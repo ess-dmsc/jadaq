@@ -7,6 +7,7 @@
 
 #include <CAENDigitizer.h>
 #include <string>
+#include <cstdint>
 
 namespace caen {
     class Error : public std::exception
