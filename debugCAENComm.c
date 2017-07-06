@@ -1,3 +1,21 @@
+/*
+ * jadaq (Just Another DAQ)
+ * Copyright (C) 2017  Troels Blum <troels@blum.dk>
+ *
+ * This program is free software: you can redistribute it and/or modify
+ *        it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ *         but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 #include <stdio.h>
 #include <stdint.h>
 #define __USE_GNU
@@ -5,29 +23,30 @@
 
 #define OSTREAM stdout
 
+int fun();
+
 typedef enum CAEN_Comm_ConnectionType {
-    CAENComm_USB				= 0,
-    CAENComm_OpticalLink	= 1,
-    CAENComm_PCI_OpticalLink	= 1, // DEPRECATED
-    CAENComm_PCIE_OpticalLink	= 1, // DEPRECATED
+    CAENComm_USB = 0,
+    CAENComm_OpticalLink = 1,
+    CAENComm_PCI_OpticalLink = 1, // DEPRECATED
+    CAENComm_PCIE_OpticalLink = 1, // DEPRECATED
 } CAENComm_ConnectionType;
 
 typedef enum CAENComm_ErrorCode {
-/* Error Types */
-            CAENComm_Success		      =  0,     /* Operation completed successfully             			*/
+    CAENComm_Success		     =  0,     /* Operation completed successfully             			*/
     CAENComm_VMEBusError         = -1,     /* VME bus error during the cycle               			*/
     CAENComm_CommError           = -2,     /* Communication error                          			*/
     CAENComm_GenericError        = -3,     /* Unspecified error                            			*/
     CAENComm_InvalidParam        = -4,     /* Invalid parameter                            			*/
     CAENComm_InvalidLinkType     = -5,     /* Invalid Link Type                            			*/
     CAENComm_InvalidHandler      = -6,     /* Invalid device handler                       			*/
-    CAENComm_CommTimeout		  = -7,     /* Communication Timeout						   			*/
+    CAENComm_CommTimeout		 = -7,     /* Communication Timeout						   			*/
     CAENComm_DeviceNotFound      = -8,     /* Unable to Open the requested Device          			*/
     CAENComm_MaxDevicesError     = -9,     /* Maximum number of devices exceeded        		    */
     CAENComm_DeviceAlreadyOpen   = -10,    /* The device is already opened							*/
-    CAENComm_NotSupported		  = -11,    /* Not supported function								*/
-    CAENComm_UnusedBridge	      = -12,    /* There aren't board controlled by that CAEN Bridge		*/
-    CAENComm_Terminated		  = -13,    /* Communication terminated by the Device				*/
+    CAENComm_NotSupported		 = -11,    /* Not supported function								*/
+    CAENComm_UnusedBridge	     = -12,    /* There aren't board controlled by that CAEN Bridge		*/
+    CAENComm_Terminated		     = -13,    /* Communication terminated by the Device				*/
 } CAENComm_ErrorCode;
 
 typedef enum CAENCOMM_INFO {
