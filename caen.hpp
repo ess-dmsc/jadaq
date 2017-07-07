@@ -22,6 +22,7 @@
 #include <CAENDigitizer.h>
 #include <string>
 #include <cstdint>
+#include <CAENDigitizerType.h>
 
 namespace caen {
     class Error : public std::exception
@@ -84,48 +85,45 @@ namespace caen {
             throw Error(code);
         }
     }
+
     struct ReadoutBuffer { char* data; uint32_t size; };
+
     struct EventInfo : CAEN_DGTZ_EventInfo_t {char* data;};
+
     class Digitizer
     {
     private:
+        Digitizer() {}
+        Digitizer(int handle) : handle_(handle) { errorHandler(CAEN_DGTZ_GetInfo(handle,&boardInfo_)); }
+
+    protected:
         int handle_;
+        CAEN_DGTZ_BoardInfo_t boardInfo_;
+        Digitizer(int handle, CAEN_DGTZ_BoardInfo_t boardInfo) : handle_(handle) { boardInfo_ = boardInfo; }
+
     public:
-        class BoardInfo : public CAEN_DGTZ_BoardInfo_t
-        {
         public:
-            const std::string modelName() const {return std::string(ModelName);}
-            uint32_t modelNo() const {return Model; }
-            uint32_t channels() const { return Channels; }
-            uint32_t formFactor() const { return  FormFactor; }
-            uint32_t familyCode() const { return FamilyCode; }
-            const std::string ROCfirmwareRel() const { return std::string(ROC_FirmwareRel); }
-            const std::string AMCfirmwareRel() const { return std::string(AMC_FirmwareRel); }
-            uint32_t serialNumber() const { return SerialNumber; }
-            uint32_t PCBrevision() const { return PCB_Revision; }
-            uint32_t ADCbits() const { return ADC_NBits; }
-            int commHandle() const { return CommHandle; }
-            int VMEhandle() const { return VMEHandle; }
-            const std::string license() const { return std::string(License); }
-        };
-        Digitizer() : handle_(-1) {}
-        Digitizer(int handle) : handle_(handle) {}
+        const std::string modelName() const {return std::string(boardInfo_.ModelName);}
+        uint32_t modelNo() const {return boardInfo_.Model; }
+        uint32_t channels() const { return boardInfo_.Channels; }
+        uint32_t formFactor() const { return  boardInfo_.FormFactor; }
+        uint32_t familyCode() const { return boardInfo_.FamilyCode; }
+        const std::string ROCfirmwareRel() const { return std::string(boardInfo_.ROC_FirmwareRel); }
+        const std::string AMCfirmwareRel() const { return std::string(boardInfo_.AMC_FirmwareRel); }
+        uint32_t serialNumber() const { return boardInfo_.SerialNumber; }
+        uint32_t PCBrevision() const { return boardInfo_.PCB_Revision; }
+        uint32_t ADCbits() const { return boardInfo_.ADC_NBits; }
+        int commHandle() const { return boardInfo_.CommHandle; }
+        int VMEhandle() const { return boardInfo_.VMEHandle; }
+        const std::string license() const { return std::string(boardInfo_.License); }
 
-        Digitizer(CAEN_DGTZ_ConnectionType linkType, int linkNum, int conetNode, uint32_t VMEBaseAddress)
-        { errorHandler(CAEN_DGTZ_OpenDigitizer(linkType,linkNum,conetNode,VMEBaseAddress,&handle_)); }
+        static Digitizer* open(CAEN_DGTZ_ConnectionType linkType, int linkNum, int conetNode, uint32_t VMEBaseAddress);
+        static Digitizer* USB(int linkNum) { return open(CAEN_DGTZ_USB,linkNum,0,0); }
 
-        ~Digitizer() { if (handle_ >= 0) errorHandler(CAEN_DGTZ_CloseDigitizer(handle_)); }
+
+        ~Digitizer() { errorHandler(CAEN_DGTZ_CloseDigitizer(handle_)); }
 
         int handle() { return handle_; }
-
-        void open(CAEN_DGTZ_ConnectionType linkType, int linkNum, int conetNode, uint32_t VMEBaseAddress)
-        { errorHandler(CAEN_DGTZ_OpenDigitizer(linkType,linkNum,conetNode,VMEBaseAddress,&handle_)); }
-
-        void openUSB(int linkNum)
-        { errorHandler(CAEN_DGTZ_OpenDigitizer(CAEN_DGTZ_USB,linkNum,0,0,&handle_)); }
-
-        void close()
-        { errorHandler(CAEN_DGTZ_CloseDigitizer(handle_)); }
 
         void writeRegister(uint32_t address, uint32_t value)
         { errorHandler(CAEN_DGTZ_WriteRegister(handle_, address, value)); }
@@ -134,8 +132,6 @@ namespace caen {
         { uint32_t value; errorHandler(CAEN_DGTZ_ReadRegister(handle_, address, &value)); return value; }
 
         void reset() { errorHandler(CAEN_DGTZ_Reset(handle_)); }
-
-        BoardInfo getInfo() {BoardInfo bi; errorHandler(CAEN_DGTZ_GetInfo(handle_,&bi)); return bi;}
 
         void calibrate()
         { errorHandler(CAEN_DGTZ_Calibrate(handle_)); }
@@ -266,11 +262,31 @@ namespace caen {
         CAEN_DGTZ_UINT16_EVENT_t* decodeEvent(EventInfo info, CAEN_DGTZ_UINT16_EVENT_t* event)
         { errorHandler(CAEN_DGTZ_DecodeEvent(handle_, info.data, (void**)&event)); return event; }
 
+    }; // class Digitizer
 
-
+    class Digitizer740 : public Digitizer
+    {
+    private:
+        Digitizer740();
+        Digitizer740(int handle, CAEN_DGTZ_BoardInfo_t boardInfo) : Digitizer(handle,boardInfo) {}
+        friend Digitizer* Digitizer::open(CAEN_DGTZ_ConnectionType linkType, int linkNum, int conetNode, uint32_t VMEBaseAddress);
+    public:
     };
 
-
+    Digitizer* Digitizer::open(CAEN_DGTZ_ConnectionType linkType, int linkNum, int conetNode, uint32_t VMEBaseAddress)
+    {
+        int handle;
+        CAEN_DGTZ_BoardInfo_t boardInfo;
+        errorHandler(CAEN_DGTZ_OpenDigitizer(linkType,linkNum,conetNode,VMEBaseAddress,&handle));
+        errorHandler(CAEN_DGTZ_GetInfo(handle,&boardInfo));
+        switch (boardInfo.FamilyCode)
+        {
+            case  CAEN_DGTZ_XX740_FAMILY_CODE:
+                return new Digitizer740(handle,boardInfo);
+            default:
+                return new Digitizer(handle,boardInfo);;
+        }
+    }
 
 } // namespace caen
 #endif //_CAEN_HPP
