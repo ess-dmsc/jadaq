@@ -153,6 +153,7 @@ namespace caen {
         int commHandle() const { return boardInfo_.CommHandle; }
         int VMEhandle() const { return boardInfo_.VMEHandle; }
         const std::string license() const { return std::string(boardInfo_.License); }
+      bool hasDppFw(){return (std::atoi(boardInfo_.AMC_FirmwareRel) != 0);}
 
         static Digitizer* open(CAEN_DGTZ_ConnectionType linkType, int linkNum, int conetNode, uint32_t VMEBaseAddress);
         static Digitizer* USB(int linkNum) { return open(CAEN_DGTZ_USB,linkNum,0,0); }
