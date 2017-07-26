@@ -29,6 +29,7 @@ namespace caen {
     {
     private:
         CAEN_DGTZ_ErrorCode code_;
+      std::string where_;
     public:
 #define __ERR_TO_STR(X) case (X) : return (#X);
         static const char* digitizerErrorString(CAEN_DGTZ_ErrorCode code)
@@ -71,20 +72,55 @@ namespace caen {
                 default : return "Unknown Error";
             }
         }
-        Error(CAEN_DGTZ_ErrorCode code) : code_(code) {}
+      Error(CAEN_DGTZ_ErrorCode code, std::string where = "") : code_(code), where_(where) {}
         virtual const char * what() const noexcept
         {
             return digitizerErrorString(code_);
         }
+      virtual const char * where() const noexcept
+      {
+        return where_.c_str();
+      }
 
         int code() const { return code_; }
     };
-    static inline void errorHandler(CAEN_DGTZ_ErrorCode code)
+  static inline void errorHandler(CAEN_DGTZ_ErrorCode code, std::string caller)
     {
         if (code != CAEN_DGTZ_Success) {
-            throw Error(code);
+          throw Error(code, caller);
         }
     }
+  // class to capture the caller and pass it to the error handling function
+  // adopted from https://stackoverflow.com/a/378165
+  class Reporter
+  {
+  public:
+    Reporter(std::string Caller, std::string File, int Line)
+      : caller_(Caller)
+      , file_(File)
+      , line_(Line)
+    {}
+
+    void operator()(CAEN_DGTZ_ErrorCode code)
+    {
+      // std::cout
+      //   << "Reporter: errorHandler() is being called by "
+      //   << caller_ << "() in " << file_ << ":" << line_ << std::endl;
+      // can use the original name here, as it is still defined
+      return errorHandler(code, caller_);
+    }
+  private:
+    std::string   caller_;
+    std::string   file_;
+    int           line_;
+
+  };
+
+  // remove the symbol for the function, then define a new version that instead
+  // creates a stack temporary instance of Reporter initialized with the caller
+#  undef errorHandler
+#  define errorHandler Reporter(__FUNCTION__,__FILE__,__LINE__)
+
 
     struct ReadoutBuffer { char* data; uint32_t size; };
 
