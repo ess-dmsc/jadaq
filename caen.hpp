@@ -143,6 +143,7 @@ namespace caen {
         uint32_t modelNo() const {return boardInfo_.Model; }
       virtual uint32_t channels() const { return boardInfo_.Channels; }
       virtual uint32_t groups() const { return 1; }
+      virtual uint32_t channelsPerGroup() const { return 1; }
         uint32_t formFactor() const { return  boardInfo_.FormFactor; }
         uint32_t familyCode() const { return boardInfo_.FamilyCode; }
         const std::string ROCfirmwareRel() const { return std::string(boardInfo_.ROC_FirmwareRel); }
@@ -249,6 +250,12 @@ namespace caen {
         void setExternalTriggerMode(CAEN_DGTZ_TriggerMode_t mode)
         { errorHandler(CAEN_DGTZ_SetExtTriggerInputMode(handle_, mode)); }
 
+      uint32_t getChannelDCOffset(uint32_t channel)
+      { uint32_t offset; errorHandler(CAEN_DGTZ_GetChannelDCOffset(handle_, channel, &offset)); return offset; }
+
+      void setChannelDCOffset(uint32_t channel, uint32_t offset)
+      { errorHandler(CAEN_DGTZ_SetChannelDCOffset(handle_, channel, offset)); }
+
         uint32_t getGroupDCOffset(uint32_t group)
         { uint32_t offset; errorHandler(CAEN_DGTZ_GetGroupDCOffset(handle_, group, &offset)); return offset; }
 
@@ -263,11 +270,22 @@ namespace caen {
       { errorHandler(CAEN_DGTZ_SetSWTriggerMode(handle_, mode)); }
 
 
+      CAEN_DGTZ_TriggerMode_t getChannelSelfTrigger(uint32_t channel)
+      { CAEN_DGTZ_TriggerMode_t mode; errorHandler(CAEN_DGTZ_GetChannelSelfTrigger(handle_, channel, &mode)); return mode; }
+
+      void setChannelSelfTrigger(uint32_t channel, CAEN_DGTZ_TriggerMode_t mode)
+      { errorHandler(CAEN_DGTZ_SetChannelSelfTrigger(handle_, mode, 1<<channel)); }
+
         CAEN_DGTZ_TriggerMode_t getGroupSelfTrigger(uint32_t group)
         { CAEN_DGTZ_TriggerMode_t mode; errorHandler(CAEN_DGTZ_GetGroupSelfTrigger(handle_, group, &mode)); return mode; }
-
         void setGroupSelfTrigger(uint32_t group, CAEN_DGTZ_TriggerMode_t mode)
         { errorHandler(CAEN_DGTZ_SetGroupSelfTrigger(handle_, mode, 1<<group)); }
+
+      uint32_t getChannelTriggerThreshold(uint32_t channel)
+      { uint32_t treshold; errorHandler(CAEN_DGTZ_GetChannelTriggerThreshold(handle_, channel, &treshold)); return treshold; }
+
+      void setChannelTriggerThreshold(uint32_t channel, uint32_t treshold)
+      { errorHandler(CAEN_DGTZ_SetChannelTriggerThreshold(handle_, channel, treshold)); }
 
         uint32_t getGroupTriggerThreshold(uint32_t group)
         { uint32_t treshold; errorHandler(CAEN_DGTZ_GetGroupTriggerThreshold(handle_, group, &treshold)); return treshold; }
@@ -317,8 +335,9 @@ namespace caen {
         Digitizer740(int handle, CAEN_DGTZ_BoardInfo_t boardInfo) : Digitizer(handle,boardInfo) {}
         friend Digitizer* Digitizer::open(CAEN_DGTZ_ConnectionType linkType, int linkNum, int conetNode, uint32_t VMEBaseAddress);
     public:
-      virtual uint32_t channels() const { return groups()*8; } // 8 channels per group
+      virtual uint32_t channels() const { return groups()*channelsPerGroup(); }
       virtual uint32_t groups() const { return boardInfo_.Channels; } // for x740: boardInfo.Channels stores number of groups
+      virtual uint32_t channelsPerGroup() const { return 8; }  // 8 channels per group for x740
     };
 
     Digitizer* Digitizer::open(CAEN_DGTZ_ConnectionType linkType, int linkNum, int conetNode, uint32_t VMEBaseAddress)
