@@ -154,7 +154,10 @@ namespace caen {
         int commHandle() const { return boardInfo_.CommHandle; }
         int VMEhandle() const { return boardInfo_.VMEHandle; }
         const std::string license() const { return std::string(boardInfo_.License); }
+
       bool hasDppFw(){return (std::atoi(boardInfo_.AMC_FirmwareRel) != 0);}
+      bool is751Family(){return (boardInfo_.FamilyCode == CAEN_DGTZ_XX751_FAMILY_CODE);}
+      bool is740Family(){return (boardInfo_.FamilyCode == CAEN_DGTZ_XX740_FAMILY_CODE);}
 
         static Digitizer* open(CAEN_DGTZ_ConnectionType linkType, int linkNum, int conetNode, uint32_t VMEBaseAddress);
         static Digitizer* USB(int linkNum) { return open(CAEN_DGTZ_USB,linkNum,0,0); }
@@ -325,6 +328,42 @@ namespace caen {
 
         CAEN_DGTZ_UINT16_EVENT_t* decodeEvent(EventInfo info, CAEN_DGTZ_UINT16_EVENT_t* event)
         { errorHandler(CAEN_DGTZ_DecodeEvent(handle_, info.data, (void**)&event)); return event; }
+
+      void setRunSynchronizationMode(CAEN_DGTZ_RunSyncMode_t mode)
+      { errorHandler(CAEN_DGTZ_SetRunSynchronizationMode(handle_, mode));}
+
+      CAEN_DGTZ_RunSyncMode_t getRunSynchronizationMode()
+      { CAEN_DGTZ_RunSyncMode_t mode; errorHandler(CAEN_DGTZ_GetRunSynchronizationMode(handle_, &mode)); return mode;}
+
+      void setOutputSignalMode(CAEN_DGTZ_OutputSignalMode_t mode)
+      { errorHandler(CAEN_DGTZ_SetOutputSignalMode(handle_, mode));}
+
+      CAEN_DGTZ_OutputSignalMode_t getOutputSignalMode()
+      { CAEN_DGTZ_OutputSignalMode_t mode; errorHandler(CAEN_DGTZ_GetOutputSignalMode(handle_, &mode)); return mode;}
+
+      /// x751 only
+      void setDESMode(CAEN_DGTZ_EnaDis_t mode)
+      { errorHandler(CAEN_DGTZ_SetDESMode(handle_, mode));}
+      /// x751 only
+      CAEN_DGTZ_EnaDis_t getDESMode()
+      { CAEN_DGTZ_EnaDis_t mode; errorHandler(CAEN_DGTZ_GetDESMode(handle_, &mode)); return mode;}
+
+      //@{
+      /** DPP-FW methods */
+      void setDPPPreTriggerSize(int channel, uint32_t samples)
+      { errorHandler(CAEN_DGTZ_SetDPPPreTriggerSize(handle_, channel, samples)); }
+
+      uint32_t getDPPPreTriggerSize(int channel)
+      { uint32_t samples; errorHandler(CAEN_DGTZ_GetDPPPreTriggerSize(handle_, channel, &samples)); return samples; }
+
+
+      void setChannelPulsePolarity(uint32_t channel, CAEN_DGTZ_PulsePolarity_t polarity)
+      { errorHandler(CAEN_DGTZ_SetChannelPulsePolarity(handle_, channel, polarity)); }
+
+      CAEN_DGTZ_PulsePolarity_t getChannelPulsePolarity(uint32_t channel)
+      { CAEN_DGTZ_PulsePolarity_t polarity; errorHandler(CAEN_DGTZ_GetChannelPulsePolarity(handle_, channel, &polarity)); return polarity; }
+
+      //@}
 
     }; // class Digitizer
 
