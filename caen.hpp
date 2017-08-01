@@ -363,6 +363,11 @@ namespace caen {
       CAEN_DGTZ_PulsePolarity_t getChannelPulsePolarity(uint32_t channel)
       { CAEN_DGTZ_PulsePolarity_t polarity; errorHandler(CAEN_DGTZ_GetChannelPulsePolarity(handle_, channel, &polarity)); return polarity; }
 
+      void setDPPAcquisitionMode(CAEN_DGTZ_DPP_AcqMode_t mode, CAEN_DGTZ_DPP_SaveParam_t param)
+      { errorHandler( CAEN_DGTZ_SetDPPAcquisitionMode(handle_, mode, param)); }
+
+      void getDPPAcquisitionMode(CAEN_DGTZ_DPP_AcqMode_t &mode, CAEN_DGTZ_DPP_SaveParam_t &param)
+      { errorHandler( CAEN_DGTZ_GetDPPAcquisitionMode(handle_, &mode, &param)); }
       //@}
 
     }; // class Digitizer
