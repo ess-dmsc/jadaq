@@ -368,6 +368,13 @@ namespace caen {
 
       void getDPPAcquisitionMode(CAEN_DGTZ_DPP_AcqMode_t &mode, CAEN_DGTZ_DPP_SaveParam_t &param)
       { errorHandler( CAEN_DGTZ_GetDPPAcquisitionMode(handle_, &mode, &param)); }
+
+      void setDPPTriggerMode(CAEN_DGTZ_DPP_TriggerMode_t mode)
+      { errorHandler( CAEN_DGTZ_SetDPPTriggerMode(handle_, mode)); }
+
+      CAEN_DGTZ_DPP_TriggerMode_t getDPPTriggerMode()
+      { CAEN_DGTZ_DPP_TriggerMode_t mode; errorHandler( CAEN_DGTZ_GetDPPTriggerMode(handle_, &mode)); return mode;}
+
       //@}
 
     }; // class Digitizer
