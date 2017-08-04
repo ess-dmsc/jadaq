@@ -23,9 +23,24 @@
 #include <string>
 #include <cstdint>
 #include <CAENDigitizerType.h>
+#include <initializer_list>
+
 
 namespace caen {
-    class Error : public std::exception
+
+  /// helper routine to compress comparison of a variable against several values
+  template <typename T>
+  bool is_in(const T& val, const std::initializer_list<T>& list){
+    for (const auto& i : list) {
+      if (val == i) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+
+  class Error : public std::exception
     {
     private:
         CAEN_DGTZ_ErrorCode code_;
@@ -155,7 +170,9 @@ namespace caen {
         int VMEhandle() const { return boardInfo_.VMEHandle; }
         const std::string license() const { return std::string(boardInfo_.License); }
 
-      bool hasDppFw(){return (std::atoi(boardInfo_.AMC_FirmwareRel) != 0);}
+      bool hasDppFw(){return (std::atoi(boardInfo_.AMC_FirmwareRel) != STANDARD_FW_CODE);}
+      bool isDppQdcFw(){return (std::atoi(boardInfo_.AMC_FirmwareRel) == 135);} // value from CAEN UM4868 - 740 DPP-QDC Registers User Manual rev. 2, page 2 (value not defined in CAENDigitizer lib up to v2.9.1)
+      bool isDppCiFw(){return is_in(std::atoi(boardInfo_.AMC_FirmwareRel), {V1720_DPP_CI_CODE, V1743_DPP_CI_CODE});}
       bool is751Family(){return (boardInfo_.FamilyCode == CAEN_DGTZ_XX751_FAMILY_CODE);}
       bool is740Family(){return (boardInfo_.FamilyCode == CAEN_DGTZ_XX740_FAMILY_CODE);}
 
