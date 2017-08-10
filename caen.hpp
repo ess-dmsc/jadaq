@@ -109,7 +109,8 @@ namespace caen {
         public:
         const std::string modelName() const {return std::string(boardInfo_.ModelName);}
         uint32_t modelNo() const {return boardInfo_.Model; }
-        uint32_t channels() const { return boardInfo_.Channels; }
+      virtual uint32_t channels() const { return boardInfo_.Channels; }
+      virtual uint32_t groups() const { return 1; }
         uint32_t formFactor() const { return  boardInfo_.FormFactor; }
         uint32_t familyCode() const { return boardInfo_.FamilyCode; }
         const std::string ROCfirmwareRel() const { return std::string(boardInfo_.ROC_FirmwareRel); }
@@ -221,6 +222,14 @@ namespace caen {
         void setGroupDCOffset(uint32_t group, uint32_t offset)
         { errorHandler(CAEN_DGTZ_SetGroupDCOffset(handle_, group, offset)); }
 
+
+      CAEN_DGTZ_TriggerMode_t getSWTriggerMode()
+        { CAEN_DGTZ_TriggerMode_t mode; errorHandler(CAEN_DGTZ_GetSWTriggerMode(handle_, &mode)); return mode; }
+
+      void setSWTriggerMode(CAEN_DGTZ_TriggerMode_t mode)
+      { errorHandler(CAEN_DGTZ_SetSWTriggerMode(handle_, mode)); }
+
+
         CAEN_DGTZ_TriggerMode_t getGroupSelfTrigger(uint32_t group)
         { CAEN_DGTZ_TriggerMode_t mode; errorHandler(CAEN_DGTZ_GetGroupSelfTrigger(handle_, group, &mode)); return mode; }
 
@@ -275,6 +284,8 @@ namespace caen {
         Digitizer740(int handle, CAEN_DGTZ_BoardInfo_t boardInfo) : Digitizer(handle,boardInfo) {}
         friend Digitizer* Digitizer::open(CAEN_DGTZ_ConnectionType linkType, int linkNum, int conetNode, uint32_t VMEBaseAddress);
     public:
+      virtual uint32_t channels() const { return groups()*8; } // 8 channels per group
+      virtual uint32_t groups() const { return boardInfo_.Channels; } // for x740: boardInfo.Channels stores number of groups
     };
 
     Digitizer* Digitizer::open(CAEN_DGTZ_ConnectionType linkType, int linkNum, int conetNode, uint32_t VMEBaseAddress)
