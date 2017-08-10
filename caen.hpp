@@ -86,7 +86,11 @@ namespace caen {
         }
     }
 
-    struct ReadoutBuffer { char* data; uint32_t size; };
+    struct ReadoutBuffer {
+        char* data;
+        uint32_t size;
+        uint32_t dataSize;
+    };
 
     struct EventInfo : CAEN_DGTZ_EventInfo_t {char* data;};
 
@@ -178,8 +182,8 @@ namespace caen {
         void freeReadoutBuffer(ReadoutBuffer b)
         { errorHandler(CAEN_DGTZ_FreeReadoutBuffer(&b.data)); }
 
-        ReadoutBuffer readData(ReadoutBuffer buffer,CAEN_DGTZ_ReadMode_t mode)
-        { errorHandler(CAEN_DGTZ_ReadData(handle_, mode, buffer.data, &buffer.size)); return buffer; }
+        uint32_t readData(ReadoutBuffer& buffer,CAEN_DGTZ_ReadMode_t mode)
+        { errorHandler(CAEN_DGTZ_ReadData(handle_, mode, buffer.data, &buffer.dataSize)); return buffer.dataSize; }
 
         uint16_t getDecimationFactor()
         { uint16_t factor;  errorHandler(CAEN_DGTZ_GetDecimationFactor(handle_, &factor)); return factor; }
@@ -248,10 +252,10 @@ namespace caen {
         { errorHandler(CAEN_DGTZ_SWStopAcquisition(handle_)); }
 
         uint32_t getNumEvents(ReadoutBuffer buffer)
-        {uint32_t n; errorHandler(CAEN_DGTZ_GetNumEvents(handle_, buffer.data, buffer.size, &n)); return n; }
+        {uint32_t n; errorHandler(CAEN_DGTZ_GetNumEvents(handle_, buffer.data, buffer.dataSize, &n)); return n; }
 
         EventInfo getEventInfo(ReadoutBuffer buffer, int32_t n)
-        { EventInfo info; errorHandler(CAEN_DGTZ_GetEventInfo(handle_, buffer.data, buffer.size, n, &info, &info.data)); return info; }
+        { EventInfo info; errorHandler(CAEN_DGTZ_GetEventInfo(handle_, buffer.data, buffer.dataSize, n, &info, &info.data)); return info; }
 
         CAEN_DGTZ_UINT16_EVENT_t* allocateEvent()
         { CAEN_DGTZ_UINT16_EVENT_t* event; errorHandler(CAEN_DGTZ_AllocateEvent(handle_, (void**)&event)); return event; }
