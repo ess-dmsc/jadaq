@@ -337,7 +337,10 @@ namespace caen {
         { errorHandler( CAEN_DGTZ_SetDPPTriggerMode(handle_, mode)); }
 
         CAEN_DGTZ_DPP_TriggerMode_t getDPPTriggerMode()
-        { CAEN_DGTZ_DPP_TriggerMode_t mode; errorHandler( CAEN_DGTZ_GetDPPTriggerMode(handle_, &mode)); return mode;}
+        { CAEN_DGTZ_DPP_TriggerMode_t mode; errorHandler( CAEN_DGTZ_GetDPPTriggerMode(handle_, &mode)); return mode; }
+
+        CAEN_DGTZ_DPPFirmware_t getDPPFirmwareType()
+        { CAEN_DGTZ_DPPFirmware_t firmware; errorHandler(CAEN_DGTZ_GetDPPFirmwareType(handle_, &firmware)); return firmware; }
 
     }; // class Digitizer
 
@@ -352,21 +355,6 @@ namespace caen {
         virtual uint32_t groups() const { return boardInfo_.Channels; } // for x740: boardInfo.Channels stores number of groups
         virtual uint32_t channelsPerGroup() const { return 8; }  // 8 channels per group for x740
     };
-
-    Digitizer* Digitizer::open(CAEN_DGTZ_ConnectionType linkType, int linkNum, int conetNode, uint32_t VMEBaseAddress)
-    {
-        int handle;
-        CAEN_DGTZ_BoardInfo_t boardInfo;
-        errorHandler(CAEN_DGTZ_OpenDigitizer(linkType,linkNum,conetNode,VMEBaseAddress,&handle));
-        errorHandler(CAEN_DGTZ_GetInfo(handle,&boardInfo));
-        switch (boardInfo.FamilyCode)
-        {
-            case  CAEN_DGTZ_XX740_FAMILY_CODE:
-                return new Digitizer740(handle,boardInfo);
-            default:
-                return new Digitizer(handle,boardInfo);;
-        }
-    }
 
 } // namespace caen
 #endif //_CAEN_HPP

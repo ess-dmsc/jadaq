@@ -7,6 +7,8 @@ int main() {
     caen::Digitizer* digitizer = caen::Digitizer::USB(0);
     digitizer->reset();
     std::cout << "I am talking to a " << digitizer->modelName() << ", serial: " << digitizer->serialNumber() << std::endl;
+    std::cout << "ROC_FW " << digitizer->ROCfirmwareRel() << std::endl;
+    std::cout << "AMC_FW " << digitizer->AMCfirmwareRel() << std::endl;
     std::cout << "ADCbits " << digitizer->ADCbits() << std::endl;
     std::cout << "Channels " << digitizer->channels() << std::endl;
     digitizer->setRecordLength(192*16);
