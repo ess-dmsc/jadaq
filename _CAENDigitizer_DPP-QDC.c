@@ -9,10 +9,13 @@
 #include <CAENDigitizer.h>
 #include "_CAENDigitizer_DPP-QDC.h"
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 extern unsigned int gEquippedGroups;
 extern _CAEN_DGTZ_DPP_QDC_Event_t *gEventsGrp[8];
 
+#define MAX(a,b) ((a) > (b) ? a : b)
 
 uint32_t _COMMON_GetChannelAddress(uint32_t base, uint16_t channel) {
     //return base + (0x100 * channel);
@@ -275,7 +278,7 @@ int _CAEN_DGTZ_MallocDPPWaveforms(int handle, _CAEN_DGTZ_DPP_QDC_Waveforms_t **g
 
     for(i=0; i<MAX_CHANNELS; i++){
         if ((enableMask & (1 << i)) && ((ret = _CAEN_DGTZ_DPP_QDC_GetRecordLength(handle, &recLength, i)) != CAEN_DGTZ_Success)) return CAEN_DGTZ_CommError;
-        Ns = max(Ns, recLength);
+        Ns = MAX(Ns, recLength);
     }
 
     /* Allocate only once per acquisition */
@@ -360,7 +363,7 @@ int _CAEN_DGTZ_MallocReadoutBuffer(int handle, char **buffer, uint32_t *size) {
     if (*buffer == NULL) 
       *buffer = (char *)malloc(allocated_size);
 
-    if(buffer == NULL) {
+    if(*buffer == NULL) {
         *size = 0;
         return CAEN_DGTZ_OutOfMemory;
     } 
