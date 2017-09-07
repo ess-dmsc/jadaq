@@ -19,10 +19,11 @@
 #ifndef _CAEN_HPP
 #define _CAEN_HPP
 
-#include <CAENDigitizer.h>
+#include "_CAENDigitizer.h"
+#include <CAENDigitizerType.h>
 #include <string>
 #include <cstdint>
-#include <CAENDigitizerType.h>
+
 
 namespace caen {
     class Error : public std::exception
@@ -90,6 +91,11 @@ namespace caen {
         char* data;
         uint32_t size;
         uint32_t dataSize;
+    };
+
+    struct DPPAcquisitionMode {
+        CAEN_DGTZ_DPP_AcqMode_t mode;    // enum
+        CAEN_DGTZ_DPP_SaveParam_t param; // enum
     };
 
     struct EventInfo : CAEN_DGTZ_EventInfo_t {char* data;};
@@ -287,14 +293,15 @@ namespace caen {
         EventInfo getEventInfo(ReadoutBuffer buffer, int32_t n)
         { EventInfo info; errorHandler(CAEN_DGTZ_GetEventInfo(handle_, buffer.data, buffer.dataSize, n, &info, &info.data)); return info; }
 
-        CAEN_DGTZ_UINT16_EVENT_t* allocateEvent()
-        { CAEN_DGTZ_UINT16_EVENT_t* event; errorHandler(CAEN_DGTZ_AllocateEvent(handle_, (void**)&event)); return event; }
+        // TODO Think of an intelligent way to handle events not using void pointers
+        void* allocateEvent()
+        { void* event; errorHandler(CAEN_DGTZ_AllocateEvent(handle_, &event)); return event; }
 
-        void freeEvent(CAEN_DGTZ_UINT16_EVENT_t* event)
+        void freeEvent(void* event)
         { errorHandler(CAEN_DGTZ_FreeEvent(handle_, (void**)&event)); }
 
-        CAEN_DGTZ_UINT16_EVENT_t* decodeEvent(EventInfo info, CAEN_DGTZ_UINT16_EVENT_t* event)
-        { errorHandler(CAEN_DGTZ_DecodeEvent(handle_, info.data, (void**)&event)); return event; }
+        void* decodeEvent(EventInfo info, void* event)
+        { errorHandler(CAEN_DGTZ_DecodeEvent(handle_, info.data, &event)); return event; }
 
         void setRunSynchronizationMode(CAEN_DGTZ_RunSyncMode_t mode)
         { errorHandler(CAEN_DGTZ_SetRunSynchronizationMode(handle_, mode));}
@@ -307,7 +314,6 @@ namespace caen {
 
         CAEN_DGTZ_OutputSignalMode_t getOutputSignalMode()
         { CAEN_DGTZ_OutputSignalMode_t mode; errorHandler(CAEN_DGTZ_GetOutputSignalMode(handle_, &mode)); return mode;}
-
 
         void setDESMode(CAEN_DGTZ_EnaDis_t mode)
         { errorHandler(CAEN_DGTZ_SetDESMode(handle_, mode));}
@@ -327,11 +333,11 @@ namespace caen {
         CAEN_DGTZ_PulsePolarity_t getChannelPulsePolarity(uint32_t channel)
         { CAEN_DGTZ_PulsePolarity_t polarity; errorHandler(CAEN_DGTZ_GetChannelPulsePolarity(handle_, channel, &polarity)); return polarity; }
 
-        void setDPPAcquisitionMode(CAEN_DGTZ_DPP_AcqMode_t mode, CAEN_DGTZ_DPP_SaveParam_t param)
-        { errorHandler( CAEN_DGTZ_SetDPPAcquisitionMode(handle_, mode, param)); }
+        void setDPPAcquisitionMode(DPPAcquisitionMode mode)
+        { errorHandler( CAEN_DGTZ_SetDPPAcquisitionMode(handle_, mode.mode, mode.param)); }
 
-        void getDPPAcquisitionMode(CAEN_DGTZ_DPP_AcqMode_t &mode, CAEN_DGTZ_DPP_SaveParam_t &param)
-        { errorHandler( CAEN_DGTZ_GetDPPAcquisitionMode(handle_, &mode, &param)); }
+        DPPAcquisitionMode getDPPAcquisitionMode()
+        { DPPAcquisitionMode mode; errorHandler( CAEN_DGTZ_GetDPPAcquisitionMode(handle_, &mode.mode, &mode.param)); return mode; }
 
         void setDPPTriggerMode(CAEN_DGTZ_DPP_TriggerMode_t mode)
         { errorHandler( CAEN_DGTZ_SetDPPTriggerMode(handle_, mode)); }
@@ -355,6 +361,16 @@ namespace caen {
         virtual uint32_t groups() const { return boardInfo_.Channels; } // for x740: boardInfo.Channels stores number of groups
         virtual uint32_t channelsPerGroup() const { return 8; }  // 8 channels per group for x740
     };
+/*
+    class Digitizer740D : public Digitizer740
+    {
+    private:
+        Digitizer740D();
+        Digitizer740D(int handle, CAEN_DGTZ_BoardInfo_t boardInfo) : Digitizer(handle,boardInfo) {}
+        friend Digitizer* Digitizer::open(CAEN_DGTZ_ConnectionType linkType, int linkNum, int conetNode, uint32_t VMEBaseAddress);
+    public:
 
+    };
+*/
 } // namespace caen
 #endif //_CAEN_HPP

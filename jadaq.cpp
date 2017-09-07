@@ -9,6 +9,7 @@ int main() {
     std::cout << "I am talking to a " << digitizer->modelName() << ", serial: " << digitizer->serialNumber() << std::endl;
     std::cout << "ROC_FW " << digitizer->ROCfirmwareRel() << std::endl;
     std::cout << "AMC_FW " << digitizer->AMCfirmwareRel() << std::endl;
+    std::cout << "DPPFirmware type" << digitizer->getDPPFirmwareType() << std::endl;
     std::cout << "ADCbits " << digitizer->ADCbits() << std::endl;
     std::cout << "Channels " << digitizer->channels() << std::endl;
     digitizer->setRecordLength(192*16);
@@ -58,7 +59,7 @@ int main() {
         uint32_t nEvents = 1;
         std::cout << "Got " << nEvents << " events." << std::endl;
         std::cout << "Buffer size after: " << buffer.size << "\tBuffer address: " << (void*) buffer.data << std::endl;
-        CAEN_DGTZ_UINT16_EVENT_t* event = digitizer->allocateEvent();
+        CAEN_DGTZ_UINT16_EVENT_t* event = (CAEN_DGTZ_UINT16_EVENT_t*)digitizer->allocateEvent();
         for (uint32_t e = 0; e < nEvents; ++e)
         {
             caen::EventInfo info = digitizer->getEventInfo(buffer,e);
