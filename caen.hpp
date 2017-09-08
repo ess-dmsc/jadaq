@@ -24,7 +24,6 @@
 #include <string>
 #include <cstdint>
 
-
 namespace caen {
     class Error : public std::exception
     {
@@ -113,6 +112,15 @@ namespace caen {
 
     public:
         public:
+
+        /* Digitizer creation */
+        static Digitizer* open(CAEN_DGTZ_ConnectionType linkType, int linkNum, int conetNode, uint32_t VMEBaseAddress);
+        static Digitizer* USB(int linkNum) { return open(CAEN_DGTZ_USB,linkNum,0,0); }
+
+        /* Destruction */
+        ~Digitizer() { errorHandler(CAEN_DGTZ_CloseDigitizer(handle_)); }
+
+        /* Information functions */
         const std::string modelName() const {return std::string(boardInfo_.ModelName);}
         uint32_t modelNo() const {return boardInfo_.Model; }
         virtual uint32_t channels() const { return boardInfo_.Channels; }
@@ -129,22 +137,18 @@ namespace caen {
         int VMEhandle() const { return boardInfo_.VMEHandle; }
         const std::string license() const { return std::string(boardInfo_.License); }
 
-        bool hasDppFw() const { return (std::atoi(boardInfo_.AMC_FirmwareRel) != 0); }
-
-        static Digitizer* open(CAEN_DGTZ_ConnectionType linkType, int linkNum, int conetNode, uint32_t VMEBaseAddress);
-        static Digitizer* USB(int linkNum) { return open(CAEN_DGTZ_USB,linkNum,0,0); }
-
-
-        ~Digitizer() { errorHandler(CAEN_DGTZ_CloseDigitizer(handle_)); }
-
         int handle() { return handle_; }
 
+        CAEN_DGTZ_DPPFirmware_t getDPPFirmwareType()
+        { CAEN_DGTZ_DPPFirmware_t firmware; errorHandler(CAEN_DGTZ_GetDPPFirmwareType(handle_, &firmware)); return firmware; }
+
+        /* Raw register read/write functions */
         void writeRegister(uint32_t address, uint32_t value)
         { errorHandler(CAEN_DGTZ_WriteRegister(handle_, address, value)); }
-
         uint32_t readRegister(uint32_t address)
         { uint32_t value; errorHandler(CAEN_DGTZ_ReadRegister(handle_, address, &value)); return value; }
 
+        /* Utility functions */
         void reset() { errorHandler(CAEN_DGTZ_Reset(handle_)); }
 
         void calibrate()
@@ -153,133 +157,14 @@ namespace caen {
         uint32_t readTemperature(int32_t ch)
         {uint32_t temp; errorHandler(CAEN_DGTZ_ReadTemperature(handle_, ch, &temp)); return temp;}
 
-        uint32_t getRecordLength()
-        { uint32_t size; errorHandler(CAEN_DGTZ_GetRecordLength(handle_,&size)); return size; }
-
-        void setRecordLength(uint32_t size)
-        { errorHandler(CAEN_DGTZ_SetRecordLength(handle_,size)); }
-
         void clearData()
         { errorHandler(CAEN_DGTZ_ClearData(handle_)); }
 
         void disableEventAlignedReadout()
         { errorHandler(CAEN_DGTZ_DisableEventAlignedReadout(handle_)); }
 
-        uint32_t getMaxNumEventsBLT()
-        { uint32_t n; errorHandler(CAEN_DGTZ_GetMaxNumEventsBLT(handle_, &n)); return n; }
-
-        void setMaxNumEventsBLT(uint32_t n)
-        { errorHandler(CAEN_DGTZ_SetMaxNumEventsBLT(handle_, n)); }
-
         void sendSWtrigger()
         { errorHandler(CAEN_DGTZ_SendSWtrigger(handle_)); }
-
-        uint32_t getChannelEnableMask()
-        { uint32_t mask; errorHandler(CAEN_DGTZ_GetChannelEnableMask(handle_, &mask)); return mask;}
-
-        void setChannelEnableMask(uint32_t mask)
-        { errorHandler(CAEN_DGTZ_SetChannelEnableMask(handle_, mask)); }
-
-        uint32_t getGroupEnableMask()
-        { uint32_t mask; errorHandler(CAEN_DGTZ_GetGroupEnableMask(handle_, &mask)); return mask;}
-
-        void setGroupEnableMask(uint32_t mask)
-        { errorHandler(CAEN_DGTZ_SetGroupEnableMask(handle_, mask)); }
-
-        ReadoutBuffer mallocReadoutBuffer()
-        { ReadoutBuffer b; errorHandler(CAEN_DGTZ_MallocReadoutBuffer(handle_, &b.data, &b.size)); return b; }
-
-        void freeReadoutBuffer(ReadoutBuffer b)
-        { errorHandler(CAEN_DGTZ_FreeReadoutBuffer(&b.data)); }
-
-        uint32_t readData(ReadoutBuffer& buffer,CAEN_DGTZ_ReadMode_t mode)
-        { errorHandler(CAEN_DGTZ_ReadData(handle_, mode, buffer.data, &buffer.dataSize)); return buffer.dataSize; }
-
-        uint16_t getDecimationFactor()
-        { uint16_t factor;  errorHandler(CAEN_DGTZ_GetDecimationFactor(handle_, &factor)); return factor; }
-
-        void setDecimationFactor(uint16_t factor)
-        { errorHandler(CAEN_DGTZ_SetDecimationFactor(handle_, factor)); }
-
-        uint32_t getPostTriggerSize()
-        { uint32_t percent; errorHandler(CAEN_DGTZ_GetPostTriggerSize(handle_, &percent)); return percent;}
-
-        void setPostTriggerSize(uint32_t percent)
-        { errorHandler(CAEN_DGTZ_SetPostTriggerSize(handle_, percent)); }
-
-        CAEN_DGTZ_IOLevel_t getIOlevel()
-        { CAEN_DGTZ_IOLevel_t level; errorHandler(CAEN_DGTZ_GetIOLevel(handle_, &level)); return level;}
-
-        void setIOlevel(CAEN_DGTZ_IOLevel_t level)
-        { errorHandler(CAEN_DGTZ_SetIOLevel(handle_, level));}
-
-        CAEN_DGTZ_AcqMode_t getAcquisitionMode()
-        { CAEN_DGTZ_AcqMode_t mode; errorHandler(CAEN_DGTZ_GetAcquisitionMode(handle_, &mode)); return mode;}
-
-        void setAcquisitionMode(CAEN_DGTZ_AcqMode_t mode)
-        { errorHandler(CAEN_DGTZ_SetAcquisitionMode(handle_, mode));}
-
-        CAEN_DGTZ_TriggerMode_t getExternalTriggerMode()
-        { CAEN_DGTZ_TriggerMode_t mode; errorHandler(CAEN_DGTZ_GetExtTriggerInputMode(handle_, &mode)); return mode; }
-
-        void setExternalTriggerMode(CAEN_DGTZ_TriggerMode_t mode)
-        { errorHandler(CAEN_DGTZ_SetExtTriggerInputMode(handle_, mode)); }
-
-        uint32_t getChannelDCOffset(uint32_t channel)
-        { uint32_t offset; errorHandler(CAEN_DGTZ_GetChannelDCOffset(handle_, channel, &offset)); return offset; }
-
-        void setChannelDCOffset(uint32_t channel, uint32_t offset)
-        { errorHandler(CAEN_DGTZ_SetChannelDCOffset(handle_, channel, offset)); }
-
-        uint32_t getGroupDCOffset(uint32_t group)
-        { uint32_t offset; errorHandler(CAEN_DGTZ_GetGroupDCOffset(handle_, group, &offset)); return offset; }
-
-        void setGroupDCOffset(uint32_t group, uint32_t offset)
-        { errorHandler(CAEN_DGTZ_SetGroupDCOffset(handle_, group, offset)); }
-
-
-        CAEN_DGTZ_TriggerMode_t getSWTriggerMode()
-        { CAEN_DGTZ_TriggerMode_t mode; errorHandler(CAEN_DGTZ_GetSWTriggerMode(handle_, &mode)); return mode; }
-
-        void setSWTriggerMode(CAEN_DGTZ_TriggerMode_t mode)
-        { errorHandler(CAEN_DGTZ_SetSWTriggerMode(handle_, mode)); }
-
-
-        CAEN_DGTZ_TriggerMode_t getChannelSelfTrigger(uint32_t channel)
-        { CAEN_DGTZ_TriggerMode_t mode; errorHandler(CAEN_DGTZ_GetChannelSelfTrigger(handle_, channel, &mode)); return mode; }
-
-        void setChannelSelfTrigger(uint32_t channel, CAEN_DGTZ_TriggerMode_t mode)
-        { errorHandler(CAEN_DGTZ_SetChannelSelfTrigger(handle_, mode, 1<<channel)); }
-
-        CAEN_DGTZ_TriggerMode_t getGroupSelfTrigger(uint32_t group)
-        { CAEN_DGTZ_TriggerMode_t mode; errorHandler(CAEN_DGTZ_GetGroupSelfTrigger(handle_, group, &mode)); return mode; }
-
-        void setGroupSelfTrigger(uint32_t group, CAEN_DGTZ_TriggerMode_t mode)
-        { errorHandler(CAEN_DGTZ_SetGroupSelfTrigger(handle_, mode, 1<<group)); }
-
-        uint32_t getChannelTriggerThreshold(uint32_t channel)
-        { uint32_t treshold; errorHandler(CAEN_DGTZ_GetChannelTriggerThreshold(handle_, channel, &treshold)); return treshold; }
-
-        void setChannelTriggerThreshold(uint32_t channel, uint32_t treshold)
-        { errorHandler(CAEN_DGTZ_SetChannelTriggerThreshold(handle_, channel, treshold)); }
-
-        uint32_t getGroupTriggerThreshold(uint32_t group)
-        { uint32_t treshold; errorHandler(CAEN_DGTZ_GetGroupTriggerThreshold(handle_, group, &treshold)); return treshold; }
-
-        void setGroupTriggerThreshold(uint32_t group, uint32_t treshold)
-        { errorHandler(CAEN_DGTZ_SetGroupTriggerThreshold(handle_, group, treshold)); }
-
-        uint32_t getChannelGroupMask(uint32_t group)
-        { uint32_t mask; errorHandler(CAEN_DGTZ_GetChannelGroupMask(handle_, group, &mask)); return mask; }
-
-        void setChannelGroupMask(uint32_t group, uint32_t mask)
-        { errorHandler(CAEN_DGTZ_SetChannelGroupMask(handle_, group, mask)); }
-
-        CAEN_DGTZ_TriggerPolarity_t getTriggerPolarity(uint32_t channel)
-        { CAEN_DGTZ_TriggerPolarity_t polarity; errorHandler(CAEN_DGTZ_GetTriggerPolarity(handle_, channel, &polarity)); return polarity; }
-
-        void setTriggerPolarity(uint32_t channel, CAEN_DGTZ_TriggerPolarity_t polarity)
-        { errorHandler(CAEN_DGTZ_SetTriggerPolarity(handle_, channel, polarity)); }
 
         void startAcquisition()
         { errorHandler(CAEN_DGTZ_SWStartAcquisition(handle_)); }
@@ -287,11 +172,15 @@ namespace caen {
         void stopAcquisition()
         { errorHandler(CAEN_DGTZ_SWStopAcquisition(handle_)); }
 
-        uint32_t getNumEvents(ReadoutBuffer buffer)
-        {uint32_t n; errorHandler(CAEN_DGTZ_GetNumEvents(handle_, buffer.data, buffer.dataSize, &n)); return n; }
+        uint32_t readData(ReadoutBuffer& buffer,CAEN_DGTZ_ReadMode_t mode)
+        { errorHandler(CAEN_DGTZ_ReadData(handle_, mode, buffer.data, &buffer.dataSize)); return buffer.dataSize; }
 
-        EventInfo getEventInfo(ReadoutBuffer buffer, int32_t n)
-        { EventInfo info; errorHandler(CAEN_DGTZ_GetEventInfo(handle_, buffer.data, buffer.dataSize, n, &info, &info.data)); return info; }
+        /* Memory management */
+        ReadoutBuffer mallocReadoutBuffer()
+        { ReadoutBuffer b; errorHandler(CAEN_DGTZ_MallocReadoutBuffer(handle_, &b.data, &b.size)); return b; }
+
+        void freeReadoutBuffer(ReadoutBuffer b)
+        { errorHandler(CAEN_DGTZ_FreeReadoutBuffer(&b.data)); }
 
         // TODO Think of an intelligent way to handle events not using void pointers
         void* allocateEvent()
@@ -300,53 +189,144 @@ namespace caen {
         void freeEvent(void* event)
         { errorHandler(CAEN_DGTZ_FreeEvent(handle_, (void**)&event)); }
 
+        /* Detector data information and manipulation*/
+        uint32_t getNumEvents(ReadoutBuffer buffer)
+        {uint32_t n; errorHandler(CAEN_DGTZ_GetNumEvents(handle_, buffer.data, buffer.dataSize, &n)); return n; }
+
+        EventInfo getEventInfo(ReadoutBuffer buffer, int32_t n)
+        { EventInfo info; errorHandler(CAEN_DGTZ_GetEventInfo(handle_, buffer.data, buffer.dataSize, n, &info, &info.data)); return info; }
+
         void* decodeEvent(EventInfo info, void* event)
         { errorHandler(CAEN_DGTZ_DecodeEvent(handle_, info.data, &event)); return event; }
 
+        /* Device configuration - i.e. getter and setters*/
+        uint32_t getRecordLength()
+        { uint32_t size; errorHandler(CAEN_DGTZ_GetRecordLength(handle_,&size)); return size; }
+        void setRecordLength(uint32_t size)
+        { errorHandler(CAEN_DGTZ_SetRecordLength(handle_,size)); }
+
+        uint32_t getMaxNumEventsBLT()
+        { uint32_t n; errorHandler(CAEN_DGTZ_GetMaxNumEventsBLT(handle_, &n)); return n; }
+        void setMaxNumEventsBLT(uint32_t n)
+        { errorHandler(CAEN_DGTZ_SetMaxNumEventsBLT(handle_, n)); }
+
+        uint32_t getChannelEnableMask()
+        { uint32_t mask; errorHandler(CAEN_DGTZ_GetChannelEnableMask(handle_, &mask)); return mask;}
+        void setChannelEnableMask(uint32_t mask)
+        { errorHandler(CAEN_DGTZ_SetChannelEnableMask(handle_, mask)); }
+
+        uint32_t getGroupEnableMask()
+        { uint32_t mask; errorHandler(CAEN_DGTZ_GetGroupEnableMask(handle_, &mask)); return mask;}
+        void setGroupEnableMask(uint32_t mask)
+        { errorHandler(CAEN_DGTZ_SetGroupEnableMask(handle_, mask)); }
+
+        uint16_t getDecimationFactor()
+        { uint16_t factor;  errorHandler(CAEN_DGTZ_GetDecimationFactor(handle_, &factor)); return factor; }
+        void setDecimationFactor(uint16_t factor)
+        { errorHandler(CAEN_DGTZ_SetDecimationFactor(handle_, factor)); }
+
+        uint32_t getPostTriggerSize()
+        { uint32_t percent; errorHandler(CAEN_DGTZ_GetPostTriggerSize(handle_, &percent)); return percent;}
+        void setPostTriggerSize(uint32_t percent)
+        { errorHandler(CAEN_DGTZ_SetPostTriggerSize(handle_, percent)); }
+
+        CAEN_DGTZ_IOLevel_t getIOlevel()
+        { CAEN_DGTZ_IOLevel_t level; errorHandler(CAEN_DGTZ_GetIOLevel(handle_, &level)); return level;}
+        void setIOlevel(CAEN_DGTZ_IOLevel_t level)
+        { errorHandler(CAEN_DGTZ_SetIOLevel(handle_, level));}
+
+        CAEN_DGTZ_AcqMode_t getAcquisitionMode()
+        { CAEN_DGTZ_AcqMode_t mode; errorHandler(CAEN_DGTZ_GetAcquisitionMode(handle_, &mode)); return mode;}
+        void setAcquisitionMode(CAEN_DGTZ_AcqMode_t mode)
+        { errorHandler(CAEN_DGTZ_SetAcquisitionMode(handle_, mode));}
+
+        CAEN_DGTZ_TriggerMode_t getExternalTriggerMode()
+        { CAEN_DGTZ_TriggerMode_t mode; errorHandler(CAEN_DGTZ_GetExtTriggerInputMode(handle_, &mode)); return mode; }
+        void setExternalTriggerMode(CAEN_DGTZ_TriggerMode_t mode)
+        { errorHandler(CAEN_DGTZ_SetExtTriggerInputMode(handle_, mode)); }
+
+        uint32_t getChannelDCOffset(uint32_t channel)
+        { uint32_t offset; errorHandler(CAEN_DGTZ_GetChannelDCOffset(handle_, channel, &offset)); return offset; }
+        void setChannelDCOffset(uint32_t channel, uint32_t offset)
+        { errorHandler(CAEN_DGTZ_SetChannelDCOffset(handle_, channel, offset)); }
+
+        uint32_t getGroupDCOffset(uint32_t group)
+        { uint32_t offset; errorHandler(CAEN_DGTZ_GetGroupDCOffset(handle_, group, &offset)); return offset; }
+        void setGroupDCOffset(uint32_t group, uint32_t offset)
+        { errorHandler(CAEN_DGTZ_SetGroupDCOffset(handle_, group, offset)); }
+
+        CAEN_DGTZ_TriggerMode_t getSWTriggerMode()
+        { CAEN_DGTZ_TriggerMode_t mode; errorHandler(CAEN_DGTZ_GetSWTriggerMode(handle_, &mode)); return mode; }
+        void setSWTriggerMode(CAEN_DGTZ_TriggerMode_t mode)
+        { errorHandler(CAEN_DGTZ_SetSWTriggerMode(handle_, mode)); }
+
+        CAEN_DGTZ_TriggerMode_t getChannelSelfTrigger(uint32_t channel)
+        { CAEN_DGTZ_TriggerMode_t mode; errorHandler(CAEN_DGTZ_GetChannelSelfTrigger(handle_, channel, &mode)); return mode; }
+        void setChannelSelfTrigger(uint32_t channel, CAEN_DGTZ_TriggerMode_t mode)
+        { errorHandler(CAEN_DGTZ_SetChannelSelfTrigger(handle_, mode, 1<<channel)); }
+
+        CAEN_DGTZ_TriggerMode_t getGroupSelfTrigger(uint32_t group)
+        { CAEN_DGTZ_TriggerMode_t mode; errorHandler(CAEN_DGTZ_GetGroupSelfTrigger(handle_, group, &mode)); return mode; }
+        void setGroupSelfTrigger(uint32_t group, CAEN_DGTZ_TriggerMode_t mode)
+        { errorHandler(CAEN_DGTZ_SetGroupSelfTrigger(handle_, mode, 1<<group)); }
+
+        uint32_t getChannelTriggerThreshold(uint32_t channel)
+        { uint32_t treshold; errorHandler(CAEN_DGTZ_GetChannelTriggerThreshold(handle_, channel, &treshold)); return treshold; }
+        void setChannelTriggerThreshold(uint32_t channel, uint32_t treshold)
+        { errorHandler(CAEN_DGTZ_SetChannelTriggerThreshold(handle_, channel, treshold)); }
+
+        uint32_t getGroupTriggerThreshold(uint32_t group)
+        { uint32_t treshold; errorHandler(CAEN_DGTZ_GetGroupTriggerThreshold(handle_, group, &treshold)); return treshold; }
+        void setGroupTriggerThreshold(uint32_t group, uint32_t treshold)
+        { errorHandler(CAEN_DGTZ_SetGroupTriggerThreshold(handle_, group, treshold)); }
+
+        uint32_t getChannelGroupMask(uint32_t group)
+        { uint32_t mask; errorHandler(CAEN_DGTZ_GetChannelGroupMask(handle_, group, &mask)); return mask; }
+        void setChannelGroupMask(uint32_t group, uint32_t mask)
+        { errorHandler(CAEN_DGTZ_SetChannelGroupMask(handle_, group, mask)); }
+
+        CAEN_DGTZ_TriggerPolarity_t getTriggerPolarity(uint32_t channel)
+        { CAEN_DGTZ_TriggerPolarity_t polarity; errorHandler(CAEN_DGTZ_GetTriggerPolarity(handle_, channel, &polarity)); return polarity; }
+        void setTriggerPolarity(uint32_t channel, CAEN_DGTZ_TriggerPolarity_t polarity)
+        { errorHandler(CAEN_DGTZ_SetTriggerPolarity(handle_, channel, polarity)); }
+
         void setRunSynchronizationMode(CAEN_DGTZ_RunSyncMode_t mode)
         { errorHandler(CAEN_DGTZ_SetRunSynchronizationMode(handle_, mode));}
-
         CAEN_DGTZ_RunSyncMode_t getRunSynchronizationMode()
         { CAEN_DGTZ_RunSyncMode_t mode; errorHandler(CAEN_DGTZ_GetRunSynchronizationMode(handle_, &mode)); return mode;}
 
         void setOutputSignalMode(CAEN_DGTZ_OutputSignalMode_t mode)
         { errorHandler(CAEN_DGTZ_SetOutputSignalMode(handle_, mode));}
-
         CAEN_DGTZ_OutputSignalMode_t getOutputSignalMode()
         { CAEN_DGTZ_OutputSignalMode_t mode; errorHandler(CAEN_DGTZ_GetOutputSignalMode(handle_, &mode)); return mode;}
 
         void setDESMode(CAEN_DGTZ_EnaDis_t mode)
         { errorHandler(CAEN_DGTZ_SetDESMode(handle_, mode));}
-
         CAEN_DGTZ_EnaDis_t getDESMode()
         { CAEN_DGTZ_EnaDis_t mode; errorHandler(CAEN_DGTZ_GetDESMode(handle_, &mode)); return mode;}
 
         void setDPPPreTriggerSize(int channel, uint32_t samples)
         { errorHandler(CAEN_DGTZ_SetDPPPreTriggerSize(handle_, channel, samples)); }
-
         uint32_t getDPPPreTriggerSize(int channel)
         { uint32_t samples; errorHandler(CAEN_DGTZ_GetDPPPreTriggerSize(handle_, channel, &samples)); return samples; }
 
         void setChannelPulsePolarity(uint32_t channel, CAEN_DGTZ_PulsePolarity_t polarity)
         { errorHandler(CAEN_DGTZ_SetChannelPulsePolarity(handle_, channel, polarity)); }
-
         CAEN_DGTZ_PulsePolarity_t getChannelPulsePolarity(uint32_t channel)
         { CAEN_DGTZ_PulsePolarity_t polarity; errorHandler(CAEN_DGTZ_GetChannelPulsePolarity(handle_, channel, &polarity)); return polarity; }
 
         void setDPPAcquisitionMode(DPPAcquisitionMode mode)
         { errorHandler( CAEN_DGTZ_SetDPPAcquisitionMode(handle_, mode.mode, mode.param)); }
-
         DPPAcquisitionMode getDPPAcquisitionMode()
         { DPPAcquisitionMode mode; errorHandler( CAEN_DGTZ_GetDPPAcquisitionMode(handle_, &mode.mode, &mode.param)); return mode; }
 
         void setDPPTriggerMode(CAEN_DGTZ_DPP_TriggerMode_t mode)
         { errorHandler( CAEN_DGTZ_SetDPPTriggerMode(handle_, mode)); }
-
         CAEN_DGTZ_DPP_TriggerMode_t getDPPTriggerMode()
         { CAEN_DGTZ_DPP_TriggerMode_t mode; errorHandler( CAEN_DGTZ_GetDPPTriggerMode(handle_, &mode)); return mode; }
 
-        CAEN_DGTZ_DPPFirmware_t getDPPFirmwareType()
-        { CAEN_DGTZ_DPPFirmware_t firmware; errorHandler(CAEN_DGTZ_GetDPPFirmwareType(handle_, &firmware)); return firmware; }
+
+
 
     }; // class Digitizer
 
