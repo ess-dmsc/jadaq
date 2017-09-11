@@ -99,6 +99,20 @@ namespace caen {
 
     struct EventInfo : CAEN_DGTZ_EventInfo_t {char* data;};
 
+    struct DPPEvents
+    {
+        union {
+            CAEN_DGTZ_DPP_PHA_Event_t **pha;
+            CAEN_DGTZ_DPP_PSD_Event_t **psd;
+            CAEN_DGTZ_DPP_CI_Event_t **ci;
+            CAEN_DGTZ_DPP_QDC_Event_t **qdc;
+            CAEN_DGTZ_751_ZLE_Event_t **zle751;
+            CAEN_DGTZ_730_ZLE_Event_t **zle730;
+            CAEN_DGTZ_DPP_X743_Event_t **x743;
+        };
+        uint32_t allocatedSize;
+    };
+
     class Digitizer
     {
     private:
@@ -140,7 +154,7 @@ namespace caen {
         int handle() { return handle_; }
 
         CAEN_DGTZ_DPPFirmware_t getDPPFirmwareType()
-        { CAEN_DGTZ_DPPFirmware_t firmware; errorHandler(CAEN_DGTZ_GetDPPFirmwareType(handle_, &firmware)); return firmware; }
+        { CAEN_DGTZ_DPPFirmware_t firmware; errorHandler(_CAEN_DGTZ_GetDPPFirmwareType(handle_, &firmware)); return firmware; }
 
         /* Raw register read/write functions */
         void writeRegister(uint32_t address, uint32_t value)
@@ -178,16 +192,59 @@ namespace caen {
         /* Memory management */
         ReadoutBuffer mallocReadoutBuffer()
         { ReadoutBuffer b; errorHandler(CAEN_DGTZ_MallocReadoutBuffer(handle_, &b.data, &b.size)); return b; }
-
         void freeReadoutBuffer(ReadoutBuffer b)
         { errorHandler(CAEN_DGTZ_FreeReadoutBuffer(&b.data)); }
 
         // TODO Think of an intelligent way to handle events not using void pointers
-        void* allocateEvent()
+        void* mallocEvent()
         { void* event; errorHandler(CAEN_DGTZ_AllocateEvent(handle_, &event)); return event; }
-
         void freeEvent(void* event)
         { errorHandler(CAEN_DGTZ_FreeEvent(handle_, (void**)&event)); }
+
+        DPPEvents mallocDPPEvents()
+        {
+            DPPEvents events;
+            switch(getDPPFirmwareType())
+            {
+                case CAEN_DGTZ_DPPFirmware_PHA:
+                    events.pha = new CAEN_DGTZ_DPP_PHA_Event_t*[MAX_DPP_PHA_CHANNEL_SIZE];
+                    errorHandler(CAEN_DGTZ_MallocDPPEvents(handle_, (void**)events.pha, &events.allocatedSize));
+                    break;
+                case CAEN_DGTZ_DPPFirmware_PSD:
+                    events.psd = new CAEN_DGTZ_DPP_PSD_Event_t*[MAX_DPP_PSD_CHANNEL_SIZE];
+                    errorHandler(CAEN_DGTZ_MallocDPPEvents(handle_, (void**)events.psd, &events.allocatedSize));
+                    break;
+                case CAEN_DGTZ_DPPFirmware_CI:
+                    switch(familyCode())
+                    {
+                        case CAEN_DGTZ_XX720_FAMILY_CODE:
+                        case CAEN_DGTZ_XX790_FAMILY_CODE:
+                            events.ci = new CAEN_DGTZ_DPP_CI_Event_t*[MAX_DPP_CI_CHANNEL_SIZE];
+                            errorHandler(CAEN_DGTZ_MallocDPPEvents(handle_, (void**)events.pha, &events.allocatedSize));
+                            break;
+                        case CAEN_DGTZ_XX743_FAMILY_CODE:
+                            events.x743 = new CAEN_DGTZ_DPP_X743_Event_t*[MAX_V1743_GROUP_SIZE];
+                            errorHandler(CAEN_DGTZ_MallocDPPEvents(handle_, (void**)events.x743, &events.allocatedSize));
+                            break;
+                        default:
+                            errorHandler(CAEN_DGTZ_FunctionNotAllowed);
+                    }
+                case CAEN_DGTZ_DPPFirmware_ZLE:
+                    // TODO handle ZLE here as well
+                    errorHandler(CAEN_DGTZ_FunctionNotAllowed);
+                    break;
+                case CAEN_DGTZ_DPPFirmware_QDC:
+                    events.qdc = new CAEN_DGTZ_DPP_QDC_Event_t*[MAX_V1740_DPP_GROUP_SIZE];
+                    errorHandler(_CAEN_DGTZ_MallocDPPEvents(handle_, (void**)events.qdc, &events.allocatedSize));
+                default:
+                    errorHandler(CAEN_DGTZ_FunctionNotAllowed);
+            }
+            return events;
+        }
+        //   - CAEN_DGTZ_FreeDPPEvents(int handle, void **events);
+        //   - CAEN_DGTZ_MallocDPPWaveforms(int handle, void **waveforms, uint32_t *allocatedSize);
+        //   - CAEN_DGTZ_FreeDPPWaveforms(int handle, void *Waveforms);
+
 
         /* Detector data information and manipulation*/
         uint32_t getNumEvents(ReadoutBuffer buffer)
@@ -198,6 +255,10 @@ namespace caen {
 
         void* decodeEvent(EventInfo info, void* event)
         { errorHandler(CAEN_DGTZ_DecodeEvent(handle_, info.data, &event)); return event; }
+
+        // CAEN_DGTZ_GetDPPEvents(int handle, char *buffer, uint32_t buffsize, void **events, uint32_t *numEventsArray);
+
+        // CAEN_DGTZ_DecodeDPPWaveforms(int handle, void *event, void *waveforms);
 
         /* Device configuration - i.e. getter and setters*/
         uint32_t getRecordLength()
@@ -325,7 +386,12 @@ namespace caen {
         CAEN_DGTZ_DPP_TriggerMode_t getDPPTriggerMode()
         { CAEN_DGTZ_DPP_TriggerMode_t mode; errorHandler( CAEN_DGTZ_GetDPPTriggerMode(handle_, &mode)); return mode; }
 
-
+      //   - CAEN_DGTZ_SetDPPParameters(int handle, uint32_t channelMask, void* params);
+      //   - CAEN_DGTZ_SetMaxNumAggregatesBLT(int handle, uint32_t numAggr);
+      //   - CAEN_DGTZ_GetMaxNumAggregatesBLT(int handle, uint32_t *numAggr);
+      //   - CAEN_DGTZ_SetNumEventsPerAggregate(int handle, uint32_t numEvents, ...);
+      //   - CAEN_DGTZ_GetNumEventsPerAggregate(int handle, uint32_t *numEvents, ...);
+      //   - CAEN_DGTZ_SetDPPEventAggregation(int handle, int threshold, int maxsize);
 
 
     }; // class Digitizer

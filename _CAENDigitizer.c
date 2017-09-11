@@ -25,7 +25,10 @@
 #include <stdio.h>
 #include "_CAENDigitizer.h"
 
-static inline CAEN_DGTZ_DPPFirmware_t getDPPFirmwareType(int vx, int vy, int handle) {
+#define MAX_GROUPS    8
+
+static inline CAEN_DGTZ_DPPFirmware_t getDPPFirmwareType(int vx, int vy, int handle)
+{
 	CAEN_DGTZ_AcquisitionMode_t mode;
 
 	switch (vx) {
@@ -51,7 +54,7 @@ static inline CAEN_DGTZ_DPPFirmware_t getDPPFirmwareType(int vx, int vy, int han
 	}
 }
 
-CAEN_DGTZ_ErrorCode CAENDGTZ_API CAEN_DGTZ_GetDPPFirmwareType(int handle, CAEN_DGTZ_DPPFirmware_t* firmware)
+CAEN_DGTZ_ErrorCode CAENDGTZ_API _CAEN_DGTZ_GetDPPFirmwareType(int handle, CAEN_DGTZ_DPPFirmware_t* firmware)
 {
     char str[40];
     int vx, vy;
@@ -62,5 +65,22 @@ CAEN_DGTZ_ErrorCode CAENDGTZ_API CAEN_DGTZ_GetDPPFirmwareType(int handle, CAEN_D
     sscanf(boardInfo.AMC_FirmwareRel, "%d.%d%s", &vx, &vy, str);
     *firmware = getDPPFirmwareType(vx, vy, handle);
 
+    return CAEN_DGTZ_Success;
+}
+
+CAEN_DGTZ_ErrorCode CAENDGTZ_API _CAEN_DGTZ_MallocDPPEvents(int handle, void **events, uint32_t *allocatedSize)
+{
+    CAEN_DGTZ_DPPFirmware_t firmware;
+    CAEN_DGTZ_ErrorCode err = _CAEN_DGTZ_GetDPPFirmwareType(handle, &firmware);
+    if (err != CAEN_DGTZ_Success) { return err; }
+    if (firmware != CAEN_DGTZ_DPPFirmware_QDC)
+    { return CAEN_DGTZ_MallocDPPEvents(handle, events, allocatedSize); }
+    /* allocate memory for group events (first time only) */
+    events = (CAEN_DGTZ_DPP_QDC_Event_t**)events;
+	for(int i=0; i<MAX_V1740_DPP_GROUP_SIZE ; i++) {
+		if (events[i] == NULL)
+         if ( (events[i] = (CAEN_DGTZ_DPP_QDC_Event_t *)malloc(V1740_MAX_CHANNELS*V1740_MAX_EVENT_QUEUE_DEPTH*sizeof(CAEN_DGTZ_DPP_QDC_Event_t))) == NULL)
+             return CAEN_DGTZ_OutOfMemory;
+	}
     return CAEN_DGTZ_Success;
 }
