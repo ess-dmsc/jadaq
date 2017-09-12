@@ -33,7 +33,8 @@
 #define MAX_V1740_DPP_GROUP_SIZE   (8)                         // Number of groups - poorly named
 #define MAX_DPP_QDC_CHANNEL_SIZE (MAX_V1740_DPP_GROUP_SIZE)
 #define V1740_MAX_CHANNELS                        64
-#define V1740_MAX_EVENT_QUEUE_DEPTH                   512
+#define V1740_QDC_MAX_EVENT_QUEUE_DEPTH                   512
+#define V1740_QDC_MAX_ALLOCATED_MEM_PER_GROUP    (18*1024*1024)
 
 #ifdef __cplusplus
 extern "C" {
@@ -72,6 +73,10 @@ CAEN_DGTZ_ErrorCode CAENDGTZ_API _CAEN_DGTZ_GetDPPFirmwareType(int handle, CAEN_
 CAEN_DGTZ_ErrorCode CAENDGTZ_API _CAEN_DGTZ_MallocDPPEvents(int handle, void **events, uint32_t *allocatedSize);
 
 CAEN_DGTZ_ErrorCode CAENDGTZ_API _CAEN_DGTZ_FreeDPPEvents(int handle, void **events);
+
+CAEN_DGTZ_ErrorCode CAENDGTZ_API _CAEN_DGTZ_FreeReadoutBuffer(char **buffer);
+
+CAEN_DGTZ_ErrorCode CAENDGTZ_API _CAEN_DGTZ_MallocReadoutBuffer(int handle, char **buffer, uint32_t *size);
 
 #ifdef __cplusplus
 }

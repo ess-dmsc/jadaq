@@ -70,12 +70,12 @@ CAEN_DGTZ_ErrorCode CAENDGTZ_API _CAEN_DGTZ_GetDPPFirmwareType(int handle, CAEN_
 
 static CAEN_DGTZ_ErrorCode V1740DPP_QDC_MallocDPPEvents(int handle, CAEN_DGTZ_DPP_QDC_Event_t **events, uint32_t *allocatedSize)
 {
-    uint32_t size = MAX_V1740_DPP_GROUP_SIZE*V1740_MAX_CHANNELS*V1740_MAX_EVENT_QUEUE_DEPTH*sizeof(CAEN_DGTZ_DPP_QDC_Event_t);
+    uint32_t size = MAX_V1740_DPP_GROUP_SIZE*V1740_MAX_CHANNELS*V1740_QDC_MAX_EVENT_QUEUE_DEPTH*sizeof(CAEN_DGTZ_DPP_QDC_Event_t);
     CAEN_DGTZ_DPP_QDC_Event_t* ptr = malloc(size);
     if (ptr == NULL)
         return CAEN_DGTZ_OutOfMemory;
     for(int i=0; i<MAX_V1740_DPP_GROUP_SIZE ; i++)
-        events[i] = ptr+V1740_MAX_CHANNELS*V1740_MAX_EVENT_QUEUE_DEPTH;
+        events[i] = ptr+V1740_MAX_CHANNELS*V1740_QDC_MAX_EVENT_QUEUE_DEPTH;
     *allocatedSize = size;
     return CAEN_DGTZ_Success;
 }
@@ -106,4 +106,29 @@ CAEN_DGTZ_ErrorCode CAENDGTZ_API _CAEN_DGTZ_FreeDPPEvents(int handle, void **eve
         return V1740DPP_QDC_FreeDPPEvents(handle, (CAEN_DGTZ_DPP_QDC_Event_t**)events);
     else
         return CAEN_DGTZ_FreeDPPEvents(handle, events);
+}
+
+static CAEN_DGTZ_ErrorCode V1740DPP_QDC_MallocReadoutBuffer(int handle, char **buffer, uint32_t *size)
+{
+    // TODO allocato only the memory needed
+    uint32_t mysize = V1740_QDC_MAX_ALLOCATED_MEM_PER_GROUP*MAX_V1740_DPP_GROUP_SIZE;
+    char* mybuffer = (char *)malloc(mysize);
+
+    if(mybuffer == NULL)
+        return CAEN_DGTZ_OutOfMemory;
+
+    *size = mysize;
+    *buffer = mybuffer;
+    return CAEN_DGTZ_Success;
+}
+
+CAEN_DGTZ_ErrorCode CAENDGTZ_API _CAEN_DGTZ_MallocReadoutBuffer(int handle, char **buffer, uint32_t *size)
+{
+    CAEN_DGTZ_DPPFirmware_t firmware;
+    CAEN_DGTZ_ErrorCode err = _CAEN_DGTZ_GetDPPFirmwareType(handle, &firmware);
+    if (err != CAEN_DGTZ_Success) { return err; }
+    if (firmware == CAEN_DGTZ_DPPFirmware_QDC)
+        return V1740DPP_QDC_MallocReadoutBuffer(handle, buffer, size);
+    else
+        return CAEN_DGTZ_MallocReadoutBuffer(handle, buffer, size);
 }

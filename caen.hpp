@@ -130,7 +130,8 @@ namespace caen {
         const std::string modelName() const {return std::string(boardInfo_.ModelName);}
         uint32_t modelNo() const {return boardInfo_.Model; }
         virtual uint32_t channels() const { return boardInfo_.Channels; }
-        virtual uint32_t groups() const { return 1; }
+        // by default groups do no exists. I.e. one channel pr. group
+        virtual uint32_t groups() const { return boardInfo_.Channels; }
         virtual uint32_t channelsPerGroup() const { return 1; }
         uint32_t formFactor() const { return  boardInfo_.FormFactor; }
         uint32_t familyCode() const { return boardInfo_.FamilyCode; }
@@ -183,7 +184,7 @@ namespace caen {
 
         /* Memory management */
         ReadoutBuffer mallocReadoutBuffer()
-        { ReadoutBuffer b; errorHandler(CAEN_DGTZ_MallocReadoutBuffer(handle_, &b.data, &b.size)); return b; }
+        { ReadoutBuffer b; errorHandler(_CAEN_DGTZ_MallocReadoutBuffer(handle_, &b.data, &b.size)); return b; }
         void freeReadoutBuffer(ReadoutBuffer b)
         { errorHandler(CAEN_DGTZ_FreeReadoutBuffer(&b.data)); }
 
@@ -218,12 +219,8 @@ namespace caen {
             errorHandler(_CAEN_DGTZ_MallocDPPEvents(handle_, events.ptr, &events.allocatedSize));
             return events;
         }
-
         void freeDPPEvents(DPPEvents events)
-        {
-            errorHandler(_CAEN_DGTZ_FreeDPPEvents(handle_, events.ptr));
-            delete[](events.ptr);
-        }
+        { errorHandler(_CAEN_DGTZ_FreeDPPEvents(handle_, events.ptr)); delete[](events.ptr); }
 
         //   - CAEN_DGTZ_MallocDPPWaveforms(int handle, void **waveforms, uint32_t *allocatedSize);
         //   - CAEN_DGTZ_FreeDPPWaveforms(int handle, void *Waveforms);
