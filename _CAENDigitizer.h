@@ -31,6 +31,7 @@
 #define V1740_DPP_QDC_CODE    (0x87)
 #define CAEN_DGTZ_DPPFirmware_QDC (CAEN_DGTZ_DPPFirmware_ZLE+1)
 #define MAX_V1740_DPP_GROUP_SIZE   (8)                         // Number of groups - poorly named
+#define MAX_DPP_QDC_CHANNEL_SIZE (MAX_V1740_DPP_GROUP_SIZE)
 #define V1740_MAX_CHANNELS                        64
 #define V1740_MAX_EVENT_QUEUE_DEPTH                   512
 

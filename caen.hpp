@@ -101,15 +101,7 @@ namespace caen {
 
     struct DPPEvents
     {
-        union {
-            CAEN_DGTZ_DPP_PHA_Event_t **pha;
-            CAEN_DGTZ_DPP_PSD_Event_t **psd;
-            CAEN_DGTZ_DPP_CI_Event_t **ci;
-            CAEN_DGTZ_DPP_QDC_Event_t **qdc;
-            CAEN_DGTZ_751_ZLE_Event_t **zle751;
-            CAEN_DGTZ_730_ZLE_Event_t **zle730;
-            CAEN_DGTZ_DPP_X743_Event_t **x743;
-        };
+        void** ptr;
         uint32_t allocatedSize;
     };
 
@@ -207,38 +199,23 @@ namespace caen {
             switch(getDPPFirmwareType())
             {
                 case CAEN_DGTZ_DPPFirmware_PHA:
-                    events.pha = new CAEN_DGTZ_DPP_PHA_Event_t*[MAX_DPP_PHA_CHANNEL_SIZE];
-                    errorHandler(CAEN_DGTZ_MallocDPPEvents(handle_, (void**)events.pha, &events.allocatedSize));
+                    events.ptr = new void*[MAX_DPP_PHA_CHANNEL_SIZE];
                     break;
                 case CAEN_DGTZ_DPPFirmware_PSD:
-                    events.psd = new CAEN_DGTZ_DPP_PSD_Event_t*[MAX_DPP_PSD_CHANNEL_SIZE];
-                    errorHandler(CAEN_DGTZ_MallocDPPEvents(handle_, (void**)events.psd, &events.allocatedSize));
+                    events.ptr = new void*[MAX_DPP_PSD_CHANNEL_SIZE];
                     break;
                 case CAEN_DGTZ_DPPFirmware_CI:
-                    switch(familyCode())
-                    {
-                        case CAEN_DGTZ_XX720_FAMILY_CODE:
-                        case CAEN_DGTZ_XX790_FAMILY_CODE:
-                            events.ci = new CAEN_DGTZ_DPP_CI_Event_t*[MAX_DPP_CI_CHANNEL_SIZE];
-                            errorHandler(CAEN_DGTZ_MallocDPPEvents(handle_, (void**)events.pha, &events.allocatedSize));
-                            break;
-                        case CAEN_DGTZ_XX743_FAMILY_CODE:
-                            events.x743 = new CAEN_DGTZ_DPP_X743_Event_t*[MAX_V1743_GROUP_SIZE];
-                            errorHandler(CAEN_DGTZ_MallocDPPEvents(handle_, (void**)events.x743, &events.allocatedSize));
-                            break;
-                        default:
-                            errorHandler(CAEN_DGTZ_FunctionNotAllowed);
-                    }
+                    events.ptr = new void*[MAX_DPP_CI_CHANNEL_SIZE];
                 case CAEN_DGTZ_DPPFirmware_ZLE:
-                    // TODO handle ZLE here as well
+                    // TODO handle ZLE here as well?
                     errorHandler(CAEN_DGTZ_FunctionNotAllowed);
                     break;
                 case CAEN_DGTZ_DPPFirmware_QDC:
-                    events.qdc = new CAEN_DGTZ_DPP_QDC_Event_t*[MAX_V1740_DPP_GROUP_SIZE];
-                    errorHandler(_CAEN_DGTZ_MallocDPPEvents(handle_, (void**)events.qdc, &events.allocatedSize));
+                    events.ptr = new void*[MAX_DPP_QDC_CHANNEL_SIZE];
                 default:
                     errorHandler(CAEN_DGTZ_FunctionNotAllowed);
             }
+            errorHandler(_CAEN_DGTZ_MallocDPPEvents(handle_, events.ptr, &events.allocatedSize));
             return events;
         }
         //   - CAEN_DGTZ_FreeDPPEvents(int handle, void **events);
