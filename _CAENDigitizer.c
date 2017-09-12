@@ -68,19 +68,42 @@ CAEN_DGTZ_ErrorCode CAENDGTZ_API _CAEN_DGTZ_GetDPPFirmwareType(int handle, CAEN_
     return CAEN_DGTZ_Success;
 }
 
+static CAEN_DGTZ_ErrorCode V1740DPP_QDC_MallocDPPEvents(int handle, CAEN_DGTZ_DPP_QDC_Event_t **events, uint32_t *allocatedSize)
+{
+    uint32_t size = MAX_V1740_DPP_GROUP_SIZE*V1740_MAX_CHANNELS*V1740_MAX_EVENT_QUEUE_DEPTH*sizeof(CAEN_DGTZ_DPP_QDC_Event_t);
+    CAEN_DGTZ_DPP_QDC_Event_t* ptr = malloc(size);
+    if (ptr == NULL)
+        return CAEN_DGTZ_OutOfMemory;
+    for(int i=0; i<MAX_V1740_DPP_GROUP_SIZE ; i++)
+        events[i] = ptr+V1740_MAX_CHANNELS*V1740_MAX_EVENT_QUEUE_DEPTH;
+    *allocatedSize = size;
+    return CAEN_DGTZ_Success;
+}
+
 CAEN_DGTZ_ErrorCode CAENDGTZ_API _CAEN_DGTZ_MallocDPPEvents(int handle, void **events, uint32_t *allocatedSize)
 {
     CAEN_DGTZ_DPPFirmware_t firmware;
     CAEN_DGTZ_ErrorCode err = _CAEN_DGTZ_GetDPPFirmwareType(handle, &firmware);
     if (err != CAEN_DGTZ_Success) { return err; }
-    if (firmware != CAEN_DGTZ_DPPFirmware_QDC)
-    { return CAEN_DGTZ_MallocDPPEvents(handle, events, allocatedSize); }
-    /* allocate memory for group events (first time only) */
-    events = (CAEN_DGTZ_DPP_QDC_Event_t**)events;
-	for(int i=0; i<MAX_V1740_DPP_GROUP_SIZE ; i++) {
-		if (events[i] == NULL)
-         if ( (events[i] = (CAEN_DGTZ_DPP_QDC_Event_t *)malloc(V1740_MAX_CHANNELS*V1740_MAX_EVENT_QUEUE_DEPTH*sizeof(CAEN_DGTZ_DPP_QDC_Event_t))) == NULL)
-             return CAEN_DGTZ_OutOfMemory;
-	}
+    if (firmware == CAEN_DGTZ_DPPFirmware_QDC)
+        return V1740DPP_QDC_MallocDPPEvents(handle, (CAEN_DGTZ_DPP_QDC_Event_t **) events, allocatedSize);
+    else
+        return CAEN_DGTZ_MallocDPPEvents(handle, events, allocatedSize);
+}
+
+static CAEN_DGTZ_ErrorCode V1740DPP_QDC_FreeDPPEvents(int handle, CAEN_DGTZ_DPP_QDC_Event_t **events)
+{
+    free(events[0]);
     return CAEN_DGTZ_Success;
+}
+
+CAEN_DGTZ_ErrorCode CAENDGTZ_API _CAEN_DGTZ_FreeDPPEvents(int handle, void **events)
+{
+    CAEN_DGTZ_DPPFirmware_t firmware;
+    CAEN_DGTZ_ErrorCode err = _CAEN_DGTZ_GetDPPFirmwareType(handle, &firmware);
+    if (err != CAEN_DGTZ_Success) { return err; }
+    if (firmware == CAEN_DGTZ_DPPFirmware_QDC)
+        return V1740DPP_QDC_FreeDPPEvents(handle, (CAEN_DGTZ_DPP_QDC_Event_t**)events);
+    else
+        return CAEN_DGTZ_FreeDPPEvents(handle, events);
 }

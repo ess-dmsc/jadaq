@@ -218,7 +218,13 @@ namespace caen {
             errorHandler(_CAEN_DGTZ_MallocDPPEvents(handle_, events.ptr, &events.allocatedSize));
             return events;
         }
-        //   - CAEN_DGTZ_FreeDPPEvents(int handle, void **events);
+
+        void freeDPPEvents(DPPEvents events)
+        {
+            errorHandler(_CAEN_DGTZ_FreeDPPEvents(handle_, events.ptr));
+            delete[](events.ptr);
+        }
+
         //   - CAEN_DGTZ_MallocDPPWaveforms(int handle, void **waveforms, uint32_t *allocatedSize);
         //   - CAEN_DGTZ_FreeDPPWaveforms(int handle, void *Waveforms);
 

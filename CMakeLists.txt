@@ -8,8 +8,8 @@ set(SOURCE_FILES jadaq.cpp caen.hpp caen.cpp _CAENDigitizer.c _CAENDigitizer.h)
 add_library(debugCAENComm SHARED debugCAENComm.c)
 target_link_libraries(debugCAENComm dl)
 
-add_library(caen SHARED caen.hpp caen.cpp)
+add_library(caen SHARED caen.hpp caen.cpp _CAENDigitizer.c _CAENDigitizer.h)
 target_link_libraries(caen dl)
 
-add_executable(jadaq ${SOURCE_FILES})
+add_executable(jadaq jadaq.cpp caen.hpp)
 target_link_libraries(jadaq CAENComm CAENDigitizer CAENVME caen)

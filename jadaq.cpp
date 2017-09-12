@@ -59,7 +59,7 @@ int main() {
         uint32_t nEvents = 1;
         std::cout << "Got " << nEvents << " events." << std::endl;
         std::cout << "Buffer size after: " << buffer.size << "\tBuffer address: " << (void*) buffer.data << std::endl;
-        CAEN_DGTZ_UINT16_EVENT_t* event = (CAEN_DGTZ_UINT16_EVENT_t*)digitizer->allocateEvent();
+        CAEN_DGTZ_UINT16_EVENT_t* event = (CAEN_DGTZ_UINT16_EVENT_t*)digitizer->mallocEvent();
         for (uint32_t e = 0; e < nEvents; ++e)
         {
             caen::EventInfo info = digitizer->getEventInfo(buffer,e);
