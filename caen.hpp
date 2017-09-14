@@ -101,7 +101,8 @@ namespace caen {
 
     struct DPPEvents
     {
-        void** ptr;
+        void** ptr;             // CAEN_DGTZ_DPP_XXX_Event_t* ptr[MAX_DPP_XXX_CHANNEL_SIZE]
+        uint32_t* nEvents;      // Number of events pr channel
         uint32_t allocatedSize;
     };
 
@@ -185,8 +186,8 @@ namespace caen {
         void stopAcquisition()
         { errorHandler(CAEN_DGTZ_SWStopAcquisition(handle_)); }
 
-        uint32_t readData(ReadoutBuffer& buffer,CAEN_DGTZ_ReadMode_t mode)
-        { errorHandler(CAEN_DGTZ_ReadData(handle_, mode, buffer.data, &buffer.dataSize)); return buffer.dataSize; }
+        ReadoutBuffer& readData(ReadoutBuffer& buffer,CAEN_DGTZ_ReadMode_t mode)
+        { errorHandler(CAEN_DGTZ_ReadData(handle_, mode, buffer.data, &buffer.dataSize)); return buffer; }
 
         /* Memory management */
         ReadoutBuffer mallocReadoutBuffer()
@@ -207,15 +208,19 @@ namespace caen {
             {
                 case CAEN_DGTZ_DPPFirmware_PHA:
                     events.ptr = new void*[MAX_DPP_PHA_CHANNEL_SIZE];
+                    events.nEvents = new uint32_t[MAX_DPP_PHA_CHANNEL_SIZE];
                     break;
                 case CAEN_DGTZ_DPPFirmware_PSD:
                     events.ptr = new void*[MAX_DPP_PSD_CHANNEL_SIZE];
+                    events.nEvents = new uint32_t[MAX_DPP_PSD_CHANNEL_SIZE];
                     break;
                 case CAEN_DGTZ_DPPFirmware_CI:
                     events.ptr = new void*[MAX_DPP_CI_CHANNEL_SIZE];
+                    events.nEvents = new uint32_t[MAX_DPP_CI_CHANNEL_SIZE];
                     break;
                 case CAEN_DGTZ_DPPFirmware_QDC:
                     events.ptr = new void*[MAX_DPP_QDC_CHANNEL_SIZE];
+                    events.nEvents = new uint32_t[MAX_DPP_QDC_CHANNEL_SIZE];
                     break;
                 default:
                     errorHandler(CAEN_DGTZ_FunctionNotAllowed);
@@ -224,7 +229,7 @@ namespace caen {
             return events;
         }
         void freeDPPEvents(DPPEvents events)
-        { errorHandler(_CAEN_DGTZ_FreeDPPEvents(handle_, events.ptr)); delete[](events.ptr); }
+        { errorHandler(_CAEN_DGTZ_FreeDPPEvents(handle_, events.ptr)); delete[](events.ptr); delete[](events.nEvents); }
 
         DPPWaveforms mallocDPPWaveforms()
         { DPPWaveforms waveforms; errorHandler(_CAEN_DGTZ_MallocDPPWaveforms(handle_, &waveforms.ptr, &waveforms.allocatedSize)); return waveforms; }
@@ -241,7 +246,8 @@ namespace caen {
         void* decodeEvent(EventInfo info, void* event)
         { errorHandler(CAEN_DGTZ_DecodeEvent(handle_, info.data, &event)); return event; }
 
-        // CAEN_DGTZ_GetDPPEvents(int handle, char *buffer, uint32_t buffsize, void **events, uint32_t *numEventsArray);
+        DPPEvents& getDPPEvents(ReadoutBuffer buffer, DPPEvents& events)
+        { _CAEN_DGTZ_GetDPPEvents(handle_, buffer.data, buffer.dataSize, events.ptr, events.nEvents); }
 
         // CAEN_DGTZ_DecodeDPPWaveforms(int handle, void *event, void *waveforms);
 
@@ -327,9 +333,9 @@ namespace caen {
         { errorHandler(CAEN_DGTZ_SetGroupTriggerThreshold(handle_, group, treshold)); }
 
         uint32_t getChannelGroupMask(uint32_t group)
-        { uint32_t mask; errorHandler(CAEN_DGTZ_GetChannelGroupMask(handle_, group, &mask)); return mask; }
+        { uint32_t mask; errorHandler(_CAEN_DGTZ_GetChannelGroupMask(handle_, group, &mask)); return mask; }
         void setChannelGroupMask(uint32_t group, uint32_t mask)
-        { errorHandler(CAEN_DGTZ_SetChannelGroupMask(handle_, group, mask)); }
+        { errorHandler(_CAEN_DGTZ_SetChannelGroupMask(handle_, group, mask)); }
 
         CAEN_DGTZ_TriggerPolarity_t getTriggerPolarity(uint32_t channel)
         { CAEN_DGTZ_TriggerPolarity_t polarity; errorHandler(CAEN_DGTZ_GetTriggerPolarity(handle_, channel, &polarity)); return polarity; }

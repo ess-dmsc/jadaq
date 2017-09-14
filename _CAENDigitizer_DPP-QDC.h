@@ -57,20 +57,14 @@ typedef struct
   uint16_t SubChannel;
 } _CAEN_DGTZ_DPP_QDC_Event_t;
 
-static int _CAEN_DGTZ_DPP_QDC_GetRecordLength(int handle, uint32_t* recordLength, int ch);
 static int _CAEN_DGTZ_DPP_QDC_GetDPPEvents(int handle, char *buffer, uint32_t bsize, _CAEN_DGTZ_DPP_QDC_Event_t **Events, uint32_t *numEvents);
 static int _CAEN_DGTZ_DPP_QDC_DecodeDPPAggregate(uint32_t *data, _CAEN_DGTZ_DPP_QDC_Event_t *Events, int *NumEvents);
 int        _CAEN_DGTZ_DPP_QDC_SetNumEvAggregate(int handle, int NevAggr);
 
 /* Function prototypes */
 int _CAEN_DGTZ_SetChannelTriggerThreshold(int handle, uint32_t channel, uint32_t Tvalue);
-int _CAEN_DGTZ_SetRecordLength(int handle, uint32_t RecordLength);
 int _CAEN_DGTZ_GetDPPEvents(int handle, char *buffer, uint32_t BufferSize, void **Events, uint32_t *NumEvents);
 int _CAEN_DGTZ_DecodeDPPWaveforms(_CAEN_DGTZ_DPP_QDC_Event_t* event, _CAEN_DGTZ_DPP_QDC_Waveforms_t *gWaveforms);
-int _CAEN_DGTZ_MallocDPPWaveforms(int handle, _CAEN_DGTZ_DPP_QDC_Waveforms_t **gWaveforms, uint32_t *AllocatedSize);
-int _CAEN_DGTZ_FreeReadoutBuffer(char **buffer);
-int _CAEN_DGTZ_MallocReadoutBuffer(int handle, char **buffer, uint32_t *size);
-int _CAEN_DGTZ_SetChannelGroupMask(int handle, uint32_t group, uint32_t channelmask);
 
 
 #endif

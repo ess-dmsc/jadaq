@@ -171,6 +171,35 @@ static CAEN_DGTZ_ErrorCode V1740DPP_QDC_FreeDPPWaveforms(int handle, void** wave
     return CAEN_DGTZ_Success;
 }
 
+static inline uint32_t _COMMON_GetChannelAddress(uint32_t base, uint16_t channel) {
+    //return base + (0x100 * channel);
+    int chShift = 8;
+    uint32_t res = base & ~(0xF<<chShift); // set bits [11:8] to zero
+    res |= channel << chShift;
+    return res;
+}
+
+static CAEN_DGTZ_ErrorCode V1740DPP_QDC_SetChannelGroupMask(int handle, uint32_t group, uint32_t channelmask)
+{
+    if (group < MAX_V1740_DPP_GROUP_SIZE)
+    {
+        uint32_t address = _COMMON_GetChannelAddress(CAEN_DGTZ_CHANNEL_GROUP_V1740_BASE_ADDRESS, group);
+        return CAEN_DGTZ_WriteRegister(handle, address, channelmask);
+    } else
+        return CAEN_DGTZ_InvalidChannelNumber;
+}
+
+static CAEN_DGTZ_ErrorCode V1740DPP_QDC_GetChannelGroupMask(int handle, uint32_t group, uint32_t *channelmask)
+{
+    if (group < MAX_V1740_DPP_GROUP_SIZE)
+    {
+        uint32_t address = _COMMON_GetChannelAddress(CAEN_DGTZ_CHANNEL_GROUP_V1740_BASE_ADDRESS, group);
+        return CAEN_DGTZ_ReadRegister(handle, address, channelmask);
+    } else
+        return CAEN_DGTZ_InvalidChannelNumber;
+
+}
+
 CAEN_DGTZ_ErrorCode CAENDGTZ_API _CAEN_DGTZ_MallocDPPEvents(int handle, void **events, uint32_t *allocatedSize)
 {
     QDC_FUNCTION(MallocDPPEvents,handle,events,allocatedSize)
@@ -204,4 +233,19 @@ CAEN_DGTZ_ErrorCode CAENDGTZ_API _CAEN_DGTZ_MallocDPPWaveforms(int handle, void 
 CAEN_DGTZ_ErrorCode CAENDGTZ_API _CAEN_DGTZ_FreeDPPWaveforms(int handle, void **waveforms)
 {
     QDC_FUNCTION(FreeDPPWaveforms,handle,waveforms)
+}
+/*
+CAEN_DGTZ_ErrorCode CAENDGTZ_API _CAEN_DGTZ_GetDPPEvents(int handle, char *buffer, uint32_t buffsize, void** events, uint32_t numEvents[])
+{
+    QDC_FUNCTION(GetDPPEvents,handle,buffer,buffsize,events,numEvents)
+}
+*/
+CAEN_DGTZ_ErrorCode CAENDGTZ_API _CAEN_DGTZ_SetChannelGroupMask(int handle, uint32_t group, uint32_t channelmask)
+{
+    QDC_FUNCTION(SetChannelGroupMask,handle,group,channelmask)
+}
+
+CAEN_DGTZ_ErrorCode CAENDGTZ_API _CAEN_DGTZ_GetChannelGroupMask(int handle, uint32_t group, uint32_t *channelmask)
+{
+    QDC_FUNCTION(GetChannelGroupMask,handle,group,channelmask)
 }
