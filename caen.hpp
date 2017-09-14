@@ -107,7 +107,7 @@ namespace caen {
 
     struct DPPWaveforms
     {
-        void** ptr;
+        void* ptr;
         uint32_t allocatedSize;
     };
 
@@ -213,12 +213,10 @@ namespace caen {
                     break;
                 case CAEN_DGTZ_DPPFirmware_CI:
                     events.ptr = new void*[MAX_DPP_CI_CHANNEL_SIZE];
-                case CAEN_DGTZ_DPPFirmware_ZLE:
-                    // TODO handle ZLE here as well?
-                    errorHandler(CAEN_DGTZ_FunctionNotAllowed);
                     break;
                 case CAEN_DGTZ_DPPFirmware_QDC:
                     events.ptr = new void*[MAX_DPP_QDC_CHANNEL_SIZE];
+                    break;
                 default:
                     errorHandler(CAEN_DGTZ_FunctionNotAllowed);
             }
@@ -228,9 +226,10 @@ namespace caen {
         void freeDPPEvents(DPPEvents events)
         { errorHandler(_CAEN_DGTZ_FreeDPPEvents(handle_, events.ptr)); delete[](events.ptr); }
 
-        //   - CAEN_DGTZ_MallocDPPWaveforms(int handle, void **waveforms, uint32_t *allocatedSize);
-        //   - CAEN_DGTZ_FreeDPPWaveforms(int handle, void *Waveforms);
-
+        DPPWaveforms mallocDPPWaveforms()
+        { DPPWaveforms waveforms; errorHandler(_CAEN_DGTZ_MallocDPPWaveforms(handle_, &waveforms.ptr, &waveforms.allocatedSize)); return waveforms; }
+        void freeDPPWaveforms(DPPWaveforms waveforms)
+        { errorHandler(_CAEN_DGTZ_FreeDPPWaveforms(handle_, &waveforms.ptr)); }
 
         /* Detector data information and manipulation*/
         uint32_t getNumEvents(ReadoutBuffer buffer)

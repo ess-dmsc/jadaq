@@ -25,6 +25,8 @@
 #include <stdio.h>
 #include "_CAENDigitizer.h"
 
+#define MAX(a, b) ((a) > (b) ? (a) : (b))
+
 #define QDC_FUNCTION(F_NAME,HANDLE,...)                                         \
     CAEN_DGTZ_DPPFirmware_t firmware;                                           \
     CAEN_DGTZ_ErrorCode err = _CAEN_DGTZ_GetDPPFirmwareType(HANDLE, &firmware); \
@@ -129,6 +131,45 @@ static CAEN_DGTZ_ErrorCode V1740DPP_QDC_SetRecordLength(int handle, uint32_t siz
     return err;
 }
 
+static CAEN_DGTZ_ErrorCode V1740DPP_QDC_MallocDPPWaveforms(int handle, void** waveforms, uint32_t* allocatedSize)
+{
+    CAEN_DGTZ_ErrorCode err;
+    uint32_t enabled;
+    uint32_t samples = 0;
+    if (err = CAEN_DGTZ_ReadRegister(handle, CAEN_DGTZ_CH_ENABLE_ADD, &enabled) != CAEN_DGTZ_Success)
+        return err;
+
+    for(int i=0; i<MAX_V1740_DPP_GROUP_SIZE; ++i)
+    {
+        if (enabled & (1<<i))
+        {
+            uint32_t s;
+            if (err = V1740DPP_QDC_GetRecordLength(handle, &s, i) != CAEN_DGTZ_Success)
+                return err;
+            samples = MAX(samples, s);
+        }
+    }
+
+    uint32_t size = sizeof(CAEN_DGTZ_DPP_PSD_Waveforms_t) + 2*samples*sizeof(uint16_t) + 4*samples*sizeof(uint8_t);
+    CAEN_DGTZ_DPP_QDC_Waveforms_t* buffer = (CAEN_DGTZ_DPP_QDC_Waveforms_t*)malloc(size);
+    if (buffer == NULL)
+        return CAEN_DGTZ_OutOfMemory;
+    buffer->Trace1 = (uint16_t*)(buffer+1);
+    buffer->Trace2 = buffer->Trace1+samples;
+    buffer->DTrace1 = (uint8_t*)(buffer->Trace2+samples);
+    buffer->DTrace2 = buffer->DTrace1+samples;
+    buffer->DTrace3 = buffer->DTrace2+samples;
+    buffer->DTrace4 = buffer->DTrace3+samples;
+    *waveforms = buffer;
+    *allocatedSize = size;
+    return CAEN_DGTZ_Success;
+}
+
+static CAEN_DGTZ_ErrorCode V1740DPP_QDC_FreeDPPWaveforms(int handle, void** waveforms)
+{
+    free(*waveforms);
+    return CAEN_DGTZ_Success;
+}
 
 CAEN_DGTZ_ErrorCode CAENDGTZ_API _CAEN_DGTZ_MallocDPPEvents(int handle, void **events, uint32_t *allocatedSize)
 {
@@ -153,4 +194,14 @@ CAEN_DGTZ_ErrorCode CAENDGTZ_API _CAEN_DGTZ_SetRecordLength(int handle, uint32_t
 CAEN_DGTZ_ErrorCode CAENDGTZ_API _CAEN_DGTZ_GetRecordLength(int handle, uint32_t *size, int channel)
 {
     QDC_FUNCTION(GetRecordLength,handle,size,channel)
+}
+
+CAEN_DGTZ_ErrorCode CAENDGTZ_API _CAEN_DGTZ_MallocDPPWaveforms(int handle, void **waveforms, uint32_t *allocatedSize)
+{
+    QDC_FUNCTION(MallocDPPWaveforms,handle,waveforms,allocatedSize)
+}
+
+CAEN_DGTZ_ErrorCode CAENDGTZ_API _CAEN_DGTZ_FreeDPPWaveforms(int handle, void **waveforms)
+{
+    QDC_FUNCTION(FreeDPPWaveforms,handle,waveforms)
 }
