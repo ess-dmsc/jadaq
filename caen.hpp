@@ -323,9 +323,9 @@ namespace caen {
         { errorHandler(CAEN_DGTZ_SetGroupSelfTrigger(handle_, mode, 1<<group)); }
 
         uint32_t getChannelTriggerThreshold(uint32_t channel)
-        { uint32_t treshold; errorHandler(CAEN_DGTZ_GetChannelTriggerThreshold(handle_, channel, &treshold)); return treshold; }
+        { uint32_t treshold; errorHandler(_CAEN_DGTZ_GetChannelTriggerThreshold(handle_, channel, &treshold)); return treshold; }
         void setChannelTriggerThreshold(uint32_t channel, uint32_t treshold)
-        { errorHandler(CAEN_DGTZ_SetChannelTriggerThreshold(handle_, channel, treshold)); }
+        { errorHandler(_CAEN_DGTZ_SetChannelTriggerThreshold(handle_, channel, treshold)); }
 
         uint32_t getGroupTriggerThreshold(uint32_t group)
         { uint32_t treshold; errorHandler(CAEN_DGTZ_GetGroupTriggerThreshold(handle_, group, &treshold)); return treshold; }

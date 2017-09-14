@@ -62,7 +62,6 @@ static int _CAEN_DGTZ_DPP_QDC_DecodeDPPAggregate(uint32_t *data, _CAEN_DGTZ_DPP_
 int        _CAEN_DGTZ_DPP_QDC_SetNumEvAggregate(int handle, int NevAggr);
 
 /* Function prototypes */
-int _CAEN_DGTZ_SetChannelTriggerThreshold(int handle, uint32_t channel, uint32_t Tvalue);
 int _CAEN_DGTZ_GetDPPEvents(int handle, char *buffer, uint32_t BufferSize, void **Events, uint32_t *NumEvents);
 int _CAEN_DGTZ_DecodeDPPWaveforms(_CAEN_DGTZ_DPP_QDC_Event_t* event, _CAEN_DGTZ_DPP_QDC_Waveforms_t *gWaveforms);
 

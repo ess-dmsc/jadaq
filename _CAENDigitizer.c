@@ -200,6 +200,30 @@ static CAEN_DGTZ_ErrorCode V1740DPP_QDC_GetChannelGroupMask(int handle, uint32_t
 
 }
 
+static inline uint32_t channelTriggerAddress(uint32_t channel)
+{
+    uint32_t gr = channel>>3;
+    uint32_t ch = channel&7;
+    uint32_t address = 0x1000 | gr<<8 | 0xD0 | ch<<2;
+    return address;
+}
+
+static CAEN_DGTZ_ErrorCode V1740DPP_QDC_SetChannelTriggerThreshold(int handle, uint32_t channel, uint32_t Tvalue)
+{
+    if (channel > V1740_MAX_CHANNELS)
+        return CAEN_DGTZ_InvalidChannelNumber;
+    else
+        return CAEN_DGTZ_WriteRegister(handle, channelTriggerAddress(channel), Tvalue);
+}
+
+static CAEN_DGTZ_ErrorCode V1740DPP_QDC_GetChannelTriggerThreshold(int handle, uint32_t channel, uint32_t Tvalue)
+{
+    if (channel > V1740_MAX_CHANNELS)
+        return CAEN_DGTZ_InvalidChannelNumber;
+    else
+        return CAEN_DGTZ_ReadRegister(handle, channelTriggerAddress(channel), Tvalue);
+}
+
 CAEN_DGTZ_ErrorCode CAENDGTZ_API _CAEN_DGTZ_MallocDPPEvents(int handle, void **events, uint32_t *allocatedSize)
 {
     QDC_FUNCTION(MallocDPPEvents,handle,events,allocatedSize)
@@ -248,4 +272,14 @@ CAEN_DGTZ_ErrorCode CAENDGTZ_API _CAEN_DGTZ_SetChannelGroupMask(int handle, uint
 CAEN_DGTZ_ErrorCode CAENDGTZ_API _CAEN_DGTZ_GetChannelGroupMask(int handle, uint32_t group, uint32_t *channelmask)
 {
     QDC_FUNCTION(GetChannelGroupMask,handle,group,channelmask)
+}
+
+CAEN_DGTZ_ErrorCode CAENDGTZ_API _CAEN_DGTZ_SetChannelTriggerThreshold(int handle, uint32_t channel, uint32_t Tvalue)
+{
+    QDC_FUNCTION(SetChannelTriggerThreshold,handle,channel,Tvalue)
+}
+
+CAEN_DGTZ_ErrorCode CAENDGTZ_API _CAEN_DGTZ_GetChannelTriggerThreshold(int handle, uint32_t channel, uint32_t* Tvalue)
+{
+    QDC_FUNCTION(GetChannelTriggerThreshold,handle,channel,Tvalue)
 }

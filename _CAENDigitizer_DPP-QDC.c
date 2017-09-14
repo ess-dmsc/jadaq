@@ -216,21 +216,3 @@ int _CAEN_DGTZ_DecodeDPPWaveforms(_CAEN_DGTZ_DPP_QDC_Event_t* event, _CAEN_DGTZ_
     return CAEN_DGTZ_Success;
 
 }
-
-int _CAEN_DGTZ_SetChannelTriggerThreshold(int handle, uint32_t channel, uint32_t Tvalue) {
-    int gr;
-    int ch;
-    int ret=0;
-    uint32_t addr;
-
-    if (channel > MAX_CHANNELS) 
-        return -1; 
-
-    gr = channel/8;
-    ch = channel % 8;
-
-    addr = 0x1000 + 0x100*gr + 0xD0 + 4*ch;
-    ret |= CAEN_DGTZ_WriteRegister(handle, addr, Tvalue);
-
-    return ret;
-}
