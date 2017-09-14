@@ -25,7 +25,15 @@
 #include <stdio.h>
 #include "_CAENDigitizer.h"
 
-#define MAX_GROUPS    8
+#define QDC_FUNCTION(F_NAME,HANDLE,...)                                         \
+    CAEN_DGTZ_DPPFirmware_t firmware;                                           \
+    CAEN_DGTZ_ErrorCode err = _CAEN_DGTZ_GetDPPFirmwareType(HANDLE, &firmware); \
+    if (err != CAEN_DGTZ_Success) { return err; }                               \
+    if (firmware == CAEN_DGTZ_DPPFirmware_QDC)                                  \
+        return V1740DPP_QDC_##F_NAME(HANDLE, __VA_ARGS__);                      \
+    else                                                                        \
+        return CAEN_DGTZ_##F_NAME(HANDLE, __VA_ARGS__);
+
 
 static inline CAEN_DGTZ_DPPFirmware_t getDPPFirmwareType(int vx, int vy, int handle)
 {
@@ -68,7 +76,7 @@ CAEN_DGTZ_ErrorCode CAENDGTZ_API _CAEN_DGTZ_GetDPPFirmwareType(int handle, CAEN_
     return CAEN_DGTZ_Success;
 }
 
-static CAEN_DGTZ_ErrorCode V1740DPP_QDC_MallocDPPEvents(int handle, CAEN_DGTZ_DPP_QDC_Event_t **events, uint32_t *allocatedSize)
+static CAEN_DGTZ_ErrorCode V1740DPP_QDC_MallocDPPEvents(int handle, void **events, uint32_t *allocatedSize)
 {
     uint32_t size = MAX_V1740_DPP_GROUP_SIZE*V1740_MAX_CHANNELS*V1740_QDC_MAX_EVENT_QUEUE_DEPTH*sizeof(CAEN_DGTZ_DPP_QDC_Event_t);
     CAEN_DGTZ_DPP_QDC_Event_t* ptr = malloc(size);
@@ -80,32 +88,10 @@ static CAEN_DGTZ_ErrorCode V1740DPP_QDC_MallocDPPEvents(int handle, CAEN_DGTZ_DP
     return CAEN_DGTZ_Success;
 }
 
-CAEN_DGTZ_ErrorCode CAENDGTZ_API _CAEN_DGTZ_MallocDPPEvents(int handle, void **events, uint32_t *allocatedSize)
-{
-    CAEN_DGTZ_DPPFirmware_t firmware;
-    CAEN_DGTZ_ErrorCode err = _CAEN_DGTZ_GetDPPFirmwareType(handle, &firmware);
-    if (err != CAEN_DGTZ_Success) { return err; }
-    if (firmware == CAEN_DGTZ_DPPFirmware_QDC)
-        return V1740DPP_QDC_MallocDPPEvents(handle, (CAEN_DGTZ_DPP_QDC_Event_t **) events, allocatedSize);
-    else
-        return CAEN_DGTZ_MallocDPPEvents(handle, events, allocatedSize);
-}
-
-static CAEN_DGTZ_ErrorCode V1740DPP_QDC_FreeDPPEvents(int handle, CAEN_DGTZ_DPP_QDC_Event_t **events)
+static CAEN_DGTZ_ErrorCode V1740DPP_QDC_FreeDPPEvents(int handle, void **events)
 {
     free(events[0]);
     return CAEN_DGTZ_Success;
-}
-
-CAEN_DGTZ_ErrorCode CAENDGTZ_API _CAEN_DGTZ_FreeDPPEvents(int handle, void **events)
-{
-    CAEN_DGTZ_DPPFirmware_t firmware;
-    CAEN_DGTZ_ErrorCode err = _CAEN_DGTZ_GetDPPFirmwareType(handle, &firmware);
-    if (err != CAEN_DGTZ_Success) { return err; }
-    if (firmware == CAEN_DGTZ_DPPFirmware_QDC)
-        return V1740DPP_QDC_FreeDPPEvents(handle, (CAEN_DGTZ_DPP_QDC_Event_t**)events);
-    else
-        return CAEN_DGTZ_FreeDPPEvents(handle, events);
 }
 
 static CAEN_DGTZ_ErrorCode V1740DPP_QDC_MallocReadoutBuffer(int handle, char **buffer, uint32_t *size)
@@ -122,13 +108,49 @@ static CAEN_DGTZ_ErrorCode V1740DPP_QDC_MallocReadoutBuffer(int handle, char **b
     return CAEN_DGTZ_Success;
 }
 
+static CAEN_DGTZ_ErrorCode V1740DPP_QDC_GetRecordLength(int handle, uint32_t* size, int channel)
+{
+    if (channel < 0)
+        return CAEN_DGTZ_InvalidChannelNumber;
+    uint32_t s;
+    CAEN_DGTZ_ErrorCode err = CAEN_DGTZ_ReadRegister(handle, 0x1024 | channel<<8, &s);
+    if (err != CAEN_DGTZ_Success)
+        return err;
+    *size = s<<3; // TODO why the shift? Not documented
+    return CAEN_DGTZ_Success;
+}
+
+static CAEN_DGTZ_ErrorCode V1740DPP_QDC_SetRecordLength(int handle, uint32_t size, int channel) {
+    CAEN_DGTZ_ErrorCode err;
+    if (channel < 0)
+        err = CAEN_DGTZ_WriteRegister(handle, 0x8024, size>>3); // TODO why the shift? Not documented
+    else
+        err = CAEN_DGTZ_WriteRegister(handle, 0x1024 | channel<<8, size>>3); // TODO why the shift? Not documented
+    return err;
+}
+
+
+CAEN_DGTZ_ErrorCode CAENDGTZ_API _CAEN_DGTZ_MallocDPPEvents(int handle, void **events, uint32_t *allocatedSize)
+{
+    QDC_FUNCTION(MallocDPPEvents,handle,events,allocatedSize)
+}
+
+CAEN_DGTZ_ErrorCode CAENDGTZ_API _CAEN_DGTZ_FreeDPPEvents(int handle, void **events)
+{
+    QDC_FUNCTION(FreeDPPEvents,handle,events)
+}
+
 CAEN_DGTZ_ErrorCode CAENDGTZ_API _CAEN_DGTZ_MallocReadoutBuffer(int handle, char **buffer, uint32_t *size)
 {
-    CAEN_DGTZ_DPPFirmware_t firmware;
-    CAEN_DGTZ_ErrorCode err = _CAEN_DGTZ_GetDPPFirmwareType(handle, &firmware);
-    if (err != CAEN_DGTZ_Success) { return err; }
-    if (firmware == CAEN_DGTZ_DPPFirmware_QDC)
-        return V1740DPP_QDC_MallocReadoutBuffer(handle, buffer, size);
-    else
-        return CAEN_DGTZ_MallocReadoutBuffer(handle, buffer, size);
+    QDC_FUNCTION(MallocReadoutBuffer,handle,buffer,size)
+}
+
+CAEN_DGTZ_ErrorCode CAENDGTZ_API _CAEN_DGTZ_SetRecordLength(int handle, uint32_t size, int channel)
+{
+    QDC_FUNCTION(SetRecordLength,handle,size,channel)
+}
+
+CAEN_DGTZ_ErrorCode CAENDGTZ_API _CAEN_DGTZ_GetRecordLength(int handle, uint32_t *size, int channel)
+{
+    QDC_FUNCTION(GetRecordLength,handle,size,channel)
 }

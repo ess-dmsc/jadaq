@@ -105,6 +105,12 @@ namespace caen {
         uint32_t allocatedSize;
     };
 
+    struct DPPWaveforms
+    {
+        void** ptr;
+        uint32_t allocatedSize;
+    };
+
     class Digitizer
     {
     private:
@@ -241,10 +247,10 @@ namespace caen {
         // CAEN_DGTZ_DecodeDPPWaveforms(int handle, void *event, void *waveforms);
 
         /* Device configuration - i.e. getter and setters*/
-        uint32_t getRecordLength()
-        { uint32_t size; errorHandler(CAEN_DGTZ_GetRecordLength(handle_,&size)); return size; }
-        void setRecordLength(uint32_t size)
-        { errorHandler(CAEN_DGTZ_SetRecordLength(handle_,size)); }
+        uint32_t getRecordLength(int channel=-1) // Default channel -1 == all
+        { uint32_t size; errorHandler(_CAEN_DGTZ_GetRecordLength(handle_,&size,channel)); return size; }
+        void setRecordLength(uint32_t size, int channel=-1)  // Default channel -1 == all
+        { errorHandler(_CAEN_DGTZ_SetRecordLength(handle_,size,channel)); }
 
         uint32_t getMaxNumEventsBLT()
         { uint32_t n; errorHandler(CAEN_DGTZ_GetMaxNumEventsBLT(handle_, &n)); return n; }
