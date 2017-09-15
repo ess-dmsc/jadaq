@@ -377,11 +377,14 @@ namespace caen {
         CAEN_DGTZ_DPP_TriggerMode_t getDPPTriggerMode()
         { CAEN_DGTZ_DPP_TriggerMode_t mode; errorHandler( CAEN_DGTZ_GetDPPTriggerMode(handle_, &mode)); return mode; }
 
+        void setNumEventsPerAggregate(uint32_t numEvents, int channel=-1)
+        { errorHandler(CAEN_DGTZ_SetNumEventsPerAggregate(handle_, numEvents, channel)); }
+        uint32_t getNumEventsPerAggregate(int channel=-1)
+        { uint32_t numEvents; errorHandler(CAEN_DGTZ_GetNumEventsPerAggregate(handle_, &numEvents, channel)); return numEvents; }
+
       //   - CAEN_DGTZ_SetDPPParameters(int handle, uint32_t channelMask, void* params);
       //   - CAEN_DGTZ_SetMaxNumAggregatesBLT(int handle, uint32_t numAggr);
       //   - CAEN_DGTZ_GetMaxNumAggregatesBLT(int handle, uint32_t *numAggr);
-      //   - CAEN_DGTZ_SetNumEventsPerAggregate(int handle, uint32_t numEvents, ...);
-      //   - CAEN_DGTZ_GetNumEventsPerAggregate(int handle, uint32_t *numEvents, ...);
       //   - CAEN_DGTZ_SetDPPEventAggregation(int handle, int threshold, int maxsize);
 
 

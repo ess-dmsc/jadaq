@@ -81,6 +81,9 @@ CAEN_DGTZ_ErrorCode CAENDGTZ_API _CAEN_DGTZ_SetChannelGroupMask(int handle, uint
 CAEN_DGTZ_ErrorCode CAENDGTZ_API _CAEN_DGTZ_GetChannelGroupMask(int handle, uint32_t group, uint32_t *channelmask);
 CAEN_DGTZ_ErrorCode CAENDGTZ_API _CAEN_DGTZ_SetChannelTriggerThreshold(int handle, uint32_t channel, uint32_t Tvalue);
 CAEN_DGTZ_ErrorCode CAENDGTZ_API _CAEN_DGTZ_GetChannelTriggerThreshold(int handle, uint32_t channel, uint32_t* Tvalue);
+CAEN_DGTZ_ErrorCode CAENDGTZ_API _CAEN_DGTZ_GetNumEventsPerAggregate(int handle, uint32_t *numEvents, int channel);
+CAEN_DGTZ_ErrorCode CAENDGTZ_API _CAEN_DGTZ_SetNumEventsPerAggregate(int handle, uint32_t numEvents, int channel);
+
 
 #ifdef __cplusplus
 }

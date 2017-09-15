@@ -59,7 +59,6 @@ typedef struct
 
 static int _CAEN_DGTZ_DPP_QDC_GetDPPEvents(int handle, char *buffer, uint32_t bsize, _CAEN_DGTZ_DPP_QDC_Event_t **Events, uint32_t *numEvents);
 static int _CAEN_DGTZ_DPP_QDC_DecodeDPPAggregate(uint32_t *data, _CAEN_DGTZ_DPP_QDC_Event_t *Events, int *NumEvents);
-int        _CAEN_DGTZ_DPP_QDC_SetNumEvAggregate(int handle, int NevAggr);
 
 /* Function prototypes */
 int _CAEN_DGTZ_GetDPPEvents(int handle, char *buffer, uint32_t BufferSize, void **Events, uint32_t *NumEvents);

@@ -17,28 +17,6 @@ extern _CAEN_DGTZ_DPP_QDC_Event_t *gEventsGrp[8];
 
 #define MAX(a,b) ((a) > (b) ? a : b)
 
-int _CAEN_DGTZ_DPP_QDC_SetNumEvAggregate(int handle, int NevAggr)
-{
-    int ret=0;
-    uint32_t d32;
-
-    if (NevAggr == 0) {
-        CAEN_DGTZ_ReadRegister(handle, 0x8000, &d32);
-        if (d32 & (1<<16)) {                                          /* waveform enabled      */
-            ret |= CAEN_DGTZ_WriteRegister(handle, 0x800C, 0x3);      /* Buffer organization   */
-            ret |= CAEN_DGTZ_WriteRegister(handle, 0x8020, 1);        /* Events per aggregate  */
-        } else {
-            ret |= CAEN_DGTZ_WriteRegister(handle, 0x800C, 0xA);      /* Buffer organization   */
-            ret |= CAEN_DGTZ_WriteRegister(handle, 0x8020, 16);       /* Events per aggregate  */
-        }
-    } else {
-        ret |= CAEN_DGTZ_WriteRegister(handle, 0x800C, 0x3);          /* Buffer organization   */
-        ret |= CAEN_DGTZ_WriteRegister(handle, 0x8020, NevAggr);      /* Events per aggregate  */
-    }
-
-    return ret;
-}
-
 int _CAEN_DGTZ_DPP_QDC_GetDPPEvents(int handle, char *buffer, uint32_t BufferSize, _CAEN_DGTZ_DPP_QDC_Event_t **Events, uint32_t *NumEvents)
 {
     unsigned int pnt = 0;

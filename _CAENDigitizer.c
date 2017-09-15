@@ -216,12 +216,49 @@ static CAEN_DGTZ_ErrorCode V1740DPP_QDC_SetChannelTriggerThreshold(int handle, u
         return CAEN_DGTZ_WriteRegister(handle, channelTriggerAddress(channel), Tvalue);
 }
 
-static CAEN_DGTZ_ErrorCode V1740DPP_QDC_GetChannelTriggerThreshold(int handle, uint32_t channel, uint32_t Tvalue)
+static CAEN_DGTZ_ErrorCode V1740DPP_QDC_GetChannelTriggerThreshold(int handle, uint32_t channel, uint32_t* Tvalue)
 {
     if (channel > V1740_MAX_CHANNELS)
         return CAEN_DGTZ_InvalidChannelNumber;
     else
         return CAEN_DGTZ_ReadRegister(handle, channelTriggerAddress(channel), Tvalue);
+}
+
+static CAEN_DGTZ_ErrorCode V1740DPP_QDC_GetNumEventsPerAggregate(int handle, uint32_t *numEvents, int channel)
+{
+    if (channel >= 0)
+        return CAEN_DGTZ_InvalidParam;
+    CAEN_DGTZ_ErrorCode err;
+    uint32_t d32;
+    if (err = CAEN_DGTZ_ReadRegister(handle, 0x8020, &d32) != CAEN_DGTZ_Success)
+        return err;
+    *numEvents = d32 & 0x3FF;
+    return CAEN_DGTZ_Success;
+}
+
+static CAEN_DGTZ_ErrorCode V1740DPP_QDC_SetNumEventsPerAggregate(int handle, uint32_t numEvents, int channel)
+{
+    if (channel >= 0)
+        return CAEN_DGTZ_InvalidParam;
+    CAEN_DGTZ_ErrorCode err;
+    uint32_t config;
+
+    // TODO actually understand the 0x800C & 0x8020 register correlation
+    // and why do we care about waveform?
+    if (numEvents == 0) {
+        CAEN_DGTZ_ReadRegister(handle, 0x8000, &config);
+        if (config & (1<<16)) {                                          /* waveform enabled      */
+            err |= CAEN_DGTZ_WriteRegister(handle, 0x800C, 0x3);      /* Buffer organization   */
+            err |= CAEN_DGTZ_WriteRegister(handle, 0x8020, 1);        /* Events per aggregate  */
+        } else {
+            err |= CAEN_DGTZ_WriteRegister(handle, 0x800C, 0xA);      /* Buffer organization   */
+            err |= CAEN_DGTZ_WriteRegister(handle, 0x8020, 16);       /* Events per aggregate  */
+        }
+    } else {
+        err |= CAEN_DGTZ_WriteRegister(handle, 0x800C, 0x3);          /* Buffer organization   */
+        err |= CAEN_DGTZ_WriteRegister(handle, 0x8020, numEvents);      /* Events per aggregate  */
+    }
+    return err;
 }
 
 CAEN_DGTZ_ErrorCode CAENDGTZ_API _CAEN_DGTZ_MallocDPPEvents(int handle, void **events, uint32_t *allocatedSize)
@@ -282,4 +319,14 @@ CAEN_DGTZ_ErrorCode CAENDGTZ_API _CAEN_DGTZ_SetChannelTriggerThreshold(int handl
 CAEN_DGTZ_ErrorCode CAENDGTZ_API _CAEN_DGTZ_GetChannelTriggerThreshold(int handle, uint32_t channel, uint32_t* Tvalue)
 {
     QDC_FUNCTION(GetChannelTriggerThreshold,handle,channel,Tvalue)
+}
+
+CAEN_DGTZ_ErrorCode CAENDGTZ_API _CAEN_DGTZ_GetNumEventsPerAggregate(int handle, uint32_t *numEvents, int channel)
+{
+    QDC_FUNCTION(GetNumEventsPerAggregate,handle,numEvents,channel)
+}
+
+CAEN_DGTZ_ErrorCode CAENDGTZ_API _CAEN_DGTZ_SetNumEventsPerAggregate(int handle, uint32_t numEvents, int channel)
+{
+    QDC_FUNCTION(SetNumEventsPerAggregate, handle, numEvents, channel)
 }
