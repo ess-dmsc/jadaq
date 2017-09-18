@@ -342,45 +342,45 @@ namespace caen {
         void setTriggerPolarity(uint32_t channel, CAEN_DGTZ_TriggerPolarity_t polarity)
         { errorHandler(CAEN_DGTZ_SetTriggerPolarity(handle_, channel, polarity)); }
 
-        void setRunSynchronizationMode(CAEN_DGTZ_RunSyncMode_t mode)
-        { errorHandler(CAEN_DGTZ_SetRunSynchronizationMode(handle_, mode));}
         CAEN_DGTZ_RunSyncMode_t getRunSynchronizationMode()
         { CAEN_DGTZ_RunSyncMode_t mode; errorHandler(CAEN_DGTZ_GetRunSynchronizationMode(handle_, &mode)); return mode;}
+        void setRunSynchronizationMode(CAEN_DGTZ_RunSyncMode_t mode)
+        { errorHandler(CAEN_DGTZ_SetRunSynchronizationMode(handle_, mode));}
 
-        void setOutputSignalMode(CAEN_DGTZ_OutputSignalMode_t mode)
-        { errorHandler(CAEN_DGTZ_SetOutputSignalMode(handle_, mode));}
         CAEN_DGTZ_OutputSignalMode_t getOutputSignalMode()
         { CAEN_DGTZ_OutputSignalMode_t mode; errorHandler(CAEN_DGTZ_GetOutputSignalMode(handle_, &mode)); return mode;}
+        void setOutputSignalMode(CAEN_DGTZ_OutputSignalMode_t mode)
+        { errorHandler(CAEN_DGTZ_SetOutputSignalMode(handle_, mode));}
 
-        void setDESMode(CAEN_DGTZ_EnaDis_t mode)
-        { errorHandler(CAEN_DGTZ_SetDESMode(handle_, mode));}
         CAEN_DGTZ_EnaDis_t getDESMode()
         { CAEN_DGTZ_EnaDis_t mode; errorHandler(CAEN_DGTZ_GetDESMode(handle_, &mode)); return mode;}
+        void setDESMode(CAEN_DGTZ_EnaDis_t mode)
+        { errorHandler(CAEN_DGTZ_SetDESMode(handle_, mode));}
 
-        void setDPPPreTriggerSize(int channel, uint32_t samples)
-        { errorHandler(CAEN_DGTZ_SetDPPPreTriggerSize(handle_, channel, samples)); }
         uint32_t getDPPPreTriggerSize(int channel)
         { uint32_t samples; errorHandler(CAEN_DGTZ_GetDPPPreTriggerSize(handle_, channel, &samples)); return samples; }
+        void setDPPPreTriggerSize(int channel, uint32_t samples)
+        { errorHandler(CAEN_DGTZ_SetDPPPreTriggerSize(handle_, channel, samples)); }
 
-        void setChannelPulsePolarity(uint32_t channel, CAEN_DGTZ_PulsePolarity_t polarity)
-        { errorHandler(CAEN_DGTZ_SetChannelPulsePolarity(handle_, channel, polarity)); }
         CAEN_DGTZ_PulsePolarity_t getChannelPulsePolarity(uint32_t channel)
         { CAEN_DGTZ_PulsePolarity_t polarity; errorHandler(CAEN_DGTZ_GetChannelPulsePolarity(handle_, channel, &polarity)); return polarity; }
+        void setChannelPulsePolarity(uint32_t channel, CAEN_DGTZ_PulsePolarity_t polarity)
+        { errorHandler(CAEN_DGTZ_SetChannelPulsePolarity(handle_, channel, polarity)); }
 
-        void setDPPAcquisitionMode(DPPAcquisitionMode mode)
-        { errorHandler( CAEN_DGTZ_SetDPPAcquisitionMode(handle_, mode.mode, mode.param)); }
         DPPAcquisitionMode getDPPAcquisitionMode()
         { DPPAcquisitionMode mode; errorHandler( CAEN_DGTZ_GetDPPAcquisitionMode(handle_, &mode.mode, &mode.param)); return mode; }
+        void setDPPAcquisitionMode(DPPAcquisitionMode mode)
+        { errorHandler( CAEN_DGTZ_SetDPPAcquisitionMode(handle_, mode.mode, mode.param)); }
 
-        void setDPPTriggerMode(CAEN_DGTZ_DPP_TriggerMode_t mode)
-        { errorHandler( CAEN_DGTZ_SetDPPTriggerMode(handle_, mode)); }
         CAEN_DGTZ_DPP_TriggerMode_t getDPPTriggerMode()
         { CAEN_DGTZ_DPP_TriggerMode_t mode; errorHandler( CAEN_DGTZ_GetDPPTriggerMode(handle_, &mode)); return mode; }
+        void setDPPTriggerMode(CAEN_DGTZ_DPP_TriggerMode_t mode)
+        { errorHandler( CAEN_DGTZ_SetDPPTriggerMode(handle_, mode)); }
 
-        void setNumEventsPerAggregate(uint32_t numEvents, int channel=-1)
-        { errorHandler(CAEN_DGTZ_SetNumEventsPerAggregate(handle_, numEvents, channel)); }
         uint32_t getNumEventsPerAggregate(int channel=-1)
         { uint32_t numEvents; errorHandler(CAEN_DGTZ_GetNumEventsPerAggregate(handle_, &numEvents, channel)); return numEvents; }
+        void setNumEventsPerAggregate(uint32_t numEvents, int channel=-1)
+        { errorHandler(CAEN_DGTZ_SetNumEventsPerAggregate(handle_, numEvents, channel)); }
 
       //   - CAEN_DGTZ_SetDPPParameters(int handle, uint32_t channelMask, void* params);
       //   - CAEN_DGTZ_SetMaxNumAggregatesBLT(int handle, uint32_t numAggr);
