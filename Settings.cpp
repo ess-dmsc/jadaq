@@ -39,6 +39,8 @@ static std::unordered_map<std::string,FunctionID > functionMap =
 
 static unsigned int s2ui(const std::string& s)
 { return std::stoi (s,nullptr,0); }
+static std::string ui2s(const unsigned int v)
+{ return std::to_string(v); }
 
 static CAEN_DGTZ_IOLevel_t s2iol(const std::string& s)
 {
@@ -94,23 +96,30 @@ static caen::DPPAcquisitionMode s2dam(const std::string& s)
     }
     throw std::invalid_argument{"Invalid DPPAcquisitionMode"};
 }
-
-#define _CASE(GS,D,F,V) GS##_CASE(D,F,V)
+static std::string dam2s(const caen::DPPAcquisitionMode& dam)
+{
+    std::stringstream ss;
+    ss << "{" << ui2s(dam.param) << "," << ui2s(dam.mode) << "}";
+    return ss.str();
+}
 
 #define SET_CASE(D,F,V) \
     case F :            \
         D->set##F(V);   \
         break;
 
-#define GET_CASE(D,F,SF) \
-    case F :            \
-        return SF(D->get##F());   \
-
+#define GET_CASE(D,F,SF)        \
+    case F :                    \
+        return SF(D->get##F());
 
 #define SET_ICASE(D,F,C,V)   \
     case F :                 \
-        D->set##F(C,V); \
+        D->set##F(C,V);      \
         break;
+
+#define GET_ICASE(D,F,C,SF)        \
+    case F :                    \
+        return SF(D->get##F(C));
 
 void set(caen::Digitizer* digitizer, FunctionID functionID, std::string value)
 {
@@ -152,6 +161,53 @@ void set(caen::Digitizer* digitizer, FunctionID functionID, int index, std::stri
         SET_ICASE(digitizer,ChannelPulsePolarity,index,s2pp(value))
         SET_ICASE(digitizer,RecordLength,s2ui(value),index)
         SET_ICASE(digitizer,NumEventsPerAggregate,s2ui(value),index)
+        default:
+            throw std::invalid_argument{"Unknown Function"};
+    }
+}
+
+std::string get(caen::Digitizer* digitizer, FunctionID functionID)
+{
+    switch(functionID)
+    {
+        GET_CASE(digitizer,MaxNumEventsBLT,ui2s)
+        GET_CASE(digitizer,ChannelEnableMask,ui2s)
+        GET_CASE(digitizer,GroupEnableMask,ui2s)
+        GET_CASE(digitizer,DecimationFactor,ui2s)
+        GET_CASE(digitizer,PostTriggerSize,ui2s)
+        GET_CASE(digitizer,IOlevel,ui2s)
+        GET_CASE(digitizer,AcquisitionMode,ui2s)
+        GET_CASE(digitizer,ExternalTriggerMode,ui2s)
+        GET_CASE(digitizer,SWTriggerMode,ui2s)
+        GET_CASE(digitizer,RunSynchronizationMode,ui2s)
+        GET_CASE(digitizer,OutputSignalMode,ui2s)
+        GET_CASE(digitizer,DESMode,ui2s)
+        GET_CASE(digitizer,DPPAcquisitionMode,dam2s)
+        GET_CASE(digitizer,DPPTriggerMode,ui2s)
+        GET_CASE(digitizer,RecordLength,ui2s)
+        GET_CASE(digitizer,NumEventsPerAggregate,ui2s)
+        default:
+            throw std::invalid_argument{"Unknown Function"};
+
+    }
+}
+
+std::string get(caen::Digitizer* digitizer, FunctionID functionID, int index)
+{
+    switch(functionID)
+    {
+        GET_ICASE(digitizer,ChannelDCOffset,index,ui2s)
+        GET_ICASE(digitizer,GroupDCOffset,index,ui2s)
+        GET_ICASE(digitizer,ChannelSelfTrigger,index,ui2s)
+        GET_ICASE(digitizer,GroupSelfTrigger,index,ui2s)
+        GET_ICASE(digitizer,ChannelTriggerThreshold,index,ui2s)
+        GET_ICASE(digitizer,GroupTriggerThreshold,index,ui2s)
+        GET_ICASE(digitizer,ChannelGroupMask,index,ui2s)
+        GET_ICASE(digitizer,TriggerPolarity,index,ui2s)
+        GET_ICASE(digitizer,DPPPreTriggerSize,index,ui2s)
+        GET_ICASE(digitizer,ChannelPulsePolarity,index,ui2s)
+        GET_ICASE(digitizer,RecordLength,index,ui2s)
+        GET_ICASE(digitizer,NumEventsPerAggregate,index,ui2s)
         default:
             throw std::invalid_argument{"Unknown Function"};
     }
