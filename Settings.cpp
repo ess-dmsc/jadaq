@@ -37,6 +37,15 @@ static std::unordered_map<std::string,FunctionID > functionMap =
                 MAP_ENTRY(NumEventsPerAggregate)
         };
 
+FunctionID functionID(std::string s)
+{
+    auto fid = functionMap.find(s);
+    if (fid == functionMap.end())
+        throw std::invalid_argument{"Not function by the name"};
+    else
+        return fid->second;
+}
+
 static unsigned int s2ui(const std::string& s)
 { return std::stoi (s,nullptr,0); }
 static std::string ui2s(const unsigned int v)
@@ -90,7 +99,7 @@ static caen::DPPAcquisitionMode s2dam(const std::string& s)
 {
     std::regex rx("\\{(\\w+),(\\w+)\\}");
     std::smatch match;
-    if (std::regex_search(s.begin(), s.end(), match, rx))
+    if (std::regex_search(s, match, rx))
     {
         return caen::DPPAcquisitionMode{s2dam_(match[1]),s2sp(match[2])};
     }
@@ -117,8 +126,8 @@ static std::string dam2s(const caen::DPPAcquisitionMode& dam)
         D->set##F(C,V);      \
         break;
 
-#define GET_ICASE(D,F,C,SF)        \
-    case F :                    \
+#define GET_ICASE(D,F,C,SF)      \
+    case F :                     \
         return SF(D->get##F(C));
 
 void set(caen::Digitizer* digitizer, FunctionID functionID, std::string value)

@@ -7,6 +7,7 @@
 
 #include <string>
 #include <unordered_map>
+#include <vector>
 #include "caen.hpp"
 
 enum FunctionID {
@@ -39,9 +40,9 @@ enum FunctionID {
     // Channel/group optional
     RecordLength,
     NumEventsPerAggregate
-
 };
 
+FunctionID functionID(std::string);
 void set(caen::Digitizer* digitizer, FunctionID functionID, std::string value);
 void set(caen::Digitizer* digitizer, FunctionID functionID, int index, std::string value);
 std::string get(caen::Digitizer* digitizer, FunctionID functionID);
