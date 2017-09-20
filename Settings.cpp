@@ -46,6 +46,24 @@ FunctionID functionID(std::string s)
         return fid->second;
 }
 
+std::pair<int,int> range(std::string s)
+{
+    std::regex single("^(\\d+)$");
+    std::regex range("^(\\d+)-(\\d+)$");
+    std::smatch match;
+    if (std::regex_search(s,match,single))
+    {
+        int i = std::stoi(match[1]);
+        return std::make_pair(i,i);
+    }
+    else if (std::regex_search(s,match,range))
+    {
+        return std::make_pair(std::stoi(match[1]),std::stoi(match[2]));
+    }
+    throw std::invalid_argument{"Not a valid range"};
+
+};
+
 static unsigned int s2ui(const std::string& s)
 { return std::stoi (s,nullptr,0); }
 static std::string ui2s(const unsigned int v)

@@ -7,6 +7,7 @@
 
 #include <fstream>
 #include <boost/property_tree/ini_parser.hpp>
+#include "Digitizer.hpp"
 
 namespace pt = boost::property_tree;
 
@@ -15,6 +16,7 @@ private:
     pt::ptree ptree;
 public:
     Configuration(std::ifstream& file);
+    std::vector<Digitizer> getDigitizers();
 };
 
 
