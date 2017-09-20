@@ -16,5 +16,5 @@ target_link_libraries(debugCAENComm dl)
 add_library(caen SHARED caen.hpp caen.cpp _CAENDigitizer.c _CAENDigitizer.h)
 target_link_libraries(caen dl)
 
-add_executable(jadaq jadaq.cpp caen.hpp Configuration.cpp Configuration.hpp Settings.hpp Settings.cpp Digitizer.cpp Digitizer.hpp)
+add_executable(jadaq jadaq.cpp caen.hpp Configuration.cpp Configuration.hpp Digitizer.cpp Digitizer.hpp)
 target_link_libraries(jadaq ${CAEN_LIB} caen)
