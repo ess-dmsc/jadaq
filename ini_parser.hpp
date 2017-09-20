@@ -2,8 +2,8 @@
 // Copyright (C) 2002-2006 Marcin Kalicinski
 // Copyright (C) 2009 Sebastian Redl
 //
-// Distributed under the Boost Software License, Version 1.0. 
-// (See accompanying file LICENSE_1_0.txt or copy at 
+// Distributed under the Boost Software License, Version 1.0.
+// (See accompanying file LICENSE_1_0.txt or copy at
 // http://www.boost.org/LICENSE_1_0.txt)
 //
 // For more information, see www.boost.org
@@ -198,23 +198,28 @@ namespace boost { namespace property_tree { namespace ini_parser
                                       typename Ptree::key_type::value_type
                                   > &stream,
                                   const Ptree& pt,
-                                  bool throw_on_children)
+                                  bool toplevel)
         {
             typedef typename Ptree::key_type::value_type Ch;
             for (typename Ptree::const_iterator it = pt.begin(), end = pt.end();
                  it != end; ++it)
             {
-                if (!it->second.empty()) {
-                    if (throw_on_children) {
-                        BOOST_PROPERTY_TREE_THROW(ini_parser_error(
-                            "ptree is too deep", "", 0));
+                if (it->second.empty()) {
+                    stream << it->first << Ch('=') << it->second.template get_value<
+                            std::basic_string<Ch> >()
+                           << Ch('\n');
+
+                } else
+                {
+                    for (auto& subdiv: it->second)
+                    {
+                        if (!subdiv.second.empty()) {
+                            BOOST_PROPERTY_TREE_THROW(ini_parser_error("ptree is too deep", "", 0));
+                        }
+                        stream << it->first << Ch('[') << subdiv.first << Ch(']') << Ch('=') <<
+                                subdiv.second.template get_value<std::basic_string<Ch> >() << Ch('\n');
                     }
-                    continue;
                 }
-                stream << it->first << Ch('=')
-                    << it->second.template get_value<
-                        std::basic_string<Ch> >()
-                    << Ch('\n');
             }
         }
 
@@ -224,7 +229,7 @@ namespace boost { namespace property_tree { namespace ini_parser
                                   > &stream,
                                   const Ptree& pt)
         {
-            write_keys(stream, pt, false);
+            write_keys(stream, pt, true);
         }
 
         template <typename Ptree>
@@ -243,7 +248,7 @@ namespace boost { namespace property_tree { namespace ini_parser
                         BOOST_PROPERTY_TREE_THROW(ini_parser_error(
                             "mixed data and children", "", 0));
                     stream << Ch('[') << it->first << Ch(']') << Ch('\n');
-                    write_keys(stream, it->second, true);
+                    write_keys(stream, it->second, false);
                 }
             }
         }
@@ -279,7 +284,7 @@ namespace boost { namespace property_tree { namespace ini_parser
                 "ptree has data on root", "", 0));
         detail::check_dupes(pt);
 
-        detail::write_top_level_keys(stream, pt);
+        //detail::write_top_level_keys(stream, pt);
         detail::write_sections(stream, pt);
     }
 

@@ -6,7 +6,7 @@
 #define JADAQ_CONFIGURATION_HPP
 
 #include <fstream>
-#include <boost/property_tree/ini_parser.hpp>
+#include "ini_parser.hpp"
 #include <boost/property_tree/info_parser.hpp>
 #include "Digitizer.hpp"
 

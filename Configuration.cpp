@@ -27,7 +27,7 @@ std::vector<Digitizer> Configuration::getDigitizers()
 
 void Configuration::write(std::ofstream& file)
 {
-    pt::write_info(file,ptree);
+    pt::write_ini(file,ptree);
 }
 
 void Configuration::populatePtree()
