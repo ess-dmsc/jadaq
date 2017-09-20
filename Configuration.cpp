@@ -3,6 +3,7 @@
 //
 
 #include "Configuration.hpp"
+#include <regex>
 
 Configuration::Configuration(std::ifstream& file)
 {
@@ -19,12 +20,6 @@ Configuration::Configuration(const std::vector<Digitizer>& digitizers_)
 
 std::vector<Digitizer> Configuration::getDigitizers()
 {
-    for (auto& section : ptree)
-    {
-        std::string name = section.first;
-        const pt::ptree& conf = section.second;
-
-    }
 
     return std::vector<Digitizer>();
 }
@@ -37,7 +32,34 @@ void Configuration::write(std::ofstream& file)
     }
 }
 
-void Configuration::populatePtree() {
-
+void Configuration::populatePtree()
+{
+    //TODO
 }
 
+void Configuration::apply()
+{
+    for (auto& section : ptree)
+    {
+        std::string name = section.first;
+        const pt::ptree& conf = section.second;
+        // TODO
+    }
+}
+
+static std::pair<int,int> range(std::string s)
+{
+    std::regex single("^(\\d+)$");
+    std::regex range("^(\\d+)-(\\d+)$");
+    std::smatch match;
+    if (std::regex_search(s,match,single))
+    {
+        int i = std::stoi(match[1]);
+        return std::make_pair(i,i);
+    }
+    else if (std::regex_search(s,match,range))
+    {
+        return std::make_pair(std::stoi(match[1]),std::stoi(match[2]));
+    }
+    throw std::invalid_argument{"Not a valid range"};
+};

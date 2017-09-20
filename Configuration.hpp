@@ -16,6 +16,7 @@ private:
     pt::ptree ptree;
     std::vector<Digitizer> digitizers;
     void populatePtree();
+    void apply();
 public:
     Configuration(std::vector<Digitizer>&& digitizers_);
     Configuration(const std::vector<Digitizer>& digitizers_);
