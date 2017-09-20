@@ -14,6 +14,7 @@ private:
     caen::Digitizer* digitizer;
 public:
     Digitizer(caen::Digitizer* digitizer_) : digitizer(digitizer_) {}
+    const std::string name() { return digitizer->modelName() + "_" + std::to_string(digitizer->serialNumber()); }
 };
 
 
