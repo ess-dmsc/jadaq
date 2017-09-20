@@ -59,6 +59,7 @@ public:
     void set(FunctionID functionID, int index, std::string value);
     std::string get(FunctionID functionID);
     std::string get(FunctionID functionID, int index);
+    caen::Digitizer* caen() { return digitizer; }
     static FunctionID functionID(std::string s);
     static const char* functionName(FunctionID id);
     static bool needIndex(FunctionID id) { return id >= ChannelDCOffset; }

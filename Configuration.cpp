@@ -27,27 +27,46 @@ std::vector<Digitizer> Configuration::getDigitizers()
 
 void Configuration::write(std::ofstream& file)
 {
-    pt::write_ini(file,ptree);
+    pt::write_info(file,ptree);
 }
 
 void Configuration::populatePtree()
 {
     for (Digitizer& digitizer: digitizers)
     {
-        pt::ptree myPtree;
+        pt::ptree dPtree;
          for (FunctionID id = Digitizer::functionIDbegin(); id < Digitizer::functionIDend(); ++id)
         {
             if (!Digitizer::needIndex(id))
             {
                 try {
-                    myPtree.put(Digitizer::functionName(id), digitizer.get(id));
+                    dPtree.put(Digitizer::functionName(id), digitizer.get(id));
                 } catch (caen::Error& e)
                 {
                     std::cout << "Tried to call get" << Digitizer::functionName(id) << " Caught: " << e.what() << std::endl;
                 }
             }
+            else
+            {
+                pt::ptree fPtree;
+                bool valid = false;
+                for (int i = 0; i < digitizer.caen()->channels(); ++i)
+                {
+                    try {
+                        fPtree.put(std::to_string(i), digitizer.get(id,i));
+                        valid = true;
+                    } catch (caen::Error& e)
+                    {
+                        std::cout << "Tried to call get" << Digitizer::functionName(id) << " Caught: " << e.what() << std::endl;
+                    }
+                }
+                if (valid)
+                {
+                    dPtree.put_child(Digitizer::functionName(id), fPtree);
+                }
+            }
         }
-        ptree.put_child(digitizer.name(),myPtree);
+        ptree.put_child(digitizer.name(),dPtree);
     }
 }
 
