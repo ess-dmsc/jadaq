@@ -39,7 +39,14 @@ enum FunctionID {
     // Channel/group optional
     RecordLength,
     NumEventsPerAggregate
+
 };
+
+static inline FunctionID& operator++(FunctionID& id)
+{
+    id = (FunctionID)((int)id+1);
+    return id;
+}
 
 class Digitizer
 {
@@ -55,7 +62,8 @@ public:
     static FunctionID functionID(std::string s);
     static const char* functionName(FunctionID id);
     static bool needIndex(FunctionID id) { return id >= ChannelDCOffset; }
-
+    static FunctionID functionIDbegin() { return MaxNumEventsBLT; }
+    static FunctionID functionIDend() { return (FunctionID)((int)NumEventsPerAggregate+1); }
 };
 
 

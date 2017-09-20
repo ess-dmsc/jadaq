@@ -4,6 +4,7 @@
 
 #include "Configuration.hpp"
 #include <regex>
+#include <iostream>
 
 Configuration::Configuration(std::ifstream& file)
 {
@@ -26,15 +27,28 @@ std::vector<Digitizer> Configuration::getDigitizers()
 
 void Configuration::write(std::ofstream& file)
 {
-    for (Digitizer& digitizer: digitizers)
-    {
-        file << '[' << digitizer.name() << "]\n";
-    }
+    pt::write_ini(file,ptree);
 }
 
 void Configuration::populatePtree()
 {
-    //TODO
+    for (Digitizer& digitizer: digitizers)
+    {
+        pt::ptree myPtree;
+         for (FunctionID id = Digitizer::functionIDbegin(); id < Digitizer::functionIDend(); ++id)
+        {
+            if (!Digitizer::needIndex(id))
+            {
+                try {
+                    myPtree.put(Digitizer::functionName(id), digitizer.get(id));
+                } catch (caen::Error& e)
+                {
+                    std::cout << "Tried to call get" << Digitizer::functionName(id) << " Caught: " << e.what() << std::endl;
+                }
+            }
+        }
+        ptree.put_child(digitizer.name(),myPtree);
+    }
 }
 
 void Configuration::apply()

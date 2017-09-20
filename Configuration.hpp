@@ -7,6 +7,7 @@
 
 #include <fstream>
 #include <boost/property_tree/ini_parser.hpp>
+#include <boost/property_tree/info_parser.hpp>
 #include "Digitizer.hpp"
 
 namespace pt = boost::property_tree;

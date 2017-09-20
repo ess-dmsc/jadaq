@@ -35,8 +35,8 @@ int main(int argc, char **argv) {
             }
             Configuration configuration(std::move(digitizers));
             configuration.write(configFile);
+            configFile.close();
         }
-
 
     } else
     {
