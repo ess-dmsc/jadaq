@@ -129,6 +129,7 @@ namespace caen {
         /* Digitizer creation */
         static Digitizer* open(CAEN_DGTZ_ConnectionType linkType, int linkNum, int conetNode, uint32_t VMEBaseAddress);
         static Digitizer* USB(int linkNum) { return open(CAEN_DGTZ_USB,linkNum,0,0); }
+        static Digitizer* VME(uint32_t VMEBaseAddress) { return open(CAEN_DGTZ_USB,0,0,VMEBaseAddress);}
 
         /* Destruction */
         ~Digitizer() { errorHandler(CAEN_DGTZ_CloseDigitizer(handle_)); }
