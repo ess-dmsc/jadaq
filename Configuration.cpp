@@ -40,10 +40,10 @@ void Configuration::populatePtree()
             if (!needIndex(id))
             {
                 try {
-                    dPtree.put(functionName(id), digitizer.get(id));
+                    dPtree.put(std::to_string(id), digitizer.get(id));
                 } catch (caen::Error& e)
                 {
-                    std::cout << "Tried to call get" << functionName(id) << " Caught: " << e.what() << std::endl;
+                    //Nothing to do
                 }
             }
             else
@@ -57,12 +57,13 @@ void Configuration::populatePtree()
                         valid = true;
                     } catch (caen::Error& e)
                     {
-                        std::cout << "Tried to call get" << functionName(id) << " Caught: " << e.what() << std::endl;
+                        //std::cout << "Tried to call get" << functionName(id) << " Caught: " << e.what() << std::endl;
+                        break; //first time we fail we give up
                     }
                 }
                 if (valid)
                 {
-                    dPtree.put_child(functionName(id), fPtree);
+                    dPtree.put_child(std::to_string(id), fPtree);
                 }
             }
         }

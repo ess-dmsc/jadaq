@@ -36,37 +36,40 @@ static std::unordered_map<std::string,FunctionID > functionMap =
                 MAP_ENTRY(NumEventsPerAggregate)
         };
 
-#define CASE_TO_STR(X) case (X) : return (#X);
-const char* functionName(FunctionID id) {
-    switch (id) {
-        CASE_TO_STR(MaxNumEventsBLT)
-        CASE_TO_STR(ChannelEnableMask)
-        CASE_TO_STR(GroupEnableMask)
-        CASE_TO_STR(DecimationFactor)
-        CASE_TO_STR(PostTriggerSize)
-        CASE_TO_STR(IOlevel)
-        CASE_TO_STR(AcquisitionMode)
-        CASE_TO_STR(ExternalTriggerMode)
-        CASE_TO_STR(SWTriggerMode)
-        CASE_TO_STR(RunSynchronizationMode)
-        CASE_TO_STR(OutputSignalMode)
-        CASE_TO_STR(DESMode)
-        CASE_TO_STR(DPPAcquisitionMode)
-        CASE_TO_STR(DPPTriggerMode)
-        CASE_TO_STR(ChannelDCOffset)
-        CASE_TO_STR(GroupDCOffset)
-        CASE_TO_STR(ChannelSelfTrigger)
-        CASE_TO_STR(GroupSelfTrigger)
-        CASE_TO_STR(ChannelTriggerThreshold)
-        CASE_TO_STR(GroupTriggerThreshold)
-        CASE_TO_STR(ChannelGroupMask)
-        CASE_TO_STR(TriggerPolarity)
-        CASE_TO_STR(DPPPreTriggerSize)
-        CASE_TO_STR(ChannelPulsePolarity)
-        CASE_TO_STR(RecordLength)
-        CASE_TO_STR(NumEventsPerAggregate)
-        default :
-            throw std::invalid_argument{"Unknown function ID"};
+namespace std {
+#define CASE_TO_STR(X) case (X) : return string(#X);
+
+    const string to_string(FunctionID id) {
+        switch (id) {
+            CASE_TO_STR(MaxNumEventsBLT)
+            CASE_TO_STR(ChannelEnableMask)
+            CASE_TO_STR(GroupEnableMask)
+            CASE_TO_STR(DecimationFactor)
+            CASE_TO_STR(PostTriggerSize)
+            CASE_TO_STR(IOlevel)
+            CASE_TO_STR(AcquisitionMode)
+            CASE_TO_STR(ExternalTriggerMode)
+            CASE_TO_STR(SWTriggerMode)
+            CASE_TO_STR(RunSynchronizationMode)
+            CASE_TO_STR(OutputSignalMode)
+            CASE_TO_STR(DESMode)
+            CASE_TO_STR(DPPAcquisitionMode)
+            CASE_TO_STR(DPPTriggerMode)
+            CASE_TO_STR(ChannelDCOffset)
+            CASE_TO_STR(GroupDCOffset)
+            CASE_TO_STR(ChannelSelfTrigger)
+            CASE_TO_STR(GroupSelfTrigger)
+            CASE_TO_STR(ChannelTriggerThreshold)
+            CASE_TO_STR(GroupTriggerThreshold)
+            CASE_TO_STR(ChannelGroupMask)
+            CASE_TO_STR(TriggerPolarity)
+            CASE_TO_STR(DPPPreTriggerSize)
+            CASE_TO_STR(ChannelPulsePolarity)
+            CASE_TO_STR(RecordLength)
+            CASE_TO_STR(NumEventsPerAggregate)
+            default :
+                throw invalid_argument{"Unknown function ID"};
+        }
     }
 }
 
