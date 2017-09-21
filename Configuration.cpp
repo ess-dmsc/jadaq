@@ -82,7 +82,7 @@ void Configuration::populatePtree()
             if (!needIndex(id))
             {
                 try {
-                    dPtree.put(std::to_string(id), digitizer.get(id));
+                    dPtree.put(to_string(id), digitizer.get(id));
                 } catch (caen::Error& e)
                 {
                     //Nothing to do
@@ -93,7 +93,7 @@ void Configuration::populatePtree()
                 pt::ptree fPtree = rangeNode(digitizer,id,0,digitizer.caen()->channels());
                 if (!fPtree.empty())
                 {
-                    dPtree.put_child(std::to_string(id), fPtree);
+                    dPtree.put_child(to_string(id), fPtree);
                 }
             }
         }

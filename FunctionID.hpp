@@ -56,9 +56,8 @@ static inline FunctionID operator++(FunctionID& id, int)
 }
 
 FunctionID functionID(std::string s);
-namespace std {
-    const string to_string(FunctionID id);
-}
+const std::string to_string(FunctionID id);
+
 
 
 #endif //JADAQ_FUNCTIONID_HPP

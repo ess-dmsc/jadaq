@@ -5,6 +5,7 @@
 #include "Digitizer.hpp"
 #include <regex>
 
+using std::to_string;
 
 static unsigned int s2ui(const std::string& s)
 { return std::stoi (s,nullptr,0); }
@@ -65,12 +66,11 @@ static caen::DPPAcquisitionMode s2dam(const std::string& s)
     }
     throw std::invalid_argument{"Invalid DPPAcquisitionMode"};
 }
-namespace std {
-    static std::string to_string(const caen::DPPAcquisitionMode &dam) {
-        std::stringstream ss;
-        ss << "{" << ui2s(dam.param) << "," << ui2s(dam.mode) << "}";
-        return ss.str();
-    }
+
+static std::string to_string(const caen::DPPAcquisitionMode &dam) {
+    std::stringstream ss;
+    ss << "{" << ui2s(dam.param) << "," << ui2s(dam.mode) << "}";
+    return ss.str();
 }
 
 #define SET_CASE(D,F,V) \
@@ -80,7 +80,7 @@ namespace std {
 
 #define GET_CASE(D,F)        \
     case F :                    \
-        return std::to_string(D->get##F());
+        return to_string(D->get##F());
 
 #define SET_ICASE(D,F,C,V)   \
     case F :                 \
@@ -89,7 +89,7 @@ namespace std {
 
 #define GET_ICASE(D,F,C)      \
     case F :                     \
-        return std::to_string(D->get##F(C));
+        return to_string(D->get##F(C));
 
 void Digitizer::set(FunctionID functionID, std::string value)
 {
