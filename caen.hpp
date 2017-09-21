@@ -319,7 +319,12 @@ namespace caen {
         { errorHandler(CAEN_DGTZ_SetChannelSelfTrigger(handle_, mode, 1<<channel)); }
 
         CAEN_DGTZ_TriggerMode_t getGroupSelfTrigger(uint32_t group)
-        { CAEN_DGTZ_TriggerMode_t mode; errorHandler(CAEN_DGTZ_GetGroupSelfTrigger(handle_, group, &mode)); return mode; }
+        {
+            if (group >= groups())  // Needed because of bug in CAEN_DGTZ_GetGroupSelfTrigger - patch sent
+                errorHandler(CAEN_DGTZ_InvalidChannelNumber);
+            CAEN_DGTZ_TriggerMode_t mode;
+            errorHandler(CAEN_DGTZ_GetGroupSelfTrigger(handle_, group, &mode));
+            return mode; }
         void setGroupSelfTrigger(uint32_t group, CAEN_DGTZ_TriggerMode_t mode)
         { errorHandler(CAEN_DGTZ_SetGroupSelfTrigger(handle_, mode, 1<<group)); }
 
