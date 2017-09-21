@@ -35,15 +35,15 @@ void Configuration::populatePtree()
     for (Digitizer& digitizer: digitizers)
     {
         pt::ptree dPtree;
-         for (FunctionID id = Digitizer::functionIDbegin(); id < Digitizer::functionIDend(); ++id)
+         for (FunctionID id = functionIDbegin(); id < functionIDend(); ++id)
         {
-            if (!Digitizer::needIndex(id))
+            if (!needIndex(id))
             {
                 try {
-                    dPtree.put(Digitizer::functionName(id), digitizer.get(id));
+                    dPtree.put(functionName(id), digitizer.get(id));
                 } catch (caen::Error& e)
                 {
-                    std::cout << "Tried to call get" << Digitizer::functionName(id) << " Caught: " << e.what() << std::endl;
+                    std::cout << "Tried to call get" << functionName(id) << " Caught: " << e.what() << std::endl;
                 }
             }
             else
@@ -57,12 +57,12 @@ void Configuration::populatePtree()
                         valid = true;
                     } catch (caen::Error& e)
                     {
-                        std::cout << "Tried to call get" << Digitizer::functionName(id) << " Caught: " << e.what() << std::endl;
+                        std::cout << "Tried to call get" << functionName(id) << " Caught: " << e.what() << std::endl;
                     }
                 }
                 if (valid)
                 {
-                    dPtree.put_child(Digitizer::functionName(id), fPtree);
+                    dPtree.put_child(functionName(id), fPtree);
                 }
             }
         }
