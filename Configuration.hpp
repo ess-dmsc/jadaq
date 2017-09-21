@@ -12,19 +12,37 @@
 
 namespace pt = boost::property_tree;
 
-class Configuration {
+class Configuration
+{
 private:
     pt::ptree ptree;
     std::vector<Digitizer> digitizers;
     void populatePtree();
     void apply();
 public:
-    Configuration(std::vector<Digitizer>&& digitizers_);
-    Configuration(const std::vector<Digitizer>& digitizers_);
-    Configuration(std::ifstream& file);
+    explicit Configuration(std::vector<Digitizer>&& digitizers_);
+    explicit Configuration(const std::vector<Digitizer>& digitizers_);
+    explicit Configuration(std::ifstream& file);
     std::vector<Digitizer> getDigitizers();
     void write(std::ofstream& file);
+    class Range
+    {
+    private:
+        int first;
+        int last;
+    public:
+        Range() : first(0), last(-1) {}
+        Range(int first_, int last_) : first(first_), last(last_) {}
+        explicit Range(std::string);
+        int begin() { return first; }
+        int end() { return last+1; }
+        friend std::string to_string(const Configuration::Range& range);
+    };
 };
+
+std::string to_string(const Configuration::Range& range);
+
+
 
 
 #endif //JADAQ_CONFIGURATION_HPP

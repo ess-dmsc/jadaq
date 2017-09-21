@@ -30,6 +30,48 @@ void Configuration::write(std::ofstream& file)
     pt::write_ini(file,ptree);
 }
 
+std::string to_string(const Configuration::Range& range)
+{
+    std::stringstream ss;
+    ss << range.first << '-' << range.last;
+    return ss.str();
+}
+
+
+static pt::ptree rangeNode(Digitizer& digitizer, FunctionID id, int begin, int end)
+{
+    pt::ptree ptree;
+    std::string prev;
+    try {
+        prev = digitizer.get(id,begin);
+    } catch (caen::Error& e)
+    {
+        return ptree;
+    }
+    for (int i = begin+1; i < end; ++i)
+    {
+        try {
+            std::string cur(digitizer.get(id,i));
+            if (cur != prev)
+            {
+                ptree.put(to_string(Configuration::Range(begin,i-1)), prev);
+                begin = i;
+                prev = cur;
+            } else
+            {
+                continue;
+            }
+        } catch (caen::Error& e)
+        {
+            ptree.put(to_string(Configuration::Range(begin,i-1)),prev);
+            return ptree;
+        }
+    }
+    // We only get here if values are valid until end
+    ptree.put(to_string(Configuration::Range(begin,end-1)),prev);
+    return ptree;
+}
+
 void Configuration::populatePtree()
 {
     for (Digitizer& digitizer: digitizers)
@@ -48,20 +90,8 @@ void Configuration::populatePtree()
             }
             else
             {
-                pt::ptree fPtree;
-                bool valid = false;
-                for (int i = 0; i < digitizer.caen()->channels(); ++i)
-                {
-                    try {
-                        fPtree.put(std::to_string(i), digitizer.get(id,i));
-                        valid = true;
-                    } catch (caen::Error& e)
-                    {
-                        //std::cout << "Tried to call get" << functionName(id) << " Caught: " << e.what() << std::endl;
-                        break; //first time we fail we give up
-                    }
-                }
-                if (valid)
+                pt::ptree fPtree = rangeNode(digitizer,id,0,digitizer.caen()->channels());
+                if (!fPtree.empty())
                 {
                     dPtree.put_child(std::to_string(id), fPtree);
                 }
@@ -81,19 +111,20 @@ void Configuration::apply()
     }
 }
 
-static std::pair<int,int> range(std::string s)
+Configuration::Range::Range(std::string s)
 {
     std::regex single("^(\\d+)$");
     std::regex range("^(\\d+)-(\\d+)$");
     std::smatch match;
     if (std::regex_search(s,match,single))
     {
-        int i = std::stoi(match[1]);
-        return std::make_pair(i,i);
+        first = last = std::stoi(match[1]);
     }
     else if (std::regex_search(s,match,range))
     {
-        return std::make_pair(std::stoi(match[1]),std::stoi(match[2]));
+        first = std::stoi(match[1]);
+        last = std::stoi(match[2]);
     }
     throw std::invalid_argument{"Not a valid range"};
-};
+
+}
