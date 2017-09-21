@@ -7,7 +7,7 @@
 
 #include <fstream>
 #include "ini_parser.hpp"
-#include <boost/property_tree/info_parser.hpp>
+#include "translator.hpp"
 #include "Digitizer.hpp"
 
 namespace pt = boost::property_tree;
@@ -39,8 +39,5 @@ public:
 };
 
 std::string to_string(const Configuration::Range& range);
-
-
-
 
 #endif //JADAQ_CONFIGURATION_HPP

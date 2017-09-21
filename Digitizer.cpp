@@ -9,8 +9,6 @@ using std::to_string;
 
 static unsigned int s2ui(const std::string& s)
 { return std::stoi (s,nullptr,0); }
-static std::string ui2s(const unsigned int v)
-{ return std::to_string(v); }
 
 static CAEN_DGTZ_IOLevel_t s2iol(const std::string& s)
 {
@@ -69,7 +67,7 @@ static caen::DPPAcquisitionMode s2dam(const std::string& s)
 
 static std::string to_string(const caen::DPPAcquisitionMode &dam) {
     std::stringstream ss;
-    ss << "{" << ui2s(dam.param) << "," << ui2s(dam.mode) << "}";
+    ss << "{" << dam.param << "," << dam.mode << "}";
     return ss.str();
 }
 

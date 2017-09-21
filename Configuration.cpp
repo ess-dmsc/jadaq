@@ -116,14 +116,12 @@ void Configuration::apply()
             std::cerr << '[' << name << ']' <<" does not contain USB number. REQUIRED" << std::endl;
             throw;
         }
-        try {
-            vme = conf.get<uint32_t>("VME");
-        } catch (pt::ptree_error& e) {  }
+        vme = conf.get<int>("VME");
         try {
             digitizers.push_back(Digitizer(usb,vme));
         } catch (caen::Error& e)
         {
-            std::cerr << "Unable to open digitizer [" << name << ']' << std::endl;
+            std::cerr << "Unable to open digitizer [" << name << ']' << usb << ',' << vme << std::endl;
         }
 
 
