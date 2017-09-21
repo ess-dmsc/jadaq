@@ -8,16 +8,9 @@
 
 Configuration::Configuration(std::ifstream& file)
 {
-    pt::ini_parser::read_ini(file, ptree);
+    pt::ini_parser::read_ini(file, in);
+    apply();
 }
-
-Configuration::Configuration(std::vector<Digitizer>&& digitizers_)
-        : digitizers(digitizers_)
-{ populatePtree(); }
-
-Configuration::Configuration(const std::vector<Digitizer>& digitizers_)
-        : digitizers(digitizers_)
-{ populatePtree(); }
 
 std::vector<Digitizer> Configuration::getDigitizers()
 {
@@ -27,7 +20,7 @@ std::vector<Digitizer> Configuration::getDigitizers()
 
 void Configuration::write(std::ofstream& file)
 {
-    pt::write_ini(file,ptree);
+    pt::write_ini(file,readBack());
 }
 
 std::string to_string(const Configuration::Range& range)
@@ -72,12 +65,18 @@ static pt::ptree rangeNode(Digitizer& digitizer, FunctionID id, int begin, int e
     return ptree;
 }
 
-void Configuration::populatePtree()
+pt::ptree Configuration::readBack()
 {
+    pt::ptree out;
     for (Digitizer& digitizer: digitizers)
     {
         pt::ptree dPtree;
-         for (FunctionID id = functionIDbegin(); id < functionIDend(); ++id)
+        dPtree.put("USB", digitizer.usb());
+        if (digitizer.vme())
+        {
+            dPtree.put("VME", digitizer.vme());
+        }
+        for (FunctionID id = functionIDbegin(); id < functionIDend(); ++id)
         {
             if (!needIndex(id))
             {
@@ -97,16 +96,38 @@ void Configuration::populatePtree()
                 }
             }
         }
-        ptree.put_child(digitizer.name(),dPtree);
+        out.put_child(digitizer.name(),dPtree);
     }
+    return out;
 }
 
 void Configuration::apply()
 {
-    for (auto& section : ptree)
+    for (auto& section : in)
     {
         std::string name = section.first;
         const pt::ptree& conf = section.second;
+        int usb;
+        uint32_t vme = 0;
+        try {
+            usb = conf.get<int>("USB");
+        } catch (pt::ptree_error& e)
+        {
+            std::cerr << '[' << name << ']' <<" does not contain USB number. REQUIRED" << std::endl;
+            throw;
+        }
+        try {
+            vme = conf.get<uint32_t>("VME");
+        } catch (pt::ptree_error& e) {  }
+        try {
+            digitizers.push_back(Digitizer(usb,vme));
+        } catch (caen::Error& e)
+        {
+            std::cerr << "Unable to open digitizer [" << name << ']' << std::endl;
+        }
+
+
+
         // TODO
     }
 }

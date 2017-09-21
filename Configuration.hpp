@@ -15,13 +15,11 @@ namespace pt = boost::property_tree;
 class Configuration
 {
 private:
-    pt::ptree ptree;
+    pt::ptree in;
     std::vector<Digitizer> digitizers;
-    void populatePtree();
+    pt::ptree readBack();
     void apply();
 public:
-    explicit Configuration(std::vector<Digitizer>&& digitizers_);
-    explicit Configuration(const std::vector<Digitizer>& digitizers_);
     explicit Configuration(std::ifstream& file);
     std::vector<Digitizer> getDigitizers();
     void write(std::ofstream& file);

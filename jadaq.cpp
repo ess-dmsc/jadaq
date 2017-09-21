@@ -12,36 +12,19 @@ int main(int argc, char **argv) {
     std::ifstream configFile(configFileName);
     if (!configFile.good())
     {
-        // Config file did not exist so we will create it
-        std::vector<Digitizer> digitizers;
-        int nDigitizers = 0;
-        try {
-            while(true)
-            {
-                digitizers.push_back(Digitizer(caen::Digitizer::USB(nDigitizers)));
-                ++nDigitizers;
-            }
-        } catch (caen::Error& e)
-        {
-            std::cout << "Found " << nDigitizers << " Digitizers." << std::endl;
-        }
-        if (nDigitizers > 0)
-        {
-            std::ofstream configFile(configFileName);
-            if (!configFile.good())
-            {
-                std::cout << "Unable to open configuration file: " << configFileName << std::endl;
-                return -1;
-            }
-            Configuration configuration(std::move(digitizers));
-            configuration.write(configFile);
-            configFile.close();
-        }
-
+        std::cerr << "Could not open configuration file: " << configFileName << std::endl;
     } else
     {
         Configuration configuration(configFile);
+        std::ofstream configFile(configFileName+".out");
+        if (!configFile.good())
+        {
+            std::cerr << "Unable to open output file: " << configFileName << std::endl;
+        } else {
+            configuration.write(configFile);
+            configFile.close();
+        }
     }
-
+    configFile.close();
     return 0;
 }
