@@ -194,11 +194,7 @@ namespace boost { namespace property_tree { namespace ini_parser
         }
 
         template <typename Ptree>
-        void write_keys(std::basic_ostream<
-                                      typename Ptree::key_type::value_type
-                                  > &stream,
-                                  const Ptree& pt,
-                                  bool toplevel)
+        void write_keys(std::basic_ostream<typename Ptree::key_type::value_type> &stream, const Ptree& pt)
         {
             typedef typename Ptree::key_type::value_type Ch;
             for (typename Ptree::const_iterator it = pt.begin(), end = pt.end();
@@ -224,19 +220,22 @@ namespace boost { namespace property_tree { namespace ini_parser
         }
 
         template <typename Ptree>
-        void write_top_level_keys(std::basic_ostream<
-                                      typename Ptree::key_type::value_type
-                                  > &stream,
-                                  const Ptree& pt)
+        void write_top_level_keys(std::basic_ostream<typename Ptree::key_type::value_type >& stream, const Ptree& pt)
         {
-            write_keys(stream, pt, true);
+            typedef typename Ptree::key_type::value_type Ch;
+            for (const auto& br: pt)
+            {
+                if (!br.second.empty())
+                {
+                    continue;
+                }
+                stream << br.first << Ch('=') <<
+                       br.second.template get_value<std::basic_string<Ch> >() << Ch('\n');
+            }
         }
 
         template <typename Ptree>
-        void write_sections(std::basic_ostream<
-                                typename Ptree::key_type::value_type
-                            > &stream,
-                            const Ptree& pt)
+        void write_sections(std::basic_ostream<typename Ptree::key_type::value_type> &stream, const Ptree& pt)
         {
             typedef typename Ptree::key_type::value_type Ch;
             for (typename Ptree::const_iterator it = pt.begin(), end = pt.end();
@@ -248,7 +247,7 @@ namespace boost { namespace property_tree { namespace ini_parser
                         BOOST_PROPERTY_TREE_THROW(ini_parser_error(
                             "mixed data and children", "", 0));
                     stream << Ch('[') << it->first << Ch(']') << Ch('\n');
-                    write_keys(stream, it->second, false);
+                    write_keys(stream, it->second);
                 }
             }
         }
@@ -284,7 +283,7 @@ namespace boost { namespace property_tree { namespace ini_parser
                 "ptree has data on root", "", 0));
         detail::check_dupes(pt);
 
-        //detail::write_top_level_keys(stream, pt);
+        detail::write_top_level_keys(stream, pt);
         detail::write_sections(stream, pt);
     }
 
