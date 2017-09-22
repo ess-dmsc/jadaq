@@ -113,12 +113,36 @@ pt::ptree Configuration::readBack()
     return out;
 }
 
+static void configure(Digitizer* digitizer, pt::ptree& conf)
+{
+    for (auto& setting : conf)
+    {
+        FunctionID fid = functionID(setting.first);
+        if (setting.second.empty()) //Setting without channel/group
+        {
+            digitizer->set(fid,setting.second.data());
+        }
+        else //Setting with channel/group
+        {
+            for (auto& rangeSetting: setting.second)
+            {
+                assert(rangeSetting.second.empty());
+                Configuration::Range range{rangeSetting.first};
+                for (int i = range.begin(); i != range.end(); ++i)
+                {
+                    digitizer->set(fid, i, rangeSetting.second.data());
+                }
+            }
+        }
+    }
+}
+
 void Configuration::apply()
 {
     for (auto& section : in)
     {
         std::string name = section.first;
-        const pt::ptree& conf = section.second;
+        pt::ptree conf(section.second); //create local a copy we can modify
         if (conf.empty()) {
             continue; //Skip top level keys i.e. not in a [section]
         }
@@ -126,37 +150,37 @@ void Configuration::apply()
         uint32_t vme = 0;
         try {
             usb = conf.get<int>("USB");
+            conf.erase("USB");
         } catch (pt::ptree_error& e)
         {
             std::cerr << '[' << name << ']' <<" does not contain USB number. REQUIRED" << std::endl;
-            throw;
+            continue;
         }
         vme = conf.get<uint32_t>("VME",0);
+        conf.erase("VME");
+        Digitizer* digitizer = nullptr;
         try {
             digitizers.push_back(Digitizer(usb,vme));
+            digitizer = &*digitizers.rbegin();
         } catch (caen::Error& e)
         {
-            std::cerr << "Unable to open digitizer [" << name << ']' << usb << ',' << vme << std::endl;
+            std::cerr << "Unable to open digitizer [" << name << ']' << std::endl;
+            continue;
         }
-
-        // TODO
+        configure(digitizer,conf);
     }
 }
 
-Configuration::Range::Range(std::string s)
-{
+Configuration::Range::Range(std::string s) {
     std::regex single("^(\\d+)$");
     std::regex range("^(\\d+)-(\\d+)$");
     std::smatch match;
-    if (std::regex_search(s,match,single))
-    {
+    if (std::regex_search(s, match, single)) {
         first = last = std::stoi(match[1]);
-    }
-    else if (std::regex_search(s,match,range))
-    {
+    } else if (std::regex_search(s, match, range)) {
         first = std::stoi(match[1]);
         last = std::stoi(match[2]);
+    } else {
+        throw std::invalid_argument{"Not a valid range"};
     }
-    throw std::invalid_argument{"Not a valid range"};
-
 }

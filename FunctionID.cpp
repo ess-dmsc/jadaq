@@ -4,6 +4,7 @@
 
 #include "FunctionID.hpp"
 #include <unordered_map>
+#include <iostream>
 
 #define MAP_ENTRY(F) {#F,(F)}
 static std::unordered_map<std::string,FunctionID > functionMap =
@@ -77,7 +78,10 @@ FunctionID functionID(std::string s)
 {
     auto fid = functionMap.find(s);
     if (fid == functionMap.end())
+    {
+        std::cerr << "Did not find function: " << s << std::endl;
         throw std::invalid_argument{"No function by that name"};
+    }
     else
         return fid->second;
 }
