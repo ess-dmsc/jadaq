@@ -124,13 +124,15 @@ namespace boost { namespace property_tree { namespace ini_parser
                         BOOST_PROPERTY_TREE_THROW(ini_parser_error("key expected", "", line_no));
                     Str key = property_tree::detail::trim(line.substr(0, eqpos), stream.getloc());
                     Str data = property_tree::detail::trim(line.substr(eqpos + 1, Str::npos), stream.getloc());
-                    std::regex rx("^(\\w+)\\[(\\w+)\\]");
+                    std::regex rx("^(\\w+)\\[(\\S+)\\]");
                     std::smatch match;
                     if (std::regex_search(key, match, rx))
                     {
                         Ptree value;
-                        value.push_back(std::make_pair(match[2],Ptree(data)));
-                        container.push_back(std::make_pair(match[1], value));
+                        key = match[1];
+                        Str range = match[2];
+                        value.push_back(std::make_pair(range,Ptree(data)));
+                        container.push_back(std::make_pair(key, value));
                     } else {
                         container.push_back(std::make_pair(key, Ptree(data)));
 
