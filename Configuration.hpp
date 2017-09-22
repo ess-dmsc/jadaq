@@ -7,7 +7,6 @@
 
 #include <fstream>
 #include "ini_parser.hpp"
-#include "translator.hpp"
 #include "Digitizer.hpp"
 
 namespace pt = boost::property_tree;
@@ -23,6 +22,7 @@ public:
     explicit Configuration(std::ifstream& file);
     std::vector<Digitizer> getDigitizers();
     void write(std::ofstream& file);
+    void writeInput(std::ofstream& file);
     class Range
     {
     private:

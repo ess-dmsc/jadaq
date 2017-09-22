@@ -18,9 +18,20 @@ std::vector<Digitizer> Configuration::getDigitizers()
     return std::vector<Digitizer>();
 }
 
+/*
+ * Read configuration from digitizers and write it on stream
+ */
 void Configuration::write(std::ofstream& file)
 {
     pt::write_ini(file,readBack());
+}
+
+/*
+ * Write the parsed tree back on stream
+ */
+void Configuration::writeInput(std::ofstream& file)
+{
+    pt::write_ini(file,in);
 }
 
 std::string to_string(const Configuration::Range& range)
@@ -84,7 +95,7 @@ pt::ptree Configuration::readBack()
                     dPtree.put(to_string(id), digitizer.get(id));
                 } catch (caen::Error& e)
                 {
-                    //Nothing to do
+                    //Function not supported so we just skip it
                 }
             }
             else
@@ -107,6 +118,8 @@ void Configuration::apply()
     {
         std::string name = section.first;
         const pt::ptree& conf = section.second;
+        if (conf.empty())
+            continue;
         int usb;
         uint32_t vme = 0;
         try {
@@ -116,7 +129,7 @@ void Configuration::apply()
             std::cerr << '[' << name << ']' <<" does not contain USB number. REQUIRED" << std::endl;
             throw;
         }
-        vme = conf.get<int>("VME");
+        try { vme = conf.get<int>("VME"); } catch (...) {}
         try {
             digitizers.push_back(Digitizer(usb,vme));
         } catch (caen::Error& e)

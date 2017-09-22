@@ -19,10 +19,11 @@
 #include <sstream>
 #include <stdexcept>
 #include <locale>
+#include <regex>
 
 namespace boost { namespace property_tree { namespace ini_parser
 {
-
+            namespace detail { template<class Ptree> void check_dupes(const Ptree &pt);}
     /**
      * Determines whether the @c flags are valid for use with the ini_parser.
      * @param flags value to check for validity as flags to ini_parser.
@@ -62,9 +63,7 @@ namespace boost { namespace property_tree { namespace ini_parser
      * @param[out] pt The property tree to populate.
      */
     template<class Ptree>
-    void read_ini(std::basic_istream<
-                    typename Ptree::key_type::value_type> &stream,
-                  Ptree &pt)
+    void read_ini(std::basic_istream<typename Ptree::key_type::value_type> &stream, Ptree &pt)
     {
         typedef typename Ptree::key_type::value_type Ch;
         typedef std::basic_string<Ch> Str;
@@ -120,19 +119,22 @@ namespace boost { namespace property_tree { namespace ini_parser
                     Ptree &container = section ? *section : local;
                     typename Str::size_type eqpos = line.find(Ch('='));
                     if (eqpos == Str::npos)
-                        BOOST_PROPERTY_TREE_THROW(ini_parser_error(
-                            "'=' character not found in line", "", line_no));
+                        BOOST_PROPERTY_TREE_THROW(ini_parser_error("'=' character not found in line", "", line_no));
                     if (eqpos == 0)
-                        BOOST_PROPERTY_TREE_THROW(ini_parser_error(
-                            "key expected", "", line_no));
-                    Str key = property_tree::detail::trim(
-                        line.substr(0, eqpos), stream.getloc());
-                    Str data = property_tree::detail::trim(
-                        line.substr(eqpos + 1, Str::npos), stream.getloc());
-                    if (container.find(key) != container.not_found())
-                        BOOST_PROPERTY_TREE_THROW(ini_parser_error(
-                            "duplicate key name", "", line_no));
-                    container.push_back(std::make_pair(key, Ptree(data)));
+                        BOOST_PROPERTY_TREE_THROW(ini_parser_error("key expected", "", line_no));
+                    Str key = property_tree::detail::trim(line.substr(0, eqpos), stream.getloc());
+                    Str data = property_tree::detail::trim(line.substr(eqpos + 1, Str::npos), stream.getloc());
+                    std::regex rx("^(\\w+)\\[(\\w+)\\]");
+                    std::smatch match;
+                    if (std::regex_search(key, match, rx))
+                    {
+                        Ptree value;
+                        value.push_back(std::make_pair(match[2],Ptree(data)));
+                        container.push_back(std::make_pair(match[1], value));
+                    } else {
+                        container.push_back(std::make_pair(key, Ptree(data)));
+
+                    }
                 }
             }
         }
@@ -141,6 +143,7 @@ namespace boost { namespace property_tree { namespace ini_parser
             local.pop_back();
 
         // Swap local ptree with result ptree
+        detail::check_dupes(local);
         pt.swap(local);
 
     }
@@ -334,5 +337,29 @@ namespace boost { namespace property_tree
     using ini_parser::read_ini;
     using ini_parser::write_ini;
 } }
+
+struct int_translator {
+    typedef std::string internal_type;
+    typedef int external_type;
+    boost::optional<external_type> get_value(const internal_type& s)
+    {
+        try { return std::stoi(s,nullptr,0); }
+        catch (...) { return boost::none; }
+    }
+    boost::optional<internal_type> put_value(const external_type& i)
+    {
+        return std::to_string(i);
+    }
+};
+
+namespace boost {
+    namespace property_tree {
+        template<typename Ch, typename Traits, typename Alloc>
+        struct translator_between<std::basic_string< Ch, Traits, Alloc >, int>
+        {
+            typedef int_translator type;
+        };
+    }
+}
 
 #endif
