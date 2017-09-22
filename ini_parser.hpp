@@ -338,12 +338,13 @@ namespace boost { namespace property_tree
     using ini_parser::write_ini;
 } }
 
-struct int_translator {
+template <typename I>
+struct integral_translator {
     typedef std::string internal_type;
-    typedef int external_type;
+    typedef I external_type;
     boost::optional<external_type> get_value(const internal_type& s)
     {
-        try { return std::stoi(s,nullptr,0); }
+        try { return (I)std::stol(s,nullptr,0); }
         catch (...) { return boost::none; }
     }
     boost::optional<internal_type> put_value(const external_type& i)
@@ -357,7 +358,32 @@ namespace boost {
         template<typename Ch, typename Traits, typename Alloc>
         struct translator_between<std::basic_string< Ch, Traits, Alloc >, int>
         {
-            typedef int_translator type;
+            typedef integral_translator<int> type;
+        };
+        template<typename Ch, typename Traits, typename Alloc>
+        struct translator_between<std::basic_string< Ch, Traits, Alloc >, unsigned int>
+        {
+            typedef integral_translator<unsigned int> type;
+        };
+        template<typename Ch, typename Traits, typename Alloc>
+        struct translator_between<std::basic_string< Ch, Traits, Alloc >, long >
+        {
+            typedef integral_translator<long> type;
+        };
+        template<typename Ch, typename Traits, typename Alloc>
+        struct translator_between<std::basic_string< Ch, Traits, Alloc >, unsigned long>
+        {
+            typedef integral_translator<unsigned long> type;
+        };
+        template<typename Ch, typename Traits, typename Alloc>
+        struct translator_between<std::basic_string< Ch, Traits, Alloc >, short >
+        {
+            typedef integral_translator<short> type;
+        };
+        template<typename Ch, typename Traits, typename Alloc>
+        struct translator_between<std::basic_string< Ch, Traits, Alloc >, unsigned short>
+        {
+            typedef integral_translator<unsigned short> type;
         };
     }
 }
