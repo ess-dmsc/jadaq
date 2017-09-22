@@ -5,6 +5,7 @@
 #include "Configuration.hpp"
 #include <regex>
 #include <iostream>
+#include <cstdint>
 
 Configuration::Configuration(std::ifstream& file)
 {
@@ -118,8 +119,9 @@ void Configuration::apply()
     {
         std::string name = section.first;
         const pt::ptree& conf = section.second;
-        if (conf.empty())
-            continue;
+        if (conf.empty()) {
+            continue; //Skip top level keys i.e. not in a [section]
+        }
         int usb;
         uint32_t vme = 0;
         try {
@@ -129,15 +131,13 @@ void Configuration::apply()
             std::cerr << '[' << name << ']' <<" does not contain USB number. REQUIRED" << std::endl;
             throw;
         }
-        try { vme = conf.get<int>("VME"); } catch (...) {}
+        vme = conf.get<uint32_t>("VME",0);
         try {
             digitizers.push_back(Digitizer(usb,vme));
         } catch (caen::Error& e)
         {
             std::cerr << "Unable to open digitizer [" << name << ']' << usb << ',' << vme << std::endl;
         }
-
-
 
         // TODO
     }
