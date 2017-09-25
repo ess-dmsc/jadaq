@@ -3,7 +3,9 @@ project(jadaq)
 #set(CMAKE_VERBOSE_MAKEFILE ON)
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_C_STANDARD 99)
-
+if (CMAKE_COMPILER_IS_GNUCXX AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 5.3)
+    message(FATAL_ERROR "Require at least g++-5.3: On CentOS-7 use Devtoolset-4")
+endif()
 find_path(CAEN_INCLUDE_DIR NAMES CAENDigitizer.h
         HINTS   $ENV{HOME}/include)
 find_library(CAEN_LIB NAMES CAENDigitizer
