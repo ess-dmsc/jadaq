@@ -77,6 +77,10 @@ const std::string to_string(FunctionID id) {
     }
 }
 
+FunctionID functionIDbegin() { return (FunctionID)0; }
+FunctionID functionIDend() { return (FunctionID)functionMap.size(); }
+
+
 
 FunctionID functionID(std::string s)
 {

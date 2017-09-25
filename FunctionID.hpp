@@ -42,8 +42,8 @@ enum FunctionID {
 };
 
 static inline bool needIndex(FunctionID id) { return id >= ChannelDCOffset; }
-static inline FunctionID functionIDbegin() { return MaxNumEventsBLT; }
-static inline FunctionID functionIDend() { return (FunctionID)((int)NumEventsPerAggregate+1); }
+FunctionID functionIDbegin();
+FunctionID functionIDend();
 static inline FunctionID& operator++(FunctionID& id)
 {
     id = (FunctionID)((int)id+1);
