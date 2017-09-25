@@ -110,6 +110,7 @@ void Digitizer::set(FunctionID functionID, std::string value)
         SET_CASE(digitizer,RunDelay,s2ui(value))
         SET_CASE(digitizer,RecordLength,s2ui(value))
         SET_CASE(digitizer,NumEventsPerAggregate,s2ui(value))
+        SET_CASE(digitizer,FixedBaseline,s2ui(value))
         default:
             throw std::invalid_argument{"Unknown Function"};
 
@@ -130,6 +131,7 @@ void Digitizer::set(FunctionID functionID, int index, std::string value) {
         SET_ICASE(digitizer,ChannelPulsePolarity,index,s2pp(value))
         SET_ICASE(digitizer,RecordLength,s2ui(value),index)
         SET_ICASE(digitizer,NumEventsPerAggregate,s2ui(value),index)
+        SET_ICASE(digitizer,FixedBaseline,s2ui(value),index)
         default:
             throw std::invalid_argument{"Unknown Function"};
     }
@@ -178,6 +180,7 @@ std::string Digitizer::get(FunctionID functionID, int index)
         GET_ICASE(digitizer,ChannelPulsePolarity,index)
         GET_ICASE(digitizer,RecordLength,index)
         GET_ICASE(digitizer,NumEventsPerAggregate,index)
+        GET_ICASE(digitizer,FixedBaseline,index)
         default:
             throw std::invalid_argument{"Unknown Function"};
     }

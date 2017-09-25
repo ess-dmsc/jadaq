@@ -37,8 +37,8 @@ enum FunctionID {
     ChannelPulsePolarity,
     // Channel/group optional
     RecordLength,
-    NumEventsPerAggregate
-
+    NumEventsPerAggregate,
+    FixedBaseline,
 };
 
 static inline bool needIndex(FunctionID id) { return id >= ChannelDCOffset; }

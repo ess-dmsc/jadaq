@@ -35,7 +35,8 @@ static std::unordered_map<std::string,FunctionID > functionMap =
                 MAP_ENTRY(DPPPreTriggerSize),
                 MAP_ENTRY(ChannelPulsePolarity),
                 MAP_ENTRY(RecordLength),
-                MAP_ENTRY(NumEventsPerAggregate)
+                MAP_ENTRY(NumEventsPerAggregate),
+                MAP_ENTRY(FixedBaseline),
         };
 
 
@@ -70,6 +71,7 @@ const std::string to_string(FunctionID id) {
         CASE_TO_STR(ChannelPulsePolarity)
         CASE_TO_STR(RecordLength)
         CASE_TO_STR(NumEventsPerAggregate)
+        CASE_TO_STR(FixedBaseline)
         default :
             throw std::invalid_argument{"Unknown function ID"};
     }
