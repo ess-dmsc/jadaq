@@ -388,6 +388,9 @@ namespace caen {
         void setNumEventsPerAggregate(uint32_t numEvents, int channel=-1)
         { errorHandler(CAEN_DGTZ_SetNumEventsPerAggregate(handle_, numEvents, channel)); }
 
+        virtual uint32_t getRunDelay() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual void setRunDelay(uint32_t delay) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+
       //   - CAEN_DGTZ_SetDPPParameters(int handle, uint32_t channelMask, void* params);
       //   - CAEN_DGTZ_SetMaxNumAggregatesBLT(int handle, uint32_t numAggr);
       //   - CAEN_DGTZ_GetMaxNumAggregatesBLT(int handle, uint32_t *numAggr);
@@ -403,9 +406,13 @@ namespace caen {
         Digitizer740(int handle, CAEN_DGTZ_BoardInfo_t boardInfo) : Digitizer(handle,boardInfo) {}
         friend Digitizer* Digitizer::open(CAEN_DGTZ_ConnectionType linkType, int linkNum, int conetNode, uint32_t VMEBaseAddress);
     public:
-        virtual uint32_t channels() const { return groups()*channelsPerGroup(); }
-        virtual uint32_t groups() const { return boardInfo_.Channels; } // for x740: boardInfo.Channels stores number of groups
-        virtual uint32_t channelsPerGroup() const { return 8; }  // 8 channels per group for x740
+        virtual uint32_t channels() const override { return groups()*channelsPerGroup(); }
+        virtual uint32_t groups() const override { return boardInfo_.Channels; } // for x740: boardInfo.Channels stores number of groups
+        virtual uint32_t channelsPerGroup() const override { return 8; }  // 8 channels per group for x740
+        virtual uint32_t getRunDelay() override
+        { uint32_t delay; errorHandler(CAEN_DGTZ_ReadRegister(handle_, 0x8170, &delay)); return delay; }
+        virtual void setRunDelay(uint32_t delay) override
+        { errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x8170, delay)); }
     };
 /*
     class Digitizer740D : public Digitizer740

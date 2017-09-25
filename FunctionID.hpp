@@ -23,6 +23,7 @@ enum FunctionID {
     DESMode,
     DPPAcquisitionMode,
     DPPTriggerMode,
+    RunDelay,
     // Channel/group setting
     ChannelDCOffset,
     GroupDCOffset,
