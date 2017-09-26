@@ -33,9 +33,9 @@ enum FunctionID {
     GroupTriggerThreshold,
     ChannelGroupMask,
     TriggerPolarity,
-    DPPPreTriggerSize,
     ChannelPulsePolarity,
     // Channel/group optional
+    DPPPreTriggerSize,
     RecordLength,
     NumEventsPerAggregate,
     FixedBaseline,

@@ -365,10 +365,12 @@ namespace caen {
         void setDESMode(CAEN_DGTZ_EnaDis_t mode)
         { errorHandler(CAEN_DGTZ_SetDESMode(handle_, mode));}
 
-        uint32_t getDPPPreTriggerSize(int channel)
+        virtual uint32_t getDPPPreTriggerSize(int channel=-1)
         { uint32_t samples; errorHandler(CAEN_DGTZ_GetDPPPreTriggerSize(handle_, channel, &samples)); return samples; }
-        void setDPPPreTriggerSize(int channel, uint32_t samples)
+        virtual void setDPPPreTriggerSize(int channel, uint32_t samples)
         { errorHandler(CAEN_DGTZ_SetDPPPreTriggerSize(handle_, channel, samples)); }
+        virtual void setDPPPreTriggerSize(uint32_t samples)
+        { errorHandler(CAEN_DGTZ_SetDPPPreTriggerSize(handle_, -1, samples)); }
 
         CAEN_DGTZ_PulsePolarity_t getChannelPulsePolarity(uint32_t channel)
         { CAEN_DGTZ_PulsePolarity_t polarity; errorHandler(CAEN_DGTZ_GetChannelPulsePolarity(handle_, channel, &polarity)); return polarity; }
@@ -471,6 +473,28 @@ namespace caen {
         void setFixedBaseline(uint32_t value) override
         { errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x8038, value & 0xFFF)); }
 
+        /* Get / Set DPPPreTrigger
+         * @group
+         * @samples: Number of samples Ns of the Pre Trigger width. The value is
+         * expressed in steps of sampling frequency (16 ns).
+         * NOTE: the Pre Trigger value must be greater than the Gate Offset value by at least 112 ns.
+         *
+         */
+        uint32_t getDPPPreTriggerSize(int group) override
+        {
+            uint32_t samples;
+            errorHandler(CAEN_DGTZ_ReadRegister(handle_, 0x103C | group<<8 , &samples));
+            return samples;
+        }
+        void setDPPPreTriggerSize(uint32_t samples) override
+        { errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x803C, samples & 0xFFF)); }
+
+        void setDPPPreTriggerSize(int group, uint32_t samples) override
+        {
+            if (group > groups())
+                errorHandler(CAEN_DGTZ_InvalidChannelNumber);
+            { errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x103C | group<<8, samples & 0xFFF)); }
+        }
     };
 
 } // namespace caen
