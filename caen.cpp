@@ -22,11 +22,16 @@ namespace caen {
     Digitizer *Digitizer::open(CAEN_DGTZ_ConnectionType linkType, int linkNum, int conetNode, uint32_t VMEBaseAddress) {
         int handle;
         CAEN_DGTZ_BoardInfo_t boardInfo;
+        CAEN_DGTZ_DPPFirmware_t firmware;
         errorHandler(CAEN_DGTZ_OpenDigitizer(linkType, linkNum, conetNode, VMEBaseAddress, &handle));
         errorHandler(CAEN_DGTZ_GetInfo(handle, &boardInfo));
+        errorHandler(_CAEN_DGTZ_GetDPPFirmwareType(handle, &firmware));
         switch (boardInfo.FamilyCode) {
             case CAEN_DGTZ_XX740_FAMILY_CODE:
-                return new Digitizer740(handle, boardInfo);
+                if (firmware == CAEN_DGTZ_DPPFirmware_QDC)
+                    return new Digitizer740DPP(handle, boardInfo);
+                else
+                    return new Digitizer740(handle, boardInfo);
             default:
                 return new Digitizer(handle, boardInfo);;
         }

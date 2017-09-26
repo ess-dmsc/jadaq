@@ -414,8 +414,11 @@ namespace caen {
     {
     private:
         Digitizer740();
-        Digitizer740(int handle, CAEN_DGTZ_BoardInfo_t boardInfo) : Digitizer(handle,boardInfo) {}
         friend Digitizer* Digitizer::open(CAEN_DGTZ_ConnectionType linkType, int linkNum, int conetNode, uint32_t VMEBaseAddress);
+
+    protected:
+        Digitizer740(int handle, CAEN_DGTZ_BoardInfo_t boardInfo) : Digitizer(handle,boardInfo) {}
+
     public:
         virtual uint32_t channels() const override { return groups()*channelsPerGroup(); }
         virtual uint32_t groups() const override { return boardInfo_.Channels; } // for x740: boardInfo.Channels stores number of groups
@@ -435,14 +438,24 @@ namespace caen {
         virtual void setRunDelay(uint32_t delay) override
         { errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x8170, delay)); }
 
+    };
+
+    class Digitizer740DPP : public Digitizer740 {
+    private:
+        Digitizer740DPP();
+        friend Digitizer *
+        Digitizer::open(CAEN_DGTZ_ConnectionType linkType, int linkNum, int conetNode, uint32_t VMEBaseAddress);
+
+    protected:
+        Digitizer740DPP(int handle, CAEN_DGTZ_BoardInfo_t boardInfo) : Digitizer740(handle, boardInfo) {}
+
+    public:
         /* Get / Set FixedBaseline
          * @group
          * @value: Value of Fixed Baseline in LSB counts - 12 bits
          */
         uint32_t getFixedBaseline(uint32_t group) override
         {
-            if (getDPPFirmwareType() != CAEN_DGTZ_DPPFirmware_QDC)
-                errorHandler(CAEN_DGTZ_FunctionNotAllowed);
             if (group > groups())
                 errorHandler(CAEN_DGTZ_InvalidChannelNumber);
             uint32_t value;
@@ -451,20 +464,14 @@ namespace caen {
         }
         void setFixedBaseline(uint32_t group, uint32_t value) override
         {
-            if (getDPPFirmwareType() != CAEN_DGTZ_DPPFirmware_QDC)
-                errorHandler(CAEN_DGTZ_FunctionNotAllowed);
             if (group > groups())
                 errorHandler(CAEN_DGTZ_InvalidChannelNumber);
             errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x1038 | group<<8, value & 0xFFF));
         }
         void setFixedBaseline(uint32_t value) override
-        {
-            if (getDPPFirmwareType() != CAEN_DGTZ_DPPFirmware_QDC)
-                errorHandler(CAEN_DGTZ_FunctionNotAllowed);
-            errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x8038, value & 0xFFF));
-        }
-
+        { errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x8038, value & 0xFFF)); }
 
     };
+
 } // namespace caen
 #endif //_CAEN_HPP
