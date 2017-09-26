@@ -92,7 +92,7 @@ static std::string to_string(const caen::DPPAcquisitionMode &dam) {
     case F :                     \
         return to_string(D->get##F(C));
 
-void Digitizer::set(FunctionID functionID, std::string value)
+static void set_(caen::Digitizer* digitizer, FunctionID functionID, const std::string& value)
 {
     switch(functionID)
     {
@@ -120,7 +120,7 @@ void Digitizer::set(FunctionID functionID, std::string value)
     }
 }
 
-void Digitizer::set(FunctionID functionID, int index, std::string value) {
+static void set_(caen::Digitizer* digitizer, FunctionID functionID, int index, const std::string& value) {
     switch (functionID) {
         SET_ICASE(digitizer,ChannelDCOffset,index,s2ui(value))
         SET_ICASE(digitizer,GroupDCOffset,index,s2ui(value))
@@ -140,7 +140,7 @@ void Digitizer::set(FunctionID functionID, int index, std::string value) {
     }
 }
 
-std::string Digitizer::get(FunctionID functionID)
+static std::string get_(caen::Digitizer* digitizer, FunctionID functionID)
 {
     switch(functionID)
     {
@@ -189,7 +189,8 @@ static std::string get_(caen::Digitizer* digitizer, FunctionID functionID, int i
     }
 }
 
-static std::string backOffRepeat(const std::function<std::string()>& fun, int retry=3,  std::chrono::milliseconds grace=std::chrono::milliseconds(100))
+template <typename R, typename F>
+static R backOffRepeat(F fun, int retry=3,  std::chrono::milliseconds grace=std::chrono::milliseconds(1))
 {
     while (retry > 0) {
         try {
@@ -198,7 +199,7 @@ static std::string backOffRepeat(const std::function<std::string()>& fun, int re
         catch (caen::Error &e) {
             if (e.code() == CAEN_DGTZ_CommError) {
                 std::this_thread::sleep_for(grace);
-                grace *= 2;
+                grace *= 10;
                 --retry;
             } else throw;
         }
@@ -207,5 +208,19 @@ static std::string backOffRepeat(const std::function<std::string()>& fun, int re
 
 std::string Digitizer::get(FunctionID functionID, int index)
 {
-    return backOffRepeat([this,&functionID,&index](){ return get_(digitizer,functionID,index); });
+    return backOffRepeat<std::string>([this,&functionID,&index](){ return get_(digitizer,functionID,index); });
+}
+
+std::string Digitizer::get(FunctionID functionID)
+{
+    return backOffRepeat<std::string>([this,&functionID](){ return get_(digitizer,functionID); });
+}
+
+void Digitizer::set(FunctionID functionID, int index, std::string value)
+{
+    return backOffRepeat<void>([this,&functionID,&index,&value](){ return set_(digitizer,functionID,index,value); });
+}
+void Digitizer::set(FunctionID functionID, std::string value)
+{
+    return backOffRepeat<void>([this,&functionID,&value](){ return set_(digitizer,functionID,value); });
 }
