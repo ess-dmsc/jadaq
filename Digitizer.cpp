@@ -4,6 +4,9 @@
 
 #include "Digitizer.hpp"
 #include <regex>
+#include <chrono>
+#include <thread>
+
 
 using std::to_string;
 
@@ -164,24 +167,45 @@ std::string Digitizer::get(FunctionID functionID)
     }
 }
 
-std::string Digitizer::get(FunctionID functionID, int index)
+static std::string get_(caen::Digitizer* digitizer, FunctionID functionID, int index)
 {
-    switch(functionID)
-    {
-        GET_ICASE(digitizer,ChannelDCOffset,index)
-        GET_ICASE(digitizer,GroupDCOffset,index)
-        GET_ICASE(digitizer,ChannelSelfTrigger,index)
-        GET_ICASE(digitizer,GroupSelfTrigger,index)
-        GET_ICASE(digitizer,ChannelTriggerThreshold,index)
-        GET_ICASE(digitizer,GroupTriggerThreshold,index)
-        GET_ICASE(digitizer,ChannelGroupMask,index)
-        GET_ICASE(digitizer,TriggerPolarity,index)
-        GET_ICASE(digitizer,DPPPreTriggerSize,index)
-        GET_ICASE(digitizer,ChannelPulsePolarity,index)
-        GET_ICASE(digitizer,RecordLength,index)
-        GET_ICASE(digitizer,NumEventsPerAggregate,index)
-        GET_ICASE(digitizer,FixedBaseline,index)
+
+    switch (functionID) {
+        GET_ICASE(digitizer, ChannelDCOffset, index)
+        GET_ICASE(digitizer, GroupDCOffset, index)
+        GET_ICASE(digitizer, ChannelSelfTrigger, index)
+        GET_ICASE(digitizer, GroupSelfTrigger, index)
+        GET_ICASE(digitizer, ChannelTriggerThreshold, index)
+        GET_ICASE(digitizer, GroupTriggerThreshold, index)
+        GET_ICASE(digitizer, ChannelGroupMask, index)
+        GET_ICASE(digitizer, TriggerPolarity, index)
+        GET_ICASE(digitizer, DPPPreTriggerSize, index)
+        GET_ICASE(digitizer, ChannelPulsePolarity, index)
+        GET_ICASE(digitizer, RecordLength, index)
+        GET_ICASE(digitizer, NumEventsPerAggregate, index)
+        GET_ICASE(digitizer, FixedBaseline, index)
         default:
             throw std::invalid_argument{"Unknown Function"};
     }
+}
+
+static std::string backOffRepeat(const std::function<std::string()>& fun, int retry=3,  std::chrono::milliseconds grace=std::chrono::milliseconds(100))
+{
+    while (retry > 0) {
+        try {
+            return fun();
+        }
+        catch (caen::Error &e) {
+            if (e.code() == CAEN_DGTZ_CommError) {
+                std::this_thread::sleep_for(grace);
+                grace *= 2;
+                --retry;
+            } else throw;
+        }
+    }
+}
+
+std::string Digitizer::get(FunctionID functionID, int index)
+{
+    return backOffRepeat([this,&functionID,&index](){ return get_(digitizer,functionID,index); });
 }

@@ -77,7 +77,7 @@ namespace caen {
             return digitizerErrorString(code_);
         }
 
-        int code() const { return code_; }
+        CAEN_DGTZ_ErrorCode code() const { return code_; }
     };
     static inline void errorHandler(CAEN_DGTZ_ErrorCode code)
     {

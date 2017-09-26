@@ -55,6 +55,17 @@ static inline FunctionID operator++(FunctionID& id, int)
     id = (FunctionID)((int)id+1);
     return copy;
 }
+static inline FunctionID& operator--(FunctionID& id)
+{
+    id = (FunctionID)((int)id-1);
+    return id;
+}
+static inline FunctionID operator--(FunctionID& id, int)
+{
+    FunctionID copy = id;
+    id = (FunctionID)((int)id-1);
+    return copy;
+}
 
 FunctionID functionID(std::string s);
 const std::string to_string(FunctionID id);
