@@ -482,6 +482,8 @@ namespace caen {
          */
         uint32_t getDPPPreTriggerSize(int group) override
         {
+            if (group > groups() || group < 0)
+                errorHandler(CAEN_DGTZ_InvalidChannelNumber);
             uint32_t samples;
             errorHandler(CAEN_DGTZ_ReadRegister(handle_, 0x103C | group<<8 , &samples));
             return samples;
@@ -491,7 +493,7 @@ namespace caen {
 
         void setDPPPreTriggerSize(int group, uint32_t samples) override
         {
-            if (group > groups())
+            if (group > groups() || group < 0)
                 errorHandler(CAEN_DGTZ_InvalidChannelNumber);
             { errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x103C | group<<8, samples & 0xFFF)); }
         }
