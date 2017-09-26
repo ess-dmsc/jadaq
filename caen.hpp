@@ -255,7 +255,9 @@ namespace caen {
         /* Device configuration - i.e. getter and setters*/
         uint32_t getRecordLength(int channel=-1) // Default channel -1 == all
         { uint32_t size; errorHandler(_CAEN_DGTZ_GetRecordLength(handle_,&size,channel)); return size; }
-        void setRecordLength(uint32_t size, int channel=-1)  // Default channel -1 == all
+        void setRecordLength(uint32_t size)  // Default channel -1 == all
+        { errorHandler(_CAEN_DGTZ_SetRecordLength(handle_,size,-1)); }
+        void setRecordLength(int channel, uint32_t size)
         { errorHandler(_CAEN_DGTZ_SetRecordLength(handle_,size,channel)); }
 
         uint32_t getMaxNumEventsBLT()
@@ -383,9 +385,13 @@ namespace caen {
         void setDPPTriggerMode(CAEN_DGTZ_DPP_TriggerMode_t mode)
         { errorHandler( CAEN_DGTZ_SetDPPTriggerMode(handle_, mode)); }
 
-        uint32_t getNumEventsPerAggregate(int channel=-1)
+        uint32_t getNumEventsPerAggregate()
+        { uint32_t numEvents; errorHandler(CAEN_DGTZ_GetNumEventsPerAggregate(handle_, &numEvents)); return numEvents; }
+        uint32_t getNumEventsPerAggregate(uint32_t channel)
         { uint32_t numEvents; errorHandler(CAEN_DGTZ_GetNumEventsPerAggregate(handle_, &numEvents, channel)); return numEvents; }
-        void setNumEventsPerAggregate(uint32_t numEvents, int channel=-1)
+        void setNumEventsPerAggregate(uint32_t numEvents)
+        { errorHandler(CAEN_DGTZ_SetNumEventsPerAggregate(handle_, numEvents)); }
+        void setNumEventsPerAggregate(uint32_t channel, uint32_t numEvents)
         { errorHandler(CAEN_DGTZ_SetNumEventsPerAggregate(handle_, numEvents, channel)); }
 
         virtual uint32_t getRunDelay() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
