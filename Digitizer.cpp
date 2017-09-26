@@ -192,15 +192,14 @@ static std::string get_(caen::Digitizer* digitizer, FunctionID functionID, int i
 template <typename R, typename F>
 static R backOffRepeat(F fun, int retry=3,  std::chrono::milliseconds grace=std::chrono::milliseconds(1))
 {
-    while (retry > 0) {
+    while (true) {
         try {
             return fun();
         }
         catch (caen::Error &e) {
-            if (e.code() == CAEN_DGTZ_CommError) {
+            if (e.code() == CAEN_DGTZ_CommError && retry-- > 0) {
                 std::this_thread::sleep_for(grace);
                 grace *= 10;
-                --retry;
             } else throw;
         }
     }
@@ -220,6 +219,7 @@ void Digitizer::set(FunctionID functionID, int index, std::string value)
 {
     return backOffRepeat<void>([this,&functionID,&index,&value](){ return set_(digitizer,functionID,index,value); });
 }
+
 void Digitizer::set(FunctionID functionID, std::string value)
 {
     return backOffRepeat<void>([this,&functionID,&value](){ return set_(digitizer,functionID,value); });
