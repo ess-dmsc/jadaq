@@ -49,7 +49,7 @@ static CAEN_DGTZ_PulsePolarity_t s2pp(const std::string& s)
 {
     return (CAEN_DGTZ_PulsePolarity_t)std::stoi(s,nullptr,0);
 }
-static CAEN_DGTZ_DPP_AcqMode_t s2dam_(const std::string& s)
+static CAEN_DGTZ_DPP_AcqMode_t s2dam(const std::string& s)
 {
     return (CAEN_DGTZ_DPP_AcqMode_t)std::stoi(s,nullptr,0);
 }
@@ -57,20 +57,52 @@ static CAEN_DGTZ_DPP_SaveParam_t s2sp(const std::string& s)
 {
     return (CAEN_DGTZ_DPP_SaveParam_t)std::stoi(s,nullptr,0);
 }
-static caen::DPPAcquisitionMode s2dam(const std::string& s)
+static caen::DPPAcquisitionMode s2cdam(const std::string& s)
 {
     std::regex rx("\\{(\\w+),(\\w+)\\}");
     std::smatch match;
     if (std::regex_search(s, match, rx))
     {
-        return caen::DPPAcquisitionMode{s2dam_(match[1]),s2sp(match[2])};
+        return caen::DPPAcquisitionMode{s2dam(match[1]),s2sp(match[2])};
     }
     throw std::invalid_argument{"Invalid DPPAcquisitionMode"};
 }
 
+static std::string to_string(CAEN_DGTZ_DPP_AcqMode_t mode)
+{
+    switch (mode)
+    {
+        case CAEN_DGTZ_DPP_ACQ_MODE_Oscilloscope :
+            return("Oscilloscope");
+        case CAEN_DGTZ_DPP_ACQ_MODE_List :
+            return ("List");
+        case CAEN_DGTZ_DPP_ACQ_MODE_Mixed :
+            return ("Mixed");
+        default :
+            return std::to_string(mode);
+    }
+}
+
+static std::string to_string(CAEN_DGTZ_DPP_SaveParam_t sp)
+{
+    switch (sp)
+    {
+        case CAEN_DGTZ_DPP_SAVE_PARAM_EnergyOnly :
+            return("EnergyOnly");
+        case CAEN_DGTZ_DPP_SAVE_PARAM_TimeOnly :
+            return ("TimeOnly");
+        case CAEN_DGTZ_DPP_SAVE_PARAM_EnergyAndTime :
+            return ("EnergyAndTime");
+        case CAEN_DGTZ_DPP_SAVE_PARAM_None :
+            return ("None");
+        default :
+            return std::to_string(sp);
+    }
+}
+
 static std::string to_string(const caen::DPPAcquisitionMode &dam) {
     std::stringstream ss;
-    ss << "{" << dam.param << "," << dam.mode << "}";
+    ss << '{' << to_string(dam.mode) << ',' << to_string(dam.param)<< '}';
     return ss.str();
 }
 
@@ -108,7 +140,7 @@ static void set_(caen::Digitizer* digitizer, FunctionID functionID, const std::s
         SET_CASE(digitizer,RunSynchronizationMode,s2rsm(value))
         SET_CASE(digitizer,OutputSignalMode,s2osm(value))
         SET_CASE(digitizer,DESMode,s2ed(value))
-        SET_CASE(digitizer,DPPAcquisitionMode,s2dam(value))
+        SET_CASE(digitizer,DPPAcquisitionMode,s2cdam(value))
         SET_CASE(digitizer,DPPTriggerMode,s2dtm(value))
         SET_CASE(digitizer,RunDelay,s2ui(value))
         SET_CASE(digitizer,RecordLength,s2ui(value))
