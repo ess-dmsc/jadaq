@@ -3,6 +3,7 @@
 //
 
 #include "Configuration.hpp"
+#include "StringConversion.hpp"
 #include <regex>
 #include <iostream>
 #include <cstdint>
@@ -86,7 +87,7 @@ pt::ptree Configuration::readBack()
         dPtree.put("USB", digitizer.usb());
         if (digitizer.vme())
         {
-            dPtree.put("VME", digitizer.vme());
+            dPtree.put("VME", hex_string(digitizer.vme()));
         }
         for (FunctionID id = functionIDbegin(); id < functionIDend(); ++id)
         {

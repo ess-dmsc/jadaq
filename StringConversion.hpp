@@ -6,9 +6,35 @@
 #define JADAQ_STRINGCONVERSION_HPP
 
 #include <string>
+#include <sstream>
+#include <bitset>
+#include <climits>
 #include "caen.hpp"
 
 using std::to_string;
+
+template<class T>
+std::string hex_string(T v)
+{
+    std::stringstream ss;
+    ss << std::hex << v;
+    return ss.str();
+}
+
+template<class T>
+std::string oct_string(T v)
+{
+    std::stringstream ss;
+    ss << std::oct << v;
+    return ss.str();
+}
+
+template<class T>
+std::string bin_string(T v)
+{
+    std::bitset<sizeof(T) * CHAR_BIT> bs(v);
+    return bs.to_string();
+}
 
 unsigned int s2ui(const std::string& s);
 CAEN_DGTZ_IOLevel_t s2iol(const std::string& s);
