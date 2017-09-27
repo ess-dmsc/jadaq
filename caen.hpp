@@ -520,8 +520,9 @@ namespace caen {
         }
         void setDPPAcquisitionMode(DPPAcquisitionMode mode) override
         {
-            if (mode.param != CAEN_DGTZ_DPP_SAVE_PARAM_EnergyAndTime)
-                errorHandler(CAEN_DGTZ_InvalidParam);
+            // Completely ignore mode.param: CAEN documentation does not match reality
+            //if (mode.param != CAEN_DGTZ_DPP_SAVE_PARAM_EnergyAndTime)
+            //    errorHandler(CAEN_DGTZ_InvalidParam);
             switch (mode.mode)
             {
                 case CAEN_DGTZ_DPP_ACQ_MODE_List:
