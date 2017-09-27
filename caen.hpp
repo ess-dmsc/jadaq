@@ -23,6 +23,7 @@
 #include <CAENDigitizerType.h>
 #include <string>
 #include <cstdint>
+#include <cassert>
 
 namespace caen {
     class Error : public std::exception
@@ -377,9 +378,9 @@ namespace caen {
         void setChannelPulsePolarity(uint32_t channel, CAEN_DGTZ_PulsePolarity_t polarity)
         { errorHandler(CAEN_DGTZ_SetChannelPulsePolarity(handle_, channel, polarity)); }
 
-        DPPAcquisitionMode getDPPAcquisitionMode()
+        virtual DPPAcquisitionMode getDPPAcquisitionMode()
         { DPPAcquisitionMode mode; errorHandler( CAEN_DGTZ_GetDPPAcquisitionMode(handle_, &mode.mode, &mode.param)); return mode; }
-        void setDPPAcquisitionMode(DPPAcquisitionMode mode)
+        virtual void setDPPAcquisitionMode(DPPAcquisitionMode mode)
         { errorHandler( CAEN_DGTZ_SetDPPAcquisitionMode(handle_, mode.mode, mode.param)); }
 
         CAEN_DGTZ_DPP_TriggerMode_t getDPPTriggerMode()
@@ -496,6 +497,42 @@ namespace caen {
             if (group >= groups() || group < 0)
                 errorHandler(CAEN_DGTZ_InvalidChannelNumber);
             { errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x103C | group<<8, samples & 0xFFF)); }
+        }
+
+        DPPAcquisitionMode getDPPAcquisitionMode() override
+        {
+            uint32_t boardConf;
+            errorHandler(CAEN_DGTZ_ReadRegister(handle_, 0x8000 , &boardConf));
+            DPPAcquisitionMode mode;
+            if (boardConf & 1<<16)
+                mode.mode = CAEN_DGTZ_DPP_ACQ_MODE_Mixed;
+            else
+                mode.mode = CAEN_DGTZ_DPP_ACQ_MODE_List;
+            switch ((boardConf & 3<<18)>>18)
+            {
+                case 0 : mode.param = CAEN_DGTZ_DPP_SAVE_PARAM_None; break;
+                case 1 : mode.param = CAEN_DGTZ_DPP_SAVE_PARAM_TimeOnly; break;
+                case 2 : mode.param = CAEN_DGTZ_DPP_SAVE_PARAM_EnergyOnly; break;
+                case 3 : mode.param = CAEN_DGTZ_DPP_SAVE_PARAM_EnergyAndTime; break;
+                default: assert(false);
+            }
+            return mode;
+        }
+        void setDPPAcquisitionMode(DPPAcquisitionMode mode) override
+        {
+            if (mode.param != CAEN_DGTZ_DPP_SAVE_PARAM_EnergyAndTime)
+                errorHandler(CAEN_DGTZ_InvalidParam);
+            switch (mode.mode)
+            {
+                case CAEN_DGTZ_DPP_ACQ_MODE_List:
+                    CAEN_DGTZ_WriteRegister(handle_, 0x8008, 1<<16); // bit clear
+                    break;
+                case CAEN_DGTZ_DPP_ACQ_MODE_Mixed:
+                    CAEN_DGTZ_WriteRegister(handle_, 0x8004, 1<<16); // bit set
+                    break;
+                default:
+                    errorHandler(CAEN_DGTZ_InvalidParam);
+            }
         }
     };
 
