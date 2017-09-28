@@ -121,7 +121,13 @@ static void configure(Digitizer* digitizer, pt::ptree& conf)
         FunctionID fid = functionID(setting.first);
         if (setting.second.empty()) //Setting without channel/group
         {
-            digitizer->set(fid,setting.second.data());
+            try { digitizer->set(fid,setting.second.data()); }
+            catch (caen::Error& e)
+            {
+                std::cerr << "Error while configuring device: set" << to_string(fid) << '(' << setting.second.data() <<
+                          ") " << e.what() << std::endl;
+                throw;
+            }
         }
         else //Setting with channel/group
         {
@@ -131,7 +137,13 @@ static void configure(Digitizer* digitizer, pt::ptree& conf)
                 Configuration::Range range{rangeSetting.first};
                 for (int i = range.begin(); i != range.end(); ++i)
                 {
-                    digitizer->set(fid, i, rangeSetting.second.data());
+                    try { digitizer->set(fid, i, rangeSetting.second.data()); }
+                    catch (caen::Error& e)
+                    {
+                        std::cerr << "Error while configuring device: set" << to_string(fid) <<
+                                  '(' << i << ", " << rangeSetting.second.data() << ") " << e.what() << std::endl;
+                        throw;
+                    }
                 }
             }
         }
