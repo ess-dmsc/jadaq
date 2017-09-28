@@ -13,29 +13,30 @@
 
 using std::to_string;
 
-template<class T>
+template<typename T>
 std::string hex_string(T v)
 {
     std::stringstream ss;
-    ss << std::hex << v;
+    ss << "0x" << std::hex << v;
     return ss.str();
 }
 
-template<class T>
+template<typename T>
 std::string oct_string(T v)
 {
     std::stringstream ss;
-    ss << std::oct << v;
+    ss << '0' << std::oct << v;
     return ss.str();
 }
 
-template<class T>
+template<size_t w=0, typename T>
 std::string bin_string(T v)
 {
-    std::bitset<sizeof(T) * CHAR_BIT> bs(v);
+    std::bitset<w?w:(sizeof(T)*CHAR_BIT)> bs(v);
     return bs.to_string();
 }
-
+// binary string
+unsigned int bs2ui(const std::string& s);
 unsigned int s2ui(const std::string& s);
 CAEN_DGTZ_IOLevel_t s2iol(const std::string& s);
 CAEN_DGTZ_AcqMode_t s2am(const std::string& s);

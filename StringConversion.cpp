@@ -13,6 +13,12 @@ unsigned int s2ui(const std::string& s)
     return std::stoi (s,nullptr,0);
 }
 
+// binary string
+unsigned int bs2ui(const std::string& s)
+{
+    return std::stoi (s,nullptr,2);
+}
+
 CAEN_DGTZ_IOLevel_t s2iol(const std::string& s)
 {
     return (CAEN_DGTZ_IOLevel_t)std::stoi(s,nullptr,0);

@@ -8,31 +8,33 @@
 #include <chrono>
 #include <thread>
 
+#define MAX_GROUPS 8
+
 #define SET_CASE(D,F,V) \
     case F :            \
         D->set##F(V);   \
         break;
 
-#define GET_CASE(D,F)        \
+#define GET_CASE(D,F,TS)        \
     case F :                    \
-        return to_string(D->get##F());
+        return TS(D->get##F());
 
 #define SET_ICASE(D,F,C,V)   \
     case F :                 \
         D->set##F(C,V);      \
         break;
 
-#define GET_ICASE(D,F,C)      \
+#define GET_ICASE(D,F,C,TS)      \
     case F :                     \
-        return to_string(D->get##F(C));
+        return TS(D->get##F(C));
 
 static void set_(caen::Digitizer* digitizer, FunctionID functionID, const std::string& value)
 {
     switch(functionID)
     {
         SET_CASE(digitizer,MaxNumEventsBLT,s2ui(value))
-        SET_CASE(digitizer,ChannelEnableMask,s2ui(value))
-        SET_CASE(digitizer,GroupEnableMask,s2ui(value))
+        SET_CASE(digitizer,ChannelEnableMask,bs2ui(value))
+        SET_CASE(digitizer,GroupEnableMask,bs2ui(value))
         SET_CASE(digitizer,DecimationFactor,s2ui(value))
         SET_CASE(digitizer,PostTriggerSize,s2ui(value))
         SET_CASE(digitizer,IOlevel,s2iol(value))
@@ -78,23 +80,23 @@ static std::string get_(caen::Digitizer* digitizer, FunctionID functionID)
 {
     switch(functionID)
     {
-        GET_CASE(digitizer,MaxNumEventsBLT)
-        GET_CASE(digitizer,ChannelEnableMask)
-        GET_CASE(digitizer,GroupEnableMask)
-        GET_CASE(digitizer,DecimationFactor)
-        GET_CASE(digitizer,PostTriggerSize)
-        GET_CASE(digitizer,IOlevel)
-        GET_CASE(digitizer,AcquisitionMode)
-        GET_CASE(digitizer,ExternalTriggerMode)
-        GET_CASE(digitizer,SWTriggerMode)
-        GET_CASE(digitizer,RunSynchronizationMode)
-        GET_CASE(digitizer,OutputSignalMode)
-        GET_CASE(digitizer,DESMode)
-        GET_CASE(digitizer,DPPAcquisitionMode)
-        GET_CASE(digitizer,DPPTriggerMode)
-        GET_CASE(digitizer,RunDelay)
-        GET_CASE(digitizer,RecordLength)
-        GET_CASE(digitizer,NumEventsPerAggregate)
+        GET_CASE(digitizer,MaxNumEventsBLT,to_string)
+        GET_CASE(digitizer,ChannelEnableMask,bin_string)
+        GET_CASE(digitizer,GroupEnableMask,bin_string<MAX_GROUPS>)
+        GET_CASE(digitizer,DecimationFactor,to_string)
+        GET_CASE(digitizer,PostTriggerSize,to_string)
+        GET_CASE(digitizer,IOlevel,to_string)
+        GET_CASE(digitizer,AcquisitionMode,to_string)
+        GET_CASE(digitizer,ExternalTriggerMode,to_string)
+        GET_CASE(digitizer,SWTriggerMode,to_string)
+        GET_CASE(digitizer,RunSynchronizationMode,to_string)
+        GET_CASE(digitizer,OutputSignalMode,to_string)
+        GET_CASE(digitizer,DESMode,to_string)
+        GET_CASE(digitizer,DPPAcquisitionMode,to_string)
+        GET_CASE(digitizer,DPPTriggerMode,to_string)
+        GET_CASE(digitizer,RunDelay,to_string)
+        GET_CASE(digitizer,RecordLength,to_string)
+        GET_CASE(digitizer,NumEventsPerAggregate,to_string)
         default:
             throw std::invalid_argument{"Unknown Function"};
 
@@ -105,19 +107,19 @@ static std::string get_(caen::Digitizer* digitizer, FunctionID functionID, int i
 {
 
     switch (functionID) {
-        GET_ICASE(digitizer, ChannelDCOffset, index)
-        GET_ICASE(digitizer, GroupDCOffset, index)
-        GET_ICASE(digitizer, ChannelSelfTrigger, index)
-        GET_ICASE(digitizer, GroupSelfTrigger, index)
-        GET_ICASE(digitizer, ChannelTriggerThreshold, index)
-        GET_ICASE(digitizer, GroupTriggerThreshold, index)
-        GET_ICASE(digitizer, ChannelGroupMask, index)
-        GET_ICASE(digitizer, TriggerPolarity, index)
-        GET_ICASE(digitizer, DPPPreTriggerSize, index)
-        GET_ICASE(digitizer, ChannelPulsePolarity, index)
-        GET_ICASE(digitizer, RecordLength, index)
-        GET_ICASE(digitizer, NumEventsPerAggregate, index)
-        GET_ICASE(digitizer, FixedBaseline, index)
+        GET_ICASE(digitizer,ChannelDCOffset,index,to_string)
+        GET_ICASE(digitizer,GroupDCOffset,index,to_string)
+        GET_ICASE(digitizer,ChannelSelfTrigger,index,to_string)
+        GET_ICASE(digitizer,GroupSelfTrigger,index,to_string)
+        GET_ICASE(digitizer,ChannelTriggerThreshold,index,to_string)
+        GET_ICASE(digitizer,GroupTriggerThreshold,index,to_string)
+        GET_ICASE(digitizer,ChannelGroupMask,index,to_string)
+        GET_ICASE(digitizer,TriggerPolarity,index,to_string)
+        GET_ICASE(digitizer,DPPPreTriggerSize,index,to_string)
+        GET_ICASE(digitizer,ChannelPulsePolarity,index,to_string)
+        GET_ICASE(digitizer,RecordLength,index,to_string)
+        GET_ICASE(digitizer,NumEventsPerAggregate,index,to_string)
+        GET_ICASE(digitizer,FixedBaseline,index,to_string)
         default:
             throw std::invalid_argument{"Unknown Function"};
     }
