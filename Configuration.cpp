@@ -52,7 +52,8 @@ static pt::ptree rangeNode(Digitizer& digitizer, FunctionID id, int begin, int e
         prev = digitizer.get(id,begin);
     } catch (caen::Error& e)
     {
-        std::cerr << "Could not read configuration value [" << begin << "] for " << to_string(id) << ": " << e.what() << std::endl;
+        std::cerr << "WARNING: " << digitizer.name() << " could not read configuration value [" << begin << "] for " <<
+                  to_string(id) << ": " << e.what() << std::endl;
         return ptree;
     }
     for (int i = begin+1; i < end; ++i)
@@ -70,7 +71,7 @@ static pt::ptree rangeNode(Digitizer& digitizer, FunctionID id, int begin, int e
             }
         } catch (caen::Error& e)
         {
-            std::cerr << "Could not read configuration range [" << i << ":" << end << "] for " << to_string(id) << ": " << e.what() << std::endl;
+            std::cerr << "WARNING: " << digitizer.name() << " could not read configuration range [" << i << ":" << end << "] for " << to_string(id) << ": " << e.what() << std::endl;
             ptree.put(to_string(Configuration::Range(begin,i-1)),prev);
             return ptree;
         }
@@ -100,7 +101,7 @@ pt::ptree Configuration::readBack()
                 } catch (caen::Error& e)
                 {
                     //Function not supported so we just skip it
-                    std::cerr << "Could not read configuration for " << to_string(id) << ": " << e.what() << std::endl;
+                    std::cerr << "WARNING: " << digitizer.name() << " could not read configuration for " << to_string(id) << ": " << e.what() << std::endl;
                 }
             }
             else
@@ -117,17 +118,17 @@ pt::ptree Configuration::readBack()
     return out;
 }
 
-static void configure(Digitizer* digitizer, pt::ptree& conf)
+static void configure(Digitizer& digitizer, pt::ptree& conf)
 {
     for (auto& setting : conf)
     {
         FunctionID fid = functionID(setting.first);
         if (setting.second.empty()) //Setting without channel/group
         {
-            try { digitizer->set(fid,setting.second.data()); }
+            try { digitizer.set(fid,setting.second.data()); }
             catch (caen::Error& e)
             {
-                std::cerr << "Error while configuring device: set" << to_string(fid) << '(' << setting.second.data() <<
+                std::cerr << "ERROR: " << digitizer.name() << " could not set" << to_string(fid) << '(' << setting.second.data() <<
                           ") " << e.what() << std::endl;
                 throw;
             }
@@ -140,10 +141,10 @@ static void configure(Digitizer* digitizer, pt::ptree& conf)
                 Configuration::Range range{rangeSetting.first};
                 for (int i = range.begin(); i != range.end(); ++i)
                 {
-                    try { digitizer->set(fid, i, rangeSetting.second.data()); }
+                    try { digitizer.set(fid, i, rangeSetting.second.data()); }
                     catch (caen::Error& e)
                     {
-                        std::cerr << "Error while configuring device: set" << to_string(fid) <<
+                        std::cerr << "ERROR: " << digitizer.name() << " could not set" << to_string(fid) <<
                                   '(' << i << ", " << rangeSetting.second.data() << ") " << e.what() << std::endl;
                         throw;
                     }
@@ -183,7 +184,7 @@ void Configuration::apply()
             std::cerr << "Unable to open digitizer [" << name << ']' << std::endl;
             continue;
         }
-        configure(digitizer,conf);
+        configure(*digitizer,conf);
     }
 }
 
