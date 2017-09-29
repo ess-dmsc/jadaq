@@ -52,7 +52,7 @@ static pt::ptree rangeNode(Digitizer& digitizer, FunctionID id, int begin, int e
         prev = digitizer.get(id,begin);
     } catch (caen::Error& e)
     {
-        std::cerr << "WARNING: " << digitizer.name() << " could not read configuration value [" << begin << "] for " <<
+        std::cerr << "DEBUG: " << digitizer.name() << " could not read configuration value [" << begin << "] for " <<
                   to_string(id) << ": " << e.what() << std::endl;
         return ptree;
     }
@@ -71,7 +71,7 @@ static pt::ptree rangeNode(Digitizer& digitizer, FunctionID id, int begin, int e
             }
         } catch (caen::Error& e)
         {
-            std::cerr << "WARNING: " << digitizer.name() << " could not read configuration range [" << i << ":" << end << "] for " << to_string(id) << ": " << e.what() << std::endl;
+            std::cerr << "DEBUG: " << digitizer.name() << " could not read configuration range [" << i << ":" << end << "] for " << to_string(id) << ": " << e.what() << std::endl;
             ptree.put(to_string(Configuration::Range(begin,i-1)),prev);
             return ptree;
         }
@@ -101,7 +101,7 @@ pt::ptree Configuration::readBack()
                 } catch (caen::Error& e)
                 {
                     //Function not supported so we just skip it
-                    std::cerr << "WARNING: " << digitizer.name() << " could not read configuration for " << to_string(id) << ": " << e.what() << std::endl;
+                    std::cerr << "DEBUG: " << digitizer.name() << " could not read configuration for " << to_string(id) << ": " << e.what() << std::endl;
                 }
             }
             else
@@ -170,7 +170,7 @@ void Configuration::apply()
             conf.erase("USB");
         } catch (pt::ptree_error& e)
         {
-            std::cerr << '[' << name << ']' <<" does not contain USB number. REQUIRED" << std::endl;
+            std::cerr << 'ERROR: [' << name << ']' <<" does not contain USB number. REQUIRED" << std::endl;
             continue;
         }
         vme = conf.get<uint32_t>("VME",0);
@@ -181,7 +181,7 @@ void Configuration::apply()
             digitizer = &*digitizers.rbegin();
         } catch (caen::Error& e)
         {
-            std::cerr << "Unable to open digitizer [" << name << ']' << std::endl;
+            std::cerr << "ERROR: Unable to open digitizer [" << name << ']' << std::endl;
             continue;
         }
         configure(*digitizer,conf);
