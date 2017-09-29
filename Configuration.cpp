@@ -170,7 +170,7 @@ void Configuration::apply()
             conf.erase("USB");
         } catch (pt::ptree_error& e)
         {
-            std::cerr << 'ERROR: [' << name << ']' <<" does not contain USB number. REQUIRED" << std::endl;
+            std::cerr << "ERROR: [" << name << ']' <<" does not contain USB number. REQUIRED" << std::endl;
             continue;
         }
         vme = conf.get<uint32_t>("VME",0);
