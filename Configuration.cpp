@@ -52,6 +52,7 @@ static pt::ptree rangeNode(Digitizer& digitizer, FunctionID id, int begin, int e
         prev = digitizer.get(id,begin);
     } catch (caen::Error& e)
     {
+        std::cerr << "Could not read configuration value [" << begin << "] for " << to_string(id) << ": " << e.what() << std::endl;
         return ptree;
     }
     for (int i = begin+1; i < end; ++i)
@@ -69,6 +70,7 @@ static pt::ptree rangeNode(Digitizer& digitizer, FunctionID id, int begin, int e
             }
         } catch (caen::Error& e)
         {
+            std::cerr << "Could not read configuration range [" << i << ":" << end << "] for " << to_string(id) << ": " << e.what() << std::endl;
             ptree.put(to_string(Configuration::Range(begin,i-1)),prev);
             return ptree;
         }
@@ -98,6 +100,7 @@ pt::ptree Configuration::readBack()
                 } catch (caen::Error& e)
                 {
                     //Function not supported so we just skip it
+                    std::cerr << "Could not read configuration for " << to_string(id) << ": " << e.what() << std::endl;
                 }
             }
             else
