@@ -400,6 +400,10 @@ namespace caen {
         virtual uint32_t getRunDelay() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         virtual void setRunDelay(uint32_t delay) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
 
+        virtual uint32_t getGateWidth(uint32_t group) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual void setGateWidth(uint32_t group, uint32_t value) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual void setGateWidth(uint32_t value) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+
         virtual uint32_t getFixedBaseline(uint32_t group) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         virtual void setFixedBaseline(uint32_t group, uint32_t value) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         virtual void setFixedBaseline(uint32_t value) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
@@ -453,6 +457,27 @@ namespace caen {
         Digitizer740DPP(int handle, CAEN_DGTZ_BoardInfo_t boardInfo) : Digitizer740(handle, boardInfo) {}
 
     public:
+        /* Get / Set GateWidth
+         * @group
+         * @value: Number of samples for the Gate width. Each sample corresponds to 16 ns - 12 bits
+         */
+        uint32_t getGateWidth(uint32_t group) override
+        {
+            if (group > groups())
+                errorHandler(CAEN_DGTZ_InvalidChannelNumber);
+            uint32_t value;
+            errorHandler(CAEN_DGTZ_ReadRegister(handle_, 0x1030 | group<<8 , &value));
+            return value;
+        }
+        void setGateWidth(uint32_t group, uint32_t value) override
+        {
+            if (group > groups())
+                errorHandler(CAEN_DGTZ_InvalidChannelNumber);
+            errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x1030 | group<<8, value & 0xFFF));
+        }
+        void setGateWidth(uint32_t value) override
+        { errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x8030, value & 0xFFF)); }
+
         /* Get / Set FixedBaseline
          * @group
          * @value: Value of Fixed Baseline in LSB counts - 12 bits

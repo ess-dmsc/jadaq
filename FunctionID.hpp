@@ -38,6 +38,7 @@ enum FunctionID {
     DPPPreTriggerSize,
     RecordLength,
     NumEventsPerAggregate,
+    GateWidth,
     FixedBaseline,
 };
 
