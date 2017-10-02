@@ -276,6 +276,9 @@ namespace caen {
         void setGroupEnableMask(uint32_t mask)
         { errorHandler(CAEN_DGTZ_SetGroupEnableMask(handle_, mask)); }
 
+        /* TODO: CAEN_DGTZ_GetDecimationFactor fails with GenericError
+         * on DT5740_171 , apparently a mismatch between DigitizerTable
+         * value end value read from register in the V1740 specific case. */
         uint16_t getDecimationFactor()
         { uint16_t factor;  errorHandler(CAEN_DGTZ_GetDecimationFactor(handle_, &factor)); return factor; }
         void setDecimationFactor(uint16_t factor)
@@ -338,7 +341,12 @@ namespace caen {
             errorHandler(CAEN_DGTZ_GetGroupSelfTrigger(handle_, group, &mode));
             return mode; }
         void setGroupSelfTrigger(uint32_t group, CAEN_DGTZ_TriggerMode_t mode)
-        { errorHandler(CAEN_DGTZ_SetGroupSelfTrigger(handle_, mode, 1<<group)); }
+        {
+            /* TODO: patch and send upstream */
+            if (group >= groups())  // Needed because of bug in CAEN_DGTZ_GetGroupTriggerThreshold - patch pending
+                errorHandler(CAEN_DGTZ_InvalidChannelNumber);
+
+            errorHandler(CAEN_DGTZ_SetGroupSelfTrigger(handle_, mode, 1<<group)); }
 
         uint32_t getChannelTriggerThreshold(uint32_t channel)
         { uint32_t treshold; errorHandler(_CAEN_DGTZ_GetChannelTriggerThreshold(handle_, channel, &treshold)); return treshold; }
@@ -346,14 +354,34 @@ namespace caen {
         { errorHandler(_CAEN_DGTZ_SetChannelTriggerThreshold(handle_, channel, treshold)); }
 
         uint32_t getGroupTriggerThreshold(uint32_t group)
-        { uint32_t treshold; errorHandler(CAEN_DGTZ_GetGroupTriggerThreshold(handle_, group, &treshold)); return treshold; }
+        {
+            uint32_t treshold;
+            if (group >= groups())  // Needed because of bug in CAEN_DGTZ_GetGroupTriggerThreshold - patch sent
+                errorHandler(CAEN_DGTZ_InvalidChannelNumber);
+            errorHandler(CAEN_DGTZ_GetGroupTriggerThreshold(handle_, group, &treshold)); return treshold;
+        }
         void setGroupTriggerThreshold(uint32_t group, uint32_t treshold)
-        { errorHandler(CAEN_DGTZ_SetGroupTriggerThreshold(handle_, group, treshold)); }
+        {
+            if (group >= groups())  // Needed because of bug in CAEN_DGTZ_GetGroupTriggerThreshold - patch sent
+                errorHandler(CAEN_DGTZ_InvalidChannelNumber);
+            errorHandler(CAEN_DGTZ_SetGroupTriggerThreshold(handle_, group, treshold));
+        }
 
         uint32_t getChannelGroupMask(uint32_t group)
-        { uint32_t mask; errorHandler(_CAEN_DGTZ_GetChannelGroupMask(handle_, group, &mask)); return mask; }
+        {
+            uint32_t mask;
+            /* TODO: patch and send upstream */
+            if (group >= groups())  // Needed because of bug in CAEN_DGTZ_GetGroupTriggerThreshold - patch pending
+                errorHandler(CAEN_DGTZ_InvalidChannelNumber);
+            errorHandler(_CAEN_DGTZ_GetChannelGroupMask(handle_, group, &mask)); return mask;
+        }
         void setChannelGroupMask(uint32_t group, uint32_t mask)
-        { errorHandler(_CAEN_DGTZ_SetChannelGroupMask(handle_, group, mask)); }
+        {
+            /* TODO: patch and send upstream */
+            if (group >= groups())  // Needed because of bug in CAEN_DGTZ_GetGroupTriggerThreshold - patch pending
+                errorHandler(CAEN_DGTZ_InvalidChannelNumber);
+            errorHandler(_CAEN_DGTZ_SetChannelGroupMask(handle_, group, mask));
+        }
 
         CAEN_DGTZ_TriggerPolarity_t getTriggerPolarity(uint32_t channel)
         { CAEN_DGTZ_TriggerPolarity_t polarity; errorHandler(CAEN_DGTZ_GetTriggerPolarity(handle_, channel, &polarity)); return polarity; }
@@ -382,6 +410,7 @@ namespace caen {
         virtual void setDPPPreTriggerSize(uint32_t samples)
         { errorHandler(CAEN_DGTZ_SetDPPPreTriggerSize(handle_, -1, samples)); }
 
+        /* TODO: fails with InvalidParam om DT5740_171 */
         CAEN_DGTZ_PulsePolarity_t getChannelPulsePolarity(uint32_t channel)
         { CAEN_DGTZ_PulsePolarity_t polarity; errorHandler(CAEN_DGTZ_GetChannelPulsePolarity(handle_, channel, &polarity)); return polarity; }
         void setChannelPulsePolarity(uint32_t channel, CAEN_DGTZ_PulsePolarity_t polarity)
