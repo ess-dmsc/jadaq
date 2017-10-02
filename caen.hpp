@@ -307,9 +307,18 @@ namespace caen {
         { errorHandler(CAEN_DGTZ_SetChannelDCOffset(handle_, channel, offset)); }
 
         uint32_t getGroupDCOffset(uint32_t group)
-        { uint32_t offset; errorHandler(CAEN_DGTZ_GetGroupDCOffset(handle_, group, &offset)); return offset; }
+        {
+            uint32_t offset;
+            if (group >= groups())  // Needed because of bug in CAEN_DGTZ_GetGroupOffset - patch sent
+                errorHandler(CAEN_DGTZ_InvalidChannelNumber);
+            errorHandler(CAEN_DGTZ_GetGroupDCOffset(handle_, group, &offset)); return offset;
+        }
         void setGroupDCOffset(uint32_t group, uint32_t offset)
-        { errorHandler(CAEN_DGTZ_SetGroupDCOffset(handle_, group, offset)); }
+        {
+            if (group >= groups())  // Needed because of bug in CAEN_DGTZ_SetGroupOffset - patch sent
+                errorHandler(CAEN_DGTZ_InvalidChannelNumber);
+            errorHandler(CAEN_DGTZ_SetGroupDCOffset(handle_, group, offset));
+        }
 
         CAEN_DGTZ_TriggerMode_t getSWTriggerMode()
         { CAEN_DGTZ_TriggerMode_t mode; errorHandler(CAEN_DGTZ_GetSWTriggerMode(handle_, &mode)); return mode; }
