@@ -502,14 +502,17 @@ namespace caen {
         { errorHandler(CAEN_DGTZ_SetChannelPulsePolarity(handle_, channel, polarity)); }
 
         virtual DPPAcquisitionMode getDPPAcquisitionMode()
-        { DPPAcquisitionMode mode; errorHandler( CAEN_DGTZ_GetDPPAcquisitionMode(handle_, &mode.mode, &mode.param)); return mode; }
+        { DPPAcquisitionMode mode; errorHandler(CAEN_DGTZ_GetDPPAcquisitionMode(handle_, &mode.mode, &mode.param)); return mode; }
         virtual void setDPPAcquisitionMode(DPPAcquisitionMode mode)
-        { errorHandler( CAEN_DGTZ_SetDPPAcquisitionMode(handle_, mode.mode, mode.param)); }
+        { errorHandler(CAEN_DGTZ_SetDPPAcquisitionMode(handle_, mode.mode, mode.param)); }
 
         CAEN_DGTZ_DPP_TriggerMode_t getDPPTriggerMode()
-        { CAEN_DGTZ_DPP_TriggerMode_t mode; errorHandler( CAEN_DGTZ_GetDPPTriggerMode(handle_, &mode)); return mode; }
+        { CAEN_DGTZ_DPP_TriggerMode_t mode; errorHandler(CAEN_DGTZ_GetDPPTriggerMode(handle_, &mode)); return mode; }
         void setDPPTriggerMode(CAEN_DGTZ_DPP_TriggerMode_t mode)
-        { errorHandler( CAEN_DGTZ_SetDPPTriggerMode(handle_, mode)); }
+        { errorHandler(CAEN_DGTZ_SetDPPTriggerMode(handle_, mode)); }
+
+        void setDPPEventAggregation(int threshold, int maxsize)
+        { errorHandler(CAEN_DGTZ_SetDPPEventAggregation(handle_, threshold, maxsize)); }
 
         uint32_t getNumEventsPerAggregate()
         { uint32_t numEvents; errorHandler(CAEN_DGTZ_GetNumEventsPerAggregate(handle_, &numEvents)); return numEvents; }
@@ -525,6 +528,9 @@ namespace caen {
         void setMaxNumAggregatesBLT(uint32_t numAggr)
         { errorHandler(CAEN_DGTZ_SetMaxNumAggregatesBLT(handle_, numAggr)); }
 
+        void setDPPParameters(uint32_t channelmask, void *params)
+        { errorHandler(CAEN_DGTZ_SetDPPParameters(handle_, channelmask, params)); }
+
         virtual uint32_t getRunDelay() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         virtual void setRunDelay(uint32_t delay) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
 
@@ -535,11 +541,6 @@ namespace caen {
         virtual uint32_t getFixedBaseline(uint32_t group) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         virtual void setFixedBaseline(uint32_t group, uint32_t value) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         virtual void setFixedBaseline(uint32_t value) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
-
-
-      //   - CAEN_DGTZ_SetDPPParameters(int handle, uint32_t channelMask, void* params);
-      //   - CAEN_DGTZ_SetDPPEventAggregation(int handle, int threshold, int maxsize);
-
 
     }; // class Digitizer
 
