@@ -30,6 +30,7 @@ static std::unordered_map<std::string,FunctionID > functionMap =
                 MAP_ENTRY(DRS4SamplingFrequency),
                 MAP_ENTRY(DPPAcquisitionMode),
                 MAP_ENTRY(DPPTriggerMode),
+                MAP_ENTRY(MaxNumAggregatesBLT),
                 MAP_ENTRY(RunDelay),
                 MAP_ENTRY(ChannelDCOffset),
                 MAP_ENTRY(GroupDCOffset),
@@ -76,6 +77,7 @@ const std::string to_string(FunctionID id) {
         CASE_TO_STR(DRS4SamplingFrequency)
         CASE_TO_STR(DPPAcquisitionMode)
         CASE_TO_STR(DPPTriggerMode)
+        CASE_TO_STR(MaxNumAggregatesBLT)
         CASE_TO_STR(RunDelay)
         CASE_TO_STR(ChannelDCOffset)
         CASE_TO_STR(GroupDCOffset)

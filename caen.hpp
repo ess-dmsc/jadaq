@@ -520,6 +520,11 @@ namespace caen {
         void setNumEventsPerAggregate(uint32_t channel, uint32_t numEvents)
         { errorHandler(CAEN_DGTZ_SetNumEventsPerAggregate(handle_, numEvents, channel)); }
 
+        uint32_t getMaxNumAggregatesBLT()
+        { uint32_t numAggr; errorHandler(CAEN_DGTZ_GetMaxNumAggregatesBLT(handle_, &numAggr)); return numAggr; }
+        void setMaxNumAggregatesBLT(uint32_t numAggr)
+        { errorHandler(CAEN_DGTZ_SetMaxNumAggregatesBLT(handle_, numAggr)); }
+
         virtual uint32_t getRunDelay() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         virtual void setRunDelay(uint32_t delay) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
 
@@ -533,8 +538,6 @@ namespace caen {
 
 
       //   - CAEN_DGTZ_SetDPPParameters(int handle, uint32_t channelMask, void* params);
-      //   - CAEN_DGTZ_SetMaxNumAggregatesBLT(int handle, uint32_t numAggr);
-      //   - CAEN_DGTZ_GetMaxNumAggregatesBLT(int handle, uint32_t *numAggr);
       //   - CAEN_DGTZ_SetDPPEventAggregation(int handle, int threshold, int maxsize);
 
 

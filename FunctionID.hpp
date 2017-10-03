@@ -30,6 +30,7 @@ enum FunctionID {
     DRS4SamplingFrequency,
     DPPAcquisitionMode,
     DPPTriggerMode,
+    MaxNumAggregatesBLT,
     RunDelay,
     // Channel/group setting
     ChannelDCOffset,
