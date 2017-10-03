@@ -410,7 +410,8 @@ namespace caen {
         virtual void setDPPPreTriggerSize(uint32_t samples)
         { errorHandler(CAEN_DGTZ_SetDPPPreTriggerSize(handle_, -1, samples)); }
 
-        /* TODO: fails with InvalidParam om DT5740_171 */
+        /* TODO: fails with InvalidParam om DT5740_171, seems to fail
+         * deep in readout when the digtizer library calls ReadRegister 0x1n80 */
         CAEN_DGTZ_PulsePolarity_t getChannelPulsePolarity(uint32_t channel)
         { CAEN_DGTZ_PulsePolarity_t polarity; errorHandler(CAEN_DGTZ_GetChannelPulsePolarity(handle_, channel, &polarity)); return polarity; }
         void setChannelPulsePolarity(uint32_t channel, CAEN_DGTZ_PulsePolarity_t polarity)
