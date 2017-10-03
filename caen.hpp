@@ -403,6 +403,11 @@ namespace caen {
         void setDESMode(CAEN_DGTZ_EnaDis_t mode)
         { errorHandler(CAEN_DGTZ_SetDESMode(handle_, mode));}
 
+        CAEN_DGTZ_ZS_Mode_t getZeroSuppressionMode()
+        { CAEN_DGTZ_ZS_Mode_t mode; errorHandler(CAEN_DGTZ_GetZeroSuppressionMode(handle_, &mode)); return mode; }
+        void setZeroSuppressionMode(CAEN_DGTZ_ZS_Mode_t mode)
+        { errorHandler(CAEN_DGTZ_SetZeroSuppressionMode(handle_, mode)); }
+
         virtual uint32_t getDPPPreTriggerSize(int channel=-1)
         { uint32_t samples; errorHandler(CAEN_DGTZ_GetDPPPreTriggerSize(handle_, channel, &samples)); return samples; }
         virtual void setDPPPreTriggerSize(int channel, uint32_t samples)

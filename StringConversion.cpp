@@ -47,6 +47,10 @@ CAEN_DGTZ_EnaDis_t s2ed(const std::string& s)
 {
     return (CAEN_DGTZ_EnaDis_t)std::stoi(s,nullptr,0);
 }
+CAEN_DGTZ_ZS_Mode_t s2zsm(const std::string& s)
+{
+    return (CAEN_DGTZ_ZS_Mode_t)std::stoi(s,nullptr,0);
+}
 CAEN_DGTZ_TriggerPolarity_t s2tp(const std::string& s)
 {
     return (CAEN_DGTZ_TriggerPolarity_t)std::stoi(s,nullptr,0);
