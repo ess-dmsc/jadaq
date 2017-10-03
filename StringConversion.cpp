@@ -60,6 +60,14 @@ CAEN_DGTZ_AnalogMonitorOutputMode_t s2amom(const std::string& s)
 {
     return (CAEN_DGTZ_AnalogMonitorOutputMode_t)std::stoi(s,nullptr,0);
 }
+CAEN_DGTZ_AnalogMonitorMagnify_t s2mf(const std::string& s)
+{
+    return (CAEN_DGTZ_AnalogMonitorMagnify_t)std::stoi(s,nullptr,0);
+}
+CAEN_DGTZ_AnalogMonitorInspectorInverter_t s2ami(const std::string& s)
+{
+    return (CAEN_DGTZ_AnalogMonitorInspectorInverter_t)std::stoi(s,nullptr,0);
+}
 CAEN_DGTZ_TriggerPolarity_t s2tp(const std::string& s)
 {
     return (CAEN_DGTZ_TriggerPolarity_t)std::stoi(s,nullptr,0);
@@ -105,6 +113,53 @@ caen::ZSParams s2zsp(const std::string& s)
     }
     throw std::invalid_argument{"Invalid ZSParams"};
 }
+
+std::string to_string(CAEN_DGTZ_AnalogMonitorMagnify_t mf)
+{
+    switch (mf)
+    {
+        case CAEN_DGTZ_AM_MAGNIFY_1X:
+            return("1X");
+        case CAEN_DGTZ_AM_MAGNIFY_2X:
+            return("2X");
+        case CAEN_DGTZ_AM_MAGNIFY_4X:
+            return("4X");
+        case CAEN_DGTZ_AM_MAGNIFY_8X:
+            return("8X");
+        default :
+            return std::to_string(mf);
+    }
+}
+std::string to_string(CAEN_DGTZ_AnalogMonitorInspectorInverter_t ami)
+{
+    switch (ami)
+    {
+        case CAEN_DGTZ_AM_INSPECTORINVERTER_P_1X:
+            return("P_1X");
+        case CAEN_DGTZ_AM_INSPECTORINVERTER_N_1X:
+            return ("N_1X");
+        default :
+            return std::to_string(ami);
+    }
+}
+std::string to_string(const caen::AIMParams &aimp)
+{
+    std::stringstream ss;
+    ss << '{' << to_string(aimp.channelmask) << ',' << to_string(aimp.offset) << ',' << to_string(aimp.mf) << ',' << to_string(aimp.ami)<< '}';
+    return ss.str();
+}
+
+caen::AIMParams s2aimp(const std::string& s)
+{
+    std::regex rx("\\{(\\w+),(\\w+),(\\w+),(\\w+)\\}");
+    std::smatch match;
+    if (std::regex_search(s, match, rx))
+    {
+        return caen::AIMParams{s2ui(match[1]),s2ui(match[2]),s2mf(match[3]),s2ami(match[4])};
+    }
+    throw std::invalid_argument{"Invalid AIMParams"};
+}
+
 
 std::string to_string(CAEN_DGTZ_DPP_AcqMode_t mode)
 {

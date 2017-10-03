@@ -47,11 +47,16 @@ CAEN_DGTZ_OutputSignalMode_t s2osm(const std::string& s);
 CAEN_DGTZ_EnaDis_t s2ed(const std::string& s);
 CAEN_DGTZ_ZS_Mode_t s2zsm(const std::string& s);
 CAEN_DGTZ_AnalogMonitorOutputMode_t s2amom(const std::string& s);
+CAEN_DGTZ_AnalogMonitorMagnify_t s2mf(const std::string& s);
+CAEN_DGTZ_AnalogMonitorInspectorInverter_t s2ami(const std::string& s);
 CAEN_DGTZ_TriggerPolarity_t s2tp(const std::string& s);
 CAEN_DGTZ_PulsePolarity_t s2pp(const std::string& s);
 
 std::string to_string(const caen::ZSParams &zsp);
 caen::ZSParams s2zsp(const std::string& s);
+std::string to_string(const caen::AIMParams &aimp);
+caen::AIMParams s2aimp(const std::string& s);
+
 
 std::string to_string(CAEN_DGTZ_DPP_AcqMode_t mode);
 CAEN_DGTZ_DPP_AcqMode_t s2dam(const std::string& s);

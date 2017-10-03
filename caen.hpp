@@ -99,6 +99,13 @@ namespace caen {
         int32_t nsamp;
     };
 
+    struct AIMParams {
+        uint32_t channelmask;
+        uint32_t offset;
+        CAEN_DGTZ_AnalogMonitorMagnify_t mf; //enum
+        CAEN_DGTZ_AnalogMonitorInspectorInverter_t ami; //enum
+    };
+
     struct DPPAcquisitionMode {
         CAEN_DGTZ_DPP_AcqMode_t mode;    // enum
         CAEN_DGTZ_DPP_SaveParam_t param; // enum
@@ -424,6 +431,10 @@ namespace caen {
         void setAnalogMonOutput(CAEN_DGTZ_AnalogMonitorOutputMode_t mode)
         { errorHandler(CAEN_DGTZ_SetAnalogMonOutput(handle_, mode)); }
 
+        AIMParams getAnalogInspectionMonParams()
+        { AIMParams params; errorHandler(CAEN_DGTZ_GetAnalogInspectionMonParams(handle_, &params.channelmask, &params.offset, &params.mf, &params.ami)); return params; }
+        void setAnalogInspectionMonParams(AIMParams params)
+        { errorHandler(CAEN_DGTZ_SetAnalogInspectionMonParams(handle_, params.channelmask, params.offset, params.mf, params.ami)); }
 
         virtual uint32_t getDPPPreTriggerSize(int channel=-1)
         { uint32_t samples; errorHandler(CAEN_DGTZ_GetDPPPreTriggerSize(handle_, channel, &samples)); return samples; }
