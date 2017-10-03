@@ -419,6 +419,12 @@ namespace caen {
         void setChannelZSParams(uint32_t channel, ZSParams params)
         { errorHandler(CAEN_DGTZ_SetChannelZSParams(handle_, channel, params.weight, params.threshold, params.nsamp));}
 
+        CAEN_DGTZ_AnalogMonitorOutputMode_t getAnalogMonOutput()
+        { CAEN_DGTZ_AnalogMonitorOutputMode_t mode; errorHandler(CAEN_DGTZ_GetAnalogMonOutput(handle_, &mode)); return mode; }
+        void setAnalogMonOutput(CAEN_DGTZ_AnalogMonitorOutputMode_t mode)
+        { errorHandler(CAEN_DGTZ_SetAnalogMonOutput(handle_, mode)); }
+
+
         virtual uint32_t getDPPPreTriggerSize(int channel=-1)
         { uint32_t samples; errorHandler(CAEN_DGTZ_GetDPPPreTriggerSize(handle_, channel, &samples)); return samples; }
         virtual void setDPPPreTriggerSize(int channel, uint32_t samples)

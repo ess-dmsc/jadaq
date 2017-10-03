@@ -22,6 +22,7 @@ enum FunctionID {
     OutputSignalMode,
     DESMode,
     ZeroSuppressionMode,
+    AnalogMonOutput,
     DPPAcquisitionMode,
     DPPTriggerMode,
     RunDelay,
