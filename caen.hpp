@@ -436,6 +436,11 @@ namespace caen {
         void setAnalogInspectionMonParams(AIMParams params)
         { errorHandler(CAEN_DGTZ_SetAnalogInspectionMonParams(handle_, params.channelmask, params.offset, params.mf, params.ami)); }
 
+        CAEN_DGTZ_EnaDis_t getEventPackaging()
+        { CAEN_DGTZ_EnaDis_t mode; errorHandler(CAEN_DGTZ_GetEventPackaging(handle_, &mode)); return mode;}
+        void setEventPackaging(CAEN_DGTZ_EnaDis_t mode)
+        { errorHandler(CAEN_DGTZ_SetEventPackaging(handle_, mode));}
+
         virtual uint32_t getDPPPreTriggerSize(int channel=-1)
         { uint32_t samples; errorHandler(CAEN_DGTZ_GetDPPPreTriggerSize(handle_, channel, &samples)); return samples; }
         virtual void setDPPPreTriggerSize(int channel, uint32_t samples)

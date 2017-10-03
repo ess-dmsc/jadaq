@@ -24,6 +24,7 @@ static std::unordered_map<std::string,FunctionID > functionMap =
                 MAP_ENTRY(ZeroSuppressionMode),
                 MAP_ENTRY(AnalogMonOutput),
                 MAP_ENTRY(AnalogInspectionMonParams),
+                MAP_ENTRY(EventPackaging),
                 MAP_ENTRY(DPPAcquisitionMode),
                 MAP_ENTRY(DPPTriggerMode),
                 MAP_ENTRY(RunDelay),
@@ -64,6 +65,7 @@ const std::string to_string(FunctionID id) {
         CASE_TO_STR(ZeroSuppressionMode)
         CASE_TO_STR(AnalogMonOutput)
         CASE_TO_STR(AnalogInspectionMonParams)
+        CASE_TO_STR(EventPackaging)
         CASE_TO_STR(DPPAcquisitionMode)
         CASE_TO_STR(DPPTriggerMode)
         CASE_TO_STR(RunDelay)

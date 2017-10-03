@@ -24,6 +24,7 @@ enum FunctionID {
     ZeroSuppressionMode,
     AnalogMonOutput,
     AnalogInspectionMonParams,
+    EventPackaging,
     DPPAcquisitionMode,
     DPPTriggerMode,
     RunDelay,
