@@ -434,6 +434,11 @@ namespace caen {
         void setFastTriggerDigitizing(CAEN_DGTZ_EnaDis_t mode)
         { errorHandler(CAEN_DGTZ_SetFastTriggerDigitizing(handle_, mode));}
 
+        CAEN_DGTZ_TriggerMode_t getFastTriggerMode()
+        { CAEN_DGTZ_TriggerMode_t mode; errorHandler(CAEN_DGTZ_GetFastTriggerMode(handle_, &mode)); return mode; }
+        void setFastTriggerMode(CAEN_DGTZ_TriggerMode_t mode)
+        { errorHandler(CAEN_DGTZ_SetFastTriggerMode(handle_, mode)); }
+
         CAEN_DGTZ_RunSyncMode_t getRunSynchronizationMode()
         { CAEN_DGTZ_RunSyncMode_t mode; errorHandler(CAEN_DGTZ_GetRunSynchronizationMode(handle_, &mode)); return mode;}
         void setRunSynchronizationMode(CAEN_DGTZ_RunSyncMode_t mode)
