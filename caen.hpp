@@ -356,7 +356,7 @@ namespace caen {
         void setGroupSelfTrigger(uint32_t group, CAEN_DGTZ_TriggerMode_t mode)
         {
             /* TODO: patch and send upstream */
-            if (group >= groups())  // Needed because of bug in CAEN_DGTZ_GetGroupTriggerThreshold - patch pending
+            if (group >= groups())  // Needed because of bug in CAEN_DGTZ_SetGroupTriggerThreshold - patch pending
                 errorHandler(CAEN_DGTZ_InvalidChannelNumber);
 
             errorHandler(CAEN_DGTZ_SetGroupSelfTrigger(handle_, mode, 1<<group)); }
@@ -375,7 +375,7 @@ namespace caen {
         }
         void setGroupTriggerThreshold(uint32_t group, uint32_t treshold)
         {
-            if (group >= groups())  // Needed because of bug in CAEN_DGTZ_GetGroupTriggerThreshold - patch sent
+            if (group >= groups())  // Needed because of bug in CAEN_DGTZ_SetGroupTriggerThreshold - patch sent
                 errorHandler(CAEN_DGTZ_InvalidChannelNumber);
             errorHandler(CAEN_DGTZ_SetGroupTriggerThreshold(handle_, group, treshold));
         }
@@ -391,7 +391,7 @@ namespace caen {
         void setChannelGroupMask(uint32_t group, uint32_t mask)
         {
             /* TODO: patch and send upstream */
-            if (group >= groups())  // Needed because of bug in CAEN_DGTZ_GetGroupTriggerThreshold - patch pending
+            if (group >= groups())  // Needed because of bug in CAEN_DGTZ_SetGroupTriggerThreshold - patch pending
                 errorHandler(CAEN_DGTZ_InvalidChannelNumber);
             errorHandler(_CAEN_DGTZ_SetChannelGroupMask(handle_, group, mask));
         }
@@ -400,6 +400,20 @@ namespace caen {
         { CAEN_DGTZ_TriggerPolarity_t polarity; errorHandler(CAEN_DGTZ_GetTriggerPolarity(handle_, channel, &polarity)); return polarity; }
         void setTriggerPolarity(uint32_t channel, CAEN_DGTZ_TriggerPolarity_t polarity)
         { errorHandler(CAEN_DGTZ_SetTriggerPolarity(handle_, channel, polarity)); }
+
+        uint32_t getGroupFastTriggerThreshold(uint32_t group)
+        {
+            uint32_t treshold;
+            if (group >= groups())  // Needed because of bug in CAEN_DGTZ_GetGroupFastTriggerThreshold - patch sent
+                errorHandler(CAEN_DGTZ_InvalidChannelNumber);
+            errorHandler(CAEN_DGTZ_GetGroupFastTriggerThreshold(handle_, group, &treshold)); return treshold;
+        }
+        void setGroupFastTriggerThreshold(uint32_t group, uint32_t treshold)
+        {
+            if (group >= groups())  // Needed because of bug in CAEN_DGTZ_SetGroupFastTriggerThreshold - patch sent
+                errorHandler(CAEN_DGTZ_InvalidChannelNumber);
+            errorHandler(CAEN_DGTZ_SetGroupFastTriggerThreshold(handle_, group, treshold));
+        }
 
         CAEN_DGTZ_RunSyncMode_t getRunSynchronizationMode()
         { CAEN_DGTZ_RunSyncMode_t mode; errorHandler(CAEN_DGTZ_GetRunSynchronizationMode(handle_, &mode)); return mode;}
