@@ -269,7 +269,7 @@ namespace caen {
 
         // CAEN_DGTZ_DecodeDPPWaveforms(int handle, void *event, void *waveforms);
 
-        /* Device configuration - i.e. getter and setters*/
+        /* Device configuration - i.e. getter and setters */
         uint32_t getRecordLength(int channel=-1) // Default channel -1 == all
         { uint32_t size; errorHandler(_CAEN_DGTZ_GetRecordLength(handle_,&size,channel)); return size; }
         void setRecordLength(uint32_t size)  // Default channel -1 == all
@@ -467,8 +467,10 @@ namespace caen {
         void setZeroSuppressionMode(CAEN_DGTZ_ZS_Mode_t mode)
         { errorHandler(CAEN_DGTZ_SetZeroSuppressionMode(handle_, mode)); }
 
-        ZSParams getChannelZSParams(uint32_t channel)
+        ZSParams getChannelZSParams(uint32_t channel=-1) // Default channel -1 == all
         { ZSParams params; errorHandler(CAEN_DGTZ_GetChannelZSParams(handle_, channel, &params.weight, &params.threshold, &params.nsamp)); return params; }
+        void setChannelZSParams(ZSParams params)  // Default channel -1 == all
+        { errorHandler(CAEN_DGTZ_SetChannelZSParams(handle_, -1, params.weight, params.threshold, params.nsamp));}
         void setChannelZSParams(uint32_t channel, ZSParams params)
         { errorHandler(CAEN_DGTZ_SetChannelZSParams(handle_, channel, params.weight, params.threshold, params.nsamp));}
 
@@ -487,11 +489,11 @@ namespace caen {
         void setEventPackaging(CAEN_DGTZ_EnaDis_t mode)
         { errorHandler(CAEN_DGTZ_SetEventPackaging(handle_, mode));}
 
-        virtual uint32_t getDPPPreTriggerSize(int channel=-1)
+        virtual uint32_t getDPPPreTriggerSize(int channel=-1) // Default channel -1 == all
         { uint32_t samples; errorHandler(CAEN_DGTZ_GetDPPPreTriggerSize(handle_, channel, &samples)); return samples; }
         virtual void setDPPPreTriggerSize(int channel, uint32_t samples)
         { errorHandler(CAEN_DGTZ_SetDPPPreTriggerSize(handle_, channel, samples)); }
-        virtual void setDPPPreTriggerSize(uint32_t samples)
+        virtual void setDPPPreTriggerSize(uint32_t samples) // Default channel -1 == all
         { errorHandler(CAEN_DGTZ_SetDPPPreTriggerSize(handle_, -1, samples)); }
 
         /* TODO: fails with InvalidParam om DT5740_171, seems to fail
@@ -510,6 +512,11 @@ namespace caen {
         { CAEN_DGTZ_DPP_TriggerMode_t mode; errorHandler(CAEN_DGTZ_GetDPPTriggerMode(handle_, &mode)); return mode; }
         void setDPPTriggerMode(CAEN_DGTZ_DPP_TriggerMode_t mode)
         { errorHandler(CAEN_DGTZ_SetDPPTriggerMode(handle_, mode)); }
+
+        int getDPP_VirtualProbe(int trace)
+        { int probe; errorHandler(CAEN_DGTZ_GetDPP_VirtualProbe(handle_, trace, &probe)); return probe; }
+        void setDPP_VirtualProbe(int trace, int probe)
+        { errorHandler(CAEN_DGTZ_SetDPP_VirtualProbe(handle_, trace, probe)); }
 
         void setDPPEventAggregation(int threshold, int maxsize)
         { errorHandler(CAEN_DGTZ_SetDPPEventAggregation(handle_, threshold, maxsize)); }

@@ -37,6 +37,7 @@ std::string bin_string(T v)
 }
 // binary string
 unsigned int bs2ui(const std::string& s);
+int s2i(const std::string& s);
 unsigned int s2ui(const std::string& s);
 CAEN_DGTZ_IOLevel_t s2iol(const std::string& s);
 CAEN_DGTZ_AcqMode_t s2am(const std::string& s);
