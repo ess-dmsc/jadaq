@@ -184,7 +184,10 @@ namespace caen {
         { errorHandler(CAEN_DGTZ_Calibrate(handle_)); }
 
         uint32_t readTemperature(int32_t ch)
-        {uint32_t temp; errorHandler(CAEN_DGTZ_ReadTemperature(handle_, ch, &temp)); return temp;}
+        {uint32_t temp; errorHandler(CAEN_DGTZ_ReadTemperature(handle_, ch, &temp)); return temp; }
+
+        CAEN_DGTZ_DRS4Correction_t getCorrectionTables(int frequency)
+        { CAEN_DGTZ_DRS4Correction_t ctable; errorHandler(CAEN_DGTZ_GetCorrectionTables(handle_, frequency, &ctable)); return ctable; }
 
         void clearData()
         { errorHandler(CAEN_DGTZ_ClearData(handle_)); }
