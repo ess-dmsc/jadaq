@@ -325,13 +325,13 @@ namespace caen {
         uint32_t getGroupDCOffset(uint32_t group)
         {
             uint32_t offset;
-            if (group >= groups())  // Needed because of bug in CAEN_DGTZ_GetGroupOffset - patch sent
+            if (group >= groups())  // Needed because of bug in CAEN_DGTZ_GetGroupDCOffset - patch sent
                 errorHandler(CAEN_DGTZ_InvalidChannelNumber);
             errorHandler(CAEN_DGTZ_GetGroupDCOffset(handle_, group, &offset)); return offset;
         }
         void setGroupDCOffset(uint32_t group, uint32_t offset)
         {
-            if (group >= groups())  // Needed because of bug in CAEN_DGTZ_SetGroupOffset - patch sent
+            if (group >= groups())  // Needed because of bug in CAEN_DGTZ_SetGroupDCOffset - patch sent
                 errorHandler(CAEN_DGTZ_InvalidChannelNumber);
             errorHandler(CAEN_DGTZ_SetGroupDCOffset(handle_, group, offset));
         }
@@ -413,6 +413,20 @@ namespace caen {
             if (group >= groups())  // Needed because of bug in CAEN_DGTZ_SetGroupFastTriggerThreshold - patch sent
                 errorHandler(CAEN_DGTZ_InvalidChannelNumber);
             errorHandler(CAEN_DGTZ_SetGroupFastTriggerThreshold(handle_, group, treshold));
+        }
+
+        uint32_t getGroupFastTriggerDCOffset(uint32_t group)
+        {
+            uint32_t offset;
+            if (group >= groups())  // Needed because of bug in CAEN_DGTZ_GetGroupFastTriggerDCOffset - patch sent
+                errorHandler(CAEN_DGTZ_InvalidChannelNumber);
+            errorHandler(CAEN_DGTZ_GetGroupFastTriggerDCOffset(handle_, group, &offset)); return offset;
+        }
+        void setGroupFastTriggerDCOffset(uint32_t group, uint32_t offset)
+        {
+            if (group >= groups())  // Needed because of bug in CAEN_DGTZ_SetGroupFastTriggerDCOffset - patch sent
+                errorHandler(CAEN_DGTZ_InvalidChannelNumber);
+            errorHandler(CAEN_DGTZ_SetGroupFastTriggerDCOffset(handle_, group, offset));
         }
 
         CAEN_DGTZ_RunSyncMode_t getRunSynchronizationMode()

@@ -38,6 +38,7 @@ enum FunctionID {
     ChannelGroupMask,
     TriggerPolarity,
     GroupFastTriggerThreshold,
+    GroupFastTriggerDCOffset,
     ChannelPulsePolarity,
     ChannelZSParams,
     // Channel/group optional

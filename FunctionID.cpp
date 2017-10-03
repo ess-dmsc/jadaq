@@ -37,6 +37,7 @@ static std::unordered_map<std::string,FunctionID > functionMap =
                 MAP_ENTRY(ChannelGroupMask),
                 MAP_ENTRY(TriggerPolarity),
                 MAP_ENTRY(GroupFastTriggerThreshold),
+                MAP_ENTRY(GroupFastTriggerDCOffset),
                 MAP_ENTRY(ChannelZSParams),
                 MAP_ENTRY(DPPPreTriggerSize),
                 MAP_ENTRY(ChannelPulsePolarity),
@@ -79,6 +80,7 @@ const std::string to_string(FunctionID id) {
         CASE_TO_STR(ChannelGroupMask)
         CASE_TO_STR(TriggerPolarity)
         CASE_TO_STR(GroupFastTriggerThreshold)
+        CASE_TO_STR(GroupFastTriggerDCOffset)
         CASE_TO_STR(ChannelZSParams)
         CASE_TO_STR(DPPPreTriggerSize)
         CASE_TO_STR(ChannelPulsePolarity)
