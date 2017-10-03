@@ -111,6 +111,11 @@ namespace caen {
         CAEN_DGTZ_DPP_SaveParam_t param; // enum
     };
 
+    struct DPP_SupportedVirtualProbes {
+        int probes[MAX_SUPPORTED_PROBES];
+        int numProbes;
+    };
+
     struct EventInfo : CAEN_DGTZ_EventInfo_t {char* data;};
 
     struct DPPEvents
@@ -517,6 +522,9 @@ namespace caen {
         { int probe; errorHandler(CAEN_DGTZ_GetDPP_VirtualProbe(handle_, trace, &probe)); return probe; }
         void setDPP_VirtualProbe(int trace, int probe)
         { errorHandler(CAEN_DGTZ_SetDPP_VirtualProbe(handle_, trace, probe)); }
+
+        DPP_SupportedVirtualProbes getDPP_SupportedVirtualProbes(int trace)
+        { DPP_SupportedVirtualProbes supported; errorHandler(CAEN_DGTZ_GetDPP_SupportedVirtualProbes(handle_, trace, (int *)&(supported.probes), &supported.numProbes)); return supported; }        
 
         void setDPPEventAggregation(int threshold, int maxsize)
         { errorHandler(CAEN_DGTZ_SetDPPEventAggregation(handle_, threshold, maxsize)); }
