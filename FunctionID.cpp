@@ -27,6 +27,7 @@ static std::unordered_map<std::string,FunctionID > functionMap =
                 MAP_ENTRY(EventPackaging),
                 MAP_ENTRY(FastTriggerDigitizing),
                 MAP_ENTRY(FastTriggerMode),
+                MAP_ENTRY(DRS4SamplingFrequency),
                 MAP_ENTRY(DPPAcquisitionMode),
                 MAP_ENTRY(DPPTriggerMode),
                 MAP_ENTRY(RunDelay),
@@ -72,6 +73,7 @@ const std::string to_string(FunctionID id) {
         CASE_TO_STR(EventPackaging)
         CASE_TO_STR(FastTriggerDigitizing)
         CASE_TO_STR(FastTriggerMode)
+        CASE_TO_STR(DRS4SamplingFrequency)
         CASE_TO_STR(DPPAcquisitionMode)
         CASE_TO_STR(DPPTriggerMode)
         CASE_TO_STR(RunDelay)

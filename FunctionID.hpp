@@ -27,6 +27,7 @@ enum FunctionID {
     EventPackaging,
     FastTriggerDigitizing,
     FastTriggerMode,
+    DRS4SamplingFrequency,
     DPPAcquisitionMode,
     DPPTriggerMode,
     RunDelay,

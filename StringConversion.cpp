@@ -40,6 +40,10 @@ CAEN_DGTZ_DPP_TriggerMode_t s2dtm(const std::string& s)
 {
     return (CAEN_DGTZ_DPP_TriggerMode_t)std::stoi(s,nullptr,0);
 }
+CAEN_DGTZ_DRS4Frequency_t s2drsff(const std::string& s)
+{
+    return (CAEN_DGTZ_DRS4Frequency_t)std::stoi(s,nullptr,0);
+}
 CAEN_DGTZ_RunSyncMode_t s2rsm(const std::string& s)
 {
     return (CAEN_DGTZ_RunSyncMode_t)std::stoi(s,nullptr,0);

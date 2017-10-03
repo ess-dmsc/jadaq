@@ -42,6 +42,7 @@ CAEN_DGTZ_IOLevel_t s2iol(const std::string& s);
 CAEN_DGTZ_AcqMode_t s2am(const std::string& s);
 CAEN_DGTZ_TriggerMode_t s2tm(const std::string& s);
 CAEN_DGTZ_DPP_TriggerMode_t s2dtm(const std::string& s);
+CAEN_DGTZ_DRS4Frequency_t s2drsff(const std::string& s);
 CAEN_DGTZ_RunSyncMode_t s2rsm(const std::string& s);
 CAEN_DGTZ_OutputSignalMode_t s2osm(const std::string& s);
 CAEN_DGTZ_EnaDis_t s2ed(const std::string& s);

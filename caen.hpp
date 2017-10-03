@@ -439,6 +439,11 @@ namespace caen {
         void setFastTriggerMode(CAEN_DGTZ_TriggerMode_t mode)
         { errorHandler(CAEN_DGTZ_SetFastTriggerMode(handle_, mode)); }
 
+        CAEN_DGTZ_DRS4Frequency_t getDRS4SamplingFrequency()
+        { CAEN_DGTZ_DRS4Frequency_t frequency; errorHandler(CAEN_DGTZ_GetDRS4SamplingFrequency(handle_, &frequency)); return frequency; }
+        void setDRS4SamplingFrequency(CAEN_DGTZ_DRS4Frequency_t frequency)
+        { errorHandler(CAEN_DGTZ_SetDRS4SamplingFrequency(handle_, frequency)); }
+
         CAEN_DGTZ_RunSyncMode_t getRunSynchronizationMode()
         { CAEN_DGTZ_RunSyncMode_t mode; errorHandler(CAEN_DGTZ_GetRunSynchronizationMode(handle_, &mode)); return mode;}
         void setRunSynchronizationMode(CAEN_DGTZ_RunSyncMode_t mode)
