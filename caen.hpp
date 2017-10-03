@@ -93,6 +93,12 @@ namespace caen {
         uint32_t dataSize;
     };
 
+    struct ZSParams {
+        CAEN_DGTZ_ThresholdWeight_t weight; //enum
+        int32_t threshold;
+        int32_t nsamp;
+    };
+
     struct DPPAcquisitionMode {
         CAEN_DGTZ_DPP_AcqMode_t mode;    // enum
         CAEN_DGTZ_DPP_SaveParam_t param; // enum
@@ -407,6 +413,11 @@ namespace caen {
         { CAEN_DGTZ_ZS_Mode_t mode; errorHandler(CAEN_DGTZ_GetZeroSuppressionMode(handle_, &mode)); return mode; }
         void setZeroSuppressionMode(CAEN_DGTZ_ZS_Mode_t mode)
         { errorHandler(CAEN_DGTZ_SetZeroSuppressionMode(handle_, mode)); }
+
+        ZSParams getChannelZSParams(uint32_t channel)
+        { ZSParams params; errorHandler(CAEN_DGTZ_GetChannelZSParams(handle_, channel, &params.weight, &params.threshold, &params.nsamp)); return params; }
+        void setChannelZSParams(uint32_t channel, ZSParams params)
+        { errorHandler(CAEN_DGTZ_SetChannelZSParams(handle_, channel, params.weight, params.threshold, params.nsamp));}
 
         virtual uint32_t getDPPPreTriggerSize(int channel=-1)
         { uint32_t samples; errorHandler(CAEN_DGTZ_GetDPPPreTriggerSize(handle_, channel, &samples)); return samples; }

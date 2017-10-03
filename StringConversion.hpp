@@ -49,6 +49,8 @@ CAEN_DGTZ_ZS_Mode_t s2zsm(const std::string& s);
 CAEN_DGTZ_TriggerPolarity_t s2tp(const std::string& s);
 CAEN_DGTZ_PulsePolarity_t s2pp(const std::string& s);
 
+std::string to_string(const caen::ZSParams &zsp);
+caen::ZSParams s2zsp(const std::string& s);
 
 std::string to_string(CAEN_DGTZ_DPP_AcqMode_t mode);
 CAEN_DGTZ_DPP_AcqMode_t s2dam(const std::string& s);

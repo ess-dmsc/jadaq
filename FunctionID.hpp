@@ -35,6 +35,7 @@ enum FunctionID {
     ChannelGroupMask,
     TriggerPolarity,
     ChannelPulsePolarity,
+    ChannelZSParams,
     // Channel/group optional
     DPPPreTriggerSize,
     RecordLength,
@@ -71,7 +72,5 @@ static inline FunctionID operator--(FunctionID& id, int)
 
 FunctionID functionID(std::string s);
 const std::string to_string(FunctionID id);
-
-
 
 #endif //JADAQ_FUNCTIONID_HPP
