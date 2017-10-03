@@ -157,7 +157,7 @@ namespace caen {
         const std::string modelName() const {return std::string(boardInfo_.ModelName);}
         uint32_t modelNo() const {return boardInfo_.Model; }
         virtual uint32_t channels() const { return boardInfo_.Channels; }
-        // by default groups do no exists. I.e. one channel pr. group
+        // by default groups do not exists. I.e. one channel pr. group
         virtual uint32_t groups() const { return boardInfo_.Channels; }
         virtual uint32_t channelsPerGroup() const { return 1; }
         uint32_t formFactor() const { return  boardInfo_.FormFactor; }
@@ -256,6 +256,10 @@ namespace caen {
 
         DPPWaveforms mallocDPPWaveforms()
         { DPPWaveforms waveforms; errorHandler(_CAEN_DGTZ_MallocDPPWaveforms(handle_, &waveforms.ptr, &waveforms.allocatedSize)); return waveforms; }
+        /* TODO: is this actually supposed to be a (void **) to FreeDPPWaveforms? 
+         *       From docs it looks more like a (void *) but explicitly
+         *       uses (void **) in _CAENDigitizer.c for some reason.
+         */
         void freeDPPWaveforms(DPPWaveforms waveforms)
         { errorHandler(_CAEN_DGTZ_FreeDPPWaveforms(handle_, &waveforms.ptr)); }
 
@@ -272,7 +276,11 @@ namespace caen {
         DPPEvents& getDPPEvents(ReadoutBuffer buffer, DPPEvents& events)
         { _CAEN_DGTZ_GetDPPEvents(handle_, buffer.data, buffer.dataSize, events.ptr, events.nEvents); }
 
-        // CAEN_DGTZ_DecodeDPPWaveforms(int handle, void *event, void *waveforms);
+        /* TODO: is this actually supposed to be a (void **) to DecodeDPPWaveforms? 
+         *       From docs it looks more like a (void *) but see above.
+         */
+        DPPWaveforms decodeDPPWaveforms(void *event, DPPWaveforms waveforms)
+        { errorHandler(CAEN_DGTZ_DecodeDPPWaveforms(handle_, event, waveforms.ptr)); return waveforms; }
 
         /* Device configuration - i.e. getter and setters */
         uint32_t getRecordLength(int channel=-1) // Default channel -1 == all
@@ -524,7 +532,7 @@ namespace caen {
         { errorHandler(CAEN_DGTZ_SetDPP_VirtualProbe(handle_, trace, probe)); }
 
         DPP_SupportedVirtualProbes getDPP_SupportedVirtualProbes(int trace)
-        { DPP_SupportedVirtualProbes supported; errorHandler(CAEN_DGTZ_GetDPP_SupportedVirtualProbes(handle_, trace, (int *)&(supported.probes), &supported.numProbes)); return supported; }        
+        { DPP_SupportedVirtualProbes supported; errorHandler(CAEN_DGTZ_GetDPP_SupportedVirtualProbes(handle_, trace, (int *)&(supported.probes), &supported.numProbes)); return supported; }
 
         void setDPPEventAggregation(int threshold, int maxsize)
         { errorHandler(CAEN_DGTZ_SetDPPEventAggregation(handle_, threshold, maxsize)); }
