@@ -25,6 +25,7 @@ enum FunctionID {
     AnalogMonOutput,
     AnalogInspectionMonParams,
     EventPackaging,
+    FastTriggerDigitizing,
     DPPAcquisitionMode,
     DPPTriggerMode,
     RunDelay,
