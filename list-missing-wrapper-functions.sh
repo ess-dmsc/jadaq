@@ -13,7 +13,7 @@ fi
 
 JADAQCAENHEADER="$JADAQBASE/caen.hpp"
 CAENDIGITIZERHEADER="$CAENDIGITIZERBASE/include/CAENDigitizer.h"
-CAENFUNCTIONLIST="$JADAQBASE/CAEN-get-set-functions.txt"
+CAENFUNCTIONLIST="$JADAQBASE/CAEN-functions.txt"
 
 if [[ ! -f "$CAENFUNCTIONLIST" ]]; then
     if [[ ! -f "$CAENDIGITIZERHEADER" ]]; then
@@ -21,8 +21,9 @@ if [[ ! -f "$CAENFUNCTIONLIST" ]]; then
 	exit 1
     fi
     echo "building list of CAENDigitizer functions from $CAENDIGITIZERHEADER"
-    egrep '^CAEN_DGTZ_ErrorCode CAENDGTZ_API CAEN_DGTZ_[GS]et' $CAENDIGITIZERHEADER | \
-        sed 's/CAEN_DGTZ_ErrorCode CAENDGTZ_API //g;s/(.*//g' > $CAENFUNCTIONLIST
+    egrep '^CAEN_DGTZ_ErrorCode CAENDGTZ_API CAEN_DGTZ_' $CAENDIGITIZERHEADER | \
+	grep -v DEPRECATED | \
+	sed 's/CAEN_DGTZ_ErrorCode CAENDGTZ_API //g;s/(.*//g' > $CAENFUNCTIONLIST
 fi
 
 for i in $(cat $CAENFUNCTIONLIST); do

@@ -131,11 +131,37 @@ namespace caen {
         uint32_t allocatedSize;
     };
 
+
+    /* Some low-level digitizer helpers */
+    static int openRawDigitizer(CAEN_DGTZ_ConnectionType linkType, int linkNum, int conetNode, uint32_t VMEBaseAddress) 
+    {
+        int handle;
+        errorHandler(CAEN_DGTZ_OpenDigitizer(linkType, linkNum, conetNode, VMEBaseAddress, &handle));
+        return handle;
+    }
+    static CAEN_DGTZ_BoardInfo_t getRawDigitizerBoardInfo(int handle) 
+    {
+        CAEN_DGTZ_BoardInfo_t boardInfo;
+        errorHandler(CAEN_DGTZ_GetInfo(handle, &boardInfo));
+        return boardInfo;
+    }
+    static CAEN_DGTZ_DPPFirmware_t getRawDigitizerDPPFirmware(int handle) 
+    {
+        CAEN_DGTZ_DPPFirmware_t firmware;
+        errorHandler(_CAEN_DGTZ_GetDPPFirmwareType(handle, &firmware));
+        return firmware;
+    }
+    static void closeRawDigitizer(int handle) 
+    {
+        errorHandler(CAEN_DGTZ_CloseDigitizer(handle));
+    }
+    
+    
     class Digitizer
     {
     private:
         Digitizer() {}
-        Digitizer(int handle) : handle_(handle) { errorHandler(CAEN_DGTZ_GetInfo(handle,&boardInfo_)); }
+        Digitizer(int handle) : handle_(handle) { boardInfo_ = getRawDigitizerBoardInfo(handle_); }
 
     protected:
         int handle_;
@@ -151,7 +177,8 @@ namespace caen {
         static Digitizer* USB(int linkNum, uint32_t VMEBaseAddress) { return open(CAEN_DGTZ_USB,linkNum,0,VMEBaseAddress);}
 
         /* Destruction */
-        ~Digitizer() { errorHandler(CAEN_DGTZ_CloseDigitizer(handle_)); }
+        static void close(int handle) { closeRawDigitizer(handle); }
+        ~Digitizer() { close(handle_); }
 
         /* Information functions */
         const std::string modelName() const {return std::string(boardInfo_.ModelName);}
