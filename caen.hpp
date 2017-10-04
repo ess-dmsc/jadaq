@@ -227,6 +227,25 @@ namespace caen {
         uint32_t readTemperature(int32_t ch)
         {uint32_t temp; errorHandler(CAEN_DGTZ_ReadTemperature(handle_, ch, &temp)); return temp; }
 
+        /* Note: to be used only with x742 series. */
+        void loadDRS4CorrectionData(CAEN_DGTZ_DRS4Frequency_t frequency)
+        { errorHandler(CAEN_DGTZ_LoadDRS4CorrectionData(handle_, frequency)); }
+
+        /* Enables/disables the data correction in the x742 series.
+         *
+         * Note: to be used only with x742 series.
+         *
+         * Note: if enabled, the data correction through the DecodeEvent function
+         * only applies if a LoadDRS4CorrectionData has been previously
+         *  called, otherwise the DecodeEvent runs the same, but data
+         *  will be provided out not compensated.
+         */
+        void enableDRS4Correction()
+        { errorHandler(CAEN_DGTZ_EnableDRS4Correction(handle_)); }
+        void disableDRS4Correction()
+        { errorHandler(CAEN_DGTZ_DisableDRS4Correction(handle_)); }
+
+        /* Note: to be used only with 742 digitizer series. */
         CAEN_DGTZ_DRS4Correction_t getCorrectionTables(int frequency)
         { CAEN_DGTZ_DRS4Correction_t ctable; errorHandler(CAEN_DGTZ_GetCorrectionTables(handle_, frequency, &ctable)); return ctable; }
 
