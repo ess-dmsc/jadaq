@@ -93,6 +93,15 @@ namespace caen {
         uint32_t dataSize;
     };
 
+    struct InterruptConfig
+    {
+        CAEN_DGTZ_EnaDis_t state;
+        uint8_t level;
+        uint32_t status_id;
+        uint16_t event_number;
+        CAEN_DGTZ_IRQMode_t mode;
+    };
+
     struct ZSParams {
         CAEN_DGTZ_ThresholdWeight_t weight; //enum
         int32_t threshold;
@@ -238,6 +247,35 @@ namespace caen {
 
         ReadoutBuffer& readData(ReadoutBuffer& buffer,CAEN_DGTZ_ReadMode_t mode)
         { errorHandler(CAEN_DGTZ_ReadData(handle_, mode, buffer.data, &buffer.dataSize)); return buffer; }
+
+        /* Interrupt control */
+
+        /* NOTE: interrupts cannot be used in case of communication via
+         * USB (either directly or through V1718 and VME)
+         */
+
+        InterruptConfig getInterruptConfig ()
+        { InterruptConfig conf; errorHandler(CAEN_DGTZ_GetInterruptConfig(handle_, &conf.state, &conf.level, &conf.status_id, &conf.event_number, &conf.mode)); return conf; }
+        void setInterruptConfig (InterruptConfig conf)
+        { errorHandler(CAEN_DGTZ_SetInterruptConfig(handle_, conf.state, conf.level, conf.status_id, conf.event_number, conf.mode)); }
+
+        void doIRQWait(uint32_t timeout)
+        { errorHandler(CAEN_DGTZ_IRQWait(handle_, timeout)); }
+
+        /* NOTE: VME* calls are for VME bus interrupts and work on a
+         * separate VME handle. Not sure if they are needed. 
+         */
+        int doVMEIRQWait(CAEN_DGTZ_ConnectionType LinkType, int LinkNum, int ConetNode, uint8_t IRQMask,uint32_t timeout)
+        { int vmehandle; errorHandler(CAEN_DGTZ_VMEIRQWait(LinkType, LinkNum, ConetNode, IRQMask, timeout, &vmehandle)); return vmehandle; }
+
+        uint8_t doVMEIRQCheck(int vmehandle)
+        { uint8_t mask; errorHandler(CAEN_DGTZ_VMEIRQCheck(vmehandle, &mask)); return mask; }
+
+        int32_t doVMEIACKCycle(int vmehandle, uint8_t level)
+        { int32_t board_id; errorHandler(CAEN_DGTZ_VMEIACKCycle(vmehandle, level, &board_id)); return board_id; }
+
+        void rearmInterrupt()
+        { errorHandler(CAEN_DGTZ_RearmInterrupt(handle_)); }
 
         /* Memory management */
         ReadoutBuffer mallocReadoutBuffer()
