@@ -576,13 +576,13 @@ namespace caen {
         void setAnalogMonOutput(CAEN_DGTZ_AnalogMonitorOutputMode_t mode)
         { errorHandler(CAEN_DGTZ_SetAnalogMonOutput(handle_, mode)); }
 
-        /* TODO: CAENDigitizer API does not match docs here!
+        /* NOTE: CAENDigitizer API does not match current docs here.
          *       According to docs the Get function should take a plain
          *       uint32_t channelmask, and not a uint32_t *pointer* as
          *       it really does.
          *       The underlying implementation saves and loads the
-         *       channelmask into a register, so the docs may just be
-         *       wrong (reported upstream).
+         *       channelmask into a register, so the docs are wrong
+         *       (confirmed by upstream).
          */
         /* NOTE: we explicitly initialize params here since some of them
          * may remain untouched garbage otherwise */
