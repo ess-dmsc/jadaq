@@ -64,14 +64,6 @@ CAEN_DGTZ_AnalogMonitorOutputMode_t s2amom(const std::string& s)
 {
     return (CAEN_DGTZ_AnalogMonitorOutputMode_t)std::stoi(s,nullptr,0);
 }
-CAEN_DGTZ_AnalogMonitorMagnify_t s2mf(const std::string& s)
-{
-    return (CAEN_DGTZ_AnalogMonitorMagnify_t)std::stoi(s,nullptr,0);
-}
-CAEN_DGTZ_AnalogMonitorInspectorInverter_t s2ami(const std::string& s)
-{
-    return (CAEN_DGTZ_AnalogMonitorInspectorInverter_t)std::stoi(s,nullptr,0);
-}
 CAEN_DGTZ_TriggerPolarity_t s2tp(const std::string& s)
 {
     return (CAEN_DGTZ_TriggerPolarity_t)std::stoi(s,nullptr,0);
@@ -87,7 +79,6 @@ CAEN_DGTZ_ThresholdWeight_t s2tw(const std::string& s)
     STR_MATCH(s,Coarse,CAEN_DGTZ_ZS_COARSE);
     return (CAEN_DGTZ_ThresholdWeight_t)std::stoi(s,nullptr,0);
 }
-
 std::string to_string(CAEN_DGTZ_ThresholdWeight_t tw)
 {
     switch (tw)
@@ -100,6 +91,7 @@ std::string to_string(CAEN_DGTZ_ThresholdWeight_t tw)
             return std::to_string(tw);
     }
 }
+
 std::string to_string(const caen::ZSParams &zsp)
 {
     std::stringstream ss;
@@ -134,6 +126,15 @@ std::string to_string(CAEN_DGTZ_AnalogMonitorMagnify_t mf)
             return std::to_string(mf);
     }
 }
+CAEN_DGTZ_AnalogMonitorMagnify_t s2mf(const std::string& s)
+{
+    STR_MATCH(s,1X,CAEN_DGTZ_AM_MAGNIFY_1X);
+    STR_MATCH(s,2X,CAEN_DGTZ_AM_MAGNIFY_2X);
+    STR_MATCH(s,4X,CAEN_DGTZ_AM_MAGNIFY_4X);
+    STR_MATCH(s,8X,CAEN_DGTZ_AM_MAGNIFY_8X);
+    return (CAEN_DGTZ_AnalogMonitorMagnify_t)std::stoi(s,nullptr,0);
+}
+
 std::string to_string(CAEN_DGTZ_AnalogMonitorInspectorInverter_t ami)
 {
     switch (ami)
@@ -146,13 +147,19 @@ std::string to_string(CAEN_DGTZ_AnalogMonitorInspectorInverter_t ami)
             return std::to_string(ami);
     }
 }
+CAEN_DGTZ_AnalogMonitorInspectorInverter_t s2ami(const std::string& s)
+{
+    STR_MATCH(s,P_1X,CAEN_DGTZ_AM_INSPECTORINVERTER_P_1X);
+    STR_MATCH(s,N_1X,CAEN_DGTZ_AM_INSPECTORINVERTER_N_1X);
+    return (CAEN_DGTZ_AnalogMonitorInspectorInverter_t)std::stoi(s,nullptr,0);
+}
+
 std::string to_string(const caen::AIMParams &aimp)
 {
     std::stringstream ss;
     ss << '{' << to_string(aimp.channelmask) << ',' << to_string(aimp.offset) << ',' << to_string(aimp.mf) << ',' << to_string(aimp.ami)<< '}';
     return ss.str();
 }
-
 caen::AIMParams s2aimp(const std::string& s)
 {
     std::regex rx("\\{(\\w+),(\\w+),(\\w+),(\\w+)\\}");
@@ -163,7 +170,6 @@ caen::AIMParams s2aimp(const std::string& s)
     }
     throw std::invalid_argument{"Invalid AIMParams"};
 }
-
 
 std::string to_string(CAEN_DGTZ_DPP_AcqMode_t mode)
 {
@@ -179,7 +185,6 @@ std::string to_string(CAEN_DGTZ_DPP_AcqMode_t mode)
             return std::to_string(mode);
     }
 }
-
 CAEN_DGTZ_DPP_AcqMode_t s2dam(const std::string& s)
 {
     STR_MATCH(s,Oscilloscope,CAEN_DGTZ_DPP_ACQ_MODE_Oscilloscope);
@@ -204,7 +209,6 @@ std::string to_string(CAEN_DGTZ_DPP_SaveParam_t sp)
             return std::to_string(sp);
     }
 }
-
 CAEN_DGTZ_DPP_SaveParam_t s2sp(const std::string& s)
 {
     STR_MATCH(s,EnergyOnly,CAEN_DGTZ_DPP_SAVE_PARAM_EnergyOnly);
