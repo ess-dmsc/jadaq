@@ -576,8 +576,19 @@ namespace caen {
         void setAnalogMonOutput(CAEN_DGTZ_AnalogMonitorOutputMode_t mode)
         { errorHandler(CAEN_DGTZ_SetAnalogMonOutput(handle_, mode)); }
 
+        /* TODO: CAENDigitizer API does not match docs here!
+         *       According to docs the Get function should take a plain
+         *       uint32_t channelmask, and not a uint32_t *pointer* as
+         *       it really does.
+         *       The underlying implementation saves and loads the
+         *       channelmask into a register, so the docs may just be
+         *       wrong (reported upstream).
+         */
+        /* NOTE: we explicitly initialize params here since some of them
+         * may remain untouched garbage otherwise */
         AIMParams getAnalogInspectionMonParams()
-        { AIMParams params; errorHandler(CAEN_DGTZ_GetAnalogInspectionMonParams(handle_, &params.channelmask, &params.offset, &params.mf, &params.ami)); return params; }
+        { AIMParams params; params.channelmask = 0; params.offset = 0; params.mf = (CAEN_DGTZ_AnalogMonitorMagnify_t)0; params.ami = (CAEN_DGTZ_AnalogMonitorInspectorInverter_t)0;
+            errorHandler(CAEN_DGTZ_GetAnalogInspectionMonParams(handle_, &params.channelmask, &params.offset, &params.mf, &params.ami)); return params; }
         void setAnalogInspectionMonParams(AIMParams params)
         { errorHandler(CAEN_DGTZ_SetAnalogInspectionMonParams(handle_, params.channelmask, params.offset, params.mf, params.ami)); }
 
