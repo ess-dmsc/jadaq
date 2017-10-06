@@ -235,3 +235,53 @@ caen::DPPAcquisitionMode s2cdam(const std::string& s)
     }
     throw std::invalid_argument{"Invalid DPPAcquisitionMode"};
 }
+
+std::string to_string(CAEN_DGTZ_SAM_CORRECTION_LEVEL_t samcl)
+{
+    switch (samcl)
+    {
+        case CAEN_DGTZ_SAM_CORRECTION_DISABLED :
+            return("DISABLED");
+        case CAEN_DGTZ_SAM_CORRECTION_PEDESTAL_ONLY :
+            return("PEDESTAL_ONLY");
+        case CAEN_DGTZ_SAM_CORRECTION_INL :
+            return("INL");
+        case CAEN_DGTZ_SAM_CORRECTION_ALL :
+            return("ALL");
+        default :
+            return std::to_string(samcl);
+    }
+}
+CAEN_DGTZ_SAM_CORRECTION_LEVEL_t s2samcl(const std::string& s)
+{
+    STR_MATCH(s,DISABLED,CAEN_DGTZ_SAM_CORRECTION_DISABLED);
+    STR_MATCH(s,PEDESTAL_ONLY,CAEN_DGTZ_SAM_CORRECTION_PEDESTAL_ONLY);
+    STR_MATCH(s,INL,CAEN_DGTZ_SAM_CORRECTION_INL);
+    STR_MATCH(s,ALL,CAEN_DGTZ_SAM_CORRECTION_ALL);
+    return (CAEN_DGTZ_SAM_CORRECTION_LEVEL_t)std::stoi(s,nullptr,0);
+}
+
+std::string to_string(CAEN_DGTZ_SAMFrequency_t samf)
+{
+    switch (samf)
+    {
+        case CAEN_DGTZ_SAM_3_2GHz :
+            return("3_2GHz");
+        case CAEN_DGTZ_SAM_1_6GHz :
+            return("1_6GHz");
+        case CAEN_DGTZ_SAM_800MHz :
+            return("800MHz");
+        case CAEN_DGTZ_SAM_400MHz :
+            return("400MHz");
+        default :
+            return std::to_string(samf);
+    }
+}
+CAEN_DGTZ_SAMFrequency_t s2samf(const std::string& s)
+{
+    STR_MATCH(s,3_2GHz,CAEN_DGTZ_SAM_3_2GHz);
+    STR_MATCH(s,1_6GHz,CAEN_DGTZ_SAM_1_6GHz);
+    STR_MATCH(s,800MHz,CAEN_DGTZ_SAM_800MHz);
+    STR_MATCH(s,400MHz,CAEN_DGTZ_SAM_400MHz);
+    return (CAEN_DGTZ_SAMFrequency_t)std::stoi(s,nullptr,0);
+}

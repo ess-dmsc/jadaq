@@ -629,6 +629,41 @@ namespace caen {
         DPP_SupportedVirtualProbes getDPP_SupportedVirtualProbes(int trace)
         { DPP_SupportedVirtualProbes supported; errorHandler(CAEN_DGTZ_GetDPP_SupportedVirtualProbes(handle_, trace, (int *)&(supported.probes), &supported.numProbes)); return supported; }
 
+        /* Functions specific to x743 */
+        
+        /* NOTE: with N channels SamIndex is always between 0 and N/2 – 1 */
+        
+        CAEN_DGTZ_SAM_CORRECTION_LEVEL_t getSAMCorrectionLevel()
+        { CAEN_DGTZ_SAM_CORRECTION_LEVEL_t level; errorHandler(CAEN_DGTZ_GetSAMCorrectionLevel(handle_, &level)); return level; }
+        void setSAMCorrectionLevel(CAEN_DGTZ_SAM_CORRECTION_LEVEL_t level)
+        { errorHandler(CAEN_DGTZ_SetSAMCorrectionLevel(handle_, level)); }
+
+        /* NOTE: docs claim that GetSAMPostTriggerSize takes an int32_t
+         * pointer but the actual implementation uses a uint32_t pointer.
+         * This appears to be a simple error in the docs. Pending
+         * upstream comment.
+         */
+        /* NOTE: GetSAMPostTriggerSize API takes an uint32_t pointer but
+         * docs explicitly point out that value is always uint8_t:
+         * "Value (range between 1 and 255) of the post-trigger delay
+         * (pointer to, in case of Get) . Unit is the sampling period
+         * multiplied by 16."
+         * this also fits the type passed to SetSAMPostTriggerSize.
+         * Pending upstream comment on why.
+         */
+        /*
+         * TODO: change get output to a uint8_t upstream and here?
+         */
+        uint32_t getSAMPostTriggerSize(int samindex)
+        { uint32_t value; errorHandler(CAEN_DGTZ_GetSAMPostTriggerSize(handle_, samindex, &value)); return value; }
+        void setSAMPostTriggerSize(int samindex, uint8_t value)
+        { errorHandler(CAEN_DGTZ_SetSAMPostTriggerSize(handle_, samindex, value)); }
+
+        CAEN_DGTZ_SAMFrequency_t getSAMSamplingFrequency()
+        { CAEN_DGTZ_SAMFrequency_t frequency; errorHandler(CAEN_DGTZ_GetSAMSamplingFrequency(handle_, &frequency)); return frequency; }
+        void setSAMSamplingFrequency(CAEN_DGTZ_SAMFrequency_t frequency)
+        { errorHandler(CAEN_DGTZ_SetSAMSamplingFrequency(handle_, frequency)); }
+
         void setDPPEventAggregation(int threshold, int maxsize)
         { errorHandler(CAEN_DGTZ_SetDPPEventAggregation(handle_, threshold, maxsize)); }
 

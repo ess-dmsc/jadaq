@@ -32,6 +32,8 @@ enum FunctionID {
     DPPTriggerMode,
     MaxNumAggregatesBLT,
     RunDelay,
+    SAMCorrectionLevel,
+    SAMSamplingFrequency,
     // Channel/group setting
     ChannelDCOffset,
     GroupDCOffset,
@@ -45,6 +47,7 @@ enum FunctionID {
     GroupFastTriggerDCOffset,
     ChannelPulsePolarity,
     ChannelZSParams,
+    SAMPostTriggerSize,
     // Channel/group optional
     DPPPreTriggerSize,
     RecordLength,

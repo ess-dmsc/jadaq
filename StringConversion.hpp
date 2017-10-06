@@ -66,6 +66,10 @@ std::string to_string(CAEN_DGTZ_DPP_SaveParam_t sp);
 CAEN_DGTZ_DPP_SaveParam_t s2sp(const std::string& s);
 std::string to_string(const caen::DPPAcquisitionMode &dam);
 caen::DPPAcquisitionMode s2cdam(const std::string& s);
+std::string to_string(CAEN_DGTZ_SAM_CORRECTION_LEVEL_t level);
+CAEN_DGTZ_SAM_CORRECTION_LEVEL_t s2samcl(const std::string& s);
+std::string to_string(CAEN_DGTZ_SAMFrequency_t frequency);
+CAEN_DGTZ_SAMFrequency_t s2samf(const std::string& s);
 
 
 #endif //JADAQ_STRINGCONVERSION_HPP

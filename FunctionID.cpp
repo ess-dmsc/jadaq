@@ -32,6 +32,8 @@ static std::unordered_map<std::string,FunctionID > functionMap =
                 MAP_ENTRY(DPPTriggerMode),
                 MAP_ENTRY(MaxNumAggregatesBLT),
                 MAP_ENTRY(RunDelay),
+                MAP_ENTRY(SAMCorrectionLevel),
+                MAP_ENTRY(SAMSamplingFrequency),
                 MAP_ENTRY(ChannelDCOffset),
                 MAP_ENTRY(GroupDCOffset),
                 MAP_ENTRY(ChannelSelfTrigger),
@@ -43,6 +45,7 @@ static std::unordered_map<std::string,FunctionID > functionMap =
                 MAP_ENTRY(GroupFastTriggerThreshold),
                 MAP_ENTRY(GroupFastTriggerDCOffset),
                 MAP_ENTRY(ChannelZSParams),
+                MAP_ENTRY(SAMPostTriggerSize),
                 MAP_ENTRY(DPPPreTriggerSize),
                 MAP_ENTRY(ChannelPulsePolarity),
                 MAP_ENTRY(RecordLength),
@@ -79,6 +82,8 @@ const std::string to_string(FunctionID id) {
         CASE_TO_STR(DPPTriggerMode)
         CASE_TO_STR(MaxNumAggregatesBLT)
         CASE_TO_STR(RunDelay)
+        CASE_TO_STR(SAMCorrectionLevel)
+        CASE_TO_STR(SAMSamplingFrequency)
         CASE_TO_STR(ChannelDCOffset)
         CASE_TO_STR(GroupDCOffset)
         CASE_TO_STR(ChannelSelfTrigger)
@@ -90,6 +95,7 @@ const std::string to_string(FunctionID id) {
         CASE_TO_STR(GroupFastTriggerThreshold)
         CASE_TO_STR(GroupFastTriggerDCOffset)
         CASE_TO_STR(ChannelZSParams)
+        CASE_TO_STR(SAMPostTriggerSize)
         CASE_TO_STR(DPPPreTriggerSize)
         CASE_TO_STR(ChannelPulsePolarity)
         CASE_TO_STR(RecordLength)
