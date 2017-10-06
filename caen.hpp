@@ -140,6 +140,21 @@ namespace caen {
         uint32_t allocatedSize;
     };
 
+    struct ChannelPairTriggerLogicParams {
+        CAEN_DGTZ_TrigerLogic_t logic;
+        uint16_t coincidenceWindow;
+    };
+
+    struct TriggerLogicParams {
+        CAEN_DGTZ_TrigerLogic_t logic;
+        uint32_t majorityLevel;
+    };
+
+    struct SAMTriggerCountVetoParams {
+        CAEN_DGTZ_EnaDis_t enable;
+        uint32_t vetoWindow;
+    };
+
 
     /* Some low-level digitizer helpers */
     static int openRawDigitizer(CAEN_DGTZ_ConnectionType linkType, int linkNum, int conetNode, uint32_t VMEBaseAddress) 
@@ -663,6 +678,44 @@ namespace caen {
         { CAEN_DGTZ_SAMFrequency_t frequency; errorHandler(CAEN_DGTZ_GetSAMSamplingFrequency(handle_, &frequency)); return frequency; }
         void setSAMSamplingFrequency(CAEN_DGTZ_SAMFrequency_t frequency)
         { errorHandler(CAEN_DGTZ_SetSAMSamplingFrequency(handle_, frequency)); }
+
+        /* NOTE: this is a public function according to docs but only
+         * exposed as _CAEN_DGTZ_Read_EEPROM in actual API. We leave it
+         * as is without trying to wrap buf nicely or anything.
+         */
+        unsigned char *read_EEPROM(int EEPROMIndex, unsigned short add, int nbOfBytes, unsigned char *buf)
+        { errorHandler(_CAEN_DGTZ_Read_EEPROM(handle_, EEPROMIndex, add, nbOfBytes, buf)); return buf; }
+
+        void loadSAMCorrectionData()
+        { errorHandler(CAEN_DGTZ_LoadSAMCorrectionData(handle_)); }
+
+        void enableSAMPulseGen(int channel, unsigned short pulsePattern, CAEN_DGTZ_SAMPulseSourceType_t pulseSource)
+        { errorHandler(CAEN_DGTZ_EnableSAMPulseGen(handle_, channel, pulsePattern, pulseSource)); }
+        void disableSAMPulseGen(int channel)
+        { errorHandler(CAEN_DGTZ_DisableSAMPulseGen(handle_, channel)); }
+
+        void sendSAMPulse()
+        { errorHandler(CAEN_DGTZ_SendSAMPulse(handle_)); }
+
+        CAEN_DGTZ_AcquisitionMode_t getSAMAcquisitionMode()
+        { CAEN_DGTZ_AcquisitionMode_t mode; errorHandler(CAEN_DGTZ_GetSAMAcquisitionMode(handle_, &mode)); return mode; }
+        void setSAMAcquisitionMode(CAEN_DGTZ_AcquisitionMode_t mode)
+        { errorHandler(CAEN_DGTZ_SetSAMAcquisitionMode(handle_, mode)); }
+
+        ChannelPairTriggerLogicParams getChannelPairTriggerLogic(uint32_t channelA, uint32_t channelB)
+        { ChannelPairTriggerLogicParams params; errorHandler(CAEN_DGTZ_GetChannelPairTriggerLogic(handle_, channelA, channelB, &params.logic, &params.coincidenceWindow)); }
+        void setChannelPairTriggerLogic(uint32_t channelA, uint32_t channelB, ChannelPairTriggerLogicParams params)
+        { errorHandler(CAEN_DGTZ_SetChannelPairTriggerLogic(handle_, channelA, channelB, params.logic, params.coincidenceWindow)); }
+
+        TriggerLogicParams getTriggerLogic()
+        { TriggerLogicParams params; errorHandler(CAEN_DGTZ_GetTriggerLogic(handle_, &params.logic, &params.majorityLevel)); }
+        void setTriggerLogic(TriggerLogicParams params)
+        { errorHandler(CAEN_DGTZ_SetTriggerLogic(handle_, params.logic, params.majorityLevel)); }
+
+        SAMTriggerCountVetoParams getSAMTriggerCountVetoParam(int channel)
+        { SAMTriggerCountVetoParams params; errorHandler(CAEN_DGTZ_GetSAMTriggerCountVetoParam(handle_, channel, &params.enable, &params.vetoWindow)); }
+        void setSAMTriggerCountVetoParam(int channel, SAMTriggerCountVetoParams params)
+        { errorHandler(CAEN_DGTZ_SetSAMTriggerCountVetoParam(handle_, channel, params.enable, params.vetoWindow)); }
 
         void setDPPEventAggregation(int threshold, int maxsize)
         { errorHandler(CAEN_DGTZ_SetDPPEventAggregation(handle_, threshold, maxsize)); }

@@ -10,18 +10,22 @@
 
 int s2i(const std::string& s)
 {
-    return std::stoi (s,nullptr);
+    return std::stoi(s,nullptr);
 }
 
 unsigned int s2ui(const std::string& s)
 {
-    return std::stoi (s,nullptr,0);
+    return std::stoi(s,nullptr,0);
+}
+uint16_t s2ui16(const std::string& s)
+{
+    return (uint16_t)s2ui(s);
 }
 
 // binary string
 unsigned int bs2ui(const std::string& s)
 {
-    return std::stoi (s,nullptr,2);
+    return std::stoi(s,nullptr,2);
 }
 
 CAEN_DGTZ_IOLevel_t s2iol(const std::string& s)
@@ -171,6 +175,79 @@ caen::AIMParams s2aimp(const std::string& s)
     throw std::invalid_argument{"Invalid AIMParams"};
 }
 
+CAEN_DGTZ_TrigerLogic_t s2tl(const std::string& s)
+{
+    STR_MATCH(s,OR,CAEN_DGTZ_LOGIC_OR);
+    STR_MATCH(s,AND,CAEN_DGTZ_LOGIC_AND);
+    return (CAEN_DGTZ_TrigerLogic_t)std::stoi(s,nullptr,0);
+}
+std::string to_string(CAEN_DGTZ_TrigerLogic_t tl)
+{
+    switch (tl)
+    {
+        case CAEN_DGTZ_LOGIC_OR:
+            return("OR");
+        case CAEN_DGTZ_LOGIC_AND:
+            return("AND");
+        default :
+            return std::to_string(tl);
+    }
+}
+
+std::string to_string(const caen::ChannelPairTriggerLogicParams &cptlp)
+{
+    std::stringstream ss;
+    ss << '{' << to_string(cptlp.logic) << ',' << to_string(cptlp.coincidenceWindow)<< '}';
+    return ss.str();
+}
+
+caen::ChannelPairTriggerLogicParams s2cptlp(const std::string& s)
+{
+    std::regex rx("\\{(\\w+),(\\w+)\\}");
+    std::smatch match;
+    if (std::regex_search(s, match, rx))
+    {
+        return caen::ChannelPairTriggerLogicParams{s2tl(match[1]),s2ui16(match[2])};
+    }
+    throw std::invalid_argument{"Invalid ChannelPairTriggerLogicParams"};
+}
+
+std::string to_string(const caen::TriggerLogicParams &tlp)
+{
+    std::stringstream ss;
+    ss << '{' << to_string(tlp.logic) << ',' << to_string(tlp.majorityLevel)<< '}';
+    return ss.str();
+}
+
+caen::TriggerLogicParams s2tlp(const std::string& s)
+{
+    std::regex rx("\\{(\\w+),(\\w+)\\}");
+    std::smatch match;
+    if (std::regex_search(s, match, rx))
+    {
+        return caen::TriggerLogicParams{s2tl(match[1]),s2ui(match[2])};
+    }
+    throw std::invalid_argument{"Invalid TriggerLogicParams"};
+}
+
+std::string to_string(const caen::SAMTriggerCountVetoParams &samtcvp)
+{
+    std::stringstream ss;
+    ss << '{' << to_string(samtcvp.enable) << ',' << to_string(samtcvp.vetoWindow)<< '}';
+    return ss.str();
+}
+
+caen::SAMTriggerCountVetoParams s2samtcvp(const std::string& s)
+{
+    std::regex rx("\\{(\\w+),(\\w+)\\}");
+    std::smatch match;
+    if (std::regex_search(s, match, rx))
+    {
+        return caen::SAMTriggerCountVetoParams{s2ed(match[1]),s2ui(match[2])};
+    }
+    throw std::invalid_argument{"Invalid SAMTriggerCountVetoParams"};
+}
+
 std::string to_string(CAEN_DGTZ_DPP_AcqMode_t mode)
 {
     switch (mode)
@@ -285,3 +362,23 @@ CAEN_DGTZ_SAMFrequency_t s2samf(const std::string& s)
     STR_MATCH(s,400MHz,CAEN_DGTZ_SAM_400MHz);
     return (CAEN_DGTZ_SAMFrequency_t)std::stoi(s,nullptr,0);
 }
+
+std::string to_string(CAEN_DGTZ_AcquisitionMode_t mode)
+{
+    switch (mode)
+    {
+        case CAEN_DGTZ_AcquisitionMode_STANDARD:
+            return("STANDARD");
+        case CAEN_DGTZ_AcquisitionMode_DPP_CI:
+            return("DPP_CI");
+        default :
+            return std::to_string(mode);
+    }
+}
+CAEN_DGTZ_AcquisitionMode_t s2samam(const std::string& s)
+{
+    STR_MATCH(s,STANDARD,CAEN_DGTZ_AcquisitionMode_STANDARD);
+    STR_MATCH(s,DPP_CI,CAEN_DGTZ_AcquisitionMode_DPP_CI);
+    return (CAEN_DGTZ_AcquisitionMode_t)std::stoi(s,nullptr,0);
+}
+

@@ -34,6 +34,8 @@ enum FunctionID {
     RunDelay,
     SAMCorrectionLevel,
     SAMSamplingFrequency,
+    SAMAcquisitionMode,
+    TriggerLogic,
     // Channel/group setting
     ChannelDCOffset,
     GroupDCOffset,
@@ -48,6 +50,7 @@ enum FunctionID {
     ChannelPulsePolarity,
     ChannelZSParams,
     SAMPostTriggerSize,
+    SAMTriggerCountVetoParam,
     // Channel/group optional
     DPPPreTriggerSize,
     RecordLength,

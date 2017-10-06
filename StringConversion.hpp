@@ -58,7 +58,12 @@ std::string to_string(const caen::ZSParams &zsp);
 caen::ZSParams s2zsp(const std::string& s);
 std::string to_string(const caen::AIMParams &aimp);
 caen::AIMParams s2aimp(const std::string& s);
-
+std::string to_string(const caen::ChannelPairTriggerLogicParams &cptlp);
+caen::ChannelPairTriggerLogicParams s2cptlp(const std::string& s);
+std::string to_string(const caen::TriggerLogicParams &tlp);
+caen::TriggerLogicParams s2tlp(const std::string& s);
+std::string to_string(const caen::SAMTriggerCountVetoParams &samtcvp);
+caen::SAMTriggerCountVetoParams s2samtcvp(const std::string& s);
 
 std::string to_string(CAEN_DGTZ_DPP_AcqMode_t mode);
 CAEN_DGTZ_DPP_AcqMode_t s2dam(const std::string& s);
@@ -70,6 +75,8 @@ std::string to_string(CAEN_DGTZ_SAM_CORRECTION_LEVEL_t level);
 CAEN_DGTZ_SAM_CORRECTION_LEVEL_t s2samcl(const std::string& s);
 std::string to_string(CAEN_DGTZ_SAMFrequency_t frequency);
 CAEN_DGTZ_SAMFrequency_t s2samf(const std::string& s);
+std::string to_string(CAEN_DGTZ_AcquisitionMode_t mode);
+CAEN_DGTZ_AcquisitionMode_t s2samam(const std::string& s);
 
 
 #endif //JADAQ_STRINGCONVERSION_HPP
