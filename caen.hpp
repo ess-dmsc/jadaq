@@ -405,8 +405,9 @@ namespace caen {
         { errorHandler(CAEN_DGTZ_SetGroupEnableMask(handle_, mask)); }
 
         /* TODO: CAEN_DGTZ_GetDecimationFactor fails with GenericError
-         * on DT5740_171 , apparently a mismatch between DigitizerTable
-         * value end value read from register in the V1740 specific case. */
+         * on DT5740_171 and V1740D_137, apparently a mismatch between
+         * DigitizerTable value end value read from register in the
+         * V1740 specific case. */
         uint16_t getDecimationFactor()
         { uint16_t factor;  errorHandler(CAEN_DGTZ_GetDecimationFactor(handle_, &factor)); return factor; }
         void setDecimationFactor(uint16_t factor)
@@ -437,6 +438,8 @@ namespace caen {
         void setChannelDCOffset(uint32_t channel, uint32_t offset)
         { errorHandler(CAEN_DGTZ_SetChannelDCOffset(handle_, channel, offset)); }
 
+        /* TODO: CAEN_DGTZ_GetGroupDCOffset fails with GenericError on
+         * V1740D_137, something fails in the V1740 specific case. */
         uint32_t getGroupDCOffset(uint32_t group)
         {
             uint32_t offset;
@@ -481,6 +484,8 @@ namespace caen {
         void setChannelTriggerThreshold(uint32_t channel, uint32_t treshold)
         { errorHandler(_CAEN_DGTZ_SetChannelTriggerThreshold(handle_, channel, treshold)); }
 
+        /* TODO: CAEN_DGTZ_GetGroupTriggerThreshold fails with ReadDeviceRegisterFail
+         * on V1740D_137. */
         uint32_t getGroupTriggerThreshold(uint32_t group)
         {
             uint32_t treshold;
@@ -619,7 +624,7 @@ namespace caen {
         virtual void setDPPPreTriggerSize(uint32_t samples) // Default channel -1 == all
         { errorHandler(CAEN_DGTZ_SetDPPPreTriggerSize(handle_, -1, samples)); }
 
-        /* TODO: fails with InvalidParam om DT5740_171, seems to fail
+        /* TODO: fails with InvalidParam om DT5740_171 and V1740D_137, seems to fail
          * deep in readout when the digtizer library calls ReadRegister 0x1n80 */
         CAEN_DGTZ_PulsePolarity_t getChannelPulsePolarity(uint32_t channel)
         { CAEN_DGTZ_PulsePolarity_t polarity; errorHandler(CAEN_DGTZ_GetChannelPulsePolarity(handle_, channel, &polarity)); return polarity; }
@@ -655,8 +660,7 @@ namespace caen {
 
         /* NOTE: docs claim that GetSAMPostTriggerSize takes an int32_t
          * pointer but the actual implementation uses a uint32_t pointer.
-         * This appears to be a simple error in the docs. Pending
-         * upstream comment.
+         * This appears to be a simple error in the docs. Reported upstream.
          */
         /* NOTE: GetSAMPostTriggerSize API takes an uint32_t pointer but
          * docs explicitly point out that value is always uint8_t:
@@ -664,10 +668,9 @@ namespace caen {
          * (pointer to, in case of Get) . Unit is the sampling period
          * multiplied by 16."
          * this also fits the type passed to SetSAMPostTriggerSize.
-         * Pending upstream comment on why.
-         */
-        /*
-         * TODO: change get output to a uint8_t upstream and here?
+         * Upstream confirmed that there's no point in using a uint32 - but
+         * changing the API might break dependent software. We just
+         * leave it alone.
          */
         uint32_t getSAMPostTriggerSize(int samindex)
         { uint32_t value; errorHandler(CAEN_DGTZ_GetSAMPostTriggerSize(handle_, samindex, &value)); return value; }
@@ -796,7 +799,7 @@ namespace caen {
          */
         uint32_t getGateWidth(uint32_t group) override
         {
-            if (group > groups())
+            if (group >= groups())
                 errorHandler(CAEN_DGTZ_InvalidChannelNumber);
             uint32_t value;
             errorHandler(CAEN_DGTZ_ReadRegister(handle_, 0x1030 | group<<8 , &value));
@@ -804,7 +807,7 @@ namespace caen {
         }
         void setGateWidth(uint32_t group, uint32_t value) override
         {
-            if (group > groups())
+            if (group >= groups())
                 errorHandler(CAEN_DGTZ_InvalidChannelNumber);
             errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x1030 | group<<8, value & 0xFFF));
         }
@@ -817,7 +820,7 @@ namespace caen {
          */
         uint32_t getFixedBaseline(uint32_t group) override
         {
-            if (group > groups())
+            if (group >= groups())
                 errorHandler(CAEN_DGTZ_InvalidChannelNumber);
             uint32_t value;
             errorHandler(CAEN_DGTZ_ReadRegister(handle_, 0x1038 | group<<8 , &value));
@@ -825,7 +828,7 @@ namespace caen {
         }
         void setFixedBaseline(uint32_t group, uint32_t value) override
         {
-            if (group > groups())
+            if (group >= groups())
                 errorHandler(CAEN_DGTZ_InvalidChannelNumber);
             errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x1038 | group<<8, value & 0xFFF));
         }
