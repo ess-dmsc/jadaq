@@ -56,6 +56,8 @@ static std::unordered_map<std::string,FunctionID > functionMap =
                 MAP_ENTRY(GateWidth),
                 MAP_ENTRY(GateOffset),
                 MAP_ENTRY(FixedBaseline),
+                MAP_ENTRY(TriggerHoldOffWidth),
+                MAP_ENTRY(ShapedTriggerWidth),
         };
 
 
@@ -110,6 +112,8 @@ const std::string to_string(FunctionID id) {
         CASE_TO_STR(GateWidth)
         CASE_TO_STR(GateOffset)
         CASE_TO_STR(FixedBaseline)
+        CASE_TO_STR(TriggerHoldOffWidth)
+        CASE_TO_STR(ShapedTriggerWidth)
         default :
             throw std::invalid_argument{"Unknown function ID"};
     }

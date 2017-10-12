@@ -64,6 +64,8 @@ static void set_(caen::Digitizer* digitizer, FunctionID functionID, const std::s
         SET_CASE(digitizer,GateWidth,s2ui(value))
         SET_CASE(digitizer,GateOffset,s2ui(value))
         SET_CASE(digitizer,FixedBaseline,s2ui(value))
+        SET_CASE(digitizer,TriggerHoldOffWidth,s2ui(value))
+        SET_CASE(digitizer,ShapedTriggerWidth,s2ui(value))
         default:
             throw std::invalid_argument{"Unknown Function"};
 
@@ -92,6 +94,8 @@ static void set_(caen::Digitizer* digitizer, FunctionID functionID, int index, c
         SET_ICASE(digitizer,GateWidth,s2ui(value),index)
         SET_ICASE(digitizer,GateOffset,s2ui(value),index)
         SET_ICASE(digitizer,FixedBaseline,s2ui(value),index)
+        SET_ICASE(digitizer,TriggerHoldOffWidth,s2ui(value),index)
+        SET_ICASE(digitizer,ShapedTriggerWidth,s2ui(value),index)
         default:
             throw std::invalid_argument{"Unknown Function"};
     }
@@ -160,6 +164,8 @@ static std::string get_(caen::Digitizer* digitizer, FunctionID functionID, int i
         GET_ICASE(digitizer,GateWidth,index,to_string)
         GET_ICASE(digitizer,GateOffset,index,to_string)
         GET_ICASE(digitizer,FixedBaseline,index,to_string)
+        GET_ICASE(digitizer,TriggerHoldOffWidth,index,to_string)
+        GET_ICASE(digitizer,ShapedTriggerWidth,index,to_string)
         default:
             throw std::invalid_argument{"Unknown Function"};
     }

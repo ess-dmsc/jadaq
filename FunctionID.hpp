@@ -58,6 +58,8 @@ enum FunctionID {
     GateWidth,
     GateOffset,
     FixedBaseline,
+    TriggerHoldOffWidth,
+    ShapedTriggerWidth,
 };
 
 static inline bool needIndex(FunctionID id) { return id >= ChannelDCOffset; }

@@ -764,6 +764,13 @@ namespace caen {
         virtual void setFixedBaseline(uint32_t group, uint32_t value) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         virtual void setFixedBaseline(uint32_t value) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
 
+        virtual uint32_t getTriggerHoldOffWidth(uint32_t group) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual void setTriggerHoldOffWidth(uint32_t group, uint32_t value) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual void setTriggerHoldOffWidth(uint32_t value) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+
+        virtual uint32_t getShapedTriggerWidth(uint32_t group) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual void setShapedTriggerWidth(uint32_t group, uint32_t value) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual void setShapedTriggerWidth(uint32_t value) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
     }; // class Digitizer
 
     class Digitizer740 : public Digitizer
@@ -869,6 +876,8 @@ namespace caen {
         void setFixedBaseline(uint32_t value) override
         { errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x8038, value & 0xFFF)); }
 
+        /* TODO: switch DPPPreTrigger to use CAENDigitizer functions? */
+
         /* Get / Set DPPPreTrigger
          * @group
          * @samples: Number of samples Ns of the Pre Trigger width. The value is
@@ -893,6 +902,50 @@ namespace caen {
                 errorHandler(CAEN_DGTZ_InvalidChannelNumber);
             { errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x103C | group<<8, samples & 0xFFF)); }
         }
+
+        /* TODO: wrap DPP Algorithm Control from register docs */
+
+        /* Get / Set TriggerHoldOffWidth
+         * @group
+         * @value: Set the Trigger Hold-Off width in steps of 16 ns - 16 bits
+         */
+        uint32_t getTriggerHoldOffWidth(uint32_t group) override
+        {
+            if (group >= groups())
+                errorHandler(CAEN_DGTZ_InvalidChannelNumber);
+            uint32_t value;
+            errorHandler(CAEN_DGTZ_ReadRegister(handle_, 0x1074 | group<<8 , &value));
+            return value;
+        }
+        void setTriggerHoldOffWidth(uint32_t group, uint32_t value) override
+        {
+            if (group >= groups())
+                errorHandler(CAEN_DGTZ_InvalidChannelNumber);
+            errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x1074 | group<<8, value & 0xFFFF));
+        }
+        void setTriggerHoldOffWidth(uint32_t value) override
+        { errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x8074, value & 0xFFFF)); }
+
+        /* Get / Set ShapedTriggerWidth
+         * @group
+         * @value: Set the number of samples for the Shaped Trigger width in trigger clock cycles (16 ns step) - 16 bits
+         */
+        uint32_t getShapedTriggerWidth(uint32_t group) override
+        {
+            if (group >= groups())
+                errorHandler(CAEN_DGTZ_InvalidChannelNumber);
+            uint32_t value;
+            errorHandler(CAEN_DGTZ_ReadRegister(handle_, 0x1078 | group<<8 , &value));
+            return value;
+        }
+        void setShapedTriggerWidth(uint32_t group, uint32_t value) override
+        {
+            if (group >= groups())
+                errorHandler(CAEN_DGTZ_InvalidChannelNumber);
+            errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x1078 | group<<8, value & 0xFFFF));
+        }
+        void setShapedTriggerWidth(uint32_t value) override
+        { errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x8078, value & 0xFFFF)); }
 
         DPPAcquisitionMode getDPPAcquisitionMode() override
         {
