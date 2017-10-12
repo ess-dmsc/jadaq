@@ -62,6 +62,7 @@ static void set_(caen::Digitizer* digitizer, FunctionID functionID, const std::s
         SET_CASE(digitizer,RecordLength,s2ui(value))
         SET_CASE(digitizer,NumEventsPerAggregate,s2ui(value))
         SET_CASE(digitizer,GateWidth,s2ui(value))
+        SET_CASE(digitizer,GateOffset,s2ui(value))
         SET_CASE(digitizer,FixedBaseline,s2ui(value))
         default:
             throw std::invalid_argument{"Unknown Function"};
@@ -89,6 +90,7 @@ static void set_(caen::Digitizer* digitizer, FunctionID functionID, int index, c
         SET_ICASE(digitizer,RecordLength,s2ui(value),index)
         SET_ICASE(digitizer,NumEventsPerAggregate,s2ui(value),index)
         SET_ICASE(digitizer,GateWidth,s2ui(value),index)
+        SET_ICASE(digitizer,GateOffset,s2ui(value),index)
         SET_ICASE(digitizer,FixedBaseline,s2ui(value),index)
         default:
             throw std::invalid_argument{"Unknown Function"};
@@ -156,6 +158,7 @@ static std::string get_(caen::Digitizer* digitizer, FunctionID functionID, int i
         GET_ICASE(digitizer,RecordLength,index,to_string)
         GET_ICASE(digitizer,NumEventsPerAggregate,index,to_string)
         GET_ICASE(digitizer,GateWidth,index,to_string)
+        GET_ICASE(digitizer,GateOffset,index,to_string)
         GET_ICASE(digitizer,FixedBaseline,index,to_string)
         default:
             throw std::invalid_argument{"Unknown Function"};

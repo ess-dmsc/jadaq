@@ -56,6 +56,7 @@ enum FunctionID {
     RecordLength,
     NumEventsPerAggregate,
     GateWidth,
+    GateOffset,
     FixedBaseline,
 };
 

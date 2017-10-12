@@ -756,6 +756,10 @@ namespace caen {
         virtual void setGateWidth(uint32_t group, uint32_t value) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         virtual void setGateWidth(uint32_t value) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
 
+        virtual uint32_t getGateOffset(uint32_t group) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual void setGateOffset(uint32_t group, uint32_t value) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual void setGateOffset(uint32_t value) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+
         virtual uint32_t getFixedBaseline(uint32_t group) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         virtual void setFixedBaseline(uint32_t group, uint32_t value) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         virtual void setFixedBaseline(uint32_t value) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
@@ -822,6 +826,27 @@ namespace caen {
         }
         void setGateWidth(uint32_t value) override
         { errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x8030, value & 0xFFF)); }
+
+        /* Get / Set GateOffset
+         * @group
+         * @value: Number of samples for the Gate Offset width. Each sample corresponds to 16 ns. - 12 bits
+         */
+        uint32_t getGateOffset(uint32_t group) override
+        {
+            if (group >= groups())
+                errorHandler(CAEN_DGTZ_InvalidChannelNumber);
+            uint32_t value;
+            errorHandler(CAEN_DGTZ_ReadRegister(handle_, 0x1034 | group<<8 , &value));
+            return value;
+        }
+        void setGateOffset(uint32_t group, uint32_t value) override
+        {
+            if (group >= groups())
+                errorHandler(CAEN_DGTZ_InvalidChannelNumber);
+            errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x1034 | group<<8, value & 0xFFF));
+        }
+        void setGateOffset(uint32_t value) override
+        { errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x8034, value & 0xFFF)); }
 
         /* Get / Set FixedBaseline
          * @group
