@@ -771,6 +771,10 @@ namespace caen {
         virtual uint32_t getShapedTriggerWidth(uint32_t group) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         virtual void setShapedTriggerWidth(uint32_t group, uint32_t value) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         virtual void setShapedTriggerWidth(uint32_t value) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+
+        virtual uint32_t getAggregateOrganization() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual void setAggregateOrganization(uint32_t value) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+
     }; // class Digitizer
 
     class Digitizer740 : public Digitizer
@@ -903,7 +907,7 @@ namespace caen {
             { errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x103C | group<<8, samples & 0xFFF)); }
         }
 
-        /* TODO: wrap DPP Algorithm Control from register docs */
+        /* TODO: wrap DPP Algorithm Control from register docs? */
 
         /* Get / Set TriggerHoldOffWidth
          * @group
@@ -926,6 +930,8 @@ namespace caen {
         void setTriggerHoldOffWidth(uint32_t value) override
         { errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x8074, value & 0xFFFF)); }
 
+        /* TODO: on V1740D ShapedTriggerWidth causes CommError */
+
         /* Get / Set ShapedTriggerWidth
          * @group
          * @value: Set the number of samples for the Shaped Trigger width in trigger clock cycles (16 ns step) - 16 bits
@@ -946,6 +952,31 @@ namespace caen {
         }
         void setShapedTriggerWidth(uint32_t value) override
         { errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x8078, value & 0xFFFF)); }
+
+        /* TODO: wrap AMC Firmware Revision from register docs? */
+
+        /* TODO: wrap Group n Low Channels DC Offset Individual Correction from register docs? */
+
+        /* TODO: wrap Group n High Channels DC Offset Individual Correction from register docs? */
+
+        /* TODO: wrap Individual Trigger Threshold of Group n Sub Channel m from register docs? */
+
+        /* TODO: wrap Board Configuration from register docs? (overlaps with other calls) */
+
+        /* Get / Set AggregateOrganization
+         * @value: Aggregate Organization. Nb: the number of aggregates is
+         * equal to N_aggr = 2^Nb . Please refer to register doc for values - 4 bits
+         */
+        uint32_t getAggregateOrganization() override
+        {
+            uint32_t value;
+            errorHandler(CAEN_DGTZ_ReadRegister(handle_, 0x800C, &value));
+            return value;
+        }
+        void setAggregateOrganization(uint32_t value) override
+        { errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x800C, value & 0x0F)); }
+
+        /* TODO: wrap Acquisition Control and remaining functions from register docs? */
 
         DPPAcquisitionMode getDPPAcquisitionMode() override
         {

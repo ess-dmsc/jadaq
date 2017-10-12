@@ -36,6 +36,7 @@ enum FunctionID {
     SAMSamplingFrequency,
     SAMAcquisitionMode,
     TriggerLogic,
+    AggregateOrganization,
     // Channel/group setting
     ChannelDCOffset,
     GroupDCOffset,
