@@ -120,6 +120,11 @@ namespace caen {
         CAEN_DGTZ_DPP_SaveParam_t param; // enum
     };
 
+    /* TODO: should this be changed to pointers like in DPPEvents?
+     * if so we should use DPP_SupportedVirtualProbes& supported as
+     * argument in getDPP_SupportedVirtualProbes rather than explicit
+     * init there.
+     */
     struct DPP_SupportedVirtualProbes {
         int probes[MAX_SUPPORTED_PROBES];
         int numProbes;
@@ -366,6 +371,10 @@ namespace caen {
         uint32_t getNumEvents(ReadoutBuffer buffer)
         {uint32_t n; errorHandler(CAEN_DGTZ_GetNumEvents(handle_, buffer.data, buffer.dataSize, &n)); return n; }
 
+        /* TODO: pass existing EventInfo as &info here like for getDPPEvents?
+         * it appears we may end up using an uninitialized EventInfo data
+         * pointer otherwise.
+         */
         EventInfo getEventInfo(ReadoutBuffer buffer, int32_t n)
         { EventInfo info; errorHandler(CAEN_DGTZ_GetEventInfo(handle_, buffer.data, buffer.dataSize, n, &info, &info.data)); return info; }
 
@@ -373,12 +382,12 @@ namespace caen {
         { errorHandler(CAEN_DGTZ_DecodeEvent(handle_, info.data, &event)); return event; }
 
         DPPEvents& getDPPEvents(ReadoutBuffer buffer, DPPEvents& events)
-        { _CAEN_DGTZ_GetDPPEvents(handle_, buffer.data, buffer.dataSize, events.ptr, events.nEvents); }
+        { _CAEN_DGTZ_GetDPPEvents(handle_, buffer.data, buffer.dataSize, events.ptr, events.nEvents); return events; }
 
         /* TODO: is this actually supposed to be a (void **) to DecodeDPPWaveforms? 
          *       From docs it looks more like a (void *) but see above.
          */
-        DPPWaveforms decodeDPPWaveforms(void *event, DPPWaveforms waveforms)
+        DPPWaveforms& decodeDPPWaveforms(void *event, DPPWaveforms& waveforms)
         { errorHandler(CAEN_DGTZ_DecodeDPPWaveforms(handle_, event, waveforms.ptr)); return waveforms; }
 
         /* Device configuration - i.e. getter and setters */
