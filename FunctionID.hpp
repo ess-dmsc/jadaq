@@ -38,6 +38,8 @@ enum FunctionID {
     TriggerLogic,
     BoardConfiguration,
     AggregateOrganization,
+    AcquisitionControl,
+    AcquisitionStatus,
     // Channel/group setting
     ChannelDCOffset,
     GroupDCOffset,

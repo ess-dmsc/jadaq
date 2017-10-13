@@ -38,6 +38,8 @@ static std::unordered_map<std::string,FunctionID > functionMap =
                 MAP_ENTRY(TriggerLogic),
                 MAP_ENTRY(BoardConfiguration),
                 MAP_ENTRY(AggregateOrganization),
+                MAP_ENTRY(AcquisitionControl),
+                MAP_ENTRY(AcquisitionStatus),
                 MAP_ENTRY(ChannelDCOffset),
                 MAP_ENTRY(GroupDCOffset),
                 MAP_ENTRY(ChannelSelfTrigger),
@@ -97,6 +99,8 @@ const std::string to_string(FunctionID id) {
         CASE_TO_STR(TriggerLogic)
         CASE_TO_STR(BoardConfiguration)
         CASE_TO_STR(AggregateOrganization)
+        CASE_TO_STR(AcquisitionControl)
+        CASE_TO_STR(AcquisitionStatus)
         CASE_TO_STR(ChannelDCOffset)
         CASE_TO_STR(GroupDCOffset)
         CASE_TO_STR(ChannelSelfTrigger)

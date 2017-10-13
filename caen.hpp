@@ -783,6 +783,11 @@ namespace caen {
         virtual uint32_t getAggregateOrganization() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         virtual void setAggregateOrganization(uint32_t value) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
 
+        virtual uint32_t getAcquisitionControl() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual void setAcquisitionControl(uint32_t value) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+
+        virtual uint32_t getAcquisitionStatus() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+
     }; // class Digitizer
 
     class Digitizer740 : public Digitizer
@@ -1053,8 +1058,18 @@ namespace caen {
         { errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x8020, value & 0x07FF)); }
         */
 
-        /* TODO: wrap Acquisition Control and remaining functions from register docs? */
+        /* TODO: make sure Record Length is already covered by RecordLength */
 
+        /* NOTE: According to the CAEN DPP register docs the bits
+         * [18:19] should always be 1, and in CAENDigitizer docs it
+         * sounds like setDPPAcquisitionMode with the only valid modes
+         * there (Mixed or List) should both set them accordingly, but
+         * apparently it doesn't really happen on V1740D with DPP
+         * firmware. Reported upstream.
+         *
+         * TODO: switch to the CAEN Get / SetDPPAcquisitionMode when fixed?
+         * TODO: switch to get / set BoardConfiguration internally?
+         */
         DPPAcquisitionMode getDPPAcquisitionMode() override
         {
             uint32_t boardConf;
@@ -1091,6 +1106,39 @@ namespace caen {
                     errorHandler(CAEN_DGTZ_InvalidParam);
             }
         }
+
+        /* TODO: wrap individual Acquisition Control fields, too?
+         *       like start/stop mode [0:1], acquisition start/arm in [2],
+         *       trigger counting mode in [3], PLL reference clock
+         *       source in [6], ...
+         */
+
+        /* Get / Set Acquisition Control
+         * @value: a bitmask covering a number of settings. Please refer
+         * to register docs - 12 bits.
+         */
+        uint32_t getAcquisitionControl() override
+        {
+            uint32_t value;
+            errorHandler(CAEN_DGTZ_ReadRegister(handle_, 0x8100, &value));
+            return value;
+        }
+        void setAcquisitionControl(uint32_t value) override
+        { errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x8100, value & 0x0FFF)); }
+
+        /* Get Acquisition Status
+         * Returns a bitmask covering a number of status fields. Please refer
+         * to register docs - 32 bits.
+         */
+        uint32_t getAcquisitionStatus() override
+        {
+            uint32_t value;
+            errorHandler(CAEN_DGTZ_ReadRegister(handle_, 0x8104, &value));
+            return value;
+        }
+
+        /* TODO: wrap Software Trigger and remaining functions from register docs? */
+
     };
 
 } // namespace caen
