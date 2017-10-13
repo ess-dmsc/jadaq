@@ -36,6 +36,7 @@ static std::unordered_map<std::string,FunctionID > functionMap =
                 MAP_ENTRY(SAMSamplingFrequency),
                 MAP_ENTRY(SAMAcquisitionMode),
                 MAP_ENTRY(TriggerLogic),
+                MAP_ENTRY(BoardConfiguration),
                 MAP_ENTRY(AggregateOrganization),
                 MAP_ENTRY(ChannelDCOffset),
                 MAP_ENTRY(GroupDCOffset),
@@ -57,6 +58,7 @@ static std::unordered_map<std::string,FunctionID > functionMap =
                 MAP_ENTRY(GateWidth),
                 MAP_ENTRY(GateOffset),
                 MAP_ENTRY(FixedBaseline),
+                MAP_ENTRY(DPPAlgorithmControl),
                 MAP_ENTRY(TriggerHoldOffWidth),
                 MAP_ENTRY(ShapedTriggerWidth),
         };
@@ -93,6 +95,7 @@ const std::string to_string(FunctionID id) {
         CASE_TO_STR(SAMSamplingFrequency)
         CASE_TO_STR(SAMAcquisitionMode)
         CASE_TO_STR(TriggerLogic)
+        CASE_TO_STR(BoardConfiguration)
         CASE_TO_STR(AggregateOrganization)
         CASE_TO_STR(ChannelDCOffset)
         CASE_TO_STR(GroupDCOffset)
@@ -114,6 +117,7 @@ const std::string to_string(FunctionID id) {
         CASE_TO_STR(GateWidth)
         CASE_TO_STR(GateOffset)
         CASE_TO_STR(FixedBaseline)
+        CASE_TO_STR(DPPAlgorithmControl)
         CASE_TO_STR(TriggerHoldOffWidth)
         CASE_TO_STR(ShapedTriggerWidth)
         default :

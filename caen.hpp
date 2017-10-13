@@ -768,9 +768,16 @@ namespace caen {
         virtual void setTriggerHoldOffWidth(uint32_t group, uint32_t value) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         virtual void setTriggerHoldOffWidth(uint32_t value) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
 
+        virtual uint32_t getDPPAlgorithmControl(uint32_t group) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual void setDPPAlgorithmControl(uint32_t group, uint32_t value) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual void setDPPAlgorithmControl(uint32_t value) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+
         virtual uint32_t getShapedTriggerWidth(uint32_t group) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         virtual void setShapedTriggerWidth(uint32_t group, uint32_t value) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         virtual void setShapedTriggerWidth(uint32_t value) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+
+        virtual uint32_t getBoardConfiguration() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual void setBoardConfiguration(uint32_t value) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
 
         virtual uint32_t getAggregateOrganization() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         virtual void setAggregateOrganization(uint32_t value) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
@@ -907,7 +914,33 @@ namespace caen {
             { errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x103C | group<<8, samples & 0xFFF)); }
         }
 
-        /* TODO: wrap DPP Algorithm Control from register docs? */
+        /* TODO: wrap individual DPP Algorithm Control fields, too?
+         *       like charge sensitivity in [0:2], internal test pulse
+         *       in [4], test pulse rate in [5:6], charge pedestal in
+         *       [8], input smoothing factor in [12:14], ...
+         */
+
+        /* Get / Set DPP Algorithm Control
+         * @group
+         * @value: bitmask for a large number of settings. Please refer
+         * to register docs for the mask details - 32 bits.
+         */
+        uint32_t getDPPAlgorithmControl(uint32_t group) override
+        {
+            if (group >= groups())
+                errorHandler(CAEN_DGTZ_InvalidChannelNumber);
+            uint32_t value;
+            errorHandler(CAEN_DGTZ_ReadRegister(handle_, 0x1040 | group<<8 , &value));
+            return value;
+        }
+        void setDPPAlgorithmControl(uint32_t group, uint32_t value) override
+        {
+            if (group >= groups())
+                errorHandler(CAEN_DGTZ_InvalidChannelNumber);
+            errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x1040 | group<<8, value & 0xFFFFFFFF));
+        }
+        void setDPPAlgorithmControl(uint32_t value) override
+        { errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x8040, value & 0xFFFFFFFF)); }
 
         /* Get / Set TriggerHoldOffWidth
          * @group
@@ -955,13 +988,37 @@ namespace caen {
 
         /* TODO: wrap AMC Firmware Revision from register docs? */
 
+        /* TODO: is DC Offset in register doc same as GroupDCOffset? */
+
+        /* NOTE: Get / Set Channel Enable Mask of Group is handled in
+         * ChannelGroupMask */
+        
         /* TODO: wrap Group n Low Channels DC Offset Individual Correction from register docs? */
 
         /* TODO: wrap Group n High Channels DC Offset Individual Correction from register docs? */
 
         /* TODO: wrap Individual Trigger Threshold of Group n Sub Channel m from register docs? */
 
-        /* TODO: wrap Board Configuration from register docs? (overlaps with other calls) */
+        /* TODO: wrap individual Board Configuration fields, too?
+         *       like individual trigger i [8], analog probe in [12:13],
+         *       waveform in [16], extras recording in [17], ...
+         */
+
+        /* Get / Set Board Configuration
+         * @value: a bitmask covering a number of settings. Please refer
+         * to register docs - 32 bits.
+         * NOTE: get from 0x8000, BitSet in 0x8004 and BitClear in
+         * 0x8008.
+         * TODO: write inverted mask to clear register 8008 first on set?
+         */
+        uint32_t getBoardConfiguration() override
+        {
+            uint32_t value;
+            errorHandler(CAEN_DGTZ_ReadRegister(handle_, 0x8000, &value));
+            return value;
+        }
+        void setBoardConfiguration(uint32_t value) override
+        { errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x8004, value & 0xFFFFFFFF)); }
 
         /* Get / Set AggregateOrganization
          * @value: Aggregate Organization. Nb: the number of aggregates is
@@ -975,6 +1032,18 @@ namespace caen {
         }
         void setAggregateOrganization(uint32_t value) override
         { errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x800C, value & 0x0F)); }
+
+        /* TODO: check that this is already covered by NumEventsPerAggregate
+
+        uint32_t getEventsPerAggregate() override
+        {
+            uint32_t value;
+            errorHandler(CAEN_DGTZ_ReadRegister(handle_, 0x8020, &value));
+            return value;
+        }
+        void setEventsPerAggregate(uint32_t value) override
+        { errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x8020, value & 0x07FF)); }
+        */
 
         /* TODO: wrap Acquisition Control and remaining functions from register docs? */
 

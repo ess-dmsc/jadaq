@@ -36,6 +36,7 @@ enum FunctionID {
     SAMSamplingFrequency,
     SAMAcquisitionMode,
     TriggerLogic,
+    BoardConfiguration,
     AggregateOrganization,
     // Channel/group setting
     ChannelDCOffset,
@@ -59,6 +60,7 @@ enum FunctionID {
     GateWidth,
     GateOffset,
     FixedBaseline,
+    DPPAlgorithmControl,
     TriggerHoldOffWidth,
     ShapedTriggerWidth,
 };
