@@ -778,6 +778,7 @@ namespace caen {
 
         virtual uint32_t getBoardConfiguration() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         virtual void setBoardConfiguration(uint32_t value) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual void unsetBoardConfiguration(uint32_t value) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
 
         virtual uint32_t getAggregateOrganization() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         virtual void setAggregateOrganization(uint32_t value) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
@@ -992,7 +993,7 @@ namespace caen {
 
         /* NOTE: Get / Set Channel Enable Mask of Group is handled in
          * ChannelGroupMask */
-        
+
         /* TODO: wrap Group n Low Channels DC Offset Individual Correction from register docs? */
 
         /* TODO: wrap Group n High Channels DC Offset Individual Correction from register docs? */
@@ -1000,16 +1001,21 @@ namespace caen {
         /* TODO: wrap Individual Trigger Threshold of Group n Sub Channel m from register docs? */
 
         /* TODO: wrap individual Board Configuration fields, too?
-         *       like individual trigger i [8], analog probe in [12:13],
+         *       like individual trigger in [8], analog probe in [12:13],
          *       waveform in [16], extras recording in [17], ...
          */
 
         /* Get / Set Board Configuration
          * @value: a bitmask covering a number of settings. Please refer
          * to register docs - 32 bits.
-         * NOTE: get from 0x8000, BitSet in 0x8004 and BitClear in
-         * 0x8008.
-         * TODO: write inverted mask to clear register 8008 first on set?
+         *
+         * According to register docs the bits [0:3,5:7,9:11,14:15,22:31]
+         * must be 0 and the bits [4,8,18,19] must be 1 so we always
+         * force compliance by a bitwise-or with 0x000C0110 followed by
+         * a bitwise-and with 0x003F3110.
+         *
+         * NOTE: Read value from 0x8000, BitSet value with 0x8004 and
+         *       BitClear value with 0x8008.
          */
         uint32_t getBoardConfiguration() override
         {
@@ -1018,7 +1024,9 @@ namespace caen {
             return value;
         }
         void setBoardConfiguration(uint32_t value) override
-        { errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x8004, value & 0xFFFFFFFF)); }
+        { errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x8004, (value | 0x000C0110) & 0x003F3110)); }
+        void unsetBoardConfiguration(uint32_t value) override
+        { errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x8008, (value | 0x000C0110) & 0x003F3110)); }
 
         /* Get / Set AggregateOrganization
          * @value: Aggregate Organization. Nb: the number of aggregates is
