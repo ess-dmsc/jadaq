@@ -63,6 +63,7 @@ enum FunctionID {
     GateOffset,
     FixedBaseline,
     DPPAlgorithmControl,
+    EasyDPPAlgorithmControl,
     TriggerHoldOffWidth,
     ShapedTriggerWidth,
 };

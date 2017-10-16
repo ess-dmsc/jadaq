@@ -39,6 +39,8 @@ std::string bin_string(T v)
 unsigned int bs2ui(const std::string& s);
 int s2i(const std::string& s);
 unsigned int s2ui(const std::string& s);
+uint16_t s2ui16(const std::string& s);
+uint8_t s2ui8(const std::string& s);
 CAEN_DGTZ_IOLevel_t s2iol(const std::string& s);
 CAEN_DGTZ_AcqMode_t s2am(const std::string& s);
 CAEN_DGTZ_TriggerMode_t s2tm(const std::string& s);
@@ -64,6 +66,8 @@ std::string to_string(const caen::TriggerLogicParams &tlp);
 caen::TriggerLogicParams s2tlp(const std::string& s);
 std::string to_string(const caen::SAMTriggerCountVetoParams &samtcvp);
 caen::SAMTriggerCountVetoParams s2samtcvp(const std::string& s);
+std::string to_string(const caen::EasyDPPAlgorithmControl &edppac);
+caen::EasyDPPAlgorithmControl s2edppac(const std::string& s);
 
 std::string to_string(CAEN_DGTZ_DPP_AcqMode_t mode);
 CAEN_DGTZ_DPP_AcqMode_t s2dam(const std::string& s);

@@ -61,6 +61,7 @@ static std::unordered_map<std::string,FunctionID > functionMap =
                 MAP_ENTRY(GateOffset),
                 MAP_ENTRY(FixedBaseline),
                 MAP_ENTRY(DPPAlgorithmControl),
+                MAP_ENTRY(EasyDPPAlgorithmControl),
                 MAP_ENTRY(TriggerHoldOffWidth),
                 MAP_ENTRY(ShapedTriggerWidth),
         };
@@ -122,6 +123,7 @@ const std::string to_string(FunctionID id) {
         CASE_TO_STR(GateOffset)
         CASE_TO_STR(FixedBaseline)
         CASE_TO_STR(DPPAlgorithmControl)
+        CASE_TO_STR(EasyDPPAlgorithmControl)
         CASE_TO_STR(TriggerHoldOffWidth)
         CASE_TO_STR(ShapedTriggerWidth)
         default :

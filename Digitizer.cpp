@@ -68,6 +68,7 @@ static void set_(caen::Digitizer* digitizer, FunctionID functionID, const std::s
         SET_CASE(digitizer,GateOffset,s2ui(value))
         SET_CASE(digitizer,FixedBaseline,s2ui(value))
         SET_CASE(digitizer,DPPAlgorithmControl,s2ui(value))
+        SET_CASE(digitizer,EasyDPPAlgorithmControl,s2edppac(value))
         SET_CASE(digitizer,TriggerHoldOffWidth,s2ui(value))
         SET_CASE(digitizer,ShapedTriggerWidth,s2ui(value))
         default:
@@ -93,14 +94,15 @@ static void set_(caen::Digitizer* digitizer, FunctionID functionID, int index, c
         SET_ICASE(digitizer,SAMTriggerCountVetoParam,index,s2samtcvp(value))
         SET_ICASE(digitizer,DPPPreTriggerSize,index,s2ui(value))
         SET_ICASE(digitizer,ChannelPulsePolarity,index,s2pp(value))
-        SET_ICASE(digitizer,RecordLength,s2ui(value),index)
-        SET_ICASE(digitizer,NumEventsPerAggregate,s2ui(value),index)
-        SET_ICASE(digitizer,GateWidth,s2ui(value),index)
-        SET_ICASE(digitizer,GateOffset,s2ui(value),index)
-        SET_ICASE(digitizer,FixedBaseline,s2ui(value),index)
-        SET_ICASE(digitizer,DPPAlgorithmControl,s2ui(value),index)
-        SET_ICASE(digitizer,TriggerHoldOffWidth,s2ui(value),index)
-        SET_ICASE(digitizer,ShapedTriggerWidth,s2ui(value),index)
+        SET_ICASE(digitizer,RecordLength,index,s2ui(value))
+        SET_ICASE(digitizer,NumEventsPerAggregate,index,s2ui(value))
+        SET_ICASE(digitizer,GateWidth,index,s2ui(value))
+        SET_ICASE(digitizer,GateOffset,index,s2ui(value))
+        SET_ICASE(digitizer,FixedBaseline,index,s2ui(value))
+        SET_ICASE(digitizer,DPPAlgorithmControl,index,s2ui(value))
+        SET_ICASE(digitizer,EasyDPPAlgorithmControl,index,s2edppac(value))
+        SET_ICASE(digitizer,TriggerHoldOffWidth,index,s2ui(value))
+        SET_ICASE(digitizer,ShapedTriggerWidth,index,s2ui(value))
         default:
             throw std::invalid_argument{"Unknown Function"};
     }
@@ -174,6 +176,7 @@ static std::string get_(caen::Digitizer* digitizer, FunctionID functionID, int i
         GET_ICASE(digitizer,GateOffset,index,to_string)
         GET_ICASE(digitizer,FixedBaseline,index,to_string)
         GET_ICASE(digitizer,DPPAlgorithmControl,index,to_string)
+        GET_ICASE(digitizer,EasyDPPAlgorithmControl,index,to_string)
         GET_ICASE(digitizer,TriggerHoldOffWidth,index,to_string)
         GET_ICASE(digitizer,ShapedTriggerWidth,index,to_string)
         default:

@@ -160,6 +160,63 @@ namespace caen {
         uint32_t vetoWindow;
     };
 
+    /* For user-friendly configuration of DPP Algorithm Control mask */
+    struct EasyDPPAlgorithmControl {
+        /* Only allow the expected number of bits per field */
+        uint8_t chargeSensitivity : 3;
+        uint8_t internalTestPulse : 1;
+        uint8_t testPulseRate : 2;
+        uint8_t chargePedestal : 1;
+        uint8_t inputSmoothingFactor : 3;
+        uint8_t pulsePolarity : 1;
+        uint8_t triggerMode : 2;
+        uint8_t baselineMean : 3;
+        uint8_t disableSelfTrigger : 1;
+        uint8_t triggerHysteresis : 1;
+    };
+
+    /* Bit-banging helpers to translate between EasyX struct and bitmask.
+     * Please refer to the register docs for the individual mask
+     * layouts.
+     */
+
+    /* EasyDPPAlgorithmControl fields:
+     * charge sensitivity in [0:2], internal test pulse in [4],
+     * test pulse rate in [5:6], charge pedestal in [8],
+     * input smoothing factor in [12:14], pulse polarity in [16],
+     * trigger mode in [18:19], baseline mean in [20:22],
+     * disable self trigger in [24], trigger hysteresis in [30].
+     */
+    static uint8_t unpackBits(uint32_t mask, uint8_t size, uint8_t offset)
+    { return (uint8_t)((mask >> offset) & size); }
+    static uint32_t packBits(uint8_t value, uint8_t size, uint8_t offset)
+    { return (value & size) << offset; }
+
+    static uint32_t edppac2bits(EasyDPPAlgorithmControl settings)
+    {
+        uint32_t mask = 0;
+        mask |= packBits(settings.chargeSensitivity, 3, 0);
+        mask |= packBits(settings.internalTestPulse, 1, 4);
+        mask |= packBits(settings.testPulseRate, 2, 5);
+        mask |= packBits(settings.chargePedestal, 1, 8);
+        mask |= packBits(settings.inputSmoothingFactor, 3, 12);
+        mask |= packBits(settings.pulsePolarity, 1, 16);
+        mask |= packBits(settings.triggerMode, 2, 18);
+        mask |= packBits(settings.baselineMean, 3, 20);
+        mask |= packBits(settings.disableSelfTrigger, 1, 24);
+        mask |= packBits(settings.triggerHysteresis, 1, 30);
+        return mask;
+    }
+    static EasyDPPAlgorithmControl bits2edppac(uint32_t mask)
+    {
+        EasyDPPAlgorithmControl settings;
+        settings = {unpackBits(mask, 3, 0), unpackBits(mask, 1, 4),
+                    unpackBits(mask, 2, 5), unpackBits(mask, 1, 8),
+                    unpackBits(mask, 3, 12), unpackBits(mask,1, 16),
+                    unpackBits(mask, 2, 18), unpackBits(mask, 3, 20),
+                    unpackBits(mask, 1, 24), unpackBits(mask, 1, 30)};
+        return settings;
+    }
 
     /* Some low-level digitizer helpers */
     static int openRawDigitizer(CAEN_DGTZ_ConnectionType linkType, int linkNum, int conetNode, uint32_t VMEBaseAddress) 
@@ -771,6 +828,9 @@ namespace caen {
         virtual uint32_t getDPPAlgorithmControl(uint32_t group) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         virtual void setDPPAlgorithmControl(uint32_t group, uint32_t value) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         virtual void setDPPAlgorithmControl(uint32_t value) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual EasyDPPAlgorithmControl getEasyDPPAlgorithmControl(uint32_t group) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual void setEasyDPPAlgorithmControl(uint32_t group, EasyDPPAlgorithmControl settings) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual void setEasyDPPAlgorithmControl(EasyDPPAlgorithmControl settings) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
 
         virtual uint32_t getShapedTriggerWidth(uint32_t group) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         virtual void setShapedTriggerWidth(uint32_t group, uint32_t value) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
@@ -920,33 +980,43 @@ namespace caen {
             { errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x103C | group<<8, samples & 0xFFF)); }
         }
 
-        /* TODO: wrap individual DPP Algorithm Control fields, too?
-         *       like charge sensitivity in [0:2], internal test pulse
-         *       in [4], test pulse rate in [5:6], charge pedestal in
-         *       [8], input smoothing factor in [12:14], ...
-         */
-
         /* Get / Set DPP Algorithm Control
          * @group
-         * @value: bitmask for a large number of settings. Please refer
+         * @mask: bitmask for a large number of settings. Please refer
          * to register docs for the mask details - 32 bits.
          */
         uint32_t getDPPAlgorithmControl(uint32_t group) override
         {
             if (group >= groups())
                 errorHandler(CAEN_DGTZ_InvalidChannelNumber);
-            uint32_t value;
-            errorHandler(CAEN_DGTZ_ReadRegister(handle_, 0x1040 | group<<8 , &value));
-            return value;
+            uint32_t mask;
+            errorHandler(CAEN_DGTZ_ReadRegister(handle_, 0x1040 | group<<8 , &mask));
+            return mask;
         }
-        void setDPPAlgorithmControl(uint32_t group, uint32_t value) override
+        void setDPPAlgorithmControl(uint32_t group, uint32_t mask) override
         {
             if (group >= groups())
                 errorHandler(CAEN_DGTZ_InvalidChannelNumber);
-            errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x1040 | group<<8, value & 0xFFFFFFFF));
+            errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x1040 | group<<8, mask & 0xFFFFFFFF));
         }
-        void setDPPAlgorithmControl(uint32_t value) override
-        { errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x8040, value & 0xFFFFFFFF)); }
+        void setDPPAlgorithmControl(uint32_t mask) override
+        { errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x8040, mask & 0xFFFFFFFF)); }
+
+        EasyDPPAlgorithmControl getEasyDPPAlgorithmControl(uint32_t group) override
+        {
+            uint32_t mask = getDPPAlgorithmControl(group);
+            return bits2edppac(mask);
+        }
+        void setEasyDPPAlgorithmControl(uint32_t group, EasyDPPAlgorithmControl settings) override
+        {
+            uint32_t mask = edppac2bits(settings);
+            setDPPAlgorithmControl(group, mask);
+        }
+        void setEasyDPPAlgorithmControl(EasyDPPAlgorithmControl settings) override
+        {
+            uint32_t mask = edppac2bits(settings);
+            setDPPAlgorithmControl(mask);
+        }
 
         /* Get / Set TriggerHoldOffWidth
          * @group
@@ -1011,7 +1081,7 @@ namespace caen {
          */
 
         /* Get / Set Board Configuration
-         * @value: a bitmask covering a number of settings. Please refer
+         * @mask: a bitmask covering a number of settings. Please refer
          * to register docs - 32 bits.
          *
          * According to register docs the bits [0:3,5:7,9:11,14:15,22:31]
@@ -1019,19 +1089,21 @@ namespace caen {
          * force compliance by a bitwise-or with 0x000C0110 followed by
          * a bitwise-and with 0x003F3110.
          *
-         * NOTE: Read value from 0x8000, BitSet value with 0x8004 and
-         *       BitClear value with 0x8008.
+         * NOTE: Read mask from 0x8000, BitSet mask with 0x8004 and
+         *       BitClear mask with 0x8008.
+         * TODO: add BoardConfiguration struct and use for user-friendly
+         *       get / set of mask.
          */
         uint32_t getBoardConfiguration() override
         {
-            uint32_t value;
-            errorHandler(CAEN_DGTZ_ReadRegister(handle_, 0x8000, &value));
-            return value;
+            uint32_t mask;
+            errorHandler(CAEN_DGTZ_ReadRegister(handle_, 0x8000, &mask));
+            return mask;
         }
-        void setBoardConfiguration(uint32_t value) override
-        { errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x8004, (value | 0x000C0110) & 0x003F3110)); }
-        void unsetBoardConfiguration(uint32_t value) override
-        { errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x8008, (value | 0x000C0110) & 0x003F3110)); }
+        void setBoardConfiguration(uint32_t mask) override
+        { errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x8004, (mask | 0x000C0110) & 0x003F3110)); }
+        void unsetBoardConfiguration(uint32_t mask) override
+        { errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x8008, (mask | 0x000C0110) & 0x003F3110)); }
 
         /* Get / Set AggregateOrganization
          * @value: Aggregate Organization. Nb: the number of aggregates is
@@ -1111,30 +1183,34 @@ namespace caen {
          *       like start/stop mode [0:1], acquisition start/arm in [2],
          *       trigger counting mode in [3], PLL reference clock
          *       source in [6], ...
+         * TODO: add AcquisitionControl struct and use for user-friendly
+         *       get / set of mask.
          */
 
         /* Get / Set Acquisition Control
-         * @value: a bitmask covering a number of settings. Please refer
+         * @mask: a bitmask covering a number of settings. Please refer
          * to register docs - 12 bits.
          */
         uint32_t getAcquisitionControl() override
         {
-            uint32_t value;
-            errorHandler(CAEN_DGTZ_ReadRegister(handle_, 0x8100, &value));
-            return value;
+            uint32_t mask;
+            errorHandler(CAEN_DGTZ_ReadRegister(handle_, 0x8100, &mask));
+            return mask;
         }
-        void setAcquisitionControl(uint32_t value) override
-        { errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x8100, value & 0x0FFF)); }
+        void setAcquisitionControl(uint32_t mask) override
+        { errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x8100, mask & 0x0FFF)); }
 
         /* Get Acquisition Status
          * Returns a bitmask covering a number of status fields. Please refer
          * to register docs - 32 bits.
+         * TODO: add AcquisitionStatus struct and use for user-friendly
+         *       get of value mask.
          */
         uint32_t getAcquisitionStatus() override
         {
-            uint32_t value;
-            errorHandler(CAEN_DGTZ_ReadRegister(handle_, 0x8104, &value));
-            return value;
+            uint32_t mask;
+            errorHandler(CAEN_DGTZ_ReadRegister(handle_, 0x8104, &mask));
+            return mask;
         }
 
         /* TODO: wrap Software Trigger and remaining functions from register docs? */

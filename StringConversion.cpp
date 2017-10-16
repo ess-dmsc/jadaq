@@ -21,6 +21,10 @@ uint16_t s2ui16(const std::string& s)
 {
     return (uint16_t)s2ui(s);
 }
+uint8_t s2ui8(const std::string& s)
+{
+    return (uint8_t)s2ui(s);
+}
 
 // binary string
 unsigned int bs2ui(const std::string& s)
@@ -246,6 +250,24 @@ caen::SAMTriggerCountVetoParams s2samtcvp(const std::string& s)
         return caen::SAMTriggerCountVetoParams{s2ed(match[1]),s2ui(match[2])};
     }
     throw std::invalid_argument{"Invalid SAMTriggerCountVetoParams"};
+}
+
+std::string to_string(const caen::EasyDPPAlgorithmControl &edppac)
+{
+    std::stringstream ss;
+    ss << '{' << to_string(edppac.chargeSensitivity) << ',' << to_string(edppac.internalTestPulse) << ',' << to_string(edppac.testPulseRate) << ',' << to_string(edppac.chargePedestal) << ',' << to_string(edppac.inputSmoothingFactor) << ',' << to_string(edppac.pulsePolarity) << ',' << to_string(edppac.triggerMode) << ',' << to_string(edppac.baselineMean) << ',' << to_string(edppac.disableSelfTrigger) << ',' << to_string(edppac.triggerHysteresis) << '}';
+    return ss.str();
+}
+
+caen::EasyDPPAlgorithmControl s2edppac(const std::string& s)
+{
+    std::regex rx("\\{(\\w+),(\\w+),(\\w+),(\\w+),(\\w+),(\\w+),(\\w+),(\\w+),(\\w+),(\\w+)\\}");
+    std::smatch match;
+    if (std::regex_search(s, match, rx))
+    {
+        return caen::EasyDPPAlgorithmControl{s2ui8(match[1]),s2ui8(match[2]),s2ui8(match[3]),s2ui8(match[4]),s2ui8(match[5]),s2ui8(match[6]),s2ui8(match[7]),s2ui8(match[8]),s2ui8(match[9]),s2ui8(match[10])};
+    }
+    throw std::invalid_argument{"Invalid EasyDPPAlgorithmControl"};
 }
 
 std::string to_string(CAEN_DGTZ_DPP_AcqMode_t mode)
