@@ -979,6 +979,9 @@ namespace caen {
         virtual uint32_t getAcquisitionStatus() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         virtual EasyAcquisitionStatus getEasyAcquisitionStatus() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
 
+        virtual uint32_t getGlobalTriggerMask() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual void setGlobalTriggerMask(uint32_t value) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+
     }; // class Digitizer
 
     class Digitizer740 : public Digitizer
@@ -1128,10 +1131,10 @@ namespace caen {
         {
             if (group >= groups())
                 errorHandler(CAEN_DGTZ_InvalidChannelNumber);
-            errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x1040 | group<<8, mask & 0xFFFFFFFF));
+            errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x1040 | group<<8, mask));
         }
         void setDPPAlgorithmControl(uint32_t mask) override
-        { errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x8040, mask & 0xFFFFFFFF)); }
+        { errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x8040, mask)); }
 
         EasyDPPAlgorithmControl getEasyDPPAlgorithmControl(uint32_t group) override
         {
@@ -1195,7 +1198,7 @@ namespace caen {
 
         /* TODO: wrap AMC Firmware Revision from register docs? */
 
-        /* TODO: is DC Offset in register doc same as GroupDCOffset? */
+        /* NOTE: Get / Set DC Offset is handled in GroupDCOffset */
 
         /* NOTE: Get / Set Channel Enable Mask of Group is handled in
          * ChannelGroupMask */
@@ -1374,7 +1377,82 @@ namespace caen {
             return bits2eas(mask);
         }
 
-        /* TODO: wrap Software Trigger and remaining functions from register docs? */
+        /* TODO: wrap Software Trigger from register docs? */
+
+        /* Get / Set Global Trigger Mask
+         * @mask: a bitmask covering a number of settings. Please refer
+         * to register docs - 32 bits.
+         */
+        /* TODO: wrap Global Trigger Mask in user-friendly struct? */
+        uint32_t getGlobalTriggerMask() override
+        {
+            uint32_t mask;
+            errorHandler(CAEN_DGTZ_ReadRegister(handle_, 0x810C, &mask));
+            return mask;
+        }
+        void setGlobalTriggerMask(uint32_t mask) override
+        { errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x810C, mask)); }
+
+        /* TODO: wrap Front Panel TRG-Out from register docs */
+
+        /* TODO: wrap LVDS I/O Data from register docs? */
+
+        /* TODO: wrap Front Panel I/O Control from register docs */
+        /* TODO: wrap Front Panel I/O Control mask in user-friendly struct? */
+
+        /* TODO: is Group Enable Mask from register docs equal to
+         * GroupEnableMask? */
+        /* TODO: wrap ROC FPGA Firmware Revision from register docs */
+
+        /* TODO: wrap Voltage Level Mode Configuration from register docs? */
+        /* TODO: wrap Software Clock Sync from register docs? */
+
+        /* TODO: is Board Info from register docs equal to GetInfo? */
+
+        /* TODO: wrap Analog Monitor Mode from register docs? */
+
+        /* TODO: is Event Size Info from register docs already coveret
+         * by existing Event function? */
+
+        /* TODO: wrap Time Bomb Downcounter from register docs? */
+
+        /* TODO: wrap Fan Speed Control from register docs */
+        /* TODO: wrap Run/Start/Stop Delay from register docs */
+
+        /* TODO: wrap Board Failure Status from register docs? */
+
+        /* TODO: wrap Disable External Trigger from register docs */
+
+        /* TODO: wrap Front Panel LVDS I/O New Features from register docs? */
+
+        /* TODO: wrap Readout Control from register docs */
+
+        /* TODO: wrap Readout Status from register docs? */
+        /* TODO: wrap Board ID from register docs? */
+
+        /* TODO: wrap MCST Base Address and Control from register docs? */
+        /* TODO: wrap Relocation Address from register docs? */
+        /* TODO: wrap Interrupt Status/ID from register docs? */
+        /* TODO: wrap Interrupt Event Number from register docs? */
+
+        /* TODO: wrap Aggregate Number per BLT from register docs */
+
+        /* TODO: wrap Scratch from register docs? */
+        /* TODO: wrap Software Reset from register docs? */
+        /* TODO: wrap Software Clear from register docs? */
+        /* TODO: wrap Configuration Reload from register docs? */
+        /* TODO: wrap Configuration ROM Checksum from register docs? */
+        /* TODO: wrap Configuration ROM Checksum Length BYTE 0 1 2  from register docs? */
+        /* TODO: wrap Configuration ROM Constant BYTE 0 1 2 from register docs? */
+        /* TODO: wrap Configuration ROM C R Code from register docs? */
+        /* TODO: wrap Configuration ROM IEEE OUI BYTE 0 1 2 from register docs? */
+        /* TODO: wrap Configuration ROM Board Version from register docs? */
+        /* TODO: wrap Configuration ROM Board Form Factor from register docs? */
+        /* TODO: wrap Configuration ROM Board ID BYTE 0 1 from register docs */
+        /* TODO: wrap Configuration ROM PCB Revision BYTE 0 1 2 3 from register docs? */
+        /* TODO: wrap Configuration ROM FLASH Type from register docs? */
+        /* TODO: wrap Configuration ROM Board Serial Number BYTE 0 1 from register docs? */
+        /* TODO: wrap Configuration ROM VCXO Type from register docs? */
 
     };
 

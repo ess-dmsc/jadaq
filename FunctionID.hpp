@@ -43,6 +43,7 @@ enum FunctionID {
     EasyAcquisitionControl,
     AcquisitionStatus,
     EasyAcquisitionStatus,
+    GlobalTriggerMask,
     // Channel/group setting
     ChannelDCOffset,
     GroupDCOffset,
