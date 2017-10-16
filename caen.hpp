@@ -239,9 +239,8 @@ namespace caen {
     static uint32_t ebc2bits(EasyBoardConfiguration settings)
     {
         uint32_t mask = 0;
-        /* NOTE: board configuration includes reserved forced 1 in [4] */
-        mask |= packBits(1, 1, 4);
-        /* Pack the rest in turn */
+        /* NOTE: board configuration includes reserved forced-1 in [4]
+         * but we leave that to the low-lewel get/set ops. */
         mask |= packBits(settings.individualTrigger, 1, 8);
         mask |= packBits(settings.analogProbe, 2, 12);
         mask |= packBits(settings.waveformRecording, 1, 16);
@@ -1128,8 +1127,10 @@ namespace caen {
          *
          * According to register docs the bits [0:3,5:7,9:11,14:15,22:31]
          * must be 0 and the bits [4,8,18,19] must be 1 so we always
-         * force compliance by a bitwise-or with 0x000C0110 followed by
-         * a bitwise-and with 0x003F3110.
+         * force compliance by a bitwise-or with 0x000C0110 followed
+         * by a bitwise-and with 0x003F3110 for the set operation.
+         * Similarly we prevent mangling by a bitwise-and with the
+         * inverted combination 0x99800 for the unset operation.
          *
          * NOTE: Read mask from 0x8000, BitSet mask with 0x8004 and
          *       BitClear mask with 0x8008.
@@ -1143,7 +1144,7 @@ namespace caen {
         void setBoardConfiguration(uint32_t mask) override
         { errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x8004, (mask | 0x000C0110) & 0x003F3110)); }
         void unsetBoardConfiguration(uint32_t mask) override
-        { errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x8008, (mask | 0x000C0110) & 0x003F3110)); }
+        { errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x8008, mask & 0x99800)); }
         EasyBoardConfiguration getEasyBoardConfiguration() override
         {
             uint32_t mask;
