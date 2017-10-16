@@ -239,6 +239,9 @@ namespace caen {
     static uint32_t ebc2bits(EasyBoardConfiguration settings)
     {
         uint32_t mask = 0;
+        /* NOTE: board configuration includes reserved forced 1 in [4] */
+        mask |= packBits(1, 1, 4);
+        /* Pack the rest in turn */
         mask |= packBits(settings.individualTrigger, 1, 8);
         mask |= packBits(settings.analogProbe, 2, 12);
         mask |= packBits(settings.waveformRecording, 1, 16);
@@ -1148,9 +1151,27 @@ namespace caen {
             return bits2ebc(mask);
         }
         void setEasyBoardConfiguration(EasyBoardConfiguration settings) override
-        { uint32_t mask = ebc2bits(settings); setBoardConfiguration(mask); }
+        {
+            /* NOTE: according to docs individualTrigger, timeStampRecording
+             * and chargeRecording MUST all be 1 */
+            assert(settings.individualTrigger == 1);
+            assert(settings.timeStampRecording == 1);
+            assert(settings.chargeRecording == 1);
+            uint32_t mask = ebc2bits(settings);
+            setBoardConfiguration(mask);
+        }
         void unsetEasyBoardConfiguration(EasyBoardConfiguration settings) override
-        { uint32_t mask = ebc2bits(settings); unsetBoardConfiguration(mask); }
+        {
+            /* NOTE: according to docs individualTrigger, timeStampRecording
+             * and chargeRecording MUST all be 1. Thus we do NOT allow
+             * unset.
+             */
+            assert(settings.individualTrigger == 0);
+            assert(settings.timeStampRecording == 0);
+            assert(settings.chargeRecording == 0);
+            uint32_t mask = ebc2bits(settings);
+            unsetBoardConfiguration(mask);
+        }
 
         /* Get / Set AggregateOrganization
          * @value: Aggregate Organization. Nb: the number of aggregates is
