@@ -982,6 +982,9 @@ namespace caen {
         virtual uint32_t getGlobalTriggerMask() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         virtual void setGlobalTriggerMask(uint32_t value) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
 
+        virtual uint32_t getFrontPanelTRGOUTEnableMask() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual void setFrontPanelTRGOUTEnableMask(uint32_t value) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+
     }; // class Digitizer
 
     class Digitizer740 : public Digitizer
@@ -1393,7 +1396,20 @@ namespace caen {
         void setGlobalTriggerMask(uint32_t mask) override
         { errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x810C, mask)); }
 
-        /* TODO: wrap Front Panel TRG-Out from register docs */
+        /* Get / Set Front Panel TRG-OUT (GPO) Enable Mask
+         * @mask: a bitmask covering a number of settings. Please refer
+         * to register docs - 32 bits.
+         */
+        /* TODO: wrap FrontPanelTRGOUTEnableMask in user-friendly struct? */
+        uint32_t getFrontPanelTRGOUTEnableMask() override
+        {
+            uint32_t mask;
+            errorHandler(CAEN_DGTZ_ReadRegister(handle_, 0x8110, &mask));
+            return mask;
+        }
+        void setFrontPanelTRGOUTEnableMask(uint32_t mask) override
+        { errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x8110, mask)); }
+
 
         /* TODO: wrap LVDS I/O Data from register docs? */
 
