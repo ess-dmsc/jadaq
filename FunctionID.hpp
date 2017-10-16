@@ -45,6 +45,11 @@ enum FunctionID {
     EasyAcquisitionStatus,
     GlobalTriggerMask,
     FrontPanelTRGOUTEnableMask,
+    FrontPanelIOControl,
+    ROCFPGAFirmwareRevision,
+    FanSpeedControl,
+    DisableExternalTrigger,
+    ReadoutControl,
     // Channel/group setting
     ChannelDCOffset,
     GroupDCOffset,

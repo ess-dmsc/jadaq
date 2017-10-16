@@ -985,6 +985,20 @@ namespace caen {
         virtual uint32_t getFrontPanelTRGOUTEnableMask() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         virtual void setFrontPanelTRGOUTEnableMask(uint32_t value) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
 
+        virtual uint32_t getFrontPanelIOControl() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual void setFrontPanelIOControl(uint32_t value) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+
+        virtual uint32_t getROCFPGAFirmwareRevision() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+
+        virtual uint32_t getFanSpeedControl() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual void setFanSpeedControl(uint32_t value) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+
+        virtual uint32_t getDisableExternalTrigger() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual void setDisableExternalTrigger(uint32_t value) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+
+        virtual uint32_t getReadoutControl() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual void setReadoutControl(uint32_t value) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+
     }; // class Digitizer
 
     class Digitizer740 : public Digitizer
@@ -1005,7 +1019,7 @@ namespace caen {
          * @delay: delay in units of 8 ns
          *
          * When the start of Run is given synchronously to several boards connected in Daisy chain, it is necessary
-         * to compensate for the delay in the propaga on of the Start (or Stop) signal through the chain. This register
+         * to compensate for the delay in the propagation of the Start (or Stop) signal through the chain. This register
          * sets the delay, expressed in trigger clock cycles between the arrival of the Start signal at the input of
          * the board (either on S-IN/GPI or TRG-IN) and the actual start of Run. The delay is usually zero for the
          * last board in the chain and rises going backwards along the chain.
@@ -1410,15 +1424,35 @@ namespace caen {
         void setFrontPanelTRGOUTEnableMask(uint32_t mask) override
         { errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x8110, mask)); }
 
-
         /* TODO: wrap LVDS I/O Data from register docs? */
 
-        /* TODO: wrap Front Panel I/O Control from register docs */
-        /* TODO: wrap Front Panel I/O Control mask in user-friendly struct? */
+        /* Get / Set Front Panel I/O Control mask
+         * @mask: a bitmask covering a number of settings. Please refer
+         * to register docs - 32 bits.
+         */
+        /* TODO: wrap FrontPanelIOControl in user-friendly struct */
+        uint32_t getFrontPanelIOControl() override
+        {
+            uint32_t mask;
+            errorHandler(CAEN_DGTZ_ReadRegister(handle_, 0x811C, &mask));
+            return mask;
+        }
+        void setFrontPanelIOControl(uint32_t mask) override
+        { errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x811C, mask)); }
 
         /* TODO: is Group Enable Mask from register docs equal to
          * GroupEnableMask? */
-        /* TODO: wrap ROC FPGA Firmware Revision from register docs */
+
+        /* Get ROC FPGA Firmware Revision
+         * Returns a bitmask covering a number of status fields. Please refer
+         * to register docs - 32 bits.
+         */
+        uint32_t getROCFPGAFirmwareRevision() override
+        {
+            uint32_t mask;
+            errorHandler(CAEN_DGTZ_ReadRegister(handle_, 0x8124, &mask));
+            return mask;
+        }
 
         /* TODO: wrap Voltage Level Mode Configuration from register docs? */
         /* TODO: wrap Software Clock Sync from register docs? */
@@ -1427,21 +1461,57 @@ namespace caen {
 
         /* TODO: wrap Analog Monitor Mode from register docs? */
 
-        /* TODO: is Event Size Info from register docs already coveret
+        /* TODO: is Event Size Info from register docs already covered
          * by existing Event function? */
 
         /* TODO: wrap Time Bomb Downcounter from register docs? */
 
-        /* TODO: wrap Fan Speed Control from register docs */
-        /* TODO: wrap Run/Start/Stop Delay from register docs */
+        /* Get / Set Fan Speed Control
+         * @mask: a bitmask covering a number of settings. Please refer
+         * to register docs - 32 bits.
+         */
+        /* TODO: wrap FanSpeedControl in user-friendly struct */
+        uint32_t getFanSpeedControl() override
+        {
+            uint32_t mask;
+            errorHandler(CAEN_DGTZ_ReadRegister(handle_, 0x8168, &mask));
+            return mask;
+        }
+        void setFanSpeedControl(uint32_t mask) override
+        { errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x8168, mask)); }
+
+        /* NOTE: Get / Set Run/Start/Stop Delay from register docs is
+         * already covered by RunDelay. */
 
         /* TODO: wrap Board Failure Status from register docs? */
 
-        /* TODO: wrap Disable External Trigger from register docs */
+        /* Get / Set Disable External Trigger on TRG-IN connector
+         * @value: a boolean to set external trigger state - 1 bit.
+         */
+        uint32_t getDisableExternalTrigger() override
+        {
+            uint32_t value;
+            errorHandler(CAEN_DGTZ_ReadRegister(handle_, 0x817C, &value));
+            return value;
+        }
+        void setDisableExternalTrigger(uint32_t value) override
+        { errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x817C, value & 0x1)); }
 
         /* TODO: wrap Front Panel LVDS I/O New Features from register docs? */
 
-        /* TODO: wrap Readout Control from register docs */
+        /* Get / Set Readout Control
+         * @mask: a bitmask covering a number of settings. Please refer
+         * to register docs - 32 bits.
+         */
+        /* TODO: wrap ReadoutControl in user-friendly struct */
+        uint32_t getReadoutControl() override
+        {
+            uint32_t mask;
+            errorHandler(CAEN_DGTZ_ReadRegister(handle_, 0xEF00, &mask));
+            return mask;
+        }
+        void setReadoutControl(uint32_t mask) override
+        { errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0xEF00, mask)); }
 
         /* TODO: wrap Readout Status from register docs? */
         /* TODO: wrap Board ID from register docs? */
