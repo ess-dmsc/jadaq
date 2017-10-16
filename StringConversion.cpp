@@ -273,16 +273,6 @@ caen::EasyDPPAlgorithmControl s2edppac(const std::string& s)
 std::string to_string(const caen::EasyBoardConfiguration &ebc)
 {
     std::stringstream ss;
-    /*
-        uint8_t individualTrigger : 1;
-        uint8_t analogProbe : 2;
-        uint8_t waveformRecording : 1;
-        uint8_t extrasRecording : 1;
-        uint8_t timeStampRecording : 1;
-        uint8_t chargeRecording : 1;
-        uint8_t externalTriggerMode : 2;
-
-     */
     ss << '{' << to_string(ebc.individualTrigger) << ',' << to_string(ebc.analogProbe) << ',' << to_string(ebc.waveformRecording) << ',' << to_string(ebc.extrasRecording) << ',' << to_string(ebc.timeStampRecording) << ',' << to_string(ebc.chargeRecording) << ',' << to_string(ebc.externalTriggerMode) << '}';
     return ss.str();
 }
@@ -296,6 +286,24 @@ caen::EasyBoardConfiguration s2ebc(const std::string& s)
         return caen::EasyBoardConfiguration{s2ui8(match[1]),s2ui8(match[2]),s2ui8(match[3]),s2ui8(match[4]),s2ui8(match[5]),s2ui8(match[6]),s2ui8(match[7])};
     }
     throw std::invalid_argument{"Invalid EasyBoardConfiguration"};
+}
+
+std::string to_string(const caen::EasyAcquisitionControl &eac)
+{
+    std::stringstream ss;
+    ss << '{' << to_string(eac.startStopMode) << ',' << to_string(eac.acquisitionStartArm) << ',' << to_string(eac.triggerCountingMode) << ',' << to_string(eac.pLLRefererenceClock) << ',' << to_string(eac.lVDSIOBusyEnable) << ',' << to_string(eac.lVDSVetoEnable) << ',' << to_string(eac.lVDSIORunInEnable) << '}';
+    return ss.str();
+}
+
+caen::EasyAcquisitionControl s2eac(const std::string& s)
+{
+    std::regex rx("\\{(\\w+),(\\w+),(\\w+),(\\w+),(\\w+),(\\w+),(\\w+)\\}");
+    std::smatch match;
+    if (std::regex_search(s, match, rx))
+    {
+        return caen::EasyAcquisitionControl{s2ui8(match[1]),s2ui8(match[2]),s2ui8(match[3]),s2ui8(match[4]),s2ui8(match[5]),s2ui8(match[6]),s2ui8(match[7])};
+    }
+    throw std::invalid_argument{"Invalid EasyAcquisitionControl"};
 }
 
 std::string to_string(CAEN_DGTZ_DPP_AcqMode_t mode)

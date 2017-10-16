@@ -40,6 +40,7 @@ static std::unordered_map<std::string,FunctionID > functionMap =
                 MAP_ENTRY(EasyBoardConfiguration),
                 MAP_ENTRY(AggregateOrganization),
                 MAP_ENTRY(AcquisitionControl),
+                MAP_ENTRY(EasyAcquisitionControl),
                 MAP_ENTRY(AcquisitionStatus),
                 MAP_ENTRY(ChannelDCOffset),
                 MAP_ENTRY(GroupDCOffset),
@@ -103,6 +104,7 @@ const std::string to_string(FunctionID id) {
         CASE_TO_STR(EasyBoardConfiguration)
         CASE_TO_STR(AggregateOrganization)
         CASE_TO_STR(AcquisitionControl)
+        CASE_TO_STR(EasyAcquisitionControl)
         CASE_TO_STR(AcquisitionStatus)
         CASE_TO_STR(ChannelDCOffset)
         CASE_TO_STR(GroupDCOffset)

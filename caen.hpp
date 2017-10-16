@@ -187,6 +187,18 @@ namespace caen {
         uint8_t externalTriggerMode : 2;
     };
 
+    /* For user-friendly configuration of Acquisition Control mask */
+    struct EasyAcquisitionControl {
+        /* Only allow the expected number of bits per field */
+        uint8_t startStopMode : 2;
+        uint8_t acquisitionStartArm : 1;
+        uint8_t triggerCountingMode : 1;
+        uint8_t pLLRefererenceClock : 1;
+        uint8_t lVDSIOBusyEnable : 1;
+        uint8_t lVDSVetoEnable : 1;
+        uint8_t lVDSIORunInEnable : 1;
+    };
+
     /* Bit-banging helpers to translate between EasyX struct and bitmask.
      * Please refer to the register docs for the individual mask
      * layouts.
@@ -257,6 +269,34 @@ namespace caen {
                     unpackBits(mask, 1, 16), unpackBits(mask, 1, 17),
                     unpackBits(mask, 1, 18), unpackBits(mask, 1, 19),
                     unpackBits(mask, 2, 20)};
+        return settings;
+    }
+
+    /* EasyAcquisitionControl fields:
+     * start/stop mode [0:1], acquisition start/arm in [2],
+     * trigger counting mode in [3], PLL reference clock
+     * source in [6], LVDS I/O busy enable in [8], 
+     * LVDS veto enable in [9], LVDS I/O RunIn enable in [11].
+     */
+    static uint32_t eac2bits(EasyAcquisitionControl settings)
+    {
+        uint32_t mask = 0;
+        mask |= packBits(settings.startStopMode, 2, 0);
+        mask |= packBits(settings.acquisitionStartArm, 1, 2);
+        mask |= packBits(settings.triggerCountingMode, 1, 3);
+        mask |= packBits(settings.pLLRefererenceClock, 1, 6);
+        mask |= packBits(settings.lVDSIOBusyEnable, 1, 8);
+        mask |= packBits(settings.lVDSVetoEnable, 1, 9);
+        mask |= packBits(settings.lVDSIORunInEnable, 1, 11);
+        return mask;
+    }
+    static EasyAcquisitionControl bits2eac(uint32_t mask)
+    {
+        EasyAcquisitionControl settings;
+        settings = {unpackBits(mask, 2, 0), unpackBits(mask, 1, 2),
+                    unpackBits(mask, 1, 3), unpackBits(mask, 1, 6),
+                    unpackBits(mask, 1, 8), unpackBits(mask, 1, 9),
+                    unpackBits(mask, 1, 11)};
         return settings;
     }
 
@@ -891,6 +931,8 @@ namespace caen {
 
         virtual uint32_t getAcquisitionControl() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         virtual void setAcquisitionControl(uint32_t value) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual EasyAcquisitionControl getEasyAcquisitionControl() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual void setEasyAcquisitionControl(EasyAcquisitionControl settings) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
 
         virtual uint32_t getAcquisitionStatus() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
 
@@ -1248,14 +1290,6 @@ namespace caen {
             }
         }
 
-        /* TODO: wrap individual Acquisition Control fields, too?
-         *       like start/stop mode [0:1], acquisition start/arm in [2],
-         *       trigger counting mode in [3], PLL reference clock
-         *       source in [6], ...
-         * TODO: add AcquisitionControl struct and use for user-friendly
-         *       get / set of mask.
-         */
-
         /* Get / Set Acquisition Control
          * @mask: a bitmask covering a number of settings. Please refer
          * to register docs - 12 bits.
@@ -1268,6 +1302,17 @@ namespace caen {
         }
         void setAcquisitionControl(uint32_t mask) override
         { errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x8100, mask & 0x0FFF)); }
+        EasyAcquisitionControl getEasyAcquisitionControl() override
+        {
+            uint32_t mask;
+            mask = getAcquisitionControl();
+            return bits2eac(mask);
+        }
+        void setEasyAcquisitionControl(EasyAcquisitionControl settings) override
+        {
+            uint32_t mask = eac2bits(settings);
+            setAcquisitionControl(mask);
+        }
 
         /* Get Acquisition Status
          * Returns a bitmask covering a number of status fields. Please refer

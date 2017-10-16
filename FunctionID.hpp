@@ -40,6 +40,7 @@ enum FunctionID {
     EasyBoardConfiguration,
     AggregateOrganization,
     AcquisitionControl,
+    EasyAcquisitionControl,
     AcquisitionStatus,
     // Channel/group setting
     ChannelDCOffset,
