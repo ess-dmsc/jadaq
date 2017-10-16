@@ -37,6 +37,7 @@ enum FunctionID {
     SAMAcquisitionMode,
     TriggerLogic,
     BoardConfiguration,
+    EasyBoardConfiguration,
     AggregateOrganization,
     AcquisitionControl,
     AcquisitionStatus,

@@ -175,10 +175,27 @@ namespace caen {
         uint8_t triggerHysteresis : 1;
     };
 
+    /* For user-friendly configuration of Board Configuration mask */
+    struct EasyBoardConfiguration {
+        /* Only allow the expected number of bits per field */
+        uint8_t individualTrigger : 1;
+        uint8_t analogProbe : 2;
+        uint8_t waveformRecording : 1;
+        uint8_t extrasRecording : 1;
+        uint8_t timeStampRecording : 1;
+        uint8_t chargeRecording : 1;
+        uint8_t externalTriggerMode : 2;
+    };
+
     /* Bit-banging helpers to translate between EasyX struct and bitmask.
      * Please refer to the register docs for the individual mask
      * layouts.
      */
+
+    static uint8_t unpackBits(uint32_t mask, uint8_t size, uint8_t offset)
+    { return (uint8_t)((mask >> offset) & size); }
+    static uint32_t packBits(uint8_t value, uint8_t size, uint8_t offset)
+    { return (value & size) << offset; }
 
     /* EasyDPPAlgorithmControl fields:
      * charge sensitivity in [0:2], internal test pulse in [4],
@@ -187,11 +204,6 @@ namespace caen {
      * trigger mode in [18:19], baseline mean in [20:22],
      * disable self trigger in [24], trigger hysteresis in [30].
      */
-    static uint8_t unpackBits(uint32_t mask, uint8_t size, uint8_t offset)
-    { return (uint8_t)((mask >> offset) & size); }
-    static uint32_t packBits(uint8_t value, uint8_t size, uint8_t offset)
-    { return (value & size) << offset; }
-
     static uint32_t edppac2bits(EasyDPPAlgorithmControl settings)
     {
         uint32_t mask = 0;
@@ -212,11 +224,40 @@ namespace caen {
         EasyDPPAlgorithmControl settings;
         settings = {unpackBits(mask, 3, 0), unpackBits(mask, 1, 4),
                     unpackBits(mask, 2, 5), unpackBits(mask, 1, 8),
-                    unpackBits(mask, 3, 12), unpackBits(mask,1, 16),
+                    unpackBits(mask, 3, 12), unpackBits(mask, 1, 16),
                     unpackBits(mask, 2, 18), unpackBits(mask, 3, 20),
                     unpackBits(mask, 1, 24), unpackBits(mask, 1, 30)};
         return settings;
     }
+
+    /* EasyBoardConfiguration fields:
+     * individual trigger in [8], analog probe in [12:13],
+     * waveform recording in [16], extras recording in [17],
+     * time stamp recording in [18], charge recording in [19],
+     * external trigger mode in [20:21].
+     */
+    static uint32_t ebc2bits(EasyBoardConfiguration settings)
+    {
+        uint32_t mask = 0;
+        mask |= packBits(settings.individualTrigger, 1, 8);
+        mask |= packBits(settings.analogProbe, 2, 12);
+        mask |= packBits(settings.waveformRecording, 1, 16);
+        mask |= packBits(settings.extrasRecording, 1, 17);
+        mask |= packBits(settings.timeStampRecording, 1, 18);
+        mask |= packBits(settings.chargeRecording, 1, 19);
+        mask |= packBits(settings.externalTriggerMode, 2, 20);
+        return mask;
+    }
+    static EasyBoardConfiguration bits2ebc(uint32_t mask)
+    {
+        EasyBoardConfiguration settings;
+        settings = {unpackBits(mask, 1, 8), unpackBits(mask, 2, 12),
+                    unpackBits(mask, 1, 16), unpackBits(mask, 1, 17),
+                    unpackBits(mask, 1, 18), unpackBits(mask, 1, 19),
+                    unpackBits(mask, 2, 20)};
+        return settings;
+    }
+
 
     /* Some low-level digitizer helpers */
     static int openRawDigitizer(CAEN_DGTZ_ConnectionType linkType, int linkNum, int conetNode, uint32_t VMEBaseAddress) 
@@ -839,6 +880,9 @@ namespace caen {
         virtual uint32_t getBoardConfiguration() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         virtual void setBoardConfiguration(uint32_t value) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         virtual void unsetBoardConfiguration(uint32_t value) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual EasyBoardConfiguration getEasyBoardConfiguration() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual void setEasyBoardConfiguration(EasyBoardConfiguration settings) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual void unsetEasyBoardConfiguration(EasyBoardConfiguration settings) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
 
         virtual uint32_t getAggregateOrganization() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         virtual void setAggregateOrganization(uint32_t value) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
@@ -1075,11 +1119,6 @@ namespace caen {
 
         /* TODO: wrap Individual Trigger Threshold of Group n Sub Channel m from register docs? */
 
-        /* TODO: wrap individual Board Configuration fields, too?
-         *       like individual trigger in [8], analog probe in [12:13],
-         *       waveform in [16], extras recording in [17], ...
-         */
-
         /* Get / Set Board Configuration
          * @mask: a bitmask covering a number of settings. Please refer
          * to register docs - 32 bits.
@@ -1091,8 +1130,6 @@ namespace caen {
          *
          * NOTE: Read mask from 0x8000, BitSet mask with 0x8004 and
          *       BitClear mask with 0x8008.
-         * TODO: add BoardConfiguration struct and use for user-friendly
-         *       get / set of mask.
          */
         uint32_t getBoardConfiguration() override
         {
@@ -1104,6 +1141,16 @@ namespace caen {
         { errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x8004, (mask | 0x000C0110) & 0x003F3110)); }
         void unsetBoardConfiguration(uint32_t mask) override
         { errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x8008, (mask | 0x000C0110) & 0x003F3110)); }
+        EasyBoardConfiguration getEasyBoardConfiguration() override
+        {
+            uint32_t mask;
+            mask = getBoardConfiguration();
+            return bits2ebc(mask);
+        }
+        void setEasyBoardConfiguration(EasyBoardConfiguration settings) override
+        { uint32_t mask = ebc2bits(settings); setBoardConfiguration(mask); }
+        void unsetEasyBoardConfiguration(EasyBoardConfiguration settings) override
+        { uint32_t mask = ebc2bits(settings); unsetBoardConfiguration(mask); }
 
         /* Get / Set AggregateOrganization
          * @value: Aggregate Organization. Nb: the number of aggregates is
