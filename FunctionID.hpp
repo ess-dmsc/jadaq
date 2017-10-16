@@ -50,6 +50,7 @@ enum FunctionID {
     FanSpeedControl,
     DisableExternalTrigger,
     ReadoutControl,
+    AggregateNumberPerBLT,
     // Channel/group setting
     ChannelDCOffset,
     GroupDCOffset,

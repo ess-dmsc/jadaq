@@ -999,6 +999,9 @@ namespace caen {
         virtual uint32_t getReadoutControl() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         virtual void setReadoutControl(uint32_t value) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
 
+        virtual uint32_t getAggregateNumberPerBLT() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual void setAggregateNumberPerBLT(uint32_t value) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+
     }; // class Digitizer
 
     class Digitizer740 : public Digitizer
@@ -1249,7 +1252,7 @@ namespace caen {
         void setBoardConfiguration(uint32_t mask) override
         { errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x8004, (mask | 0x000C0110) & 0x003F3110)); }
         void unsetBoardConfiguration(uint32_t mask) override
-        { errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x8008, mask & 0x99800)); }
+        { errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x8008, mask & 0x099800)); }
         EasyBoardConfiguration getEasyBoardConfiguration() override
         {
             uint32_t mask;
@@ -1521,7 +1524,18 @@ namespace caen {
         /* TODO: wrap Interrupt Status/ID from register docs? */
         /* TODO: wrap Interrupt Event Number from register docs? */
 
-        /* TODO: wrap Aggregate Number per BLT from register docs */
+        /* Get / Set Aggregate Number per BLT
+         * @value: Number of complete aggregates to be transferred for
+         * each block transfer (BLT) - 10 bits.
+         */
+        uint32_t getAggregateNumberPerBLT() override
+        {
+            uint32_t value;
+            errorHandler(CAEN_DGTZ_ReadRegister(handle_, 0xEF1C, &value));
+            return value;
+        }
+        void setAggregateNumberPerBLT(uint32_t value) override
+        { errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0xEF1C, value & 0x03FF)); }
 
         /* TODO: wrap Scratch from register docs? */
         /* TODO: wrap Software Reset from register docs? */

@@ -50,6 +50,7 @@ static std::unordered_map<std::string,FunctionID > functionMap =
                 MAP_ENTRY(FanSpeedControl),
                 MAP_ENTRY(DisableExternalTrigger),
                 MAP_ENTRY(ReadoutControl),
+                MAP_ENTRY(AggregateNumberPerBLT),
                 MAP_ENTRY(ChannelDCOffset),
                 MAP_ENTRY(GroupDCOffset),
                 MAP_ENTRY(ChannelSelfTrigger),
@@ -122,6 +123,7 @@ const std::string to_string(FunctionID id) {
         CASE_TO_STR(FanSpeedControl)
         CASE_TO_STR(DisableExternalTrigger)
         CASE_TO_STR(ReadoutControl)
+        CASE_TO_STR(AggregateNumberPerBLT)
         CASE_TO_STR(ChannelDCOffset)
         CASE_TO_STR(GroupDCOffset)
         CASE_TO_STR(ChannelSelfTrigger)
