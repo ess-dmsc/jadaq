@@ -199,6 +199,20 @@ namespace caen {
         uint8_t lVDSIORunInEnable : 1;
     };
 
+    /* For user-friendly configuration of Acquisition Control mask */
+    struct EasyAcquisitionStatus {
+        /* Only allow the expected number of bits per field */
+        uint8_t acquisitionStatus : 1;
+        uint8_t eventReady : 1;
+        uint8_t eventFull : 1;
+        uint8_t clockSource : 1;
+        uint8_t pLLUnlockDetect : 1;
+        uint8_t boardReady : 1;
+        uint8_t s_IN : 1;
+        uint8_t tRG_IN : 1;
+    };
+
+
     /* Bit-banging helpers to translate between EasyX struct and bitmask.
      * Please refer to the register docs for the individual mask
      * layouts.
@@ -297,6 +311,34 @@ namespace caen {
                     unpackBits(mask, 1, 3), unpackBits(mask, 1, 6),
                     unpackBits(mask, 1, 8), unpackBits(mask, 1, 9),
                     unpackBits(mask, 1, 11)};
+        return settings;
+    }
+
+    /* EasyAcquisitionStatus fields:
+     * acquisition status [2], event ready [3], event full in [4],
+     * clock source in [5], PLL unlock detect in [7], board ready in [8],
+     * S-In in [15], TRG-IN in [16].
+     */
+    static uint32_t eas2bits(EasyAcquisitionStatus settings)
+    {
+        uint32_t mask = 0;
+        mask |= packBits(settings.acquisitionStatus, 1, 2);
+        mask |= packBits(settings.eventReady, 1, 3);
+        mask |= packBits(settings.eventFull, 1, 4);
+        mask |= packBits(settings.clockSource, 1, 5);
+        mask |= packBits(settings.pLLUnlockDetect, 1, 7);
+        mask |= packBits(settings.boardReady, 1, 8);
+        mask |= packBits(settings.s_IN, 1, 15);
+        mask |= packBits(settings.tRG_IN, 1, 16);
+        return mask;
+    }
+    static EasyAcquisitionStatus bits2eas(uint32_t mask)
+    {
+        EasyAcquisitionStatus settings;
+        settings = {unpackBits(mask, 1, 2), unpackBits(mask, 1, 3),
+                    unpackBits(mask, 1, 4), unpackBits(mask, 1, 5),
+                    unpackBits(mask, 1, 7), unpackBits(mask, 1, 8),
+                    unpackBits(mask, 1, 15), unpackBits(mask, 1, 16)};
         return settings;
     }
 
@@ -935,6 +977,7 @@ namespace caen {
         virtual void setEasyAcquisitionControl(EasyAcquisitionControl settings) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
 
         virtual uint32_t getAcquisitionStatus() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual EasyAcquisitionStatus getEasyAcquisitionStatus() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
 
     }; // class Digitizer
 
@@ -1195,8 +1238,8 @@ namespace caen {
         }
         void setEasyBoardConfiguration(EasyBoardConfiguration settings) override
         {
-            /* NOTE: according to docs individualTrigger, timeStampRecording
-             * and chargeRecording MUST all be 1 */
+            /* NOTE: according to DPP register docs individualTrigger,
+             * timeStampRecording and chargeRecording MUST all be 1 */
             assert(settings.individualTrigger == 1);
             assert(settings.timeStampRecording == 1);
             assert(settings.chargeRecording == 1);
@@ -1317,14 +1360,18 @@ namespace caen {
         /* Get Acquisition Status
          * Returns a bitmask covering a number of status fields. Please refer
          * to register docs - 32 bits.
-         * TODO: add AcquisitionStatus struct and use for user-friendly
-         *       get of value mask.
          */
         uint32_t getAcquisitionStatus() override
         {
             uint32_t mask;
             errorHandler(CAEN_DGTZ_ReadRegister(handle_, 0x8104, &mask));
             return mask;
+        }
+        EasyAcquisitionStatus getEasyAcquisitionStatus() override
+        {
+            uint32_t mask;
+            mask = getAcquisitionStatus();
+            return bits2eas(mask);
         }
 
         /* TODO: wrap Software Trigger and remaining functions from register docs? */

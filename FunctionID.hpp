@@ -42,6 +42,7 @@ enum FunctionID {
     AcquisitionControl,
     EasyAcquisitionControl,
     AcquisitionStatus,
+    EasyAcquisitionStatus,
     // Channel/group setting
     ChannelDCOffset,
     GroupDCOffset,

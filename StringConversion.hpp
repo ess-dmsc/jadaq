@@ -72,6 +72,8 @@ std::string to_string(const caen::EasyBoardConfiguration &ebc);
 caen::EasyBoardConfiguration s2ebc(const std::string& s);
 std::string to_string(const caen::EasyAcquisitionControl &eac);
 caen::EasyAcquisitionControl s2eac(const std::string& s);
+std::string to_string(const caen::EasyAcquisitionStatus &eas);
+caen::EasyAcquisitionStatus s2eas(const std::string& s);
 
 std::string to_string(CAEN_DGTZ_DPP_AcqMode_t mode);
 CAEN_DGTZ_DPP_AcqMode_t s2dam(const std::string& s);

@@ -306,6 +306,24 @@ caen::EasyAcquisitionControl s2eac(const std::string& s)
     throw std::invalid_argument{"Invalid EasyAcquisitionControl"};
 }
 
+std::string to_string(const caen::EasyAcquisitionStatus &eas)
+{
+    std::stringstream ss;
+    ss << '{' << to_string(eas.acquisitionStatus) << ',' << to_string(eas.eventReady) << ',' << to_string(eas.eventFull) << ',' << to_string(eas.clockSource) << ',' << to_string(eas.pLLUnlockDetect) << ',' << to_string(eas.boardReady) << ',' << to_string(eas.s_IN) << ',' << to_string(eas.tRG_IN) << '}';
+    return ss.str();
+}
+
+caen::EasyAcquisitionStatus s2eas(const std::string& s)
+{
+    std::regex rx("\\{(\\w+),(\\w+),(\\w+),(\\w+),(\\w+),(\\w+),(\\w+),(\\w+)\\}");
+    std::smatch match;
+    if (std::regex_search(s, match, rx))
+    {
+        return caen::EasyAcquisitionStatus{s2ui8(match[1]),s2ui8(match[2]),s2ui8(match[3]),s2ui8(match[4]),s2ui8(match[5]),s2ui8(match[6]),s2ui8(match[7]),s2ui8(match[8])};
+    }
+    throw std::invalid_argument{"Invalid EasyAcquisitionStatus"};
+}
+
 std::string to_string(CAEN_DGTZ_DPP_AcqMode_t mode)
 {
     switch (mode)

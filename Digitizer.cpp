@@ -147,6 +147,7 @@ static std::string get_(caen::Digitizer* digitizer, FunctionID functionID)
         GET_CASE(digitizer,AcquisitionControl,to_string)
         GET_CASE(digitizer,EasyAcquisitionControl,to_string)
         GET_CASE(digitizer,AcquisitionStatus,to_string)
+        GET_CASE(digitizer,EasyAcquisitionStatus,to_string)
         GET_CASE(digitizer,RecordLength,to_string)
         GET_CASE(digitizer,NumEventsPerAggregate,to_string)
         default:
