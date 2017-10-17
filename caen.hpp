@@ -600,6 +600,35 @@ namespace caen {
         uint8_t tRG_IN : 1;
     };
 
+    /**
+     * @struct EasyGlobalTriggerMask
+     * @brief For user-friendly configuration of Global Trigger Mask
+     * @var EasyGlobalTriggerMask::lVDSTrigger
+     * LVDS Trigger (VME boards only). When enabled, the trigger from
+     * LVDS I/O participates to the global trigger generation (in logic
+     * OR). Options are:\n
+     * 0 = disabled\n
+     * 1 = enabled.
+     * @var EasyGlobalTriggerMask::externalTrigger
+     * External Trigger (default value is 1). When enabled, the external
+     * trigger on TRG-IN participates to the global trigger generation
+     * in logic OR with the other enabled signals. Options are:\n
+     * 0 = disabled\n
+     * 1 = enabled.
+     * @var EasyGlobalTriggerMask::softwareTrigger
+     * Software Trigger (default value is 1). When enabled, the software
+     * trigger participates to the global trigger signal generation in
+     * logic OR with the other enabled signals. Options are:\n
+     * 0 = disabled\n
+     * 1 = enabled.
+     */
+    struct EasyGlobalTriggerMask {
+        /* Only allow the expected number of bits per field */
+        uint8_t lVDSTrigger : 1;
+        uint8_t externalTrigger : 1;
+        uint8_t softwareTrigger : 1;
+    };
+
 
     /* Bit-banging helpers to translate between EasyX struct and bitmask.
      * Please refer to the register docs for the individual mask
@@ -801,6 +830,40 @@ namespace caen {
                     unpackBits(mask, 1, 4), unpackBits(mask, 1, 5),
                     unpackBits(mask, 1, 7), unpackBits(mask, 1, 8),
                     unpackBits(mask, 1, 15), unpackBits(mask, 1, 16)};
+        return settings;
+    }
+
+    /**
+     * @brief pack EasyGlobalTriggerMask settings into bit mask
+     * @param settings:
+     * Settings structure to pack
+     * @returns
+     * Bit mask ready for low-level set function.
+     * @internal
+     * EasyGlobalTriggerMask fields:
+     * LVDS trigger in [29], external trigger in [30], 
+     * software trigger in [31].
+     */
+    static uint32_t egtm2bits(EasyGlobalTriggerMask settings)
+    {
+        uint32_t mask = 0;
+        mask |= packBits(settings.lVDSTrigger, 1, 29);
+        mask |= packBits(settings.externalTrigger, 1, 30);
+        mask |= packBits(settings.softwareTrigger, 1, 31);
+        return mask;
+    }
+    /**
+     * @brief unpack bit mask into EasyGlobalTriggerMask settings
+     * @param mask:
+     * Bit mask from low-level get function to unpack
+     * @returns
+     * Settings structure for convenient use.
+     */
+    static EasyGlobalTriggerMask bits2egtm(uint32_t mask)
+    {
+        EasyGlobalTriggerMask settings;
+        settings = {unpackBits(mask, 1, 29), unpackBits(mask, 1, 30),
+                    unpackBits(mask, 1, 31)};
         return settings;
     }
 
@@ -1505,6 +1568,8 @@ namespace caen {
 
         virtual uint32_t getGlobalTriggerMask() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         virtual void setGlobalTriggerMask(uint32_t value) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual EasyGlobalTriggerMask getEasyGlobalTriggerMask() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual void setEasyGlobalTriggerMask(EasyGlobalTriggerMask settings) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
 
         virtual uint32_t getFrontPanelTRGOUTEnableMask() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         virtual void setFrontPanelTRGOUTEnableMask(uint32_t value) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
@@ -2164,7 +2229,8 @@ namespace caen {
             return bits2eas(mask);
         }
 
-        /* TODO: wrap Software Trigger from register docs? */
+        /* TODO: is Software Trigger from register docs already covered
+         * by sendSWtrigger? */
 
         /**
          * @brief Get GlobalTriggerMask
@@ -2173,7 +2239,6 @@ namespace caen {
          * register docs. It is recommended to use the EasyX wrapper
          * version instead.
          */
-        /* TODO: wrap Global Trigger Mask in user-friendly struct? */
         uint32_t getGlobalTriggerMask() override
         {
             uint32_t mask;
@@ -2189,6 +2254,33 @@ namespace caen {
          */
         void setGlobalTriggerMask(uint32_t mask) override
         { errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x810C, mask)); }
+        /**
+         * @brief Easy Get GlobalTriggerMask
+         * @returns
+         * A conveniently wrapped GlobalTriggerMask settings
+         * structure. Automatically takes care of translating from the
+         * bit mask returned by the the underlying low-level get
+         * GlobalTriggerMask funtion.
+         */
+        EasyGlobalTriggerMask getEasyGlobalTriggerMask() override
+        {
+            uint32_t mask;
+            mask = getGlobalTriggerMask();
+            return bits2egtm(mask);
+        }
+        /**
+         * @brief Easy Set GlobalTriggerMask
+         * @param settings:
+         * Set the GlobalTriggerMask as specified in the provided
+         * settings structure. Automatically takes care of translating
+         * the structure to the proper bit mask needed for the
+         * underlying low-level set GlobalTriggerMask funtion.
+         */
+        void setEasyGlobalTriggerMask(EasyGlobalTriggerMask settings) override
+        {
+            uint32_t mask = egtm2bits(settings);
+            setGlobalTriggerMask(mask);
+        }
 
         /* TODO: wrap FrontPanelTRGOUTEnableMask in user-friendly struct? */
         /**

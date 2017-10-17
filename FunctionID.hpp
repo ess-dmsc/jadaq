@@ -65,6 +65,7 @@ enum FunctionID {
     AcquisitionStatus,
     EasyAcquisitionStatus,
     GlobalTriggerMask,
+    EasyGlobalTriggerMask,
     FrontPanelTRGOUTEnableMask,
     FrontPanelIOControl,
     ROCFPGAFirmwareRevision,
