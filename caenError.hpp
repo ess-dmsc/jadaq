@@ -1,7 +1,10 @@
-/*
+/**
  * jadaq (Just Another DAQ)
  * Copyright (C) 2017  Troels Blum <troels@blum.dk>
  *
+ * @file
+ * @author Troels Blum <troels@blum.dk>
+ * @section LICENSE
  * This program is free software: you can redistribute it and/or modify
  *        it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -14,6 +17,10 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ * @section DESCRIPTION
+ * Wrap CAEN errors.
+ *
  */
 
 #ifndef _CAEN_ERROR_HPP

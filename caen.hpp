@@ -1,7 +1,10 @@
-/*
+/**
  * jadaq (Just Another DAQ)
  * Copyright (C) 2017  Troels Blum <troels@blum.dk>
  *
+ * @file
+ * @author Troels Blum <troels@blum.dk>
+ * @section LICENSE
  * This program is free software: you can redistribute it and/or modify
  *        it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -14,6 +17,13 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ * @section DESCRIPTION
+ * Convenient wrapping of the official CAEN Digitizer library functions
+ * and some additional functionality otherwise only exposed through low-level
+ * register access.
+ * This file contains most of the actual implementation.
+ *
  */
 
 #ifndef _CAEN_HPP
@@ -160,7 +170,88 @@ namespace caen {
         uint32_t vetoWindow;
     };
 
-    /* For user-friendly configuration of DPP Algorithm Control mask */
+    /**
+     * @struct EasyDPPAlgorithmControl
+     * @brief For user-friendly configuration of DPP Algorithm Control mask
+     * @var EasyDPPAlgorithmControl::chargeSensitivity
+     * Charge Sensitivity: defines how many pC of charge correspond to
+     * one channel of the energy spectrum. Options are:\n
+     * 000: 0.16 pC\n
+     * 001: 0.32 pC\n
+     * 010: 0.64 pC\n
+     * 011: 1.28 pC\n
+     * 100: 2.56 pC\n
+     * 101: 5.12 pC\n
+     * 110: 10.24 pC\n
+     * 111: 20.48 pC.
+     * @var EasyDPPAlgorithmControl::internalTestPulse
+     * Internal Test Pulse. It is possible to enable an internal test
+     * pulse for debugging purposes. The ADC counts are replaced with
+     * the built-in pulse emulator. Options are:\n
+     * 0: disabled\n
+     * 1: enabled.
+     * @var EasyDPPAlgorithmControl::testPulseRate
+     * Test Pulse Rate. Set the rate of the built-in test pulse
+     * emulator. Options are:\n
+     * 00: 1 kHz\n
+     * 01: 10 kHz\n
+     * 10: 100 kHz\n
+     * 11: 1 MHz.
+     * @var EasyDPPAlgorithmControl::chargePedestal
+     * Charge Pedestal: when enabled a fixed value of 1024 is added to
+     * the charge. This feature is useful in case of energies close to
+     * zero.
+     * @var EasyDPPAlgorithmControl::inputSmoothingFactor
+     * Input smoothing factor n. In case of noisy signal it is possible
+     * to apply a smoothing filter, where each sample is replaced with
+     * the mean value of n previous samples. When enabled, the trigger
+     * is evaluated on the smoothed samples, while the charge
+     * integration will be performed on the samples corresponding to the
+     * ”Analog Probe” selection (bits[13:12] of register 0x8000). In any
+     * case the output data contains the smoothed samples. Options are:\n
+     * 000: disabled\n
+     * 001: 2 samples\n
+     * 010: 4 samples\n
+     * 011: 8 samples\n
+     * 100: 16 samples\n
+     * 101: 32 samples\n
+     * 110: 64 samples\n
+     * 111: Reserved.
+     * @var EasyDPPAlgorithmControl::pulsePolarity
+     * Pulse Polarity. Options are:\n
+     * 0: positive pulse\n
+     * 1: negative pulse.
+     * @var EasyDPPAlgorithmControl::triggerMode
+     * Trigger Mode. Options are:\n
+     * 00: Normal mode. Each channel can self-trigger independently from
+     * the other channels.\n
+     * 01: Paired mode. Each channel of a couple ’n’ acquire the event
+     * in logic OR between its self-trigger and the self-trigger of the
+     * other channel of the couple. Couple n corresponds to channel n
+     * and channel n+2\n
+     * 10: Reserved\n
+     * 11: Reserved.
+     * @var EasyDPPAlgorithmControl::baselineMean
+     * Baseline Mean. Sets the number of events for the baseline mean
+     * calculation. Options are:\n
+     * 000: Fixed: the baseline value is fixed to the value set in
+     * register 0x1n38\n
+     * 001: 4 samples\n
+     * 010: 16 samples\n
+     * 011: 64 samples.
+     * @var EasyDPPAlgorithmControl::disableSelfTrigger
+     * Disable Self Trigger. If disabled, the self-trigger can be still
+     * propagated to the TRG-OUT front panel connector, though it is not
+     * used by the channel to acquire the event. Options are:\n
+     * 0: self-trigger enabled\n
+     * 1: self-trigger disabled.
+     * @var EasyDPPAlgorithmControl::triggerHysteresis
+     * Trigger Hysteresis. The trigger can be inhibited during the
+     * trailing edge of a pulse, to avoid re-triggering on the pulse
+     * itself. Options are:\n
+     * 0 (default value): enabled\n
+     * 1: disabled.
+     */
     struct EasyDPPAlgorithmControl {
         /* Only allow the expected number of bits per field */
         uint8_t chargeSensitivity : 3;
@@ -175,7 +266,43 @@ namespace caen {
         uint8_t triggerHysteresis : 1;
     };
 
-    /* For user-friendly configuration of Board Configuration mask */
+    /**
+     * @struct EasyBoardConfiguration
+     * @brief For user-friendly configuration of Board Configuration mask
+     * @var EasyBoardConfiguration::individualTrigger
+     * Individual trigger: must be 1
+     * @var EasyBoardConfiguration::analogProbe
+     * Analog Probe: Selects which signal is associated to the Analog
+     * trace in the readout data. Options are:\n
+     * 00: Input\n
+     * 01: Smoothed Input\n
+     * 10: Baseline\n
+     * 11: Reserved.
+     * @var EasyBoardConfiguration::waveformRecording
+     * Waveform Recording: enables the data recording of the
+     * waveform. The user must define the number of samples to be saved
+     * in the Record Length 0x1n24 register. Options are:\n
+     * 0: disabled\n
+     * 1: enabled.
+     * @var EasyBoardConfiguration::extrasRecording
+     * Extras Recording: when enabled the EXTRAS word is saved into the
+     * event data. Refer to the ”Channel Aggregate Data Format” chapter
+     * of the DPP User Manual for more details about the EXTRAS
+     * word. Options are:\n
+     * 0: disabled\n
+     * 1: enabled.
+     * @var EasyBoardConfiguration::timeStampRecording
+     * Time Stamp Recording: must be 1
+     * @var EasyBoardConfiguration::chargeRecording
+     * Charge Recording: must be 1
+     * @var EasyBoardConfiguration::externalTriggerMode
+     * External Trigger mode. The external trigger mode on TRG-IN
+     * connector can be used according to the following options:\n
+     * 00: Trigger\n
+     * 01: Veto\n
+     * 10: An -Veto\n
+     * 11: Reserved.
+     */
     struct EasyBoardConfiguration {
         /* Only allow the expected number of bits per field */
         uint8_t individualTrigger : 1;
@@ -187,7 +314,74 @@ namespace caen {
         uint8_t externalTriggerMode : 2;
     };
 
-    /* For user-friendly configuration of Acquisition Control mask */
+    /**
+     * @struct EasyAcquisitionControl
+     * @brief For user-friendly configuration of Acquisition Control mask
+     * @var EasyAcquisitionControl::startStopMode
+     * Start/Stop Mode Selection (default value is 00). Options are:\n
+     * 00 = SW CONTROLLED. Start/stop of the run takes place on software
+     * command by setting/resetting bit[2] of this register\n
+     * 01 = S-IN/GPI CONTROLLED (S-IN for VME, GPI for Desktop/NIM). If
+     * the acquisition is armed (i.e. bit[2] = 1), then the acquisition
+     * starts when S-IN/GPI is asserted and stops when S-IN/GPI returns
+     * inactive. If bit[2] = 0, the acquisition is always off\n
+     * 10 = FIRST TRIGGER CONTROLLED. If the acquisition is armed
+     * (i.e. bit[2] = 1), then the run starts on the first trigger pulse
+     * (rising edge on TRG-IN); this pulse is not used as input trigger,
+     * while actual triggers start from the second pulse. The stop of
+     * Run must be SW controlled (i.e. bit[2] = 0)\n
+     * 11 = LVDS CONTROLLED (VME only). It is like option 01 but using
+     * LVDS (RUN) instead of S-IN.\n
+     * The LVDS can be set using registers 0x811C and 0x81A0.
+     * @var EasyAcquisitionControl::acquisitionStartArm
+     * Acquisition Start/Arm (default value is 0).\n
+     * When bits[1:0] = 00, this bit acts as a Run Start/Stop. When
+     * bits[1:0] = 01, 10, 11, this bit arms the acquisition and the
+     * actual Start/Stop is controlled by an external signal. Options
+     * are:\n
+     * 0 = Acquisition STOP (if bits[1:0]=00); Acquisition DISARMED (others)\n
+     * 1 = Acquisition RUN (if bits[1:0]=00); Acquisition ARMED (others).
+     * @var EasyAcquisitionControl::triggerCountingMode
+     * Trigger Counting Mode (default value is 0). Through this bit it
+     * is possible to count the reading requests from channels to mother
+     * board. The reading requests may come from the following options:\n
+     * 0 = accepted triggers from combination of channels\n
+     * 1 = triggers from combination of channels, in addition to TRG-IN
+     * and SW TRG.
+     * @var EasyAcquisitionControl::pLLRefererenceClock
+     * PLL Reference Clock Source (Desktop/NIM only). Default value is 0.\n
+     * Options are:\n
+     * 0 = internal oscillator (50 MHz)\n
+     * 1 = external clock from front panel CLK-IN connector.\n
+     * NOTE: this bit is reserved in case of VME boards.
+     * @var EasyAcquisitionControl::lVDSIOBusyEnable
+     * LVDS I/O Busy Enable (VME only). Default value is 0.\n
+     * The LVDS I/Os can be programmed to accept a Busy signal as input,
+     * or to propagate it as output. Options are:\n
+     * 0 = disabled\n
+     * 1 = enabled.\n
+     * NOTE: this bit is supported only by VME boards and meaningful
+     * only if the LVDS new features are enabled (bit[8]=1 of register
+     * 0x811C). Register 0x81A0 should also be configured for nBusy/nVeto.
+     * @var EasyAcquisitionControl::lVDSVetoEnable
+     * LVDS I/O Veto Enable (VME only). Default value is 0.\n
+     * The LVDS I/Os can be programmed to accept a Veto signal as input,
+     * or to transfer it as output. Options are:\n
+     * 0 = disabled (default)\n
+     * 1 = enabled.\n
+     * NOTE: this bit is supported only by VME boards and meaningful
+     * only if the LVDS new features are enabled (bit[8]=1 of register
+     * 0x811C). Register 0x81A0 should also be configured for nBusy/nVeto.
+     * @var EasyAcquisitionControl::lVDSIORunInEnable
+     * LVDS I/O RunIn Enable Mode (VME only). Default value is 0.\n
+     * The LVDS I/Os can be programmed to accept a RunIn signal as
+     * input, or to transfer it as output. Options are:\n
+     * 0 = starts on RunIn level (default)\n
+     * 1 = starts on RunIn rising edge.\n
+     * NOTE: this bit is supported only by VME boards and meaningful
+     * only if the LVDS new features are enabled (bit[8]=1 of register
+     * 0x811C). Register 0x81A0 must also be configured for nBusy/nVeto.
+     */
     struct EasyAcquisitionControl {
         /* Only allow the expected number of bits per field */
         uint8_t startStopMode : 2;
@@ -199,7 +393,56 @@ namespace caen {
         uint8_t lVDSIORunInEnable : 1;
     };
 
-    /* For user-friendly configuration of Acquisition Control mask */
+    /**
+     * @struct EasyAcquisitionStatus
+     * @brief For user-friendly configuration of Acquisition Status mask
+     * @var EasyAcquisitionStatus::acquisitionStatus
+     * Acquisition Status. It reflects the status of the acquisition and
+     * drivers the front panel ’RUN’ LED. Options are:\n
+     * 0 = acquisition is stopped (’RUN’ is off)\n
+     * 1 = acquisition is running (’RUN’ lits).
+     * @var EasyAcquisitionStatus::eventReady
+     * Event Ready. Indicates if any events are available for
+     * readout. Options are:\n
+     * 0 = no event is available for readout\n
+     * 1 = at least one event is available for readout.\n
+     * NOTE: the status of this bit must be considered when managing the
+     * readout from the digitizer.
+     * @var EasyAcquisitionStatus::eventFull
+     * Event Full. Indicates if at least one channel has reached the
+     * FULL condition. Options are:\n
+     * 0 = no channel has reached the FULL condition\n
+     * 1 = the maximum number of events to be read is reached.
+     * @var EasyAcquisitionStatus::clockSource
+     * Clock Source. Indicates the clock source status. Options are:\n
+     * 0 = internal (PLL uses the internal 50 MHz oscillator as reference)\n
+     * 1 = external (PLL uses the external clock on CLK-IN connector as
+     * reference).
+     * @var EasyAcquisitionStatus::pLLUnlockDetect
+     * PLL Unlock Detect. This bit flags a PLL unlock condition. Options
+     * are:\n
+     * 0 = PLL has had an unlock condition since the last register read
+     * access\n
+     * 1 = PLL has not had any unlock condition since the last register
+     * read access.\n
+     * NOTE: flag can be restored to 1 via read access to register 0xEF04.
+     * @var EasyAcquisitionStatus::boardReady
+     * Board Ready. This flag indicates if the board is ready for
+     * acquisition (PLL and ADCs are correctly synchronised). Options
+     * are:\n
+     * 0 = board is not ready to start the acquisition\n
+     * 1 = board is ready to start the acquisition.\n
+     * NOTE: this bit should be checked a er so ware reset to ensure
+     * that the board will enter immediately in run mode a er the RUN
+     * mode setting; otherwise, a latency between RUN mode setting and
+     * Acquisition start might occur.
+     * @var EasyAcquisitionStatus::s_IN
+     * S-IN (VME boards) or GPI (DT/NIM boards) Status. Reads the
+     * current logical level on S-IN (GPI) front panel connector.
+     * @var EasyAcquisitionStatus::tRG_IN
+     * TRG-IN Status. Reads the current logical level on TRG-IN front
+     * panel connector.
+     */
     struct EasyAcquisitionStatus {
         /* Only allow the expected number of bits per field */
         uint8_t acquisitionStatus : 1;
@@ -1107,7 +1350,7 @@ namespace caen {
         void setFixedBaseline(uint32_t value) override
         { errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x8038, value & 0xFFF)); }
 
-        /* TODO: switch DPPPreTrigger to use CAENDigitizer functions? */
+        /* TODO: switch DPPPreTrigger to use native CAENDigitizer functions? */
 
         /* Get / Set DPPPreTrigger
          * @group
@@ -1215,6 +1458,21 @@ namespace caen {
         }
         void setShapedTriggerWidth(uint32_t value) override
         { errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x8078, value & 0xFFFF)); }
+
+        /* TODO: auto-comment conf files with e.g. EasyX struct names.
+         *       # EasyBoardConfiguration: structure with ordered values:
+         *       # individualTrigger, analogProbe, ..., externalTriggerMode
+         *       EasyBoardConfiguration={1,0,0,0,0,0,0}
+         *       Switch to bitmasks read-in and write-out in struct confs?
+         *       ... preferably using the bit length of the field.
+         *       Can we support more user-friendly aliases?
+         *         EasyX[enableTrigger] = 1
+         *         EasyX[Field1,..,FieldN] = {1,..,1}
+         *       ... must be parsed into a single set operation if so.
+         */
+        /* TODO: add doxygen comments to all important functions and structs */
+
+        /* TODO: implement these optional TODOs as virtual:NotImpemented? */
 
         /* TODO: wrap AMC Firmware Revision from register docs? */
 
