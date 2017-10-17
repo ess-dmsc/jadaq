@@ -97,12 +97,42 @@ namespace caen {
         }
     }
 
+    /**
+     * @struct ReadoutBuffer
+     * @brief For parameter handling in ReadoutBuffer handling
+     * @var ReadoutBuffer::data
+     * The allocated memory buffer
+     * @var ReadoutBuffer::size
+     * The size (in byte) of the buffer allocated
+     * @var ReadoutBuffer::dataSize
+     * The size (in byte) of the buffer actually used
+     */
     struct ReadoutBuffer {
         char* data;
         uint32_t size;
         uint32_t dataSize;
     };
 
+    /**
+     * @struct InterruptConfig
+     * @brief For parameter handling in Set / GetInterruptConfig
+     * @var InterruptConfig::state
+     * Enable/Disable
+     * @var InterruptConfig::level
+     * VME IRQ Level (from 1 to 7). Must be 1 for direct connection
+     * through CONET
+     * @var InterruptConfig::status_id
+     * 32-bit number assigned to the device and returned by the device
+     * during the Interrupt Acknowledge
+     * @var InterruptConfig::event_number
+     * If the number of events ready for the readout is equal to or
+     * greater than event_number, then the digitizer asserts the
+     * interrupt request
+     * @var InterruptConfig::mode
+     * Interrupt release mode: CAEN_DGTZ_IRQ_MODE_RORA (release on
+     * register access) or CAEN_DGTZ_IRQ_MODE_ROAK (release on
+     * acknowledge)
+     */
     struct InterruptConfig
     {
         CAEN_DGTZ_EnaDis_t state;
@@ -112,12 +142,42 @@ namespace caen {
         CAEN_DGTZ_IRQMode_t mode;
     };
 
+    /**
+     * @struct ZSParams
+     * @brief For parameter handling in Set / GetChannelZSParams
+     * @var ZSParams::weight
+     * Zero Suppression weight*. Used in “Full Suppression based on the
+     * integral of the signal” supported only by x724 series.\n
+     * CAEN_DGTZ_ZS_FINE = 0 (Fine threshold step; the threshold is the
+     * threshold parameter), CAEN_DGTZ_ZS_COARSE = 1 (Coarse threshold
+     * step; the threshold is threshold × 64)\n
+     * For “Full Suppression based on the signal amplitude” and “Zero
+     * Length Encoding” algorithms, the value of weight doesn’t affect
+     * the function working.
+     * @var ZSParams::threshold
+     * Zero Suppression Threshold to set/get depending on the ZS algorithm.
+     * @var ZSParams::nsamp
+     * Number of samples of the ZS algorithm to set/get.
+     */
     struct ZSParams {
         CAEN_DGTZ_ThresholdWeight_t weight; //enum
         int32_t threshold;
         int32_t nsamp;
     };
 
+    /**
+     * @struct AIMParams
+     * @brief For parameter handling in Set / GetAnalogInspectionMonParams
+     * @var AIMParams::channelmask
+     * Channel enable mask
+     * @var AIMParams::offset
+     * DC Offset for the analog output signal
+     * @var AIMParams::mf
+     * Multiply factor (see definition of CAEN_DGTZ_AnalogMonitorMagnify_t)
+     * @var AIMParams::ami
+     * Invert Output (see definition of
+     * CAEN_DGTZ_AnalogMonitorInspectorInverter_t) 
+     */
     struct AIMParams {
         uint32_t channelmask;
         uint32_t offset;
@@ -125,23 +185,64 @@ namespace caen {
         CAEN_DGTZ_AnalogMonitorInspectorInverter_t ami; //enum
     };
 
+    /**
+     * @struct DPPAcquisitionMode
+     * @brief For parameter handling in Set / GetDPPAcquisitionMode
+     * @var DPPAcquisitionMode::mode
+     * The DPP acquisition mode to set/get.\n
+     * CAEN_DGTZ_DPP_ACQ_MODE_Oscilloscope = 0L: enables the acquisition
+     * of the samples of the digitized waveforms.\n
+     * Note: Oscilloscope mode is not supported by DPP-PSD firmware of
+     * the 730 digitizer family.\n
+     * CAEN_DGTZ_DPP_ACQ_MODE_List = 1L: enables the acquisition of time
+     * stamps and energy values for each DPP firmware\n
+     * CAEN_DGTZ_DPP_ACQ_MODE_Mixed = 2L: enables the acquisition of
+     * both waveforms, energies or charges, and time stamps.
+     * @var DPPAcquisitionMode::param
+     * The acquisition data to retrieve in the acquisition.
+     * Note: CAEN_DGTZ_DPP_SAVE_PARAM_ChargeAndTime is NOT USED
+     */
     struct DPPAcquisitionMode {
         CAEN_DGTZ_DPP_AcqMode_t mode;    // enum
         CAEN_DGTZ_DPP_SaveParam_t param; // enum
     };
 
-    /* TODO: should this be changed to pointers like in DPPEvents?
-     * if so we should use DPP_SupportedVirtualProbes& supported as
-     * argument in getDPP_SupportedVirtualProbes rather than explicit
-     * init there.
+    /**
+     * @struct DPP_SupportedVirtualProbes
+     * @brief For parameter handling in GetDPP_SupportedVirtualProbes
+     * @var DPP_SupportedVirtualProbes::probes
+     * The list of Virtual Probes supported by the trace.\n
+     * Note: it must be an array of length MAX_SUPPORTED_PROBES
+     * @var DPP_SupportedVirtualProbes::numProbes
+     * The number of probes supported by the trace 
      */
     struct DPP_SupportedVirtualProbes {
+        /* TODO: should this be changed to pointers like in DPPEvents?
+         * if so we should use DPP_SupportedVirtualProbes& supported as
+         * argument in getDPP_SupportedVirtualProbes rather than explicit
+         * init there.
+         */
         int probes[MAX_SUPPORTED_PROBES];
         int numProbes;
     };
 
     struct EventInfo : CAEN_DGTZ_EventInfo_t {char* data;};
 
+    /**
+     * @struct DPPEvents
+     * @brief For parameter handling in DPPEvents handling
+     * @var DPPEvents::ptr
+     * The pointer to the event matrix, which shall be of type:\n
+     * CAEN_DGTZ_DPP_PHA_Event_t, for DPP-PHA,\n
+     * CAEN_DGTZ_DPP_PSD_Event_t, for DPP-PSD\n
+     * CAEN_DGTZ_DPP_CI_Event_t, for DPP-CI\n
+     * Note: please refer to the DPP User Manual for the event format
+     * description.
+     * @var DPPEvents::nEvents
+     * Number of events in the events list
+     * @var DPPEvents::allocatedSize
+     * The size in bytes of the events list
+     */
     struct DPPEvents
     {
         void** ptr;             // CAEN_DGTZ_DPP_XXX_Event_t* ptr[MAX_DPP_XXX_CHANNEL_SIZE]
@@ -149,22 +250,66 @@ namespace caen {
         uint32_t allocatedSize;
     };
 
+    /**
+     * @struct DPPWaveforms
+     * @brief For parameter handling in DPPWaveforms handling
+     * @var DPPWaveforms::ptr
+     * The pointer to the waveform buffer, which shall be of type:\n
+     * CAEN_DGTZ_DPP_PHA_Waveforms_t, for DPP-PHA\n
+     * CAEN_DGTZ_DPP_PSD_Waveforms_t, for DPP-PSD\n
+     * CAEN_DGTZ_DPP_CI_Waveforms_t, for DPP-CI
+     * @var DPPWaveforms::allocatedSize
+     * The size in bytes of the waveform buffer
+     */
     struct DPPWaveforms
     {
         void* ptr;
         uint32_t allocatedSize;
     };
 
+    /**
+     * @struct ChannelPairTriggerLogicParams
+     * @brief For parameter handling in Set / GetChannelPairTriggerLogic
+     * @var ChannelPairTriggerLogicParams::logic
+     * The value (or the pointer to , in case of Get) of the
+     * CAEN_DGTZ_TrigerLogic_t structure, defining the trigger logic
+     * mode (AND / OR).
+     * @var ChannelPairTriggerLogicParams::coincidenceWindow
+     * The coincidence gate (in ns). It corresponds to the Primitives
+     * Gate Length parameter of the WaveCatcher software (see the
+     * software User Manual).\n
+     * Note: it must be ≥ 15 ns. (it should be a multiple of 5 ns also;
+     * otherwise, the library will put the closer multiple of 5 as gate
+     * length). Maximum value is 5*255 = 1275 ns.
+     */
     struct ChannelPairTriggerLogicParams {
         CAEN_DGTZ_TrigerLogic_t logic;
         uint16_t coincidenceWindow;
     };
 
+    /**
+     * @struct TriggerLogicParams
+     * @brief For parameter handling in Set / GetTriggerLogic
+     * @var TriggerLogicParams::logic
+     * The trigger logic to set/get according to the
+     * CAEN_DGTZ_TrigerLogic_t structure.
+     * @var TriggerLogicParams::majorityLevel
+     * Value of the majority level. Allowed values range between 0 and
+     * (max num. channel – 1). “0” means more than 0, i.e. ≥ 1.
+     */
     struct TriggerLogicParams {
         CAEN_DGTZ_TrigerLogic_t logic;
         uint32_t majorityLevel;
     };
 
+    /**
+     * @struct SAMTriggerCountVetoParams
+     * @brief For parameter handling in Set / GetSAMTriggerCountVetoParam
+     * @var SAMTriggerCountVetoParams::enable
+     * enable the trigger counter veto
+     * @var SAMTriggerCountVetoParams::vetoWindow
+     * programs the time window for the veto
+     */
     struct SAMTriggerCountVetoParams {
         CAEN_DGTZ_EnaDis_t enable;
         uint32_t vetoWindow;
@@ -461,12 +606,37 @@ namespace caen {
      * layouts.
      */
 
-    static uint8_t unpackBits(uint32_t mask, uint8_t size, uint8_t offset)
-    { return (uint8_t)((mask >> offset) & size); }
-    static uint32_t packBits(uint8_t value, uint8_t size, uint8_t offset)
-    { return (value & size) << offset; }
+    /**
+     * @brief unpack at most 8 bits from 32 bit mask
+     * @param mask:
+     * bit mask
+     * @param cap:
+     * cap of bit value to unpack, i.e. always cap to this max value.
+     * @param offset:
+     * offset to the bits to unpack, i.e. how many bits to right-shift
+     */
+    static uint8_t unpackBits(uint32_t mask, uint8_t cap, uint8_t offset)
+    { return (uint8_t)((mask >> offset) & cap); }
+    /**
+     * @brief pack at most 8 bits into 32 bit mask
+     * @param value:
+     * value to pack
+     * @param cap:
+     * cap before pack, i.e. always cap to this max value.
+     * @param offset:
+     * offset to the packed bits, i.e. how many bits to left-shift
+     */
+    static uint32_t packBits(uint8_t value, uint8_t cap, uint8_t offset)
+    { return (value & cap) << offset; }
 
-    /* EasyDPPAlgorithmControl fields:
+    /**
+     * @brief pack EasyDPPAlgorithmControl settings into bit mask
+     * @param settings:
+     * Settings structure to pack
+     * @returns
+     * Bit mask ready for low-level set function.
+     * @internal
+     * EasyDPPAlgorithmControl fields:
      * charge sensitivity in [0:2], internal test pulse in [4],
      * test pulse rate in [5:6], charge pedestal in [8],
      * input smoothing factor in [12:14], pulse polarity in [16],
@@ -488,6 +658,13 @@ namespace caen {
         mask |= packBits(settings.triggerHysteresis, 1, 30);
         return mask;
     }
+    /**
+     * @brief unpack bit mask into EasyDPPAlgorithmControl settings
+     * @param mask:
+     * Bit mask from low-level get function to unpack
+     * @returns
+     * Settings structure for convenient use.
+     */
     static EasyDPPAlgorithmControl bits2edppac(uint32_t mask)
     {
         EasyDPPAlgorithmControl settings;
@@ -499,7 +676,14 @@ namespace caen {
         return settings;
     }
 
-    /* EasyBoardConfiguration fields:
+    /**
+     * @brief pack EasyBoardConfiguration settings into bit mask
+     * @param settings:
+     * Settings structure to pack
+     * @returns
+     * Bit mask ready for low-level set function.
+     * @internal
+     * EasyBoardConfiguration fields:
      * individual trigger in [8], analog probe in [12:13],
      * waveform recording in [16], extras recording in [17],
      * time stamp recording in [18], charge recording in [19],
@@ -519,6 +703,13 @@ namespace caen {
         mask |= packBits(settings.externalTriggerMode, 2, 20);
         return mask;
     }
+    /**
+     * @brief unpack bit mask into EasyBoardConfiguration settings
+     * @param mask:
+     * Bit mask from low-level get function to unpack
+     * @returns
+     * Settings structure for convenient use.
+     */
     static EasyBoardConfiguration bits2ebc(uint32_t mask)
     {
         EasyBoardConfiguration settings;
@@ -529,7 +720,14 @@ namespace caen {
         return settings;
     }
 
-    /* EasyAcquisitionControl fields:
+    /**
+     * @brief pack EasyAcquisitionControl settings into bit mask
+     * @param settings:
+     * Settings structure to pack
+     * @returns
+     * Bit mask ready for low-level set function.
+     * @internal
+     * EasyAcquisitionControl fields:
      * start/stop mode [0:1], acquisition start/arm in [2],
      * trigger counting mode in [3], PLL reference clock
      * source in [6], LVDS I/O busy enable in [8], 
@@ -547,6 +745,13 @@ namespace caen {
         mask |= packBits(settings.lVDSIORunInEnable, 1, 11);
         return mask;
     }
+    /**
+     * @brief unpack bit mask into EasyAcquisitionControl settings
+     * @param mask:
+     * Bit mask from low-level get function to unpack
+     * @returns
+     * Settings structure for convenient use.
+     */
     static EasyAcquisitionControl bits2eac(uint32_t mask)
     {
         EasyAcquisitionControl settings;
@@ -557,7 +762,14 @@ namespace caen {
         return settings;
     }
 
-    /* EasyAcquisitionStatus fields:
+    /**
+     * @brief pack EasyAcquisitionStatus settings into bit mask
+     * @param settings:
+     * Settings structure to pack
+     * @returns
+     * Bit mask ready for low-level set function.
+     * @internal
+     * EasyAcquisitionStatus fields:
      * acquisition status [2], event ready [3], event full in [4],
      * clock source in [5], PLL unlock detect in [7], board ready in [8],
      * S-In in [15], TRG-IN in [16].
@@ -575,6 +787,13 @@ namespace caen {
         mask |= packBits(settings.tRG_IN, 1, 16);
         return mask;
     }
+    /**
+     * @brief unpack bit mask into EasyAcquisitionStatus settings
+     * @param mask:
+     * Bit mask from low-level get function to unpack
+     * @returns
+     * Settings structure for convenient use.
+     */
     static EasyAcquisitionStatus bits2eas(uint32_t mask)
     {
         EasyAcquisitionStatus settings;
@@ -587,30 +806,59 @@ namespace caen {
 
 
     /* Some low-level digitizer helpers */
+    /**
+     * @brief open raw digitizer
+
+     * @param linkType: which kind of link or bus to connect with
+     * @param linkNum: device index on the link or bus
+     * @param conetNode: node index if using conet
+     * @param VMEBaseAddress: device address if using VME connection
+     * @returns
+     * low-level digitizer handle.
+     */
     static int openRawDigitizer(CAEN_DGTZ_ConnectionType linkType, int linkNum, int conetNode, uint32_t VMEBaseAddress) 
     {
         int handle;
         errorHandler(CAEN_DGTZ_OpenDigitizer(linkType, linkNum, conetNode, VMEBaseAddress, &handle));
         return handle;
     }
+    /**
+     * @brief extract board info from low-level digitizer handle
+     * @param handle: low-level digitizer handle
+     * @returns
+     * Structure with board info.
+     */
     static CAEN_DGTZ_BoardInfo_t getRawDigitizerBoardInfo(int handle) 
     {
         CAEN_DGTZ_BoardInfo_t boardInfo;
         errorHandler(CAEN_DGTZ_GetInfo(handle, &boardInfo));
         return boardInfo;
     }
+    /**
+     * @brief extract DPP firmware info from low-level digitizer handle
+     * @param handle: low-level digitizer handle
+     * @returns
+     * Structure with DPP firmware info.
+     */
     static CAEN_DGTZ_DPPFirmware_t getRawDigitizerDPPFirmware(int handle) 
     {
         CAEN_DGTZ_DPPFirmware_t firmware;
         errorHandler(_CAEN_DGTZ_GetDPPFirmwareType(handle, &firmware));
         return firmware;
     }
+    /**
+     * @brief close low-level digitizer handle
+     * @param handle: low-level digitizer handle
+     */
     static void closeRawDigitizer(int handle) 
     {
         errorHandler(CAEN_DGTZ_CloseDigitizer(handle));
     }
     
     
+    /**
+     * @brief Generic digitizer abstraction
+     */
     class Digitizer
     {
     private:
@@ -627,11 +875,31 @@ namespace caen {
 
         /* Digitizer creation */
         static Digitizer* open(CAEN_DGTZ_ConnectionType linkType, int linkNum, int conetNode, uint32_t VMEBaseAddress);
+        /**
+         * @brief Instantiate Digitizer from USB device.
+         * @param linkNum: device index on the bus
+         * @returns
+         * Abstracted digitizer instance for the device.
+         */
         static Digitizer* USB(int linkNum) { return open(CAEN_DGTZ_USB,linkNum,0,0); }
+        /**
+         * @brief Instantiate Digitizer from USB device.
+         * @param linkNum: device index on the bus
+         * @param VMEBaseAddress: device address if using VME connection
+         * @returns
+         * Abstracted digitizer instance for the device.
+         */
         static Digitizer* USB(int linkNum, uint32_t VMEBaseAddress) { return open(CAEN_DGTZ_USB,linkNum,0,VMEBaseAddress);}
 
         /* Destruction */
+        /**
+         * @brief close Digitizer instance.
+         * @param handle: low-level device handle
+         */
         static void close(int handle) { closeRawDigitizer(handle); }
+        /**
+         * @brief Destroy Digitizer instance.
+         */
         ~Digitizer() { close(handle_); }
 
         /* Information functions */
@@ -838,7 +1106,7 @@ namespace caen {
         void setGroupEnableMask(uint32_t mask)
         { errorHandler(CAEN_DGTZ_SetGroupEnableMask(handle_, mask)); }
 
-        /** 
+        /**
          * @bug
          * CAEN_DGTZ_GetDecimationFactor fails with GenericError
          * on DT5740_171 and V1740D_137, apparently a mismatch between
@@ -1302,7 +1570,7 @@ namespace caen {
     public:
         /**
          * @brief Get GateWidth
-         * @arg group:
+         * @param group:
          * channel group index
          * @returns
          * Number of samples for the Gate width. Each sample
@@ -1318,9 +1586,9 @@ namespace caen {
         }
         /**
          * @brief Set GateWidth
-         * @arg group:
+         * @param group:
          * optional channel group index
-         * @arg value:
+         * @param value:
          * Number of samples for the Gate width. Each sample corresponds
          * to 16 ns - 12 bits
          */
@@ -1339,7 +1607,7 @@ namespace caen {
 
         /**
          * @brief Get GateOffset
-         * @arg group:
+         * @param group:
          * channel group index
          * @returns
          * Number of samples for the Gate Offset width. Each
@@ -1355,9 +1623,9 @@ namespace caen {
         }
         /**
          * @brief Set GateOffset
-         * @arg group:
+         * @param group:
          * optional channel group index
-         * @arg value:
+         * @param value:
          * Number of samples for the Gate Offset width. Each sample
          * corresponds to 16 ns. - 12 bits
          */
@@ -1376,7 +1644,7 @@ namespace caen {
 
         /**
          * @brief Get FixedBaseline
-         * @arg group:
+         * @param group:
          * channel group index
          * @returns
          * Value of Fixed Baseline in LSB counts - 12 bits
@@ -1391,9 +1659,9 @@ namespace caen {
         }
         /**
          * @brief Set FixedBaseline
-         * @arg group:
+         * @param group:
          * optional channel group index
-         * @arg value:
+         * @param value:
          * Value of Fixed Baseline in LSB counts - 12 bits
          */
         void setFixedBaseline(uint32_t group, uint32_t value) override
@@ -1413,7 +1681,7 @@ namespace caen {
 
         /**
          * @brief Get DPPPreTriggerSize
-         * @arg group:
+         * @param group:
          * channel group index
          * @returns
          * Number of samples Ns of the Pre Trigger width. The value is
@@ -1430,9 +1698,9 @@ namespace caen {
         }
         /**
          * @brief Set DPPPreTriggerSize
-         * @arg group:
+         * @param group:
          * optional channel group index
-         * @arg samples:
+         * @param samples:
          * Number of samples Ns of the Pre Trigger width. The value is
          * expressed in steps of sampling frequency (16 ns).\n
          * NOTE: the Pre Trigger value must be greater than the Gate
@@ -1468,9 +1736,9 @@ namespace caen {
         }
         /**
          * @brief Set DPPAlgorithmControl mask
-         * @arg group:
+         * @param group:
          * optional channel group index
-         * @arg mask:
+         * @param mask:
          * Set the low-level DPPAlgorithmControl mask in line with
          * register docs. It is recommended to use the EasyX wrapper
          * version instead.
@@ -1503,7 +1771,7 @@ namespace caen {
         }
         /**
          * @brief Easy Set DPPAlgorithmControl
-         * @arg settings:
+         * @param settings:
          * Set the DPPAlgorithmControl as specified in the provided
          * settings structure. Automatically takes care of translating
          * the structure to the proper bit mask needed for the
@@ -1526,7 +1794,7 @@ namespace caen {
 
         /**
          * @brief Get TriggerHoldOffWidth
-         * @arg group:
+         * @param group:
          * channel group index
          * @returns
          * The Trigger Hold-Off width in steps of 16 ns - 16 bits
@@ -1541,9 +1809,9 @@ namespace caen {
         }
         /**
          * @brief Set TriggerHoldOffWidth
-         * @arg group:
+         * @param group:
          * optional channel group index
-         * @arg value:
+         * @param value:
          * The Trigger Hold-Off width in steps of 16 ns - 16 bits
          */
         void setTriggerHoldOffWidth(uint32_t group, uint32_t value) override
@@ -1561,7 +1829,7 @@ namespace caen {
 
         /**
          * @brief Get ShapedTriggerWidth
-         * @arg group:
+         * @param group:
          * channel group index
          * @returns
          * The number of samples for the Shaped Trigger width in trigger
@@ -1581,9 +1849,9 @@ namespace caen {
         }
         /**
          * @brief Set ShapedTriggerWidth
-         * @arg group:
+         * @param group:
          * optional channel group index
-         * @arg value:
+         * @param value:
          * Set the number of samples for the Shaped Trigger width in
          * trigger clock cycles (16 ns step) - 16 bits
          */
@@ -1654,7 +1922,7 @@ namespace caen {
         }
         /**
          * @brief Set BoardConfiguration mask
-         * @arg mask:
+         * @param mask:
          * Set the low-level BoardConfiguration mask in line with
          * register docs. It is recommended to use the EasyX wrapper
          * version instead.
@@ -1663,7 +1931,7 @@ namespace caen {
         { errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x8004, (mask | 0x000C0110) & 0x003F3110)); }
         /**
          * @brief Unset BoardConfiguration mask
-         * @arg mask:
+         * @param mask:
          * Unset the low-level BoardConfiguration mask in line with
          * register docs. It is recommended to use the EasyX wrapper
          * version instead.
@@ -1686,7 +1954,7 @@ namespace caen {
         }
         /**
          * @brief Easy Set BoardConfiguration
-         * @arg settings:
+         * @param settings:
          * Set the BoardConfiguration as specified in the provided
          * settings structure. Automatically takes care of translating
          * the structure to the proper bit mask needed for the
@@ -1704,7 +1972,7 @@ namespace caen {
         }
         /**
          * @brief Easy Unset BoardConfiguration
-         * @arg settings:
+         * @param settings:
          * Unset the BoardConfiguration as specified in the provided
          * settings structure. Automatically takes care of translating
          * the structure to the proper bit mask needed for the
@@ -1738,7 +2006,7 @@ namespace caen {
         }
         /**
          * @brief Set AggregateOrganization
-         * @arg value:
+         * @param value:
          * Aggregate Organization. Nb: the number of aggregates is equal
          * to N_aggr = 2^Nb . Please refer to register doc for values -
          * 4 bits
@@ -1797,7 +2065,7 @@ namespace caen {
         }
         /**
          * @brief Set DPPAcquisitionMode
-         * @arg mode
+         * @param mode
          * Set DPP acquisition mode flag - 4 bits
          */
         void setDPPAcquisitionMode(DPPAcquisitionMode mode) override
@@ -1833,7 +2101,7 @@ namespace caen {
         }
         /**
          * @brief Set AcquisitionControl mask
-         * @arg mask:
+         * @param mask:
          * Set the low-level AcquisitionControl mask in line with
          * register docs. It is recommended to use the EasyX wrapper
          * version instead.
@@ -1856,7 +2124,7 @@ namespace caen {
         }
         /**
          * @brief Easy Set AcquisitionControl
-         * @arg settings:
+         * @param settings:
          * Set the AcquisitionControl as specified in the provided
          * settings structure. Automatically takes care of translating
          * the structure to the proper bit mask needed for the
@@ -1914,7 +2182,7 @@ namespace caen {
         }
         /**
          * @brief Set GlobalTriggerMask
-         * @arg mask:
+         * @param mask:
          * Set the low-level GlobalTriggerMask in line with
          * register docs. It is recommended to use the EasyX wrapper
          * version instead.
@@ -1938,7 +2206,7 @@ namespace caen {
         }
         /**
          * @brief Set FrontPanelTRGOUTEnableMask
-         * @arg mask:
+         * @param mask:
          * Set the low-level FrontPanelTRGOUTEnableMask in line with
          * register docs. It is recommended to use the EasyX wrapper
          * version instead.
@@ -1964,7 +2232,7 @@ namespace caen {
         }
         /**
          * @brief Set FrontPanelIOControl mask
-         * @arg mask:
+         * @param mask:
          * Set the low-level FrontPanelIOControl mask in line with
          * register docs. It is recommended to use the EasyX wrapper
          * version instead.
@@ -2018,7 +2286,7 @@ namespace caen {
         }
         /**
          * @brief Set FanSpeedControl mask
-         * @arg mask:
+         * @param mask:
          * Set the low-level FanSpeedControl mask in line with
          * register docs. It is recommended to use the EasyX wrapper
          * version instead.
@@ -2044,7 +2312,7 @@ namespace caen {
         }
         /**
          * @brief Set DisableExternalTrigger value
-         * @arg value:
+         * @param value:
          * Set the low-level DisableExternalTrigger value - 1 bit.
          */
         void setDisableExternalTrigger(uint32_t value) override
@@ -2068,7 +2336,7 @@ namespace caen {
         }
         /**
          * @brief Set ReadoutControl mask
-         * @arg mask:
+         * @param mask:
          * Set the low-level ReadoutControl mask in line with
          * register docs. It is recommended to use the EasyX wrapper
          * version instead.
@@ -2098,7 +2366,7 @@ namespace caen {
         }
         /**
          * @brief Set AggregateNumberPerBLT value
-         * @arg value:
+         * @param value:
          * Number of complete aggregates to be transferred for
          * each block transfer (BLT) - 10 bits.
          */
