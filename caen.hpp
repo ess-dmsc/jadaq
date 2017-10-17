@@ -838,10 +838,13 @@ namespace caen {
         void setGroupEnableMask(uint32_t mask)
         { errorHandler(CAEN_DGTZ_SetGroupEnableMask(handle_, mask)); }
 
-        /* TODO: CAEN_DGTZ_GetDecimationFactor fails with GenericError
+        /** 
+         * @bug
+         * CAEN_DGTZ_GetDecimationFactor fails with GenericError
          * on DT5740_171 and V1740D_137, apparently a mismatch between
          * DigitizerTable value end value read from register in the
-         * V1740 specific case. */
+         * V1740 specific case. 
+         */
         uint16_t getDecimationFactor()
         { uint16_t factor;  errorHandler(CAEN_DGTZ_GetDecimationFactor(handle_, &factor)); return factor; }
         void setDecimationFactor(uint16_t factor)
@@ -872,8 +875,11 @@ namespace caen {
         void setChannelDCOffset(uint32_t channel, uint32_t offset)
         { errorHandler(CAEN_DGTZ_SetChannelDCOffset(handle_, channel, offset)); }
 
-        /* TODO: CAEN_DGTZ_GetGroupDCOffset fails with GenericError on
-         * V1740D_137, something fails in the V1740 specific case. */
+        /**
+         * @bug
+         * CAEN_DGTZ_GetGroupDCOffset fails with GenericError on
+         * V1740D_137, something fails in the V1740 specific case. 
+         */
         uint32_t getGroupDCOffset(uint32_t group)
         {
             uint32_t offset;
@@ -918,8 +924,11 @@ namespace caen {
         void setChannelTriggerThreshold(uint32_t channel, uint32_t treshold)
         { errorHandler(_CAEN_DGTZ_SetChannelTriggerThreshold(handle_, channel, treshold)); }
 
-        /* TODO: CAEN_DGTZ_GetGroupTriggerThreshold fails with ReadDeviceRegisterFail
-         * on V1740D_137. */
+        /**
+         * @bug
+         * CAEN_DGTZ_GetGroupTriggerThreshold fails with ReadDeviceRegisterFail
+         * on V1740D_137. 
+         */
         uint32_t getGroupTriggerThreshold(uint32_t group)
         {
             uint32_t treshold;
@@ -1058,8 +1067,12 @@ namespace caen {
         virtual void setDPPPreTriggerSize(uint32_t samples) // Default channel -1 == all
         { errorHandler(CAEN_DGTZ_SetDPPPreTriggerSize(handle_, -1, samples)); }
 
-        /* TODO: fails with InvalidParam om DT5740_171 and V1740D_137, seems to fail
-         * deep in readout when the digtizer library calls ReadRegister 0x1n80 */
+        /**
+         * @bug
+         * CAEN_DGTZ_GetChannelPulsePolarity fails with InvalidParam om
+         * DT5740_171 and V1740D_137. Seems to fail deep in readout when
+         * the digtizer library calls ReadRegister 0x1n80 
+         */
         CAEN_DGTZ_PulsePolarity_t getChannelPulsePolarity(uint32_t channel)
         { CAEN_DGTZ_PulsePolarity_t polarity; errorHandler(CAEN_DGTZ_GetChannelPulsePolarity(handle_, channel, &polarity)); return polarity; }
         void setChannelPulsePolarity(uint32_t channel, CAEN_DGTZ_PulsePolarity_t polarity)
@@ -1287,9 +1300,13 @@ namespace caen {
         Digitizer740DPP(int handle, CAEN_DGTZ_BoardInfo_t boardInfo) : Digitizer740(handle, boardInfo) {}
 
     public:
-        /* Get / Set GateWidth
-         * @group
-         * @value: Number of samples for the Gate width. Each sample corresponds to 16 ns - 12 bits
+        /**
+         * @brief Get GateWidth
+         * @arg group:
+         * channel group index
+         * @returns
+         * Number of samples for the Gate width. Each sample
+         * corresponds to 16 ns - 12 bits
          */
         uint32_t getGateWidth(uint32_t group) override
         {
@@ -1299,18 +1316,34 @@ namespace caen {
             errorHandler(CAEN_DGTZ_ReadRegister(handle_, 0x1030 | group<<8 , &value));
             return value;
         }
+        /**
+         * @brief Set GateWidth
+         * @arg group:
+         * optional channel group index
+         * @arg value:
+         * Number of samples for the Gate width. Each sample corresponds
+         * to 16 ns - 12 bits
+         */
         void setGateWidth(uint32_t group, uint32_t value) override
         {
             if (group >= groups())
                 errorHandler(CAEN_DGTZ_InvalidChannelNumber);
             errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x1030 | group<<8, value & 0xFFF));
         }
+        /**
+         * @brief Broadcast version: please refer to details in
+         * single-group version.
+         */
         void setGateWidth(uint32_t value) override
         { errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x8030, value & 0xFFF)); }
 
-        /* Get / Set GateOffset
-         * @group
-         * @value: Number of samples for the Gate Offset width. Each sample corresponds to 16 ns. - 12 bits
+        /**
+         * @brief Get GateOffset
+         * @arg group:
+         * channel group index
+         * @returns
+         * Number of samples for the Gate Offset width. Each
+         * sample corresponds to 16 ns. - 12 bits
          */
         uint32_t getGateOffset(uint32_t group) override
         {
@@ -1320,18 +1353,33 @@ namespace caen {
             errorHandler(CAEN_DGTZ_ReadRegister(handle_, 0x1034 | group<<8 , &value));
             return value;
         }
+        /**
+         * @brief Set GateOffset
+         * @arg group:
+         * optional channel group index
+         * @arg value:
+         * Number of samples for the Gate Offset width. Each sample
+         * corresponds to 16 ns. - 12 bits
+         */
         void setGateOffset(uint32_t group, uint32_t value) override
         {
             if (group >= groups())
                 errorHandler(CAEN_DGTZ_InvalidChannelNumber);
             errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x1034 | group<<8, value & 0xFFF));
         }
+        /**
+         * @brief Broadcast version: please refer to details in
+         * single-group version.
+         */
         void setGateOffset(uint32_t value) override
         { errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x8034, value & 0xFFF)); }
 
-        /* Get / Set FixedBaseline
-         * @group
-         * @value: Value of Fixed Baseline in LSB counts - 12 bits
+        /**
+         * @brief Get FixedBaseline
+         * @arg group:
+         * channel group index
+         * @returns
+         * Value of Fixed Baseline in LSB counts - 12 bits
          */
         uint32_t getFixedBaseline(uint32_t group) override
         {
@@ -1341,23 +1389,36 @@ namespace caen {
             errorHandler(CAEN_DGTZ_ReadRegister(handle_, 0x1038 | group<<8 , &value));
             return value;
         }
+        /**
+         * @brief Set FixedBaseline
+         * @arg group:
+         * optional channel group index
+         * @arg value:
+         * Value of Fixed Baseline in LSB counts - 12 bits
+         */
         void setFixedBaseline(uint32_t group, uint32_t value) override
         {
             if (group >= groups())
                 errorHandler(CAEN_DGTZ_InvalidChannelNumber);
             errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x1038 | group<<8, value & 0xFFF));
         }
+        /**
+         * @brief Broadcast version: please refer to details in
+         * single-group version.
+         */
         void setFixedBaseline(uint32_t value) override
         { errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x8038, value & 0xFFF)); }
 
         /* TODO: switch DPPPreTrigger to use native CAENDigitizer functions? */
 
-        /* Get / Set DPPPreTrigger
-         * @group
-         * @samples: Number of samples Ns of the Pre Trigger width. The value is
-         * expressed in steps of sampling frequency (16 ns).
+        /**
+         * @brief Get DPPPreTriggerSize
+         * @arg group:
+         * channel group index
+         * @returns
+         * Number of samples Ns of the Pre Trigger width. The value is
+         * expressed in steps of sampling frequency (16 ns).\n
          * NOTE: the Pre Trigger value must be greater than the Gate Offset value by at least 112 ns.
-         *
          */
         uint32_t getDPPPreTriggerSize(int group) override
         {
@@ -1367,20 +1428,35 @@ namespace caen {
             errorHandler(CAEN_DGTZ_ReadRegister(handle_, 0x103C | group<<8 , &samples));
             return samples;
         }
-        void setDPPPreTriggerSize(uint32_t samples) override
-        { errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x803C, samples & 0xFFF)); }
-
+        /**
+         * @brief Set DPPPreTriggerSize
+         * @arg group:
+         * optional channel group index
+         * @arg samples:
+         * Number of samples Ns of the Pre Trigger width. The value is
+         * expressed in steps of sampling frequency (16 ns).\n
+         * NOTE: the Pre Trigger value must be greater than the Gate
+         * Offset value by at least 112 ns.
+         */
         void setDPPPreTriggerSize(int group, uint32_t samples) override
         {
             if (group >= groups() || group < 0)
                 errorHandler(CAEN_DGTZ_InvalidChannelNumber);
             { errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x103C | group<<8, samples & 0xFFF)); }
         }
+        /**
+         * @brief Broadcast version: please refer to details in
+         * single-group version.
+         */
+        void setDPPPreTriggerSize(uint32_t samples) override
+        { errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x803C, samples & 0xFFF)); }
 
-        /* Get / Set DPP Algorithm Control
-         * @group
-         * @mask: bitmask for a large number of settings. Please refer
-         * to register docs for the mask details - 32 bits.
+        /**
+         * @brief Get DPPAlgorithmControl
+         * @returns
+         * Get the low-level DPPAlgorithmControl mask in line with
+         * register docs. It is recommended to use the EasyX wrapper
+         * version instead.
          */
         uint32_t getDPPAlgorithmControl(uint32_t group) override
         {
@@ -1390,34 +1466,70 @@ namespace caen {
             errorHandler(CAEN_DGTZ_ReadRegister(handle_, 0x1040 | group<<8 , &mask));
             return mask;
         }
+        /**
+         * @brief Set DPPAlgorithmControl mask
+         * @arg group:
+         * optional channel group index
+         * @arg mask:
+         * Set the low-level DPPAlgorithmControl mask in line with
+         * register docs. It is recommended to use the EasyX wrapper
+         * version instead.
+         */
         void setDPPAlgorithmControl(uint32_t group, uint32_t mask) override
         {
             if (group >= groups())
                 errorHandler(CAEN_DGTZ_InvalidChannelNumber);
             errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x1040 | group<<8, mask));
         }
+        /**
+         * @brief Broadcast version: please refer to details in
+         * single-group version.
+         */
         void setDPPAlgorithmControl(uint32_t mask) override
         { errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x8040, mask)); }
 
+        /**
+         * @brief Easy Get DPPAlgorithmControl
+         * @returns
+         * A conveniently wrapped DPPAlgorithmControl settings
+         * structure. Automatically takes care of translating from the
+         * bit mask returned by the the underlying low-level get
+         * DPPAlgorithmControl mask funtion.
+         */
         EasyDPPAlgorithmControl getEasyDPPAlgorithmControl(uint32_t group) override
         {
             uint32_t mask = getDPPAlgorithmControl(group);
             return bits2edppac(mask);
         }
+        /**
+         * @brief Easy Set DPPAlgorithmControl
+         * @arg settings:
+         * Set the DPPAlgorithmControl as specified in the provided
+         * settings structure. Automatically takes care of translating
+         * the structure to the proper bit mask needed for the
+         * underlying low-level set DPPAlgorithmControl funtion.
+         */
         void setEasyDPPAlgorithmControl(uint32_t group, EasyDPPAlgorithmControl settings) override
         {
             uint32_t mask = edppac2bits(settings);
             setDPPAlgorithmControl(group, mask);
         }
+        /**
+         * @brief Broadcast version: please refer to details in
+         * single-group version.
+         */
         void setEasyDPPAlgorithmControl(EasyDPPAlgorithmControl settings) override
         {
             uint32_t mask = edppac2bits(settings);
             setDPPAlgorithmControl(mask);
         }
 
-        /* Get / Set TriggerHoldOffWidth
-         * @group
-         * @value: Set the Trigger Hold-Off width in steps of 16 ns - 16 bits
+        /**
+         * @brief Get TriggerHoldOffWidth
+         * @arg group:
+         * channel group index
+         * @returns
+         * The Trigger Hold-Off width in steps of 16 ns - 16 bits
          */
         uint32_t getTriggerHoldOffWidth(uint32_t group) override
         {
@@ -1427,20 +1539,37 @@ namespace caen {
             errorHandler(CAEN_DGTZ_ReadRegister(handle_, 0x1074 | group<<8 , &value));
             return value;
         }
+        /**
+         * @brief Set TriggerHoldOffWidth
+         * @arg group:
+         * optional channel group index
+         * @arg value:
+         * The Trigger Hold-Off width in steps of 16 ns - 16 bits
+         */
         void setTriggerHoldOffWidth(uint32_t group, uint32_t value) override
         {
             if (group >= groups())
                 errorHandler(CAEN_DGTZ_InvalidChannelNumber);
             errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x1074 | group<<8, value & 0xFFFF));
         }
+        /**
+         * @brief Broadcast version: please refer to details in
+         * single-group version.
+         */
         void setTriggerHoldOffWidth(uint32_t value) override
         { errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x8074, value & 0xFFFF)); }
 
-        /* TODO: on V1740D ShapedTriggerWidth causes CommError */
-
-        /* Get / Set ShapedTriggerWidth
-         * @group
-         * @value: Set the number of samples for the Shaped Trigger width in trigger clock cycles (16 ns step) - 16 bits
+        /**
+         * @brief Get ShapedTriggerWidth
+         * @arg group:
+         * channel group index
+         * @returns
+         * The number of samples for the Shaped Trigger width in trigger
+         * clock cycles (16 ns step) - 16 bits
+         *
+         * @bug
+         * CAEN_DGTZ_ReadRegister 0x1078 for ShapedTriggerWidth on V1740D
+         * causes CommError 
          */
         uint32_t getShapedTriggerWidth(uint32_t group) override
         {
@@ -1450,12 +1579,24 @@ namespace caen {
             errorHandler(CAEN_DGTZ_ReadRegister(handle_, 0x1078 | group<<8 , &value));
             return value;
         }
+        /**
+         * @brief Set ShapedTriggerWidth
+         * @arg group:
+         * optional channel group index
+         * @arg value:
+         * Set the number of samples for the Shaped Trigger width in
+         * trigger clock cycles (16 ns step) - 16 bits
+         */
         void setShapedTriggerWidth(uint32_t group, uint32_t value) override
         {
             if (group >= groups())
                 errorHandler(CAEN_DGTZ_InvalidChannelNumber);
             errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x1078 | group<<8, value & 0xFFFF));
         }
+        /**
+         * @brief Broadcast version: please refer to details in
+         * single-group version.
+         */
         void setShapedTriggerWidth(uint32_t value) override
         { errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x8078, value & 0xFFFF)); }
 
@@ -1487,16 +1628,20 @@ namespace caen {
 
         /* TODO: wrap Individual Trigger Threshold of Group n Sub Channel m from register docs? */
 
-        /* Get / Set Board Configuration
-         * @mask: a bitmask covering a number of settings. Please refer
-         * to register docs - 32 bits.
+        /**
+         * @brief Get BoardConfiguration mask
+         * @returns
+         * Get the low-level BoardConfiguration mask in line with
+         * register docs. It is recommended to use the EasyX wrapper
+         * version instead.
          *
+         * @internal
          * According to register docs the bits [0:3,5:7,9:11,14:15,22:31]
          * must be 0 and the bits [4,8,18,19] must be 1 so we always
          * force compliance by a bitwise-or with 0x000C0110 followed
          * by a bitwise-and with 0x003F3110 for the set operation.
          * Similarly we prevent mangling by a bitwise-and with the
-         * inverted combination 0x99800 for the unset operation.
+         * inverted combination 0x099800 for the unset operation.\n
          *
          * NOTE: Read mask from 0x8000, BitSet mask with 0x8004 and
          *       BitClear mask with 0x8008.
@@ -1507,16 +1652,46 @@ namespace caen {
             errorHandler(CAEN_DGTZ_ReadRegister(handle_, 0x8000, &mask));
             return mask;
         }
+        /**
+         * @brief Set BoardConfiguration mask
+         * @arg mask:
+         * Set the low-level BoardConfiguration mask in line with
+         * register docs. It is recommended to use the EasyX wrapper
+         * version instead.
+         */
         void setBoardConfiguration(uint32_t mask) override
         { errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x8004, (mask | 0x000C0110) & 0x003F3110)); }
+        /**
+         * @brief Unset BoardConfiguration mask
+         * @arg mask:
+         * Unset the low-level BoardConfiguration mask in line with
+         * register docs. It is recommended to use the EasyX wrapper
+         * version instead.
+         */
         void unsetBoardConfiguration(uint32_t mask) override
         { errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x8008, mask & 0x099800)); }
+        /**
+         * @brief Easy Get BoardConfiguration
+         * @returns
+         * A conveniently wrapped BoardConfiguration settings
+         * structure. Automatically takes care of translating from the
+         * bit mask returned by the the underlying low-level get
+         * BoardConfiguration mask funtion.
+         */
         EasyBoardConfiguration getEasyBoardConfiguration() override
         {
             uint32_t mask;
             mask = getBoardConfiguration();
             return bits2ebc(mask);
         }
+        /**
+         * @brief Easy Set BoardConfiguration
+         * @arg settings:
+         * Set the BoardConfiguration as specified in the provided
+         * settings structure. Automatically takes care of translating
+         * the structure to the proper bit mask needed for the
+         * underlying low-level set BoardConfiguration funtion.
+         */
         void setEasyBoardConfiguration(EasyBoardConfiguration settings) override
         {
             /* NOTE: according to DPP register docs individualTrigger,
@@ -1527,6 +1702,14 @@ namespace caen {
             uint32_t mask = ebc2bits(settings);
             setBoardConfiguration(mask);
         }
+        /**
+         * @brief Easy Unset BoardConfiguration
+         * @arg settings:
+         * Unset the BoardConfiguration as specified in the provided
+         * settings structure. Automatically takes care of translating
+         * the structure to the proper bit mask needed for the
+         * underlying low-level unset BoardConfiguration funtion.
+         */
         void unsetEasyBoardConfiguration(EasyBoardConfiguration settings) override
         {
             /* NOTE: according to docs individualTrigger, timeStampRecording
@@ -1540,9 +1723,12 @@ namespace caen {
             unsetBoardConfiguration(mask);
         }
 
-        /* Get / Set AggregateOrganization
-         * @value: Aggregate Organization. Nb: the number of aggregates is
-         * equal to N_aggr = 2^Nb . Please refer to register doc for values - 4 bits
+        /**
+         * @brief Get AggregateOrganization
+         * @returns
+         * Aggregate Organization. Nb: the number of aggregates is equal
+         * to N_aggr = 2^Nb . Please refer to register doc for values -
+         * 4 bits
          */
         uint32_t getAggregateOrganization() override
         {
@@ -1550,6 +1736,13 @@ namespace caen {
             errorHandler(CAEN_DGTZ_ReadRegister(handle_, 0x800C, &value));
             return value;
         }
+        /**
+         * @brief Set AggregateOrganization
+         * @arg value:
+         * Aggregate Organization. Nb: the number of aggregates is equal
+         * to N_aggr = 2^Nb . Please refer to register doc for values -
+         * 4 bits
+         */
         void setAggregateOrganization(uint32_t value) override
         { errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x800C, value & 0x0F)); }
 
@@ -1567,14 +1760,20 @@ namespace caen {
 
         /* TODO: make sure Record Length is already covered by RecordLength */
 
-        /* NOTE: According to the CAEN DPP register docs the bits
+        /**
+         * @brief Get DPPAcquisitionMode
+         * @returns
+         * DPP acquisition mode flag - 4 bits
+         *
+         * @internal
+         * NOTE: According to the CAEN DPP register docs the bits
          * [18:19] should always be 1, and in CAENDigitizer docs it
          * sounds like setDPPAcquisitionMode with the only valid modes
          * there (Mixed or List) should both set them accordingly, but
          * apparently it doesn't really happen on V1740D with DPP
-         * firmware. Reported upstream.
-         *
-         * TODO: switch to the CAEN Get / SetDPPAcquisitionMode when fixed?
+         * firmware. Reported upstream.\n
+         */
+        /* TODO: switch to the CAEN Get / SetDPPAcquisitionMode when fixed?
          * TODO: switch to get / set BoardConfiguration internally?
          */
         DPPAcquisitionMode getDPPAcquisitionMode() override
@@ -1596,6 +1795,11 @@ namespace caen {
             }
             return mode;
         }
+        /**
+         * @brief Set DPPAcquisitionMode
+         * @arg mode
+         * Set DPP acquisition mode flag - 4 bits
+         */
         void setDPPAcquisitionMode(DPPAcquisitionMode mode) override
         {
             // Completely ignore mode.param: CAEN documentation does not match reality
@@ -1614,9 +1818,12 @@ namespace caen {
             }
         }
 
-        /* Get / Set Acquisition Control
-         * @mask: a bitmask covering a number of settings. Please refer
-         * to register docs - 12 bits.
+        /**
+         * @brief Get AcquisitionControl mask
+         * @returns
+         * Get the low-level AcquisitionControl mask in line with
+         * register docs. It is recommended to use the EasyX wrapper
+         * version instead.
          */
         uint32_t getAcquisitionControl() override
         {
@@ -1624,23 +1831,49 @@ namespace caen {
             errorHandler(CAEN_DGTZ_ReadRegister(handle_, 0x8100, &mask));
             return mask;
         }
+        /**
+         * @brief Set AcquisitionControl mask
+         * @arg mask:
+         * Set the low-level AcquisitionControl mask in line with
+         * register docs. It is recommended to use the EasyX wrapper
+         * version instead.
+         */
         void setAcquisitionControl(uint32_t mask) override
         { errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x8100, mask & 0x0FFF)); }
+        /**
+         * @brief Easy Get AcquisitionControl
+         * @returns
+         * A conveniently wrapped AcquisitionControl settings
+         * structure. Automatically takes care of translating from the
+         * bit mask returned by the the underlying low-level get
+         * AcquisitionControl mask funtion.
+         */
         EasyAcquisitionControl getEasyAcquisitionControl() override
         {
             uint32_t mask;
             mask = getAcquisitionControl();
             return bits2eac(mask);
         }
+        /**
+         * @brief Easy Set AcquisitionControl
+         * @arg settings:
+         * Set the AcquisitionControl as specified in the provided
+         * settings structure. Automatically takes care of translating
+         * the structure to the proper bit mask needed for the
+         * underlying low-level set AcquisitionControl funtion.
+         */
         void setEasyAcquisitionControl(EasyAcquisitionControl settings) override
         {
             uint32_t mask = eac2bits(settings);
             setAcquisitionControl(mask);
         }
 
-        /* Get Acquisition Status
-         * Returns a bitmask covering a number of status fields. Please refer
-         * to register docs - 32 bits.
+        /**
+         * @brief Get AcquisitionStatus mask
+         * @returns
+         * Get the low-level AcquisitionStatus mask in line with
+         * register docs. It is recommended to use the EasyX wrapper
+         * version instead.
          */
         uint32_t getAcquisitionStatus() override
         {
@@ -1648,6 +1881,14 @@ namespace caen {
             errorHandler(CAEN_DGTZ_ReadRegister(handle_, 0x8104, &mask));
             return mask;
         }
+        /**
+         * @brief Easy Get AcquisitionStatus
+         * @returns
+         * A conveniently wrapped AcquisitionStatus settings
+         * structure. Automatically takes care of translating from the
+         * bit mask returned by the the underlying low-level get
+         * AcquisitionStatus mask funtion.
+         */
         EasyAcquisitionStatus getEasyAcquisitionStatus() override
         {
             uint32_t mask;
@@ -1657,9 +1898,12 @@ namespace caen {
 
         /* TODO: wrap Software Trigger from register docs? */
 
-        /* Get / Set Global Trigger Mask
-         * @mask: a bitmask covering a number of settings. Please refer
-         * to register docs - 32 bits.
+        /**
+         * @brief Get GlobalTriggerMask
+         * @returns
+         * Get the low-level GlobalTriggerMask in line with
+         * register docs. It is recommended to use the EasyX wrapper
+         * version instead.
          */
         /* TODO: wrap Global Trigger Mask in user-friendly struct? */
         uint32_t getGlobalTriggerMask() override
@@ -1668,45 +1912,76 @@ namespace caen {
             errorHandler(CAEN_DGTZ_ReadRegister(handle_, 0x810C, &mask));
             return mask;
         }
+        /**
+         * @brief Set GlobalTriggerMask
+         * @arg mask:
+         * Set the low-level GlobalTriggerMask in line with
+         * register docs. It is recommended to use the EasyX wrapper
+         * version instead.
+         */
         void setGlobalTriggerMask(uint32_t mask) override
         { errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x810C, mask)); }
 
-        /* Get / Set Front Panel TRG-OUT (GPO) Enable Mask
-         * @mask: a bitmask covering a number of settings. Please refer
-         * to register docs - 32 bits.
-         */
         /* TODO: wrap FrontPanelTRGOUTEnableMask in user-friendly struct? */
+        /**
+         * @brief Get FrontPanelTRGOUTEnableMask
+         * @returns
+         * Get the low-level FrontPanelTRGOUTEnableMask in line with
+         * register docs. It is recommended to use the EasyX wrapper
+         * version instead.
+         */
         uint32_t getFrontPanelTRGOUTEnableMask() override
         {
             uint32_t mask;
             errorHandler(CAEN_DGTZ_ReadRegister(handle_, 0x8110, &mask));
             return mask;
         }
+        /**
+         * @brief Set FrontPanelTRGOUTEnableMask
+         * @arg mask:
+         * Set the low-level FrontPanelTRGOUTEnableMask in line with
+         * register docs. It is recommended to use the EasyX wrapper
+         * version instead.
+         */
         void setFrontPanelTRGOUTEnableMask(uint32_t mask) override
         { errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x8110, mask)); }
 
         /* TODO: wrap LVDS I/O Data from register docs? */
 
-        /* Get / Set Front Panel I/O Control mask
-         * @mask: a bitmask covering a number of settings. Please refer
-         * to register docs - 32 bits.
-         */
         /* TODO: wrap FrontPanelIOControl in user-friendly struct */
+        /**
+         * @brief Get FrontPanelIOControl mask
+         * @returns
+         * Get the low-level FrontPanelIOControl mask in line with
+         * register docs. It is recommended to use the EasyX wrapper
+         * version instead.
+         */
         uint32_t getFrontPanelIOControl() override
         {
             uint32_t mask;
             errorHandler(CAEN_DGTZ_ReadRegister(handle_, 0x811C, &mask));
             return mask;
         }
+        /**
+         * @brief Set FrontPanelIOControl mask
+         * @arg mask:
+         * Set the low-level FrontPanelIOControl mask in line with
+         * register docs. It is recommended to use the EasyX wrapper
+         * version instead.
+         */
         void setFrontPanelIOControl(uint32_t mask) override
         { errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x811C, mask)); }
 
         /* TODO: is Group Enable Mask from register docs equal to
          * GroupEnableMask? */
 
-        /* Get ROC FPGA Firmware Revision
-         * Returns a bitmask covering a number of status fields. Please refer
-         * to register docs - 32 bits.
+        /* TODO: wrap ROCFPGAFirmwareRevision in user-friendly struct */
+        /**
+         * @brief Get ROCFPGAFirmwareRevision mask
+         * @returns
+         * Get the low-level ROCFirmwareRevision mask in line with
+         * register docs. It is recommended to use the EasyX wrapper
+         * version instead.
          */
         uint32_t getROCFPGAFirmwareRevision() override
         {
@@ -1727,17 +2002,27 @@ namespace caen {
 
         /* TODO: wrap Time Bomb Downcounter from register docs? */
 
-        /* Get / Set Fan Speed Control
-         * @mask: a bitmask covering a number of settings. Please refer
-         * to register docs - 32 bits.
-         */
         /* TODO: wrap FanSpeedControl in user-friendly struct */
+        /**
+         * @brief Get FanSpeedControl mask
+         * @returns
+         * Get the low-level FanSpeedControl mask in line with
+         * register docs. It is recommended to use the EasyX wrapper
+         * version instead.
+         */
         uint32_t getFanSpeedControl() override
         {
             uint32_t mask;
             errorHandler(CAEN_DGTZ_ReadRegister(handle_, 0x8168, &mask));
             return mask;
         }
+        /**
+         * @brief Set FanSpeedControl mask
+         * @arg mask:
+         * Set the low-level FanSpeedControl mask in line with
+         * register docs. It is recommended to use the EasyX wrapper
+         * version instead.
+         */
         void setFanSpeedControl(uint32_t mask) override
         { errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x8168, mask)); }
 
@@ -1746,8 +2031,10 @@ namespace caen {
 
         /* TODO: wrap Board Failure Status from register docs? */
 
-        /* Get / Set Disable External Trigger on TRG-IN connector
-         * @value: a boolean to set external trigger state - 1 bit.
+        /**
+         * @brief Get DisableExternalTrigger
+         * @returns
+         * A boolean to set external trigger state - 1 bit.
          */
         uint32_t getDisableExternalTrigger() override
         {
@@ -1755,22 +2042,37 @@ namespace caen {
             errorHandler(CAEN_DGTZ_ReadRegister(handle_, 0x817C, &value));
             return value;
         }
+        /**
+         * @brief Set DisableExternalTrigger value
+         * @arg value:
+         * Set the low-level DisableExternalTrigger value - 1 bit.
+         */
         void setDisableExternalTrigger(uint32_t value) override
         { errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x817C, value & 0x1)); }
 
         /* TODO: wrap Front Panel LVDS I/O New Features from register docs? */
 
-        /* Get / Set Readout Control
-         * @mask: a bitmask covering a number of settings. Please refer
-         * to register docs - 32 bits.
-         */
         /* TODO: wrap ReadoutControl in user-friendly struct */
+        /**
+         * @brief Get ReadoutControl mask
+         * @returns
+         * Get the low-level ReadoutControl mask in line with
+         * register docs. It is recommended to use the EasyX wrapper
+         * version instead.
+         */
         uint32_t getReadoutControl() override
         {
             uint32_t mask;
             errorHandler(CAEN_DGTZ_ReadRegister(handle_, 0xEF00, &mask));
             return mask;
         }
+        /**
+         * @brief Set ReadoutControl mask
+         * @arg mask:
+         * Set the low-level ReadoutControl mask in line with
+         * register docs. It is recommended to use the EasyX wrapper
+         * version instead.
+         */
         void setReadoutControl(uint32_t mask) override
         { errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0xEF00, mask)); }
 
@@ -1782,8 +2084,10 @@ namespace caen {
         /* TODO: wrap Interrupt Status/ID from register docs? */
         /* TODO: wrap Interrupt Event Number from register docs? */
 
-        /* Get / Set Aggregate Number per BLT
-         * @value: Number of complete aggregates to be transferred for
+        /**
+         * @brief Get AggregateNumberPerBLT value
+         * @returns
+         * Number of complete aggregates to be transferred for
          * each block transfer (BLT) - 10 bits.
          */
         uint32_t getAggregateNumberPerBLT() override
@@ -1792,6 +2096,12 @@ namespace caen {
             errorHandler(CAEN_DGTZ_ReadRegister(handle_, 0xEF1C, &value));
             return value;
         }
+        /**
+         * @brief Set AggregateNumberPerBLT value
+         * @arg value:
+         * Number of complete aggregates to be transferred for
+         * each block transfer (BLT) - 10 bits.
+         */
         void setAggregateNumberPerBLT(uint32_t value) override
         { errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0xEF1C, value & 0x03FF)); }
 
