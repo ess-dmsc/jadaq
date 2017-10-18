@@ -577,7 +577,7 @@ namespace caen {
      * are:\n
      * 0 = board is not ready to start the acquisition\n
      * 1 = board is ready to start the acquisition.\n
-     * NOTE: this bit should be checked a er so ware reset to ensure
+     * NOTE: this bit should be checked a er software reset to ensure
      * that the board will enter immediately in run mode a er the RUN
      * mode setting; otherwise, a latency between RUN mode setting and
      * Acquisition start might occur.
@@ -625,6 +625,36 @@ namespace caen {
     struct EasyGlobalTriggerMask {
         /* Only allow the expected number of bits per field */
         uint8_t lVDSTrigger : 1;
+        uint8_t externalTrigger : 1;
+        uint8_t softwareTrigger : 1;
+    };
+
+    /**
+     * @struct EasyFrontPanelTRGOUTEnableMask
+     * @brief For user-friendly configuration of Global Trigger Mask
+     * @var EasyFrontPanelTRGOUTEnableMask::lVDSTriggerEnable
+     * LVDS Trigger Enable (VME boards only). If the LVDS I/Os are
+     * programmed as outputs, they can participate in the TRG-OUT (GPO)
+     * signal generation. They are in logic OR with the other enabled
+     * signals. Options are:\n
+     * 0 = disabled\n
+     * 1 = enabled.
+     * @var EasyFrontPanelTRGOUTEnableMask::externalTrigger
+     * External Trigger. When enabled, the external trigger on TRG-IN
+     * can participate in the TRG-OUT (GPO) signal generation in logic
+     * OR with the other enabled signals. Options are:\n
+     * 0 = disabled\n
+     * 1 = enabled.
+     * @var EasyFrontPanelTRGOUTEnableMask::softwareTrigger
+     * Software Trigger. When enabled, the software trigger can
+     * participate in the TRG-OUT (GPO) signal generation in logic OR
+     * with the other enabled signals. Options are:\n
+     * 0 = disabled\n
+     * 1 = enabled.
+     */
+    struct EasyFrontPanelTRGOUTEnableMask {
+        /* Only allow the expected number of bits per field */
+        uint8_t lVDSTriggerEnable : 1;
         uint8_t externalTrigger : 1;
         uint8_t softwareTrigger : 1;
     };
@@ -841,7 +871,7 @@ namespace caen {
      * Bit mask ready for low-level set function.
      * @internal
      * EasyGlobalTriggerMask fields:
-     * LVDS trigger in [29], external trigger in [30], 
+     * LVDS trigger in [29], external trigger in [30],
      * software trigger in [31].
      */
     static uint32_t egtm2bits(EasyGlobalTriggerMask settings)
@@ -862,6 +892,40 @@ namespace caen {
     static EasyGlobalTriggerMask bits2egtm(uint32_t mask)
     {
         EasyGlobalTriggerMask settings;
+        settings = {unpackBits(mask, 1, 29), unpackBits(mask, 1, 30),
+                    unpackBits(mask, 1, 31)};
+        return settings;
+    }
+
+    /**
+     * @brief pack EasyFrontPanelTRGOUTEnableMask settings into bit mask
+     * @param settings:
+     * Settings structure to pack
+     * @returns
+     * Bit mask ready for low-level set function.
+     * @internal
+     * EasyFrontPanelTRGOUTEnableMask fields:
+     * LVDS trigger enable in [29], external trigger in [30],
+     * software trigger in [31].
+     */
+    static uint32_t efptoem2bits(EasyFrontPanelTRGOUTEnableMask settings)
+    {
+        uint32_t mask = 0;
+        mask |= packBits(settings.lVDSTriggerEnable, 1, 29);
+        mask |= packBits(settings.externalTrigger, 1, 30);
+        mask |= packBits(settings.softwareTrigger, 1, 31);
+        return mask;
+    }
+    /**
+     * @brief unpack bit mask into EasyFrontPanelTRGOUTEnableMask settings
+     * @param mask:
+     * Bit mask from low-level get function to unpack
+     * @returns
+     * Settings structure for convenient use.
+     */
+    static EasyFrontPanelTRGOUTEnableMask bits2efptoem(uint32_t mask)
+    {
+        EasyFrontPanelTRGOUTEnableMask settings;
         settings = {unpackBits(mask, 1, 29), unpackBits(mask, 1, 30),
                     unpackBits(mask, 1, 31)};
         return settings;
@@ -1573,6 +1637,8 @@ namespace caen {
 
         virtual uint32_t getFrontPanelTRGOUTEnableMask() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         virtual void setFrontPanelTRGOUTEnableMask(uint32_t value) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual EasyFrontPanelTRGOUTEnableMask getEasyFrontPanelTRGOUTEnableMask() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual void setEasyFrontPanelTRGOUTEnableMask(EasyFrontPanelTRGOUTEnableMask settings) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
 
         virtual uint32_t getFrontPanelIOControl() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         virtual void setFrontPanelIOControl(uint32_t value) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
@@ -2305,6 +2371,33 @@ namespace caen {
          */
         void setFrontPanelTRGOUTEnableMask(uint32_t mask) override
         { errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x8110, mask)); }
+        /**
+         * @brief Easy Get FrontPanelTRGOUTEnableMask
+         * @returns
+         * A conveniently wrapped FrontPanelTRGOUTEnableMask settings
+         * structure. Automatically takes care of translating from the
+         * bit mask returned by the the underlying low-level get
+         * FrontPanelTRGOUTEnableMask funtion.
+         */
+        EasyFrontPanelTRGOUTEnableMask getEasyFrontPanelTRGOUTEnableMask() override
+        {
+            uint32_t mask;
+            mask = getFrontPanelTRGOUTEnableMask();
+            return bits2efptoem(mask);
+        }
+        /**
+         * @brief Easy Set FrontPanelTRGOUTEnableMask
+         * @param settings:
+         * Set the FrontPanelTRGOUTEnableMask as specified in the provided
+         * settings structure. Automatically takes care of translating
+         * the structure to the proper bit mask needed for the
+         * underlying low-level set FrontPanelTRGOUTEnableMask funtion.
+         */
+        void setEasyFrontPanelTRGOUTEnableMask(EasyFrontPanelTRGOUTEnableMask settings) override
+        {
+            uint32_t mask = efptoem2bits(settings);
+            setFrontPanelTRGOUTEnableMask(mask);
+        }
 
         /* TODO: wrap LVDS I/O Data from register docs? */
 

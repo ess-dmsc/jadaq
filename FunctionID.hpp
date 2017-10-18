@@ -67,6 +67,7 @@ enum FunctionID {
     GlobalTriggerMask,
     EasyGlobalTriggerMask,
     FrontPanelTRGOUTEnableMask,
+    EasyFrontPanelTRGOUTEnableMask,
     FrontPanelIOControl,
     ROCFPGAFirmwareRevision,
     FanSpeedControl,

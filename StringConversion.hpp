@@ -97,6 +97,8 @@ std::string to_string(const caen::EasyAcquisitionStatus &eas);
 caen::EasyAcquisitionStatus s2eas(const std::string& s);
 std::string to_string(const caen::EasyGlobalTriggerMask &egtm);
 caen::EasyGlobalTriggerMask s2egtm(const std::string& s);
+std::string to_string(const caen::EasyFrontPanelTRGOUTEnableMask &efptoem);
+caen::EasyFrontPanelTRGOUTEnableMask s2efptoem(const std::string& s);
 
 std::string to_string(CAEN_DGTZ_DPP_AcqMode_t mode);
 CAEN_DGTZ_DPP_AcqMode_t s2dam(const std::string& s);

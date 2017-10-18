@@ -363,6 +363,24 @@ caen::EasyGlobalTriggerMask s2egtm(const std::string& s)
     throw std::invalid_argument{"Invalid EasyGlobalTriggerMask"};
 }
 
+std::string to_string(const caen::EasyFrontPanelTRGOUTEnableMask &efptoem)
+{
+    std::stringstream ss;
+    ss << '{' << to_string(efptoem.lVDSTriggerEnable) << ',' << to_string(efptoem.externalTrigger) << ',' << to_string(efptoem.softwareTrigger) << '}';
+    return ss.str();
+}
+
+caen::EasyFrontPanelTRGOUTEnableMask s2efptoem(const std::string& s)
+{
+    std::regex rx("\\{(\\w+),(\\w+),(\\w+)\\}");
+    std::smatch match;
+    if (std::regex_search(s, match, rx))
+    {
+        return caen::EasyFrontPanelTRGOUTEnableMask{s2ui8(match[1]),s2ui8(match[2]),s2ui8(match[3])};
+    }
+    throw std::invalid_argument{"Invalid EasyFrontPanelTRGOUTEnableMask"};
+}
+
 std::string to_string(CAEN_DGTZ_DPP_AcqMode_t mode)
 {
     switch (mode)
