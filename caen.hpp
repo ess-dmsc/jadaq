@@ -1320,6 +1320,10 @@ namespace caen {
         int handle_;
         CAEN_DGTZ_BoardInfo_t boardInfo_;
         Digitizer(int handle, CAEN_DGTZ_BoardInfo_t boardInfo) : handle_(handle) { boardInfo_ = boardInfo; }
+        virtual uint32_t filterBoardConfigurationSetMask(uint32_t mask)
+        { return mask; }
+        virtual uint32_t filterBoardConfigurationUnsetMask(uint32_t mask)
+        { return mask; }
 
     public:
         public:
@@ -2000,19 +2004,32 @@ namespace caen {
         virtual uint32_t groups() const override { return boardInfo_.Channels; } // for x740: boardInfo.Channels stores number of groups
         virtual uint32_t channelsPerGroup() const override { return 8; }  // 8 channels per group for x740
 
-        /* Get / Set RunDelay
-         * @delay: delay in units of 8 ns
-         *
-         * When the start of Run is given synchronously to several boards connected in Daisy chain, it is necessary
-         * to compensate for the delay in the propagation of the Start (or Stop) signal through the chain. This register
-         * sets the delay, expressed in trigger clock cycles between the arrival of the Start signal at the input of
-         * the board (either on S-IN/GPI or TRG-IN) and the actual start of Run. The delay is usually zero for the
-         * last board in the chain and rises going backwards along the chain.
+        /* NOTE: BoardConfiguration differs in forced ones and zeros
+         * between generic and DPP version. Use a class-specific mask.
          */
-        uint32_t getRunDelay() override
-        { uint32_t delay; errorHandler(CAEN_DGTZ_ReadRegister(handle_, 0x8170, &delay)); return delay; }
-        virtual void setRunDelay(uint32_t delay) override
-        { errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x8170, delay)); }
+        /* According to register docs the bits [0,2,5,7:8,10,23]
+         * must be 0 and the bits [4] must be 1 so we always
+         * force compliance by a bitwise-or with 0x00000010 followed
+         * by a bitwise-and with 0x008005A5 for the set operation.
+         * Similarly we prevent mangling of the force ones by a
+         * bitwise-and with the xor inverted version of 0x00000010 for
+         * the unset operation.
+         */
+        virtual uint32_t filterBoardConfigurationSetMask(uint32_t mask) override
+        { return ((mask | 0x00000010) & 0x008005A5); }
+        virtual uint32_t filterBoardConfigurationUnsetMask(uint32_t mask) override
+        { return (mask & (0xFFFFFFFF ^ 0x00000010)); }
+
+        /* TODO: wrap AMC Firmware Revision from register docs? */
+
+        /* NOTE: Get / Set DC Offset is handled in GroupDCOffset */
+
+        /* NOTE: Get / Set Channel Enable Mask of Group is handled in
+         * ChannelGroupMask */
+
+        /* TODO: wrap Group n Low Channels DC Offset Individual Correction from register docs? */
+
+        /* TODO: wrap Group n High Channels DC Offset Individual Correction from register docs? */
 
         /**
          * @brief Get ROCFPGAFirmwareRevision mask
@@ -2042,7 +2059,240 @@ namespace caen {
             return bits2erffr(mask);
         }
 
+        /**
+         * @brief Get BoardConfiguration mask
+         * @returns
+         * Get the low-level BoardConfiguration mask in line with
+         * register docs. It is recommended to use the EasyX wrapper
+         * version instead.
+         *
+         * NOTE: Read mask from 0x8000, BitSet mask with 0x8004 and
+         *       BitClear mask with 0x8008.
+         */
+        uint32_t getBoardConfiguration() override
+        {
+            uint32_t mask;
+            errorHandler(CAEN_DGTZ_ReadRegister(handle_, 0x8000, &mask));
+            return mask;
+        }
+        /**
+         * @brief Set BoardConfiguration mask
+         * @param mask:
+         * Set the low-level BoardConfiguration mask in line with
+         * register docs. It is recommended to use the EasyX wrapper
+         * version instead.
+         */
+        void setBoardConfiguration(uint32_t mask) override
+        { errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x8004, filterBoardConfigurationSetMask(mask))); }
+        /**
+         * @brief Unset BoardConfiguration mask
+         * @param mask:
+         * Unset the low-level BoardConfiguration mask in line with
+         * register docs. It is recommended to use the EasyX wrapper
+         * version instead.
+         */
+        void unsetBoardConfiguration(uint32_t mask) override
+        { errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x8008, filterBoardConfigurationUnsetMask(mask))); }
+
+        /* TODO: figure out a way to handle differences in
+         * BoardConfiguration mask meaning between generic and DPP
+         * version
+         */
+
+        /**
+         * @brief Get AcquisitionControl mask
+         * @returns
+         * Get the low-level AcquisitionControl mask in line with
+         * register docs. It is recommended to use the EasyX wrapper
+         * version instead.
+         */
+        uint32_t getAcquisitionControl() override
+        {
+            uint32_t mask;
+            errorHandler(CAEN_DGTZ_ReadRegister(handle_, 0x8100, &mask));
+            return mask;
+        }
+        /**
+         * @brief Set AcquisitionControl mask
+         * @param mask:
+         * Set the low-level AcquisitionControl mask in line with
+         * register docs. It is recommended to use the EasyX wrapper
+         * version instead.
+         */
+        void setAcquisitionControl(uint32_t mask) override
+        { errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x8100, mask & 0x0FFF)); }
+
+        /**
+         * @brief Get AcquisitionStatus mask
+         * @returns
+         * Get the low-level AcquisitionStatus mask in line with
+         * register docs. It is recommended to use the EasyX wrapper
+         * version instead.
+         */
+        uint32_t getAcquisitionStatus() override
+        {
+            uint32_t mask;
+            errorHandler(CAEN_DGTZ_ReadRegister(handle_, 0x8104, &mask));
+            return mask;
+        }
+
+        /**
+         * @brief Get GlobalTriggerMask
+         * @returns
+         * Get the low-level GlobalTriggerMask in line with
+         * register docs. It is recommended to use the EasyX wrapper
+         * version instead.
+         */
+        uint32_t getGlobalTriggerMask() override
+        {
+            uint32_t mask;
+            errorHandler(CAEN_DGTZ_ReadRegister(handle_, 0x810C, &mask));
+            return mask;
+        }
+        /**
+         * @brief Set GlobalTriggerMask
+         * @param mask:
+         * Set the low-level GlobalTriggerMask in line with
+         * register docs. It is recommended to use the EasyX wrapper
+         * version instead.
+         */
+        void setGlobalTriggerMask(uint32_t mask) override
+        { errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x810C, mask)); }
+
+        /**
+         * @brief Get FrontPanelTRGOUTEnableMask
+         * @returns
+         * Get the low-level FrontPanelTRGOUTEnableMask in line with
+         * register docs. It is recommended to use the EasyX wrapper
+         * version instead.
+         */
+        uint32_t getFrontPanelTRGOUTEnableMask() override
+        {
+            uint32_t mask;
+            errorHandler(CAEN_DGTZ_ReadRegister(handle_, 0x8110, &mask));
+            return mask;
+        }
+        /**
+         * @brief Set FrontPanelTRGOUTEnableMask
+         * @param mask:
+         * Set the low-level FrontPanelTRGOUTEnableMask in line with
+         * register docs. It is recommended to use the EasyX wrapper
+         * version instead.
+         */
+        void setFrontPanelTRGOUTEnableMask(uint32_t mask) override
+        { errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x8110, mask)); }
+
+        /* TODO: wrap LVDS I/O Data from register docs? */
+
+        /**
+         * @brief Get FrontPanelIOControl mask
+         * @returns
+         * Get the low-level FrontPanelIOControl mask in line with
+         * register docs. It is recommended to use the EasyX wrapper
+         * version instead.
+         */
+        uint32_t getFrontPanelIOControl() override
+        {
+            uint32_t mask;
+            errorHandler(CAEN_DGTZ_ReadRegister(handle_, 0x811C, &mask));
+            return mask;
+        }
+        /**
+         * @brief Set FrontPanelIOControl mask
+         * @param mask:
+         * Set the low-level FrontPanelIOControl mask in line with
+         * register docs. It is recommended to use the EasyX wrapper
+         * version instead.
+         */
+        void setFrontPanelIOControl(uint32_t mask) override
+        { errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x811C, mask)); }
+
+        /**
+         * @brief Get FanSpeedControl mask
+         * @returns
+         * Get the low-level FanSpeedControl mask in line with
+         * register docs. It is recommended to use the EasyX wrapper
+         * version instead.
+         */
+        uint32_t getFanSpeedControl() override
+        {
+            uint32_t mask;
+            errorHandler(CAEN_DGTZ_ReadRegister(handle_, 0x8168, &mask));
+            return mask;
+        }
+        /**
+         * @brief Set FanSpeedControl mask
+         * @param mask:
+         * Set the low-level FanSpeedControl mask in line with
+         * register docs. It is recommended to use the EasyX wrapper
+         * version instead.
+         */
+        void setFanSpeedControl(uint32_t mask) override
+        { errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x8168, mask)); }
+
+        /**
+         * @brief Get DisableExternalTrigger
+         * @returns
+         * A boolean to set external trigger state - 1 bit.
+         */
+        uint32_t getDisableExternalTrigger() override
+        {
+            uint32_t value;
+            errorHandler(CAEN_DGTZ_ReadRegister(handle_, 0x817C, &value));
+            return value;
+        }
+        /**
+         * @brief Set DisableExternalTrigger value
+         * @param value:
+         * Set the low-level DisableExternalTrigger value - 1 bit.
+         */
+        void setDisableExternalTrigger(uint32_t value) override
+        { errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x817C, value & 0x1)); }
+
+        /**
+         * @brief Get ReadoutControl mask
+         * @returns
+         * Get the low-level ReadoutControl mask in line with
+         * register docs. It is recommended to use the EasyX wrapper
+         * version instead.
+         */
+        uint32_t getReadoutControl() override
+        {
+            uint32_t mask;
+            errorHandler(CAEN_DGTZ_ReadRegister(handle_, 0xEF00, &mask));
+            return mask;
+        }
+        /**
+         * @brief Set ReadoutControl mask
+         * @param mask:
+         * Set the low-level ReadoutControl mask in line with
+         * register docs. It is recommended to use the EasyX wrapper
+         * version instead.
+         */
+        void setReadoutControl(uint32_t mask) override
+        { errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0xEF00, mask)); }
+
+        /* TODO: wrap Readout Status from register docs? */
+        /* TODO: wrap Board ID from register docs? */
+
+
         /* TODO: move additional general 740 register functions here */
+
+        /* Get / Set RunDelay
+         * @delay: delay in units of 8 ns
+         *
+         * When the start of Run is given synchronously to several boards connected in Daisy chain, it is necessary
+         * to compensate for the delay in the propagation of the Start (or Stop) signal through the chain. This register
+         * sets the delay, expressed in trigger clock cycles between the arrival of the Start signal at the input of
+         * the board (either on S-IN/GPI or TRG-IN) and the actual start of Run. The delay is usually zero for the
+         * last board in the chain and rises going backwards along the chain.
+         */
+        uint32_t getRunDelay() override
+        { uint32_t delay; errorHandler(CAEN_DGTZ_ReadRegister(handle_, 0x8170, &delay)); return delay; }
+        virtual void setRunDelay(uint32_t delay) override
+        { errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x8170, delay)); }
+
+
 
     };
 
@@ -2056,6 +2306,20 @@ namespace caen {
         Digitizer740DPP(int handle, CAEN_DGTZ_BoardInfo_t boardInfo) : Digitizer740(handle, boardInfo) {}
 
     public:
+
+        /* According to register docs the bits [0:3,5:7,9:11,14:15,22:31]
+         * must be 0 and the bits [4,8,18,19] must be 1 so we always
+         * force compliance by a bitwise-or with 0x000C0110 followed
+         * by a bitwise-and with 0x003F3110 for the set operation.
+         * Similarly we prevent mangling of the force ones by a
+         * bitwise-and with the xor inverted version of 0x000C0110 for
+         * the unset operation.
+         */
+        virtual uint32_t filterBoardConfigurationSetMask(uint32_t mask) override
+        { return ((mask | 0x000C0110) & 0x003F3110); }
+        virtual uint32_t filterBoardConfigurationUnsetMask(uint32_t mask) override
+        { return (mask & (0xFFFFFFFF ^ 0x000C0110)); }
+
         /**
          * @brief Get GateWidth
          * @param group:
@@ -2371,61 +2635,8 @@ namespace caen {
 
         /* TODO: implement these optional TODOs as virtual:NotImpemented? */
 
-        /* TODO: wrap AMC Firmware Revision from register docs? */
-
-        /* NOTE: Get / Set DC Offset is handled in GroupDCOffset */
-
-        /* NOTE: Get / Set Channel Enable Mask of Group is handled in
-         * ChannelGroupMask */
-
-        /* TODO: wrap Group n Low Channels DC Offset Individual Correction from register docs? */
-
-        /* TODO: wrap Group n High Channels DC Offset Individual Correction from register docs? */
-
         /* TODO: wrap Individual Trigger Threshold of Group n Sub Channel m from register docs? */
 
-        /**
-         * @brief Get BoardConfiguration mask
-         * @returns
-         * Get the low-level BoardConfiguration mask in line with
-         * register docs. It is recommended to use the EasyX wrapper
-         * version instead.
-         *
-         * @internal
-         * According to register docs the bits [0:3,5:7,9:11,14:15,22:31]
-         * must be 0 and the bits [4,8,18,19] must be 1 so we always
-         * force compliance by a bitwise-or with 0x000C0110 followed
-         * by a bitwise-and with 0x003F3110 for the set operation.
-         * Similarly we prevent mangling by a bitwise-and with the
-         * inverted combination 0x099800 for the unset operation.\n
-         *
-         * NOTE: Read mask from 0x8000, BitSet mask with 0x8004 and
-         *       BitClear mask with 0x8008.
-         */
-        uint32_t getBoardConfiguration() override
-        {
-            uint32_t mask;
-            errorHandler(CAEN_DGTZ_ReadRegister(handle_, 0x8000, &mask));
-            return mask;
-        }
-        /**
-         * @brief Set BoardConfiguration mask
-         * @param mask:
-         * Set the low-level BoardConfiguration mask in line with
-         * register docs. It is recommended to use the EasyX wrapper
-         * version instead.
-         */
-        void setBoardConfiguration(uint32_t mask) override
-        { errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x8004, (mask | 0x000C0110) & 0x003F3110)); }
-        /**
-         * @brief Unset BoardConfiguration mask
-         * @param mask:
-         * Unset the low-level BoardConfiguration mask in line with
-         * register docs. It is recommended to use the EasyX wrapper
-         * version instead.
-         */
-        void unsetBoardConfiguration(uint32_t mask) override
-        { errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x8008, mask & 0x099800)); }
         /**
          * @brief Easy Get BoardConfiguration
          * @returns
@@ -2574,28 +2785,8 @@ namespace caen {
             }
         }
 
-        /**
-         * @brief Get AcquisitionControl mask
-         * @returns
-         * Get the low-level AcquisitionControl mask in line with
-         * register docs. It is recommended to use the EasyX wrapper
-         * version instead.
-         */
-        uint32_t getAcquisitionControl() override
-        {
-            uint32_t mask;
-            errorHandler(CAEN_DGTZ_ReadRegister(handle_, 0x8100, &mask));
-            return mask;
-        }
-        /**
-         * @brief Set AcquisitionControl mask
-         * @param mask:
-         * Set the low-level AcquisitionControl mask in line with
-         * register docs. It is recommended to use the EasyX wrapper
-         * version instead.
-         */
-        void setAcquisitionControl(uint32_t mask) override
-        { errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x8100, mask & 0x0FFF)); }
+        /* NOTE: reuse get / set AcquisitionControl from parent class */
+
         /**
          * @brief Easy Get AcquisitionControl
          * @returns
@@ -2624,19 +2815,8 @@ namespace caen {
             setAcquisitionControl(mask);
         }
 
-        /**
-         * @brief Get AcquisitionStatus mask
-         * @returns
-         * Get the low-level AcquisitionStatus mask in line with
-         * register docs. It is recommended to use the EasyX wrapper
-         * version instead.
-         */
-        uint32_t getAcquisitionStatus() override
-        {
-            uint32_t mask;
-            errorHandler(CAEN_DGTZ_ReadRegister(handle_, 0x8104, &mask));
-            return mask;
-        }
+        /* NOTE: reuse get / set AcquisitionStatus from parent class */
+
         /**
          * @brief Easy Get AcquisitionStatus
          * @returns
@@ -2655,28 +2835,8 @@ namespace caen {
         /* TODO: is Software Trigger from register docs already covered
          * by sendSWtrigger? */
 
-        /**
-         * @brief Get GlobalTriggerMask
-         * @returns
-         * Get the low-level GlobalTriggerMask in line with
-         * register docs. It is recommended to use the EasyX wrapper
-         * version instead.
-         */
-        uint32_t getGlobalTriggerMask() override
-        {
-            uint32_t mask;
-            errorHandler(CAEN_DGTZ_ReadRegister(handle_, 0x810C, &mask));
-            return mask;
-        }
-        /**
-         * @brief Set GlobalTriggerMask
-         * @param mask:
-         * Set the low-level GlobalTriggerMask in line with
-         * register docs. It is recommended to use the EasyX wrapper
-         * version instead.
-         */
-        void setGlobalTriggerMask(uint32_t mask) override
-        { errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x810C, mask)); }
+        /* NOTE: Reuse get / set GlobalTriggerMask from parent */
+
         /**
          * @brief Easy Get GlobalTriggerMask
          * @returns
@@ -2705,28 +2865,8 @@ namespace caen {
             setGlobalTriggerMask(mask);
         }
 
-        /**
-         * @brief Get FrontPanelTRGOUTEnableMask
-         * @returns
-         * Get the low-level FrontPanelTRGOUTEnableMask in line with
-         * register docs. It is recommended to use the EasyX wrapper
-         * version instead.
-         */
-        uint32_t getFrontPanelTRGOUTEnableMask() override
-        {
-            uint32_t mask;
-            errorHandler(CAEN_DGTZ_ReadRegister(handle_, 0x8110, &mask));
-            return mask;
-        }
-        /**
-         * @brief Set FrontPanelTRGOUTEnableMask
-         * @param mask:
-         * Set the low-level FrontPanelTRGOUTEnableMask in line with
-         * register docs. It is recommended to use the EasyX wrapper
-         * version instead.
-         */
-        void setFrontPanelTRGOUTEnableMask(uint32_t mask) override
-        { errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x8110, mask)); }
+        /* NOTE: reuse get / set FrontPanelTRGOUTEnableMask from parent */
+
         /**
          * @brief Easy Get FrontPanelTRGOUTEnableMask
          * @returns
@@ -2755,30 +2895,8 @@ namespace caen {
             setFrontPanelTRGOUTEnableMask(mask);
         }
 
-        /* TODO: wrap LVDS I/O Data from register docs? */
+        /* NOTE: reuse get / set FrontPanelIOControl from parent */
 
-        /**
-         * @brief Get FrontPanelIOControl mask
-         * @returns
-         * Get the low-level FrontPanelIOControl mask in line with
-         * register docs. It is recommended to use the EasyX wrapper
-         * version instead.
-         */
-        uint32_t getFrontPanelIOControl() override
-        {
-            uint32_t mask;
-            errorHandler(CAEN_DGTZ_ReadRegister(handle_, 0x811C, &mask));
-            return mask;
-        }
-        /**
-         * @brief Set FrontPanelIOControl mask
-         * @param mask:
-         * Set the low-level FrontPanelIOControl mask in line with
-         * register docs. It is recommended to use the EasyX wrapper
-         * version instead.
-         */
-        void setFrontPanelIOControl(uint32_t mask) override
-        { errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x811C, mask)); }
         /**
          * @brief Easy Get FrontPanelIOControl
          * @returns
@@ -2825,81 +2943,15 @@ namespace caen {
         /* TODO: wrap Time Bomb Downcounter from register docs? */
 
         /* TODO: wrap FanSpeedControl in user-friendly struct */
-        /**
-         * @brief Get FanSpeedControl mask
-         * @returns
-         * Get the low-level FanSpeedControl mask in line with
-         * register docs. It is recommended to use the EasyX wrapper
-         * version instead.
-         */
-        uint32_t getFanSpeedControl() override
-        {
-            uint32_t mask;
-            errorHandler(CAEN_DGTZ_ReadRegister(handle_, 0x8168, &mask));
-            return mask;
-        }
-        /**
-         * @brief Set FanSpeedControl mask
-         * @param mask:
-         * Set the low-level FanSpeedControl mask in line with
-         * register docs. It is recommended to use the EasyX wrapper
-         * version instead.
-         */
-        void setFanSpeedControl(uint32_t mask) override
-        { errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x8168, mask)); }
 
         /* NOTE: Get / Set Run/Start/Stop Delay from register docs is
          * already covered by RunDelay. */
 
         /* TODO: wrap Board Failure Status from register docs? */
 
-        /**
-         * @brief Get DisableExternalTrigger
-         * @returns
-         * A boolean to set external trigger state - 1 bit.
-         */
-        uint32_t getDisableExternalTrigger() override
-        {
-            uint32_t value;
-            errorHandler(CAEN_DGTZ_ReadRegister(handle_, 0x817C, &value));
-            return value;
-        }
-        /**
-         * @brief Set DisableExternalTrigger value
-         * @param value:
-         * Set the low-level DisableExternalTrigger value - 1 bit.
-         */
-        void setDisableExternalTrigger(uint32_t value) override
-        { errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x817C, value & 0x1)); }
-
         /* TODO: wrap Front Panel LVDS I/O New Features from register docs? */
 
         /* TODO: wrap ReadoutControl in user-friendly struct */
-        /**
-         * @brief Get ReadoutControl mask
-         * @returns
-         * Get the low-level ReadoutControl mask in line with
-         * register docs. It is recommended to use the EasyX wrapper
-         * version instead.
-         */
-        uint32_t getReadoutControl() override
-        {
-            uint32_t mask;
-            errorHandler(CAEN_DGTZ_ReadRegister(handle_, 0xEF00, &mask));
-            return mask;
-        }
-        /**
-         * @brief Set ReadoutControl mask
-         * @param mask:
-         * Set the low-level ReadoutControl mask in line with
-         * register docs. It is recommended to use the EasyX wrapper
-         * version instead.
-         */
-        void setReadoutControl(uint32_t mask) override
-        { errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0xEF00, mask)); }
-
-        /* TODO: wrap Readout Status from register docs? */
-        /* TODO: wrap Board ID from register docs? */
 
         /* TODO: wrap MCST Base Address and Control from register docs? */
         /* TODO: wrap Relocation Address from register docs? */
