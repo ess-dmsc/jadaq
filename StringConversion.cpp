@@ -381,6 +381,24 @@ caen::EasyFrontPanelTRGOUTEnableMask s2efptoem(const std::string& s)
     throw std::invalid_argument{"Invalid EasyFrontPanelTRGOUTEnableMask"};
 }
 
+std::string to_string(const caen::EasyFrontPanelIOControl &efpioc)
+{
+    std::stringstream ss;
+    ss << '{' << to_string(efpioc.lEMOIOElectricalLevel) << ',' << to_string(efpioc.tRGOUTEnable) << ',' << to_string(efpioc.lVDSIODirectionFirst) << ',' << to_string(efpioc.lVDSIODirectionSecond) << ',' << to_string(efpioc.lVDSIODirectionThird) << ',' << to_string(efpioc.lVDSIODirectionFourth) << ',' << to_string(efpioc.lVDSIOSignalConfiguration) << ',' << to_string(efpioc.lVDSIONewFeaturesSelection) << ',' << to_string(efpioc.lVDSIOPatternLatchMode) << ',' << to_string(efpioc.tRGINControl) << ',' << to_string(efpioc.tRGINMezzanines) << ',' << to_string(efpioc.forceTRGOUT) << ',' << to_string(efpioc.tRGOUTMode) << ',' << to_string(efpioc.tRGOUTModeSelection) << ',' << to_string(efpioc.motherboardVirtualProbeSelection) << ',' << to_string(efpioc.motherboardVirtualProbePropagation) << ',' << to_string(efpioc.patternConfiguration) << '}';
+    return ss.str();
+}
+
+caen::EasyFrontPanelIOControl s2efpioc(const std::string& s)
+{
+    std::regex rx("\\{(\\w+),(\\w+),(\\w+),(\\w+),(\\w+),(\\w+),(\\w+),(\\w+),(\\w+),(\\w+),(\\w+),(\\w+),(\\w+),(\\w+),(\\w+),(\\w+),(\\w+)\\}");
+    std::smatch match;
+    if (std::regex_search(s, match, rx))
+    {
+        return caen::EasyFrontPanelIOControl{s2ui8(match[1]),s2ui8(match[2]),s2ui8(match[3]),s2ui8(match[4]),s2ui8(match[5]),s2ui8(match[6]),s2ui8(match[7]),s2ui8(match[8]),s2ui8(match[9]),s2ui8(match[10]),s2ui8(match[11]),s2ui8(match[12]),s2ui8(match[13]),s2ui8(match[14]),s2ui8(match[15]),s2ui8(match[16]),s2ui8(match[17])};
+    }
+    throw std::invalid_argument{"Invalid EasyFrontPanelIOControl"};
+}
+
 std::string to_string(CAEN_DGTZ_DPP_AcqMode_t mode)
 {
     switch (mode)

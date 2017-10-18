@@ -659,6 +659,172 @@ namespace caen {
         uint8_t softwareTrigger : 1;
     };
 
+    /**
+     * @struct EasyFrontPanelIOControl
+     * @brief For user-friendly configuration of Acquisition Control mask
+     * @var EasyFrontPanelIOControl::lEMOIOElectricalLevel
+     * LEMO I/Os Electrical Level. This bit sets the electrical level of
+     * the front panel LEMO connectors: TRG-IN, TRG-OUT (GPO in case of
+     * DT and NIM boards), S-IN (GPI in case of DT and NIM
+     * boards). Options are:\n
+     * 0 = NIM I/O levels\n
+     * 1 = TTL I/O levels.
+     * @var EasyFrontPanelIOControl::tRGOUTEnable
+     * TRG-OUT Enable (VME boards only). Enables the TRG-OUT LEMO front
+     * panel connector. Options are:\n
+     * 0 = enabled (default)\n
+     * 1 = high impedance.\n
+     * NOTE: this bit is reserved in case of DT and NIM boards.
+     * @var EasyFrontPanelIOControl::lVDSIODirectionFirst
+     * LVDS I/O [3:0] Direction (VME boards only). Sets the direction of
+     * the signals on the first 4-pin group of the LVDS I/O
+     * connector. Options are:\n
+     * 0 = input\n
+     * 1 = output.\n
+     * NOTE: this bit is reserved in case of DT and NIM boards.
+     * @var EasyFrontPanelIOControl::lVDSIODirectionSecond
+     * LVDS I/O [7:4] Direction (VME boards only). Sets the direction of
+     * the second 4-pin group of the LVDS I/O connector. Options are:\n
+     * 0 = input\n
+     * 1 = output.\n
+     * NOTE: this bit is reserved in case of DT and NIM boards.
+     * @var EasyFrontPanelIOControl::lVDSIODirectionThird
+     * LVDS I/O [11:8] Direction (VME boards only). Sets the direction of
+     * the third 4-pin group of the LVDS I/O connector. Options are:\n
+     * 0 = input\n
+     * 1 = output.\n
+     * NOTE: this bit is reserved in case of DT and NIM boards.
+     * @var EasyFrontPanelIOControl::lVDSIODirectionFourth
+     * LVDS I/O [15:12] Direction (VME boards only). Sets the direction of
+     * the fourth 4-pin group of the LVDS I/O connector. Options are:\n
+     * 0 = input\n
+     * 1 = output.\n
+     * NOTE: this bit is reserved in case of DT and NIM boards.
+     * @var EasyFrontPanelIOControl::lVDSIOSignalConfiguration
+     * LVDS I/O Signal Configuration (VME boards and LVDS I/O old
+     * features only). This configuration must be enabled through bit[8]
+     * set to 0. Options are:\n
+     * 00 = general purpose I/O\n
+     * 01 = programmed I/O\n
+     * 10 = pattern mode: LVDS signals are input and their value is
+     * written into the header PATTERN field\n
+     * 11 = reserved.\n
+     * NOTE: these bits are reserved in case of DT and NIM boards.
+     * @var EasyFrontPanelIOControl::lVDSIONewFeaturesSelection
+     * LVDS I/O New Features Selection (VME boards only). Options are:\n
+     * 0 = LVDS old features\n
+     * 1 = LVDS new features.\n
+     * The new features options can be configured through register
+     * 0x81A0. Please, refer to the User Manual for all details.\n
+     * NOTE: LVDS I/O New Features option is valid from motherboard
+     * firmware revision 3.8 on.\n
+     * NOTE: this bit is reserved in case of DT and NIM boards.
+     * @var EasyFrontPanelIOControl::lVDSIOPatternLatchMode
+     * LVDS I/Os Pattern Latch Mode (VME boards only). Options are:\n
+     * 0 = Pattern (i.e. 16-pin LVDS status) is latched when the
+     * (internal) global trigger is sent to channels, in consequence of
+     * an external trigger. It accounts for post-trigger settings and
+     * input latching delays\n
+     * 1 = Pattern (i.e. 16-pin LVDS status) is latched when an external
+     * trigger arrives.\n
+     * NOTE: this bit is reserved in case of DT and NIM boards.
+     * @var EasyFrontPanelIOControl::tRGINControl
+     * TRG-IN control. The board trigger logic can be synchronized
+     * either with the edge of the TRG-IN signal, or with its whole
+     * duration.\n
+     * Note: this bit must be used in conjunction with bit[11] =
+     * 0. Options are:\n
+     * 0 = trigger is synchronized with the edge of the TRG-IN signal\n
+     * 1 = trigger is synchronized with the whole duration of the TRG-IN
+     * signal.
+     * @var EasyFrontPanelIOControl::tRGINMezzanines
+     * TRG-IN to Mezzanines (channels). Options are:\n
+     * 0 = TRG-IN signal is processed by the motherboard and sent to
+     * mezzanine (default). The trigger logic is then synchronized with
+     * TRG-IN\n
+     * 1 = TRG-IN is directly sent to the mezzanines with no mother
+     * board processing nor delay. This option can be useful when TRG-IN
+     * is used to veto the acquisition.\n
+     * NOTE: if this bit is set to 1, then bit[10] is ignored.
+     * @var EasyFrontPanelIOControl::forceTRGOUT
+     * Force TRG-OUT (GPO). This bit can force TRG-OUT (GPO in case of
+     * DT and NIM boards) test logical level if bit[15] = 1. Options
+     * are:\n
+     * 0 = Force TRG-OUT (GPO) to 0\n
+     * 1 = Force TRG-OUT (GPO) to 1.
+     * @var EasyFrontPanelIOControl::tRGOUTMode
+     * TRG-OUT (GPO) Mode. Options are:\n
+     * 0 = TRG-OUT (GPO) is an internal signal (according to bits[17:16])\n
+     * 1= TRG-OUT (GPO) is a test logic level set via bit[14].
+     * @var EasyFrontPanelIOControl::tRGOUTModeSelection
+     * TRG-OUT (GPO) Mode Selection. Options are:\n
+     * 00 = Trigger: TRG-OUT/GPO propagates the internal trigger sources
+     * according to register 0x8110\n
+     * 01 = Motherboard Probes: TRG-OUT/GPO is used to propagate signals
+     * of the motherboards according to bits[19:18]\n
+     * 10 = Channel Probes: TRG-OUT/GPO is used to propagate signals of
+     * the mezzanines (Channel Signal Virtual Probe)\n
+     * 11 = S-IN (GPI) propagation.
+     * @var EasyFrontPanelIOControl::motherboardVirtualProbeSelection
+     * Motherboard Virtual Probe Selection (to be propagated on TRG-
+     * OUT/GPO). Options are:\n
+     * 00 = RUN/delayedRUN: this is the RUN in case of ROC FPGA firmware
+     * rel. less than 4.12. This probe can be selected according to
+     * bit[20].\n
+     * 01 = CLKOUT: this clock is synchronous with the sampling clock of
+     * the ADC and this option can be used to align the phase of the
+     * clocks in different boards\n
+     * 10 = CLK Phase\n
+     * 11 = BUSY/UNLOCK: this is the board BUSY in case of ROC FPGA
+     * firmware rel. 4.5 or lower. This probe can be selected according
+     * to bit[20].
+     * @var EasyFrontPanelIOControl::motherboardVirtualProbePropagation
+     * According to bits[19:18], this bit selects the probe to be
+     * propagated on TRG-OUT . If bits[19:18] = 00, then bit[20] options
+     * are:\n
+     * 0 = RUN, the signal is active when the acquisition is running and
+     * it is synchonized with the start run. This option must be used to
+     * synchronize the start/stop of the acquisition through the
+     * TRG-OUT->TR-IN or TRG-OUT->S-IN (GPI) daisy chain.\n
+     * 1 = delayedRUN. This option can be used to debug the
+     * synchronization when the start/stop is propagated through the
+     * LVDS I/O (VME boards). If bits[19:18] = 11, then bit[20] options
+     * are:\n
+     * 0 = Board BUSY\n
+     * 1 = PLL Lock Loss.\n
+     * NOTE: this bit is reserved in case of ROC FPGA firmware rel. 4.5
+     * or lower.\n
+     * NOTE: this bit corresponds to BUSY/UNLOCK for ROC FPGA firmware
+     * rel. less than 4.12.
+     * @var EasyFrontPanelIOControl::patternConfiguration
+     * Pattern Configuration. Configures the information given by the
+     * 16-bit PATTERN field in the header of the event format (VME
+     * only). Option are:\n
+     * 00 = PATTERN: 16-bit pattern latched on the 16 LVDS signals as
+     * one trigger arrives (default)\n
+     * Other options are reserved.
+     */
+    struct EasyFrontPanelIOControl {
+        /* Only allow the expected number of bits per field */
+        uint8_t lEMOIOElectricalLevel : 1;
+        uint8_t tRGOUTEnable : 1;
+        uint8_t lVDSIODirectionFirst : 1;
+        uint8_t lVDSIODirectionSecond : 1;
+        uint8_t lVDSIODirectionThird : 1;
+        uint8_t lVDSIODirectionFourth : 1;
+        uint8_t lVDSIOSignalConfiguration : 2;
+        uint8_t lVDSIONewFeaturesSelection : 1;
+        uint8_t lVDSIOPatternLatchMode : 1;
+        uint8_t tRGINControl : 1;
+        uint8_t tRGINMezzanines : 1;
+        uint8_t forceTRGOUT : 1;
+        uint8_t tRGOUTMode : 1;
+        uint8_t tRGOUTModeSelection : 2;
+        uint8_t motherboardVirtualProbeSelection : 2;
+        uint8_t motherboardVirtualProbePropagation : 1;
+        uint8_t patternConfiguration : 2;
+    };
+
 
     /* Bit-banging helpers to translate between EasyX struct and bitmask.
      * Please refer to the register docs for the individual mask
@@ -928,6 +1094,71 @@ namespace caen {
         EasyFrontPanelTRGOUTEnableMask settings;
         settings = {unpackBits(mask, 1, 29), unpackBits(mask, 1, 30),
                     unpackBits(mask, 1, 31)};
+        return settings;
+    }
+
+    /**
+     * @brief pack EasyFrontPanelIOControl settings into bit mask
+     * @param settings:
+     * Settings structure to pack
+     * @returns
+     * Bit mask ready for low-level set function.
+     * @internal
+     * EasyFrontPanelIOControl fields:
+     * LEMO I/O electrical level [0], TRG-OUT enable [1],
+     * LVDS I/O 1st Direction in [2], LVDS I/O 2nd Direction in [3],
+     * LVDS I/O 3rd Direction in [4], LVDS I/O 4th Direction in [5],
+     * LVDS I/O signal configuration [6:7],
+     * LVDS I/O new features selection in [8],
+     * LVDS I/Os pattern latch mode in [9],
+     * TRG-IN control in [10], TRG-IN to mezzanines in [11],
+     * force TRG-OUT in [14], TRG-OUT mode in [15],
+     * TRG-OUT mode selection in [16:17],
+     * motherboard virtual probe selection in [18:19],
+     * motherboard virtual probe propagation in [20],
+     * pattern configuration in [21:22]
+     */
+    static uint32_t efpioc2bits(EasyFrontPanelIOControl settings)
+    {
+        uint32_t mask = 0;
+        mask |= packBits(settings.lEMOIOElectricalLevel, 1, 0);
+        mask |= packBits(settings.tRGOUTEnable, 1, 1);
+        mask |= packBits(settings.lVDSIODirectionFirst, 1, 2);
+        mask |= packBits(settings.lVDSIODirectionSecond, 1, 3);
+        mask |= packBits(settings.lVDSIODirectionThird, 1, 4);
+        mask |= packBits(settings.lVDSIODirectionFourth, 1, 5);
+        mask |= packBits(settings.lVDSIOSignalConfiguration, 2, 6);
+        mask |= packBits(settings.lVDSIONewFeaturesSelection, 1, 8);
+        mask |= packBits(settings.lVDSIOPatternLatchMode, 1, 9);
+        mask |= packBits(settings.tRGINControl, 1, 10);
+        mask |= packBits(settings.tRGINMezzanines, 1, 11);
+        mask |= packBits(settings.forceTRGOUT, 1, 14);
+        mask |= packBits(settings.tRGOUTMode, 1, 15);
+        mask |= packBits(settings.tRGOUTModeSelection, 2, 16);
+        mask |= packBits(settings.motherboardVirtualProbeSelection, 2, 18);
+        mask |= packBits(settings.motherboardVirtualProbePropagation, 1, 20);
+        mask |= packBits(settings.patternConfiguration, 2, 21);
+        return mask;
+    }
+    /**
+     * @brief unpack bit mask into EasyFrontPanelIOControl settings
+     * @param mask:
+     * Bit mask from low-level get function to unpack
+     * @returns
+     * Settings structure for convenient use.
+     */
+    static EasyFrontPanelIOControl bits2efpioc(uint32_t mask)
+    {
+        EasyFrontPanelIOControl settings;
+        settings = {unpackBits(mask, 1, 0), unpackBits(mask, 1, 1),
+                    unpackBits(mask, 1, 2), unpackBits(mask, 1, 3),
+                    unpackBits(mask, 1, 4), unpackBits(mask, 1, 5),
+                    unpackBits(mask, 2, 6), unpackBits(mask, 1, 8),
+                    unpackBits(mask, 1, 9), unpackBits(mask, 1, 10),
+                    unpackBits(mask, 1, 11), unpackBits(mask, 1, 14),
+                    unpackBits(mask, 1, 15), unpackBits(mask, 2, 16),
+                    unpackBits(mask, 2, 18), unpackBits(mask, 1, 20),
+                    unpackBits(mask, 2, 21)};
         return settings;
     }
 
@@ -1642,6 +1873,8 @@ namespace caen {
 
         virtual uint32_t getFrontPanelIOControl() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         virtual void setFrontPanelIOControl(uint32_t value) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual EasyFrontPanelIOControl getEasyFrontPanelIOControl() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual void setEasyFrontPanelIOControl(EasyFrontPanelIOControl settings) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
 
         virtual uint32_t getROCFPGAFirmwareRevision() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
 
@@ -2348,7 +2581,6 @@ namespace caen {
             setGlobalTriggerMask(mask);
         }
 
-        /* TODO: wrap FrontPanelTRGOUTEnableMask in user-friendly struct? */
         /**
          * @brief Get FrontPanelTRGOUTEnableMask
          * @returns
@@ -2401,7 +2633,6 @@ namespace caen {
 
         /* TODO: wrap LVDS I/O Data from register docs? */
 
-        /* TODO: wrap FrontPanelIOControl in user-friendly struct */
         /**
          * @brief Get FrontPanelIOControl mask
          * @returns
@@ -2424,6 +2655,33 @@ namespace caen {
          */
         void setFrontPanelIOControl(uint32_t mask) override
         { errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x811C, mask)); }
+        /**
+         * @brief Easy Get FrontPanelIOControl
+         * @returns
+         * A conveniently wrapped FrontPanelIOControl settings
+         * structure. Automatically takes care of translating from the
+         * bit mask returned by the the underlying low-level get
+         * FrontPanelIOControl mask funtion.
+         */
+        EasyFrontPanelIOControl getEasyFrontPanelIOControl() override
+        {
+            uint32_t mask;
+            mask = getFrontPanelIOControl();
+            return bits2efpioc(mask);
+        }
+        /**
+         * @brief Easy Set FrontPanelIOControl
+         * @param settings:
+         * Set the FrontPanelIOControl as specified in the provided
+         * settings structure. Automatically takes care of translating
+         * the structure to the proper bit mask needed for the
+         * underlying low-level set FrontPanelIOControl funtion.
+         */
+        void setEasyFrontPanelIOControl(EasyFrontPanelIOControl settings) override
+        {
+            uint32_t mask = efpioc2bits(settings);
+            setFrontPanelIOControl(mask);
+        }
 
         /* TODO: is Group Enable Mask from register docs equal to
          * GroupEnableMask? */

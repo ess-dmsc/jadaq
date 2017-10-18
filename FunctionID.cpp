@@ -69,6 +69,7 @@ static std::unordered_map<std::string,FunctionID > functionMap =
                 MAP_ENTRY(FrontPanelTRGOUTEnableMask),
                 MAP_ENTRY(EasyFrontPanelTRGOUTEnableMask),
                 MAP_ENTRY(FrontPanelIOControl),
+                MAP_ENTRY(EasyFrontPanelIOControl),
                 MAP_ENTRY(ROCFPGAFirmwareRevision),
                 MAP_ENTRY(FanSpeedControl),
                 MAP_ENTRY(DisableExternalTrigger),
@@ -144,6 +145,7 @@ const std::string to_string(FunctionID id) {
         CASE_TO_STR(FrontPanelTRGOUTEnableMask)
         CASE_TO_STR(EasyFrontPanelTRGOUTEnableMask)
         CASE_TO_STR(FrontPanelIOControl)
+        CASE_TO_STR(EasyFrontPanelIOControl)
         CASE_TO_STR(ROCFPGAFirmwareRevision)
         CASE_TO_STR(FanSpeedControl)
         CASE_TO_STR(DisableExternalTrigger)
