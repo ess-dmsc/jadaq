@@ -399,6 +399,24 @@ caen::EasyFrontPanelIOControl s2efpioc(const std::string& s)
     throw std::invalid_argument{"Invalid EasyFrontPanelIOControl"};
 }
 
+std::string to_string(const caen::EasyROCFPGAFirmwareRevision &erffr)
+{
+    std::stringstream ss;
+    ss << '{' << to_string(erffr.minorRevisionNumber) << ',' << to_string(erffr.majorRevisionNumber) << ',' << to_string(erffr.revisionDate) << '}';
+    return ss.str();
+}
+
+caen::EasyROCFPGAFirmwareRevision s2erffr(const std::string& s)
+{
+    std::regex rx("\\{(\\w+),(\\w+),(\\w+)\\}");
+    std::smatch match;
+    if (std::regex_search(s, match, rx))
+    {
+        return caen::EasyROCFPGAFirmwareRevision{s2ui8(match[1]),s2ui8(match[2]),s2ui16(match[3])};
+    }
+    throw std::invalid_argument{"Invalid EasyROCFPGAFirmwareRevision"};
+}
+
 std::string to_string(CAEN_DGTZ_DPP_AcqMode_t mode)
 {
     switch (mode)

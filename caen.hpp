@@ -317,7 +317,10 @@ namespace caen {
 
     /**
      * @struct EasyDPPAlgorithmControl
-     * @brief For user-friendly configuration of DPP Algorithm Control mask
+     * @brief For user-friendly configuration of DPP Algorithm Control mask.
+     *
+     * Management of the DPP algorithm features.
+     *
      * @var EasyDPPAlgorithmControl::chargeSensitivity
      * Charge Sensitivity: defines how many pC of charge correspond to
      * one channel of the energy spectrum. Options are:\n
@@ -413,7 +416,11 @@ namespace caen {
 
     /**
      * @struct EasyBoardConfiguration
-     * @brief For user-friendly configuration of Board Configuration mask
+     * @brief For user-friendly configuration of Board Configuration mask.
+     *
+     * This register contains general settings for the board
+     * configuration.
+     *
      * @var EasyBoardConfiguration::individualTrigger
      * Individual trigger: must be 1
      * @var EasyBoardConfiguration::analogProbe
@@ -461,7 +468,10 @@ namespace caen {
 
     /**
      * @struct EasyAcquisitionControl
-     * @brief For user-friendly configuration of Acquisition Control mask
+     * @brief For user-friendly configuration of Acquisition Control mask.
+     *
+     * This register manages the acquisition settings.
+     *
      * @var EasyAcquisitionControl::startStopMode
      * Start/Stop Mode Selection (default value is 00). Options are:\n
      * 00 = SW CONTROLLED. Start/stop of the run takes place on software
@@ -540,7 +550,11 @@ namespace caen {
 
     /**
      * @struct EasyAcquisitionStatus
-     * @brief For user-friendly configuration of Acquisition Status mask
+     * @brief For user-friendly configuration of Acquisition Status mask.
+     *
+     * This register monitors a set of conditions related to the
+     * acquisition status.
+     *
      * @var EasyAcquisitionStatus::acquisitionStatus
      * Acquisition Status. It reflects the status of the acquisition and
      * drivers the front panel ’RUN’ LED. Options are:\n
@@ -602,7 +616,11 @@ namespace caen {
 
     /**
      * @struct EasyGlobalTriggerMask
-     * @brief For user-friendly configuration of Global Trigger Mask
+     * @brief For user-friendly configuration of Global Trigger Mask.
+     *
+     * This register sets which signal can contribute to the global
+     * trigger generation.
+     *
      * @var EasyGlobalTriggerMask::lVDSTrigger
      * LVDS Trigger (VME boards only). When enabled, the trigger from
      * LVDS I/O participates to the global trigger generation (in logic
@@ -631,7 +649,12 @@ namespace caen {
 
     /**
      * @struct EasyFrontPanelTRGOUTEnableMask
-     * @brief For user-friendly configuration of Global Trigger Mask
+     * @brief For user-friendly configuration of Front Panel TRG-OUT Enable Mask.
+     *
+     * This register sets which signal can contribute to
+     * generate the signal on the front panel TRG-OUT LEMO connector
+     * (GPO in case of DT and NIM boards).
+     *
      * @var EasyFrontPanelTRGOUTEnableMask::lVDSTriggerEnable
      * LVDS Trigger Enable (VME boards only). If the LVDS I/Os are
      * programmed as outputs, they can participate in the TRG-OUT (GPO)
@@ -661,7 +684,11 @@ namespace caen {
 
     /**
      * @struct EasyFrontPanelIOControl
-     * @brief For user-friendly configuration of Acquisition Control mask
+     * @brief For user-friendly configuration of Acquisition Control mask.
+     *
+     * This register manages the front panel I/O connectors. Default
+     * value is 0x000000.
+     *
      * @var EasyFrontPanelIOControl::lEMOIOElectricalLevel
      * LEMO I/Os Electrical Level. This bit sets the electrical level of
      * the front panel LEMO connectors: TRG-IN, TRG-OUT (GPO in case of
@@ -823,6 +850,34 @@ namespace caen {
         uint8_t motherboardVirtualProbeSelection : 2;
         uint8_t motherboardVirtualProbePropagation : 1;
         uint8_t patternConfiguration : 2;
+    };
+
+    /**
+     * @struct EasyROCFPGAFirmwareRevision
+     * @brief For user-friendly configuration of ROC FPGA Firmware Revision.
+     *
+     * This register contains the motherboard FPGA (ROC) firmware
+     * revision information.\n
+     * The complete format is:\n
+     * Firmware Revision = X.Y (16 lower bits)\n
+     * Firmware Revision Date = Y/M/DD (16 higher bits)\n
+     * EXAMPLE 1: revision 3.08, November 12th, 2007 is 0x7B120308.\n
+     * EXAMPLE 2: revision 4.09, March 7th, 2016 is 0x03070409.\n
+     * NOTE: the nibble code for the year makes this information to roll
+     * over each 16 years.
+     *
+     * @var EasyROCFPGAFirmwareRevision::minorRevisionNumber
+     * ROC Firmware Minor Revision Number (Y).
+     * @var EasyROCFPGAFirmwareRevision::majorRevisionNumber
+     * ROC Firmware Major Revision Number (X).
+     * @var EasyROCFPGAFirmwareRevision::revisionDate
+     * ROC Firmware Revision Date (Y/M/DD).
+     */
+    struct EasyROCFPGAFirmwareRevision {
+        /* Only allow the expected number of bits per field */
+        uint8_t minorRevisionNumber : 8;
+        uint8_t majorRevisionNumber : 8;
+        uint16_t revisionDate : 16;
     };
 
 
@@ -1159,6 +1214,44 @@ namespace caen {
                     unpackBits(mask, 1, 15), unpackBits(mask, 2, 16),
                     unpackBits(mask, 2, 18), unpackBits(mask, 1, 20),
                     unpackBits(mask, 2, 21)};
+        return settings;
+    }
+
+    /**
+     * @brief pack EasyROCFPGAFirmwareRevision settings into bit mask
+     * @param settings:
+     * Settings structure to pack
+     * @returns
+     * Bit mask ready for low-level set function.
+     * @internal
+     * EasyROCFPGAFirmwareRevision fields:
+     * minor revision number in [0:7], major revision number in [8:15],
+     * revision date in [16:31]
+     */
+    static uint32_t erffr2bits(EasyROCFPGAFirmwareRevision settings)
+    {
+        uint32_t mask = 0;
+        mask |= packBits(settings.minorRevisionNumber, 8, 0);
+        mask |= packBits(settings.majorRevisionNumber, 8, 8);
+        /* revisionDate is 16-bit - manually pack in two steps */
+        mask |= packBits(settings.revisionDate & 0xFF, 8, 16);
+        mask |= packBits(settings.revisionDate >> 8 & 0xFF, 8, 24);
+        return mask;
+    }
+    /**
+     * @brief unpack bit mask into EasyROCFPGAFirmwareRevision settings
+     * @param mask:
+     * Bit mask from low-level get function to unpack
+     * @returns
+     * Settings structure for convenient use.
+     */
+    static EasyROCFPGAFirmwareRevision bits2erffr(uint32_t mask)
+    {
+        EasyROCFPGAFirmwareRevision settings;
+        /* revisionDate is 16-bit - manually unpack in two steps */
+        settings = {unpackBits(mask, 8, 0), unpackBits(mask, 8, 8),
+                    (uint16_t)(unpackBits(mask, 8, 24) << 8 |
+                               unpackBits(mask, 8, 16))};
         return settings;
     }
 
@@ -1877,6 +1970,7 @@ namespace caen {
         virtual void setEasyFrontPanelIOControl(EasyFrontPanelIOControl settings) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
 
         virtual uint32_t getROCFPGAFirmwareRevision() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual EasyROCFPGAFirmwareRevision getEasyROCFPGAFirmwareRevision() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
 
         virtual uint32_t getFanSpeedControl() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         virtual void setFanSpeedControl(uint32_t value) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
@@ -2686,7 +2780,6 @@ namespace caen {
         /* TODO: is Group Enable Mask from register docs equal to
          * GroupEnableMask? */
 
-        /* TODO: wrap ROCFPGAFirmwareRevision in user-friendly struct */
         /**
          * @brief Get ROCFPGAFirmwareRevision mask
          * @returns
@@ -2699,6 +2792,20 @@ namespace caen {
             uint32_t mask;
             errorHandler(CAEN_DGTZ_ReadRegister(handle_, 0x8124, &mask));
             return mask;
+        }
+        /**
+         * @brief Easy Get ROCFPGAFirmwareRevision
+         * @returns
+         * A conveniently wrapped ROCFPGAFirmwareRevision settings
+         * structure. Automatically takes care of translating from the
+         * bit mask returned by the the underlying low-level get
+         * ROCFPGAFirmwareRevision mask funtion.
+         */
+        EasyROCFPGAFirmwareRevision getEasyROCFPGAFirmwareRevision() override
+        {
+            uint32_t mask;
+            mask = getROCFPGAFirmwareRevision();
+            return bits2erffr(mask);
         }
 
         /* TODO: wrap Voltage Level Mode Configuration from register docs? */

@@ -101,6 +101,8 @@ std::string to_string(const caen::EasyFrontPanelTRGOUTEnableMask &efptoem);
 caen::EasyFrontPanelTRGOUTEnableMask s2efptoem(const std::string& s);
 std::string to_string(const caen::EasyFrontPanelIOControl &efpioc);
 caen::EasyFrontPanelIOControl s2efpioc(const std::string& s);
+std::string to_string(const caen::EasyROCFPGAFirmwareRevision &erffr);
+caen::EasyROCFPGAFirmwareRevision s2erffr(const std::string& s);
 
 std::string to_string(CAEN_DGTZ_DPP_AcqMode_t mode);
 CAEN_DGTZ_DPP_AcqMode_t s2dam(const std::string& s);

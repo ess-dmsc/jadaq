@@ -71,6 +71,7 @@ enum FunctionID {
     FrontPanelIOControl,
     EasyFrontPanelIOControl,
     ROCFPGAFirmwareRevision,
+    EasyROCFPGAFirmwareRevision,
     FanSpeedControl,
     DisableExternalTrigger,
     ReadoutControl,
