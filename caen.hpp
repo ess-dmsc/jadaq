@@ -890,24 +890,24 @@ namespace caen {
      * @brief unpack at most 8 bits from 32 bit mask
      * @param mask:
      * bit mask
-     * @param cap:
-     * cap of bit value to unpack, i.e. always cap to this max value.
+     * @param bits:
+     * number of bits to unpack
      * @param offset:
      * offset to the bits to unpack, i.e. how many bits to right-shift
      */
-    static uint8_t unpackBits(uint32_t mask, uint8_t cap, uint8_t offset)
-    { return (uint8_t)((mask >> offset) & cap); }
+    static uint8_t unpackBits(uint32_t mask, uint8_t bits, uint8_t offset)
+    { return (uint8_t)((mask >> offset) & ((1 << bits) - 1) ); }
     /**
      * @brief pack at most 8 bits into 32 bit mask
      * @param value:
      * value to pack
-     * @param cap:
-     * cap before pack, i.e. always cap to this max value.
+     * @param bits:
+     * number of bits to pack
      * @param offset:
      * offset to the packed bits, i.e. how many bits to left-shift
      */
-    static uint32_t packBits(uint8_t value, uint8_t cap, uint8_t offset)
-    { return (value & cap) << offset; }
+    static uint32_t packBits(uint8_t value, uint8_t bits, uint8_t offset)
+    { return (value & ((1 << bits) - 1)) << offset; }
 
     /**
      * @brief pack EasyDPPAlgorithmControl settings into bit mask
@@ -2014,6 +2014,36 @@ namespace caen {
         virtual void setRunDelay(uint32_t delay) override
         { errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x8170, delay)); }
 
+        /**
+         * @brief Get ROCFPGAFirmwareRevision mask
+         * @returns
+         * Get the low-level ROCFirmwareRevision mask in line with
+         * register docs. It is recommended to use the EasyX wrapper
+         * version instead.
+         */
+        uint32_t getROCFPGAFirmwareRevision() override
+        {
+            uint32_t mask;
+            errorHandler(CAEN_DGTZ_ReadRegister(handle_, 0x8124, &mask));
+            return mask;
+        }
+        /**
+         * @brief Easy Get ROCFPGAFirmwareRevision
+         * @returns
+         * A conveniently wrapped ROCFPGAFirmwareRevision settings
+         * structure. Automatically takes care of translating from the
+         * bit mask returned by the the underlying low-level get
+         * ROCFPGAFirmwareRevision mask funtion.
+         */
+        EasyROCFPGAFirmwareRevision getEasyROCFPGAFirmwareRevision() override
+        {
+            uint32_t mask;
+            mask = getROCFPGAFirmwareRevision();
+            return bits2erffr(mask);
+        }
+
+        /* TODO: move additional general 740 register functions here */
+
     };
 
     class Digitizer740DPP : public Digitizer740 {
@@ -2780,34 +2810,8 @@ namespace caen {
         /* TODO: is Group Enable Mask from register docs equal to
          * GroupEnableMask? */
 
-        /**
-         * @brief Get ROCFPGAFirmwareRevision mask
-         * @returns
-         * Get the low-level ROCFirmwareRevision mask in line with
-         * register docs. It is recommended to use the EasyX wrapper
-         * version instead.
-         */
-        uint32_t getROCFPGAFirmwareRevision() override
-        {
-            uint32_t mask;
-            errorHandler(CAEN_DGTZ_ReadRegister(handle_, 0x8124, &mask));
-            return mask;
-        }
-        /**
-         * @brief Easy Get ROCFPGAFirmwareRevision
-         * @returns
-         * A conveniently wrapped ROCFPGAFirmwareRevision settings
-         * structure. Automatically takes care of translating from the
-         * bit mask returned by the the underlying low-level get
-         * ROCFPGAFirmwareRevision mask funtion.
-         */
-        EasyROCFPGAFirmwareRevision getEasyROCFPGAFirmwareRevision() override
-        {
-            uint32_t mask;
-            mask = getROCFPGAFirmwareRevision();
-            return bits2erffr(mask);
-        }
-
+        /* NOTE: ROCFPGAFirmwareRevision is inherited from Digitizer740  */
+        
         /* TODO: wrap Voltage Level Mode Configuration from register docs? */
         /* TODO: wrap Software Clock Sync from register docs? */
 

@@ -34,6 +34,15 @@
 
 using std::to_string;
 
+/* force small integers to full unsigned int for proper printing */
+template<typename T>
+std::string ui_to_string(T v)
+{
+    std::stringstream ss;
+    ss << unsigned(v);
+    return ss.str();
+}
+
 template<typename T>
 std::string hex_string(T v)
 {

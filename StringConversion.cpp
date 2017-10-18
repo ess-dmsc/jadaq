@@ -124,7 +124,7 @@ std::string to_string(CAEN_DGTZ_ThresholdWeight_t tw)
 std::string to_string(const caen::ZSParams &zsp)
 {
     std::stringstream ss;
-    ss << '{' << to_string(zsp.weight) << ',' << to_string(zsp.threshold) << ',' << to_string(zsp.nsamp)<< '}';
+    ss << '{' << to_string(zsp.weight) << ',' << to_string(zsp.threshold) << ',' << to_string(zsp.nsamp) << '}';
     return ss.str();
 }
 
@@ -186,7 +186,7 @@ CAEN_DGTZ_AnalogMonitorInspectorInverter_t s2ami(const std::string& s)
 std::string to_string(const caen::AIMParams &aimp)
 {
     std::stringstream ss;
-    ss << '{' << to_string(aimp.channelmask) << ',' << to_string(aimp.offset) << ',' << to_string(aimp.mf) << ',' << to_string(aimp.ami)<< '}';
+    ss << '{' << to_string(aimp.channelmask) << ',' << to_string(aimp.offset) << ',' << to_string(aimp.mf) << ',' << to_string(aimp.ami) << '}';
     return ss.str();
 }
 caen::AIMParams s2aimp(const std::string& s)
@@ -222,7 +222,7 @@ std::string to_string(CAEN_DGTZ_TrigerLogic_t tl)
 std::string to_string(const caen::ChannelPairTriggerLogicParams &cptlp)
 {
     std::stringstream ss;
-    ss << '{' << to_string(cptlp.logic) << ',' << to_string(cptlp.coincidenceWindow)<< '}';
+    ss << '{' << to_string(cptlp.logic) << ',' << ui_to_string(cptlp.coincidenceWindow) << '}';
     return ss.str();
 }
 
@@ -240,7 +240,7 @@ caen::ChannelPairTriggerLogicParams s2cptlp(const std::string& s)
 std::string to_string(const caen::TriggerLogicParams &tlp)
 {
     std::stringstream ss;
-    ss << '{' << to_string(tlp.logic) << ',' << to_string(tlp.majorityLevel)<< '}';
+    ss << '{' << to_string(tlp.logic) << ',' << to_string(tlp.majorityLevel) << '}';
     return ss.str();
 }
 
@@ -258,7 +258,7 @@ caen::TriggerLogicParams s2tlp(const std::string& s)
 std::string to_string(const caen::SAMTriggerCountVetoParams &samtcvp)
 {
     std::stringstream ss;
-    ss << '{' << to_string(samtcvp.enable) << ',' << to_string(samtcvp.vetoWindow)<< '}';
+    ss << '{' << to_string(samtcvp.enable) << ',' << to_string(samtcvp.vetoWindow) << '}';
     return ss.str();
 }
 
@@ -276,7 +276,7 @@ caen::SAMTriggerCountVetoParams s2samtcvp(const std::string& s)
 std::string to_string(const caen::EasyDPPAlgorithmControl &edppac)
 {
     std::stringstream ss;
-    ss << '{' << to_string(edppac.chargeSensitivity) << ',' << to_string(edppac.internalTestPulse) << ',' << to_string(edppac.testPulseRate) << ',' << to_string(edppac.chargePedestal) << ',' << to_string(edppac.inputSmoothingFactor) << ',' << to_string(edppac.pulsePolarity) << ',' << to_string(edppac.triggerMode) << ',' << to_string(edppac.baselineMean) << ',' << to_string(edppac.disableSelfTrigger) << ',' << to_string(edppac.triggerHysteresis) << '}';
+    ss << '{' << ui_to_string(edppac.chargeSensitivity) << ',' << ui_to_string(edppac.internalTestPulse) << ',' << ui_to_string(edppac.testPulseRate) << ',' << ui_to_string(edppac.chargePedestal) << ',' << ui_to_string(edppac.inputSmoothingFactor) << ',' << ui_to_string(edppac.pulsePolarity) << ',' << ui_to_string(edppac.triggerMode) << ',' << ui_to_string(edppac.baselineMean) << ',' << ui_to_string(edppac.disableSelfTrigger) << ',' << ui_to_string(edppac.triggerHysteresis) << '}';
     return ss.str();
 }
 
@@ -294,7 +294,7 @@ caen::EasyDPPAlgorithmControl s2edppac(const std::string& s)
 std::string to_string(const caen::EasyBoardConfiguration &ebc)
 {
     std::stringstream ss;
-    ss << '{' << to_string(ebc.individualTrigger) << ',' << to_string(ebc.analogProbe) << ',' << to_string(ebc.waveformRecording) << ',' << to_string(ebc.extrasRecording) << ',' << to_string(ebc.timeStampRecording) << ',' << to_string(ebc.chargeRecording) << ',' << to_string(ebc.externalTriggerMode) << '}';
+    ss << '{' << ui_to_string(ebc.individualTrigger) << ',' << ui_to_string(ebc.analogProbe) << ',' << ui_to_string(ebc.waveformRecording) << ',' << ui_to_string(ebc.extrasRecording) << ',' << ui_to_string(ebc.timeStampRecording) << ',' << ui_to_string(ebc.chargeRecording) << ',' << ui_to_string(ebc.externalTriggerMode) << '}';
     return ss.str();
 }
 
@@ -312,7 +312,7 @@ caen::EasyBoardConfiguration s2ebc(const std::string& s)
 std::string to_string(const caen::EasyAcquisitionControl &eac)
 {
     std::stringstream ss;
-    ss << '{' << to_string(eac.startStopMode) << ',' << to_string(eac.acquisitionStartArm) << ',' << to_string(eac.triggerCountingMode) << ',' << to_string(eac.pLLRefererenceClock) << ',' << to_string(eac.lVDSIOBusyEnable) << ',' << to_string(eac.lVDSVetoEnable) << ',' << to_string(eac.lVDSIORunInEnable) << '}';
+    ss << '{' << ui_to_string(eac.startStopMode) << ',' << ui_to_string(eac.acquisitionStartArm) << ',' << ui_to_string(eac.triggerCountingMode) << ',' << ui_to_string(eac.pLLRefererenceClock) << ',' << ui_to_string(eac.lVDSIOBusyEnable) << ',' << ui_to_string(eac.lVDSVetoEnable) << ',' << ui_to_string(eac.lVDSIORunInEnable) << '}';
     return ss.str();
 }
 
@@ -330,7 +330,7 @@ caen::EasyAcquisitionControl s2eac(const std::string& s)
 std::string to_string(const caen::EasyAcquisitionStatus &eas)
 {
     std::stringstream ss;
-    ss << '{' << to_string(eas.acquisitionStatus) << ',' << to_string(eas.eventReady) << ',' << to_string(eas.eventFull) << ',' << to_string(eas.clockSource) << ',' << to_string(eas.pLLUnlockDetect) << ',' << to_string(eas.boardReady) << ',' << to_string(eas.s_IN) << ',' << to_string(eas.tRG_IN) << '}';
+    ss << '{' << ui_to_string(eas.acquisitionStatus) << ',' << ui_to_string(eas.eventReady) << ',' << ui_to_string(eas.eventFull) << ',' << ui_to_string(eas.clockSource) << ',' << ui_to_string(eas.pLLUnlockDetect) << ',' << ui_to_string(eas.boardReady) << ',' << ui_to_string(eas.s_IN) << ',' << ui_to_string(eas.tRG_IN) << '}';
     return ss.str();
 }
 
@@ -348,7 +348,7 @@ caen::EasyAcquisitionStatus s2eas(const std::string& s)
 std::string to_string(const caen::EasyGlobalTriggerMask &egtm)
 {
     std::stringstream ss;
-    ss << '{' << to_string(egtm.lVDSTrigger) << ',' << to_string(egtm.externalTrigger) << ',' << to_string(egtm.softwareTrigger) << '}';
+    ss << '{' << ui_to_string(egtm.lVDSTrigger) << ',' << ui_to_string(egtm.externalTrigger) << ',' << ui_to_string(egtm.softwareTrigger) << '}';
     return ss.str();
 }
 
@@ -366,7 +366,7 @@ caen::EasyGlobalTriggerMask s2egtm(const std::string& s)
 std::string to_string(const caen::EasyFrontPanelTRGOUTEnableMask &efptoem)
 {
     std::stringstream ss;
-    ss << '{' << to_string(efptoem.lVDSTriggerEnable) << ',' << to_string(efptoem.externalTrigger) << ',' << to_string(efptoem.softwareTrigger) << '}';
+    ss << '{' << ui_to_string(efptoem.lVDSTriggerEnable) << ',' << ui_to_string(efptoem.externalTrigger) << ',' << ui_to_string(efptoem.softwareTrigger) << '}';
     return ss.str();
 }
 
@@ -384,7 +384,7 @@ caen::EasyFrontPanelTRGOUTEnableMask s2efptoem(const std::string& s)
 std::string to_string(const caen::EasyFrontPanelIOControl &efpioc)
 {
     std::stringstream ss;
-    ss << '{' << to_string(efpioc.lEMOIOElectricalLevel) << ',' << to_string(efpioc.tRGOUTEnable) << ',' << to_string(efpioc.lVDSIODirectionFirst) << ',' << to_string(efpioc.lVDSIODirectionSecond) << ',' << to_string(efpioc.lVDSIODirectionThird) << ',' << to_string(efpioc.lVDSIODirectionFourth) << ',' << to_string(efpioc.lVDSIOSignalConfiguration) << ',' << to_string(efpioc.lVDSIONewFeaturesSelection) << ',' << to_string(efpioc.lVDSIOPatternLatchMode) << ',' << to_string(efpioc.tRGINControl) << ',' << to_string(efpioc.tRGINMezzanines) << ',' << to_string(efpioc.forceTRGOUT) << ',' << to_string(efpioc.tRGOUTMode) << ',' << to_string(efpioc.tRGOUTModeSelection) << ',' << to_string(efpioc.motherboardVirtualProbeSelection) << ',' << to_string(efpioc.motherboardVirtualProbePropagation) << ',' << to_string(efpioc.patternConfiguration) << '}';
+    ss << '{' << ui_to_string(efpioc.lEMOIOElectricalLevel) << ',' << ui_to_string(efpioc.tRGOUTEnable) << ',' << ui_to_string(efpioc.lVDSIODirectionFirst) << ',' << ui_to_string(efpioc.lVDSIODirectionSecond) << ',' << ui_to_string(efpioc.lVDSIODirectionThird) << ',' << ui_to_string(efpioc.lVDSIODirectionFourth) << ',' << ui_to_string(efpioc.lVDSIOSignalConfiguration) << ',' << ui_to_string(efpioc.lVDSIONewFeaturesSelection) << ',' << ui_to_string(efpioc.lVDSIOPatternLatchMode) << ',' << ui_to_string(efpioc.tRGINControl) << ',' << ui_to_string(efpioc.tRGINMezzanines) << ',' << ui_to_string(efpioc.forceTRGOUT) << ',' << ui_to_string(efpioc.tRGOUTMode) << ',' << ui_to_string(efpioc.tRGOUTModeSelection) << ',' << ui_to_string(efpioc.motherboardVirtualProbeSelection) << ',' << ui_to_string(efpioc.motherboardVirtualProbePropagation) << ',' << ui_to_string(efpioc.patternConfiguration) << '}';
     return ss.str();
 }
 
@@ -402,7 +402,11 @@ caen::EasyFrontPanelIOControl s2efpioc(const std::string& s)
 std::string to_string(const caen::EasyROCFPGAFirmwareRevision &erffr)
 {
     std::stringstream ss;
-    ss << '{' << to_string(erffr.minorRevisionNumber) << ',' << to_string(erffr.majorRevisionNumber) << ',' << to_string(erffr.revisionDate) << '}';
+    /* Firmware Revision Date = Y/M/DD (16 higher bits)
+       EXAMPLE 1: revision 3.08, November 12th, 2007 is 0x7B120308. */
+    /* NOTE: We unwrap each of the revisionDate bytes in turn for proper
+       translation and printing */
+    ss << '{' << ui_to_string(erffr.minorRevisionNumber) << ',' << ui_to_string(erffr.majorRevisionNumber) << ',' << ui_to_string(erffr.revisionDate >> 12) << ui_to_string((erffr.revisionDate & 0x0F00) >> 8) << ui_to_string((erffr.revisionDate & 0xF0) >> 4) << ui_to_string(erffr.revisionDate & 0xF) << '}';
     return ss.str();
 }
 
@@ -412,7 +416,9 @@ caen::EasyROCFPGAFirmwareRevision s2erffr(const std::string& s)
     std::smatch match;
     if (std::regex_search(s, match, rx))
     {
-        return caen::EasyROCFPGAFirmwareRevision{s2ui8(match[1]),s2ui8(match[2]),s2ui16(match[3])};
+        /* NOTE: date is encoded as four individual byte integer values
+         * as described above. Thus, we unpack as int and force to uint16. */
+        return caen::EasyROCFPGAFirmwareRevision{s2ui8(match[1]),s2ui8(match[2]),(uint16_t)s2ui(match[3])};
     }
     throw std::invalid_argument{"Invalid EasyROCFPGAFirmwareRevision"};
 }
@@ -467,7 +473,7 @@ CAEN_DGTZ_DPP_SaveParam_t s2sp(const std::string& s)
 std::string to_string(const caen::DPPAcquisitionMode &dam)
 {
     std::stringstream ss;
-    ss << '{' << to_string(dam.mode) << ',' << to_string(dam.param)<< '}';
+    ss << '{' << to_string(dam.mode) << ',' << to_string(dam.param) << '}';
     return ss.str();
 }
 
