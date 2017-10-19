@@ -58,6 +58,7 @@ enum FunctionID {
     TriggerLogic,
     BoardConfiguration,
     EasyBoardConfiguration,
+    EasyDPPBoardConfiguration,
     AggregateOrganization,
     AcquisitionControl,
     EasyAcquisitionControl,

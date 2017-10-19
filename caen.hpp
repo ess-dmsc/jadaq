@@ -449,33 +449,71 @@ namespace caen {
      * This register contains general settings for the board
      * configuration.
      *
-     * @var EasyBoardConfiguration::individualTrigger
+     * @var EasyBoardConfiguration::triggerOverlapSetting
+     * Trigger Overlap Setting (default value is 0).\n
+     * When two acquisition windows are overlapped, the second trigger
+     * can be either accepted or rejected. Options are:\n
+     * 0 = Trigger Overlapping Not Allowed (no trigger is accepted until
+     * the current acquisition window is finished);\n
+     * 1 = Trigger Overlapping Allowed (the current acquisition window
+     * is prematurely closed by the arrival of a new trigger).\n
+     * NOTE: it is suggested to keep this bit cleared in case of using a
+     * DPP firmware.
+     * @var EasyBoardConfiguration::testPatternEnable
+     * Test Pattern Enable (default value is 0).\n
+     * This bit enables a triangular (0<-->3FFF) test wave to be
+     * provided at the ADCs input for debug purposes. Options are:\n
+     * 0 = disabled\n
+     * 1 = enabled.
+     * @var EasyBoardConfiguration::selfTriggerPolarity
+     * Self-trigger Polarity (default value is 0).\n
+     * Options are:\n
+     * 0 = Positive (the self-trigger is generated upon the input pulse
+     * overthreshold)\n
+     * 1 = Negative (the self-trigger is generated upon the input pulse
+     * underthreshold).
+     */
+    struct EasyBoardConfiguration {
+        /* Only allow the expected number of bits per field */
+        uint8_t triggerOverlapSetting : 1;
+        uint8_t testPatternEnable : 1;
+        uint8_t selfTriggerPolarity : 1;
+    };
+
+    /**
+     * @struct EasyDPPBoardConfiguration
+     * @brief For user-friendly configuration of DPP Board Configuration mask.
+     *
+     * This register contains general settings for the DPP board
+     * configuration.
+     *
+     * @var EasyDPPBoardConfiguration::individualTrigger
      * Individual trigger: must be 1
-     * @var EasyBoardConfiguration::analogProbe
+     * @var EasyDPPBoardConfiguration::analogProbe
      * Analog Probe: Selects which signal is associated to the Analog
      * trace in the readout data. Options are:\n
      * 00: Input\n
      * 01: Smoothed Input\n
      * 10: Baseline\n
      * 11: Reserved.
-     * @var EasyBoardConfiguration::waveformRecording
+     * @var EasyDPPBoardConfiguration::waveformRecording
      * Waveform Recording: enables the data recording of the
      * waveform. The user must define the number of samples to be saved
      * in the Record Length 0x1n24 register. Options are:\n
      * 0: disabled\n
      * 1: enabled.
-     * @var EasyBoardConfiguration::extrasRecording
+     * @var EasyDPPBoardConfiguration::extrasRecording
      * Extras Recording: when enabled the EXTRAS word is saved into the
      * event data. Refer to the ”Channel Aggregate Data Format” chapter
      * of the DPP User Manual for more details about the EXTRAS
      * word. Options are:\n
      * 0: disabled\n
      * 1: enabled.
-     * @var EasyBoardConfiguration::timeStampRecording
+     * @var EasyDPPBoardConfiguration::timeStampRecording
      * Time Stamp Recording: must be 1
-     * @var EasyBoardConfiguration::chargeRecording
+     * @var EasyDPPBoardConfiguration::chargeRecording
      * Charge Recording: must be 1
-     * @var EasyBoardConfiguration::externalTriggerMode
+     * @var EasyDPPBoardConfiguration::externalTriggerMode
      * External Trigger mode. The external trigger mode on TRG-IN
      * connector can be used according to the following options:\n
      * 00: Trigger\n
@@ -483,7 +521,7 @@ namespace caen {
      * 10: An -Veto\n
      * 11: Reserved.
      */
-    struct EasyBoardConfiguration {
+    struct EasyDPPBoardConfiguration {
         /* Only allow the expected number of bits per field */
         uint8_t individualTrigger : 1;
         uint8_t analogProbe : 2;
@@ -1031,12 +1069,48 @@ namespace caen {
      * Bit mask ready for low-level set function.
      * @internal
      * EasyBoardConfiguration fields:
+     * trigger overlap setting in [1], test pattern enable in [3],
+     * self-trigger polarity in [6].
+     */
+    static uint32_t ebc2bits(EasyBoardConfiguration settings)
+    {
+        uint32_t mask = 0;
+        /* NOTE: board configuration includes reserved forced-1 in [4]
+         * but we leave that to the low-lewel get/set ops. */
+        mask |= packBits(settings.triggerOverlapSetting, 1, 1);
+        mask |= packBits(settings.testPatternEnable, 1, 3);
+        mask |= packBits(settings.selfTriggerPolarity, 1, 6);
+        return mask;
+    }
+    /**
+     * @brief unpack bit mask into EasyBoardConfiguration settings
+     * @param mask:
+     * Bit mask from low-level get function to unpack
+     * @returns
+     * Settings structure for convenient use.
+     */
+    static EasyBoardConfiguration bits2ebc(uint32_t mask)
+    {
+        EasyBoardConfiguration settings;
+        settings = {unpackBits(mask, 1, 1), unpackBits(mask, 1, 3),
+                    unpackBits(mask, 1, 6)};
+        return settings;
+    }
+
+    /**
+     * @brief pack EasyDPPBoardConfiguration settings into bit mask
+     * @param settings:
+     * Settings structure to pack
+     * @returns
+     * Bit mask ready for low-level set function.
+     * @internal
+     * EasyDPPBoardConfiguration fields:
      * individual trigger in [8], analog probe in [12:13],
      * waveform recording in [16], extras recording in [17],
      * time stamp recording in [18], charge recording in [19],
      * external trigger mode in [20:21].
      */
-    static uint32_t ebc2bits(EasyBoardConfiguration settings)
+    static uint32_t edbc2bits(EasyDPPBoardConfiguration settings)
     {
         uint32_t mask = 0;
         /* NOTE: board configuration includes reserved forced-1 in [4]
@@ -1051,15 +1125,15 @@ namespace caen {
         return mask;
     }
     /**
-     * @brief unpack bit mask into EasyBoardConfiguration settings
+     * @brief unpack bit mask into EasyDPPBoardConfiguration settings
      * @param mask:
      * Bit mask from low-level get function to unpack
      * @returns
      * Settings structure for convenient use.
      */
-    static EasyBoardConfiguration bits2ebc(uint32_t mask)
+    static EasyDPPBoardConfiguration bits2edbc(uint32_t mask)
     {
-        EasyBoardConfiguration settings;
+        EasyDPPBoardConfiguration settings;
         settings = {unpackBits(mask, 1, 8), unpackBits(mask, 2, 12),
                     unpackBits(mask, 1, 16), unpackBits(mask, 1, 17),
                     unpackBits(mask, 1, 18), unpackBits(mask, 1, 19),
@@ -2016,6 +2090,9 @@ namespace caen {
         virtual EasyBoardConfiguration getEasyBoardConfiguration() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         virtual void setEasyBoardConfiguration(EasyBoardConfiguration settings) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         virtual void unsetEasyBoardConfiguration(EasyBoardConfiguration settings) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual EasyDPPBoardConfiguration getEasyDPPBoardConfiguration() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual void setEasyDPPBoardConfiguration(EasyDPPBoardConfiguration settings) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual void unsetEasyDPPBoardConfiguration(EasyDPPBoardConfiguration settings) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
 
         virtual uint32_t getAggregateOrganization() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         virtual void setAggregateOrganization(uint32_t value) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
@@ -2215,6 +2292,59 @@ namespace caen {
          * class?
          * What about read,write for conf handling?
          */
+
+        /**
+         * @brief Easy Get BoardConfiguration
+         *
+         * A convenience wrapper for the low-level function of the same
+         * name. Works on a struct with named variables rather than
+         * directly manipulating obscure bit patterns. Automatically
+         * takes care of translating from the bit mask returned by the
+         * the underlying low-level get funtion.
+         *
+         * @returns
+         * EasyBoardConfiguration structure
+         */
+        EasyBoardConfiguration getEasyBoardConfiguration() override
+        {
+            uint32_t mask;
+            mask = getBoardConfiguration();
+            return bits2ebc(mask);
+        }
+        /**
+         * @brief Easy Set BoardConfiguration
+         *
+         * A convenience wrapper for the low-level function of the same
+         * name. Works on a struct with named variables rather than
+         * directly manipulating obscure bit patterns. Automatically
+         * takes care of translating to the bit mask needed by the
+         * the underlying low-level set funtion.
+         *
+         * @param settings:
+         * EasyBoardConfiguration structure
+         */
+        void setEasyBoardConfiguration(EasyBoardConfiguration settings) override
+        {
+            uint32_t mask = ebc2bits(settings);
+            setBoardConfiguration(mask);
+        }
+        /**
+         * @brief Easy Unset BoardConfiguration
+         *
+         * A convenience wrapper for the low-level function of the same
+         * name. Works on a struct with named variables rather than
+         * directly manipulating obscure bit patterns. Automatically
+         * takes care of translating to the bit mask needed by the
+         * the underlying low-level unset funtion.
+         *
+         * @param settings:
+         * EasyBoardConfiguration structure
+         */
+        void unsetEasyBoardConfiguration(EasyBoardConfiguration settings) override
+        {
+            uint32_t mask = ebc2bits(settings);
+            unsetBoardConfiguration(mask);
+        }
 
         /**
          * @brief Get AcquisitionControl mask
@@ -3046,7 +3176,7 @@ namespace caen {
         /* TODO: wrap Individual Trigger Threshold of Group n Sub Channel m from register docs? */
 
         /**
-         * @brief Easy Get BoardConfiguration
+         * @brief Easy Get DPP BoardConfiguration
          *
          * A convenience wrapper for the low-level function of the same
          * name. Works on a struct with named variables rather than
@@ -3055,16 +3185,16 @@ namespace caen {
          * the underlying low-level get funtion.
          *
          * @returns
-         * EasyBoardConfiguration structure
+         * EasyDPPBoardConfiguration structure
          */
-        EasyBoardConfiguration getEasyBoardConfiguration() override
+        EasyDPPBoardConfiguration getEasyDPPBoardConfiguration() override
         {
             uint32_t mask;
             mask = getBoardConfiguration();
-            return bits2ebc(mask);
+            return bits2edbc(mask);
         }
         /**
-         * @brief Easy Set BoardConfiguration
+         * @brief Easy Set DPP BoardConfiguration
          *
          * A convenience wrapper for the low-level function of the same
          * name. Works on a struct with named variables rather than
@@ -3073,20 +3203,20 @@ namespace caen {
          * the underlying low-level set funtion.
          *
          * @param settings:
-         * EasyBoardConfiguration structure
+         * EasyDPPBoardConfiguration structure
          */
-        void setEasyBoardConfiguration(EasyBoardConfiguration settings) override
+        void setEasyDPPBoardConfiguration(EasyDPPBoardConfiguration settings) override
         {
             /* NOTE: according to DPP register docs individualTrigger,
              * timeStampRecording and chargeRecording MUST all be 1 */
             assert(settings.individualTrigger == 1);
             assert(settings.timeStampRecording == 1);
             assert(settings.chargeRecording == 1);
-            uint32_t mask = ebc2bits(settings);
+            uint32_t mask = edbc2bits(settings);
             setBoardConfiguration(mask);
         }
         /**
-         * @brief Easy Unset BoardConfiguration
+         * @brief Easy Unset DPP BoardConfiguration
          *
          * A convenience wrapper for the low-level function of the same
          * name. Works on a struct with named variables rather than
@@ -3095,9 +3225,9 @@ namespace caen {
          * the underlying low-level unset funtion.
          *
          * @param settings:
-         * EasyBoardConfiguration structure
+         * EasyDPPBoardConfiguration structure
          */
-        void unsetEasyBoardConfiguration(EasyBoardConfiguration settings) override
+        void unsetEasyDPPBoardConfiguration(EasyDPPBoardConfiguration settings) override
         {
             /* NOTE: according to docs individualTrigger, timeStampRecording
              * and chargeRecording MUST all be 1. Thus we do NOT allow
@@ -3106,7 +3236,7 @@ namespace caen {
             assert(settings.individualTrigger == 0);
             assert(settings.timeStampRecording == 0);
             assert(settings.chargeRecording == 0);
-            uint32_t mask = ebc2bits(settings);
+            uint32_t mask = edbc2bits(settings);
             unsetBoardConfiguration(mask);
         }
 

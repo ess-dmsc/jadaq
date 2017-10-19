@@ -318,19 +318,37 @@ caen::EasyDPPAlgorithmControl s2edppac(const std::string& s)
 std::string to_string(const caen::EasyBoardConfiguration &ebc)
 {
     std::stringstream ss;
-    ss << '{' << ui_to_string(ebc.individualTrigger) << ',' << ui_to_string(ebc.analogProbe) << ',' << ui_to_string(ebc.waveformRecording) << ',' << ui_to_string(ebc.extrasRecording) << ',' << ui_to_string(ebc.timeStampRecording) << ',' << ui_to_string(ebc.chargeRecording) << ',' << ui_to_string(ebc.externalTriggerMode) << '}';
+    ss << '{' << ui_to_string(ebc.triggerOverlapSetting) << ',' << ui_to_string(ebc.testPatternEnable) << ',' << ui_to_string(ebc.selfTriggerPolarity) << '}';
     return ss.str();
 }
 
 caen::EasyBoardConfiguration s2ebc(const std::string& s)
 {
+    std::regex rx("\\{(\\w+),(\\w+),(\\w+)\\}");
+    std::smatch match;
+    if (std::regex_search(s, match, rx))
+    {
+        return caen::EasyBoardConfiguration{s2ui8(match[1]),s2ui8(match[2]),s2ui8(match[3])};
+    }
+    throw std::invalid_argument{"Invalid EasyBoardConfiguration"};
+}
+
+std::string to_string(const caen::EasyDPPBoardConfiguration &edbc)
+{
+    std::stringstream ss;
+    ss << '{' << ui_to_string(edbc.individualTrigger) << ',' << ui_to_string(edbc.analogProbe) << ',' << ui_to_string(edbc.waveformRecording) << ',' << ui_to_string(edbc.extrasRecording) << ',' << ui_to_string(edbc.timeStampRecording) << ',' << ui_to_string(edbc.chargeRecording) << ',' << ui_to_string(edbc.externalTriggerMode) << '}';
+    return ss.str();
+}
+
+caen::EasyDPPBoardConfiguration s2edbc(const std::string& s)
+{
     std::regex rx("\\{(\\w+),(\\w+),(\\w+),(\\w+),(\\w+),(\\w+),(\\w+)\\}");
     std::smatch match;
     if (std::regex_search(s, match, rx))
     {
-        return caen::EasyBoardConfiguration{s2ui8(match[1]),s2ui8(match[2]),s2ui8(match[3]),s2ui8(match[4]),s2ui8(match[5]),s2ui8(match[6]),s2ui8(match[7])};
+        return caen::EasyDPPBoardConfiguration{s2ui8(match[1]),s2ui8(match[2]),s2ui8(match[3]),s2ui8(match[4]),s2ui8(match[5]),s2ui8(match[6]),s2ui8(match[7])};
     }
-    throw std::invalid_argument{"Invalid EasyBoardConfiguration"};
+    throw std::invalid_argument{"Invalid EasyDPPBoardConfiguration"};
 }
 
 std::string to_string(const caen::EasyAcquisitionControl &eac)

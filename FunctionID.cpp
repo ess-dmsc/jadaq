@@ -58,6 +58,7 @@ static std::unordered_map<std::string,FunctionID > functionMap =
                 MAP_ENTRY(TriggerLogic),
                 MAP_ENTRY(BoardConfiguration),
                 MAP_ENTRY(EasyBoardConfiguration),
+                MAP_ENTRY(EasyDPPBoardConfiguration),
                 MAP_ENTRY(AggregateOrganization),
                 MAP_ENTRY(AcquisitionControl),
                 MAP_ENTRY(EasyAcquisitionControl),
@@ -137,6 +138,7 @@ const std::string to_string(FunctionID id) {
         CASE_TO_STR(TriggerLogic)
         CASE_TO_STR(BoardConfiguration)
         CASE_TO_STR(EasyBoardConfiguration)
+        CASE_TO_STR(EasyDPPBoardConfiguration)
         CASE_TO_STR(AggregateOrganization)
         CASE_TO_STR(AcquisitionControl)
         CASE_TO_STR(EasyAcquisitionControl)
