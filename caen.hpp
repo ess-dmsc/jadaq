@@ -1982,6 +1982,9 @@ namespace caen {
         virtual uint32_t getDisableExternalTrigger() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         virtual void setDisableExternalTrigger(uint32_t value) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
 
+        virtual uint32_t getRunStartStopDelay() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual void setRunStartStopDelay(uint32_t value) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+
         virtual uint32_t getReadoutControl() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         virtual void setReadoutControl(uint32_t value) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
 
@@ -2032,42 +2035,20 @@ namespace caen {
         /* TODO: wrap Group n High Channels DC Offset Individual Correction from register docs? */
 
         /**
-         * @brief Get ROCFPGAFirmwareRevision mask
-         * @returns
-         * Get the low-level ROCFirmwareRevision mask in line with
-         * register docs. It is recommended to use the EasyX wrapper
-         * version instead.
-         */
-        uint32_t getROCFPGAFirmwareRevision() override
-        {
-            uint32_t mask;
-            errorHandler(CAEN_DGTZ_ReadRegister(handle_, 0x8124, &mask));
-            return mask;
-        }
-        /**
-         * @brief Easy Get ROCFPGAFirmwareRevision
-         * @returns
-         * A conveniently wrapped ROCFPGAFirmwareRevision settings
-         * structure. Automatically takes care of translating from the
-         * bit mask returned by the the underlying low-level get
-         * ROCFPGAFirmwareRevision mask funtion.
-         */
-        EasyROCFPGAFirmwareRevision getEasyROCFPGAFirmwareRevision() override
-        {
-            uint32_t mask;
-            mask = getROCFPGAFirmwareRevision();
-            return bits2erffr(mask);
-        }
-
-        /**
          * @brief Get BoardConfiguration mask
-         * @returns
+         *
+         * This register contains general settings for the board
+         * configuration.
+         *
          * Get the low-level BoardConfiguration mask in line with
          * register docs. It is recommended to use the EasyX wrapper
          * version instead.
          *
          * NOTE: Read mask from 0x8000, BitSet mask with 0x8004 and
          *       BitClear mask with 0x8008.
+         *
+         * @returns
+         * 32-bit mask with layout described in register docs
          */
         uint32_t getBoardConfiguration() override
         {
@@ -2077,34 +2058,55 @@ namespace caen {
         }
         /**
          * @brief Set BoardConfiguration mask
-         * @param mask:
+         *
+         * This register contains general settings for the board
+         * configuration.
+         *
          * Set the low-level BoardConfiguration mask in line with
          * register docs. It is recommended to use the EasyX wrapper
          * version instead.
+         *
+         * @param mask:
+         * 32-bit mask with layout described in register docs
          */
         void setBoardConfiguration(uint32_t mask) override
         { errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x8004, filterBoardConfigurationSetMask(mask))); }
         /**
          * @brief Unset BoardConfiguration mask
-         * @param mask:
+         *
+         *
+         * This register contains general settings for the board
+         * configuration.
+         *
          * Unset the low-level BoardConfiguration mask in line with
          * register docs. It is recommended to use the EasyX wrapper
          * version instead.
+         *
+         * @param mask:
+         * 32-bit mask with layout described in register docs
          */
         void unsetBoardConfiguration(uint32_t mask) override
         { errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x8008, filterBoardConfigurationUnsetMask(mask))); }
 
-        /* TODO: figure out a way to handle differences in
+        /* TODO: figure out a good way to handle differences in
          * BoardConfiguration mask meaning between generic and DPP
-         * version
+         * version.
+         * Maybe define own BoardConfiguration struct in each
+         * class?
+         * What about read,write for conf handling?
          */
 
         /**
          * @brief Get AcquisitionControl mask
-         * @returns
+         *
+         * This register manages the acquisition settings.
+         *
          * Get the low-level AcquisitionControl mask in line with
          * register docs. It is recommended to use the EasyX wrapper
          * version instead.
+         *
+         * @returns
+         * 32-bit mask with layout described in register docs
          */
         uint32_t getAcquisitionControl() override
         {
@@ -2114,20 +2116,31 @@ namespace caen {
         }
         /**
          * @brief Set AcquisitionControl mask
-         * @param mask:
+         *
+         * This register manages the acquisition settings.
+         *
          * Set the low-level AcquisitionControl mask in line with
          * register docs. It is recommended to use the EasyX wrapper
          * version instead.
+         *
+         * @param mask:
+         * 32-bit mask with layout described in register docs
          */
         void setAcquisitionControl(uint32_t mask) override
         { errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x8100, mask & 0x0FFF)); }
 
         /**
          * @brief Get AcquisitionStatus mask
-         * @returns
+         *
+         * This register monitors a set of conditions related to the
+         * acquisition status.
+         *
          * Get the low-level AcquisitionStatus mask in line with
          * register docs. It is recommended to use the EasyX wrapper
          * version instead.
+         *
+         * @returns
+         * 32-bit mask with layout described in register docs
          */
         uint32_t getAcquisitionStatus() override
         {
@@ -2136,12 +2149,21 @@ namespace caen {
             return mask;
         }
 
+        /* TODO: is Software Trigger from register docs already covered
+         * by sendSWtrigger? */
+
         /**
          * @brief Get GlobalTriggerMask
-         * @returns
+         *
+         * This register sets which signal can contribute to the global
+         * trigger generation.
+         *
          * Get the low-level GlobalTriggerMask in line with
          * register docs. It is recommended to use the EasyX wrapper
          * version instead.
+         *
+         * @returns
+         * 32-bit mask with layout described in register docs
          */
         uint32_t getGlobalTriggerMask() override
         {
@@ -2151,20 +2173,33 @@ namespace caen {
         }
         /**
          * @brief Set GlobalTriggerMask
-         * @param mask:
+         *
+         * This register sets which signal can contribute to the global
+         * trigger generation.
+         *
          * Set the low-level GlobalTriggerMask in line with
          * register docs. It is recommended to use the EasyX wrapper
          * version instead.
+         *
+         * @param mask:
+         * 32-bit mask with layout described in register docs
          */
         void setGlobalTriggerMask(uint32_t mask) override
         { errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x810C, mask)); }
 
         /**
          * @brief Get FrontPanelTRGOUTEnableMask
-         * @returns
+         *
+         * This register sets which signal can contribute to generate
+         * the signal on the front panel TRG-OUT LEMO connector (GPO in
+         * case of DT and NIM boards).
+         *
          * Get the low-level FrontPanelTRGOUTEnableMask in line with
          * register docs. It is recommended to use the EasyX wrapper
          * version instead.
+         *
+         * @returns
+         * 32-bit mask with layout described in register docs
          */
         uint32_t getFrontPanelTRGOUTEnableMask() override
         {
@@ -2174,10 +2209,17 @@ namespace caen {
         }
         /**
          * @brief Set FrontPanelTRGOUTEnableMask
-         * @param mask:
+         *
+         * This register sets which signal can contribute to generate
+         * the signal on the front panel TRG-OUT LEMO connector (GPO in
+         * case of DT and NIM boards).
+         *
          * Set the low-level FrontPanelTRGOUTEnableMask in line with
          * register docs. It is recommended to use the EasyX wrapper
          * version instead.
+         *
+         * @param mask:
+         * 32-bit mask with layout described in register docs
          */
         void setFrontPanelTRGOUTEnableMask(uint32_t mask) override
         { errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x8110, mask)); }
@@ -2186,10 +2228,15 @@ namespace caen {
 
         /**
          * @brief Get FrontPanelIOControl mask
-         * @returns
+         *
+         * This register manages the front panel I/O connectors.
+         *
          * Get the low-level FrontPanelIOControl mask in line with
          * register docs. It is recommended to use the EasyX wrapper
          * version instead.
+         *
+         * @returns
+         * 32-bit mask with layout described in register docs
          */
         uint32_t getFrontPanelIOControl() override
         {
@@ -2199,20 +2246,98 @@ namespace caen {
         }
         /**
          * @brief Set FrontPanelIOControl mask
-         * @param mask:
+         *
+         * This register manages the front panel I/O connectors.
+         *
          * Set the low-level FrontPanelIOControl mask in line with
          * register docs. It is recommended to use the EasyX wrapper
          * version instead.
+         *
+         * @param mask:
+         * 32-bit mask with layout described in register docs
          */
         void setFrontPanelIOControl(uint32_t mask) override
         { errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x811C, mask)); }
 
+        /* NOTE: Group Enable Mask from register is handled by GroupEnableMask */
+
+        /**
+         * @brief Get ROCFPGAFirmwareRevision mask
+         *
+         * This register contains the motherboard FPGA (ROC) firmware
+         * revision information.\n
+         * The complete format is:\n
+         * Firmware Revision = X.Y (16 lower bits)\n
+         * Firmware Revision Date = Y/M/DD (16 higher bits)\n
+         * EXAMPLE 1: revision 3.08, November 12th, 2007 is 0x7B120308.\n
+         * EXAMPLE 2: revision 4.09, March 7th, 2016 is 0x03070409.\n
+         * NOTE: the nibble code for the year makes this informa on to
+         * roll over each 16 years.
+         *
+         * Get the low-level ROCFirmwareRevision mask in line with
+         * register docs. It is recommended to use the EasyX wrapper
+         * version instead.
+         *
+         * @returns
+         * 32-bit mask with layout described in register docs
+         */
+        uint32_t getROCFPGAFirmwareRevision() override
+        {
+            uint32_t mask;
+            errorHandler(CAEN_DGTZ_ReadRegister(handle_, 0x8124, &mask));
+            return mask;
+        }
+        /**
+         * @brief Easy Get ROCFPGAFirmwareRevision
+         *
+         * A convenience wrapper for the low-level function of the same
+         * name. Works on a struct with named variables rather than
+         * directly manipulating obscure bit patterns. Automatically
+         * takes care of translating from the bit mask returned by the
+         * the underlying low-level get funtion.
+         *
+         * @returns
+         * EasyROCFPGAFirmwareRevision structure
+         */
+        EasyROCFPGAFirmwareRevision getEasyROCFPGAFirmwareRevision() override
+        {
+            uint32_t mask;
+            mask = getROCFPGAFirmwareRevision();
+            return bits2erffr(mask);
+        }
+
+        /* TODO: wrap Software Clock Sync from register docs? */
+
+        /* TODO: handle Board Info from register docs? looks slightly
+         * different from GetInfo. */
+
+        /* TODO: wrap Monitor DAC Mode from register docs? */
+
+        /* TODO: is Event Size Info from register docs already covered
+         * by existing Event function? */
+
         /**
          * @brief Get FanSpeedControl mask
-         * @returns
+         *
+         * This register manages the on-board fan speed in order to
+         * guarantee an appropriate cooling according to the internal
+         * temperature variations.\n
+         * NOTE: from revision 4 of the motherboard PCB (see register
+         * 0xF04C of the Configuration ROM), the automatic fan speed
+         * control has been implemented, and it is supported by ROC FPGA
+         * firmware revision greater than 4.4 (see register 0x8124).\n
+         * Independently of the revision, the user can set the fan speed
+         * high by setting bit[3] = 1. Setting bit[3] = 0 will restore
+         * the automatic control for revision 4 or higher, or the low
+         * fan speed in case of revisions lower than 4.\n
+         * NOTE: this register is supported by Desktop (DT) boards only.
+         *
          * Get the low-level FanSpeedControl mask in line with
          * register docs. It is recommended to use the EasyX wrapper
          * version instead.
+         *
+         * @returns
+         * 32-bit mask with layout described in register docs
          */
         uint32_t getFanSpeedControl() override
         {
@@ -2222,39 +2347,99 @@ namespace caen {
         }
         /**
          * @brief Set FanSpeedControl mask
-         * @param mask:
+         *
+         * This register manages the on-board fan speed in order to
+         * guarantee an appropriate cooling according to the internal
+         * temperature variations.\n
+         * NOTE: from revision 4 of the motherboard PCB (see register
+         * 0xF04C of the Configuration ROM), the automatic fan speed
+         * control has been implemented, and it is supported by ROC FPGA
+         * firmware revision greater than 4.4 (see register 0x8124).\n
+         * Independently of the revision, the user can set the fan speed
+         * high by setting bit[3] = 1. Setting bit[3] = 0 will restore
+         * the automatic control for revision 4 or higher, or the low
+         * fan speed in case of revisions lower than 4.\n
+         * NOTE: this register is supported by Desktop (DT) boards only.
+         *
          * Set the low-level FanSpeedControl mask in line with
          * register docs. It is recommended to use the EasyX wrapper
          * version instead.
+         *
+         * @param mask:
+         * 32-bit mask with layout described in register docs
          */
         void setFanSpeedControl(uint32_t mask) override
         { errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x8168, mask)); }
 
         /**
-         * @brief Get DisableExternalTrigger
+         * @brief Get Run/Start/Stop Delay
+         *
+         * When the start of Run is given synchronously to several
+         * boards connected in Daisy chain, it is necessary to
+         * compensate for the delay in the propagation of the Start (or
+         * Stop) signal through the chain. This register sets the delay,
+         * expressed in trigger clock cycles between the arrival of the
+         * Start signal at the input of the board (either on S-IN/GPI or
+         * TRG-IN) and the actual start of Run. The delay is usually
+         * zero for the last board in the chain and rises going
+         * backwards along the chain.
+         *
+         * Get the low-level Run/Start/Stop Delay in line with
+         * register docs. It is recommended to use the EasyX wrapper
+         * version instead.
+         *
          * @returns
-         * A boolean to set external trigger state - 1 bit.
+         * Delay (in units of 8 ns).
          */
-        uint32_t getDisableExternalTrigger() override
-        {
-            uint32_t value;
-            errorHandler(CAEN_DGTZ_ReadRegister(handle_, 0x817C, &value));
-            return value;
-        }
+        uint32_t getRunStartStopDelay() override
+        { uint32_t delay; errorHandler(CAEN_DGTZ_ReadRegister(handle_, 0x8170, &delay)); return delay; }
         /**
-         * @brief Set DisableExternalTrigger value
-         * @param value:
-         * Set the low-level DisableExternalTrigger value - 1 bit.
+         * @brief Set Run/Start/Stop Delay
+         *
+         * When the start of Run is given synchronously to several
+         * boards connected in Daisy chain, it is necessary to
+         * compensate for the delay in the propagation of the Start (or
+         * Stop) signal through the chain. This register sets the delay,
+         * expressed in trigger clock cycles between the arrival of the
+         * Start signal at the input of the board (either on S-IN/GPI or
+         * TRG-IN) and the actual start of Run. The delay is usually
+         * zero for the last board in the chain and rises going
+         * backwards along the chain.
+         *
+         * Set the low-level Run/Start/Stop Delay in line with
+         * register docs. It is recommended to use the EasyX wrapper
+         * version instead.
+         *
+         * @param delay:
+         * Delay (in units of 8 ns).
          */
-        void setDisableExternalTrigger(uint32_t value) override
-        { errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x817C, value & 0x1)); }
+        virtual void setRunStartStopDelay(uint32_t delay) override
+        { errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x8170, delay)); }
+
+        /* NOTE: map these legacy methods to get / setRunStartStopDelay */
+        virtual uint32_t getRunDelay()
+        { return getRunStartStopDelay(); };
+        virtual void setRunDelay(uint32_t delay)
+        { return setRunStartStopDelay(delay); };
+
+        /* TODO: wrap Board Failure Status from register docs? */
+
+        /* TODO: wrap Front Panel LVDS I/O New Features from register docs? */
+
+        /* TODO: wrap Buffer Occupancy Gain from register docs? */
 
         /**
          * @brief Get ReadoutControl mask
-         * @returns
+         *
+         * This register is mainly intended for VME boards, anyway some
+         * bits are applicable also for DT and NIM boards.
+         *
          * Get the low-level ReadoutControl mask in line with
          * register docs. It is recommended to use the EasyX wrapper
          * version instead.
+         *
+         * @returns
+         * 32-bit mask with layout described in register docs
          */
         uint32_t getReadoutControl() override
         {
@@ -2264,35 +2449,43 @@ namespace caen {
         }
         /**
          * @brief Set ReadoutControl mask
-         * @param mask:
+         *
+         * This register is mainly intended for VME boards, anyway some
+         * bits are applicable also for DT and NIM boards.
+         *
          * Set the low-level ReadoutControl mask in line with
          * register docs. It is recommended to use the EasyX wrapper
          * version instead.
+         *
+         * @param mask:
+         * 32-bit mask with layout described in register docs
          */
         void setReadoutControl(uint32_t mask) override
         { errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0xEF00, mask)); }
 
         /* TODO: wrap Readout Status from register docs? */
         /* TODO: wrap Board ID from register docs? */
+        /* TODO: wrap MCST Base Address and Control from register docs? */
+        /* TODO: wrap Relocation Address from register docs? */
+        /* TODO: wrap Interrupt Status/ID from register docs? */
+        /* TODO: wrap Interrupt Event Number from register docs? */
 
-
-        /* TODO: move additional general 740 register functions here */
-
-        /* Get / Set RunDelay
-         * @delay: delay in units of 8 ns
-         *
-         * When the start of Run is given synchronously to several boards connected in Daisy chain, it is necessary
-         * to compensate for the delay in the propagation of the Start (or Stop) signal through the chain. This register
-         * sets the delay, expressed in trigger clock cycles between the arrival of the Start signal at the input of
-         * the board (either on S-IN/GPI or TRG-IN) and the actual start of Run. The delay is usually zero for the
-         * last board in the chain and rises going backwards along the chain.
-         */
-        uint32_t getRunDelay() override
-        { uint32_t delay; errorHandler(CAEN_DGTZ_ReadRegister(handle_, 0x8170, &delay)); return delay; }
-        virtual void setRunDelay(uint32_t delay) override
-        { errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x8170, delay)); }
-
-
+        /* TODO: wrap Scratch from register docs? */
+        /* TODO: wrap Software Reset from register docs? */
+        /* TODO: wrap Software Clear from register docs? */
+        /* TODO: wrap Configuration Reload from register docs? */
+        /* TODO: wrap Configuration ROM Checksum from register docs? */
+        /* TODO: wrap Configuration ROM Checksum Length BYTE 0 1 2  from register docs? */
+        /* TODO: wrap Configuration ROM Constant BYTE 0 1 2 from register docs? */
+        /* TODO: wrap Configuration ROM C R Code from register docs? */
+        /* TODO: wrap Configuration ROM IEEE OUI BYTE 0 1 2 from register docs? */
+        /* TODO: wrap Configuration ROM Board Version from register docs? */
+        /* TODO: wrap Configuration ROM Board Form Factor from register docs? */
+        /* TODO: wrap Configuration ROM Board ID BYTE 0 1 from register docs */
+        /* TODO: wrap Configuration ROM PCB Revision BYTE 0 1 2 3 from register docs? */
+        /* TODO: wrap Configuration ROM FLASH Type from register docs? */
+        /* TODO: wrap Configuration ROM Board Serial Number BYTE 0 1 from register docs? */
+        /* TODO: wrap Configuration ROM VCXO Type from register docs? */
 
     };
 
@@ -2320,8 +2513,14 @@ namespace caen {
         virtual uint32_t filterBoardConfigurationUnsetMask(uint32_t mask) override
         { return (mask & (0xFFFFFFFF ^ 0x000C0110)); }
 
+        /* TODO: rename these DPP-specific methods to getDPP / setDPP? */
+
         /**
          * @brief Get GateWidth
+         *
+         * Sets the Gate width for the charge integration used in the
+         * energy spectra calculation.
+         *
          * @param group:
          * channel group index
          * @returns
@@ -2338,11 +2537,15 @@ namespace caen {
         }
         /**
          * @brief Set GateWidth
+         *
+         * Sets the Gate width for the charge integration used in the
+         * energy spectra calculation.
+         *
          * @param group:
          * optional channel group index
          * @param value:
-         * Number of samples for the Gate width. Each sample corresponds
-         * to 16 ns - 12 bits
+         * Number of samples for the Gate width. Each sample
+         * corresponds to 16 ns - 12 bits
          */
         void setGateWidth(uint32_t group, uint32_t value) override
         {
@@ -2359,6 +2562,10 @@ namespace caen {
 
         /**
          * @brief Get GateOffset
+         *
+         * Corresponds to the shift in time of the integration gate
+         * position with respect to the trigger.
+         *
          * @param group:
          * channel group index
          * @returns
@@ -2375,6 +2582,10 @@ namespace caen {
         }
         /**
          * @brief Set GateOffset
+         *
+         * Corresponds to the shift in time of the integration gate
+         * position with respect to the trigger.
+         *
          * @param group:
          * optional channel group index
          * @param value:
@@ -2396,6 +2607,17 @@ namespace caen {
 
         /**
          * @brief Get FixedBaseline
+         *
+         * The baseline calculation can be performed either dynamically
+         * or statically. In the first case the user can set the samples
+         * of the moving average window through register 0x1n40. In the
+         * latter case the user must disable the automatic baseline
+         * calculation through bits[22:20] of register 0x1n40 and set
+         * the desired value of fixed baseline through this
+         * register. The baseline value then remains constant for the
+         * whole acquisition.\n
+         * Note: This register is ignored in case of dynamic calculation.
+         *
          * @param group:
          * channel group index
          * @returns
@@ -2411,6 +2633,17 @@ namespace caen {
         }
         /**
          * @brief Set FixedBaseline
+         *
+         * The baseline calculation can be performed either dynamically
+         * or statically. In the first case the user can set the samples
+         * of the moving average window through register 0x1n40. In the
+         * latter case the user must disable the automatic baseline
+         * calculation through bits[22:20] of register 0x1n40 and set
+         * the desired value of fixed baseline through this
+         * register. The baseline value then remains constant for the
+         * whole acquisition.\n
+         * Note: This register is ignored in case of dynamic calculation.
+         *
          * @param group:
          * optional channel group index
          * @param value:
@@ -2429,16 +2662,23 @@ namespace caen {
         void setFixedBaseline(uint32_t value) override
         { errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x8038, value & 0xFFF)); }
 
-        /* TODO: switch DPPPreTrigger to use native CAENDigitizer functions? */
+        /* TODO: switch DPPPreTriggerSize to use native CAENDigitizer functions? */
+        /* NOTE: we can't rename DPPPreTriggerSize to fit DPP register
+         * doc Pre Trigger since it is a general Digitizer method. */
 
         /**
          * @brief Get DPPPreTriggerSize
+         *
+         * The Pre Trigger defines the number of samples before the
+         * trigger in the waveform saved into memory.
+         *
          * @param group:
          * channel group index
          * @returns
          * Number of samples Ns of the Pre Trigger width. The value is
          * expressed in steps of sampling frequency (16 ns).\n
-         * NOTE: the Pre Trigger value must be greater than the Gate Offset value by at least 112 ns.
+         * NOTE: the Pre Trigger value must be greater than the Gate
+         * Offset value by at least 112 ns.
          */
         uint32_t getDPPPreTriggerSize(int group) override
         {
@@ -2450,6 +2690,10 @@ namespace caen {
         }
         /**
          * @brief Set DPPPreTriggerSize
+         *
+         * The Pre Trigger defines the number of samples before the
+         * trigger in the waveform saved into memory.
+         *
          * @param group:
          * optional channel group index
          * @param samples:
@@ -2473,10 +2717,15 @@ namespace caen {
 
         /**
          * @brief Get DPPAlgorithmControl
-         * @returns
+         *
+         * Management of the DPP algorithm features.
+         *
          * Get the low-level DPPAlgorithmControl mask in line with
          * register docs. It is recommended to use the EasyX wrapper
          * version instead.
+         *
+         * @returns
+         * 32-bit mask with layout described in register docs
          */
         uint32_t getDPPAlgorithmControl(uint32_t group) override
         {
@@ -2488,12 +2737,17 @@ namespace caen {
         }
         /**
          * @brief Set DPPAlgorithmControl mask
-         * @param group:
-         * optional channel group index
-         * @param mask:
+         *
+         * Management of the DPP algorithm features.
+         *
          * Set the low-level DPPAlgorithmControl mask in line with
          * register docs. It is recommended to use the EasyX wrapper
          * version instead.
+         *
+         * @param group:
+         * optional channel group index
+         * @param mask:
+         * 32-bit mask with layout described in register docs
          */
         void setDPPAlgorithmControl(uint32_t group, uint32_t mask) override
         {
@@ -2510,11 +2764,15 @@ namespace caen {
 
         /**
          * @brief Easy Get DPPAlgorithmControl
+         *
+         * A convenience wrapper for the low-level function of the same
+         * name. Works on a struct with named variables rather than
+         * directly manipulating obscure bit patterns. Automatically
+         * takes care of translating from the bit mask returned by the
+         * the underlying low-level get funtion.
+         *
          * @returns
-         * A conveniently wrapped DPPAlgorithmControl settings
-         * structure. Automatically takes care of translating from the
-         * bit mask returned by the the underlying low-level get
-         * DPPAlgorithmControl mask funtion.
+         * EasyDPPAlgorithmControl structure
          */
         EasyDPPAlgorithmControl getEasyDPPAlgorithmControl(uint32_t group) override
         {
@@ -2523,11 +2781,15 @@ namespace caen {
         }
         /**
          * @brief Easy Set DPPAlgorithmControl
+         *
+         * A convenience wrapper for the low-level function of the same
+         * name. Works on a struct with named variables rather than
+         * directly manipulating obscure bit patterns. Automatically
+         * takes care of translating to the bit mask needed by the
+         * the underlying low-level set funtion.
+         *
          * @param settings:
-         * Set the DPPAlgorithmControl as specified in the provided
-         * settings structure. Automatically takes care of translating
-         * the structure to the proper bit mask needed for the
-         * underlying low-level set DPPAlgorithmControl funtion.
+         * EasyDPPAlgorithmControl structure
          */
         void setEasyDPPAlgorithmControl(uint32_t group, EasyDPPAlgorithmControl settings) override
         {
@@ -2546,6 +2808,12 @@ namespace caen {
 
         /**
          * @brief Get TriggerHoldOffWidth
+         *
+         * The Trigger Hold-Off is a logic signal of programmable width
+         * generated by a channel in correspondence with its local
+         * self-trigger. Other triggers are inhibited for the overall
+         * Trigger Hold-Off duration. 
+         *
          * @param group:
          * channel group index
          * @returns
@@ -2561,6 +2829,12 @@ namespace caen {
         }
         /**
          * @brief Set TriggerHoldOffWidth
+         *
+         * The Trigger Hold-Off is a logic signal of programmable width
+         * generated by a channel in correspondence with its local
+         * self-trigger. Other triggers are inhibited for the overall
+         * Trigger Hold-Off duration. 
+         *
          * @param group:
          * optional channel group index
          * @param value:
@@ -2581,6 +2855,13 @@ namespace caen {
 
         /**
          * @brief Get ShapedTriggerWidth
+         *
+         * The Shaped Trigger is a logic signal of programmable width
+         * generated by a channel in correspondence to its local
+         * self-trigger. It is used to propagate the trigger to the
+         * other channels of the board and to other external boards, as
+         * well as to feed the coincidence trigger logic.
+         *
          * @param group:
          * channel group index
          * @returns
@@ -2601,6 +2882,13 @@ namespace caen {
         }
         /**
          * @brief Set ShapedTriggerWidth
+         *
+         * The Shaped Trigger is a logic signal of programmable width
+         * generated by a channel in correspondence to its local
+         * self-trigger. It is used to propagate the trigger to the
+         * other channels of the board and to other external boards, as
+         * well as to feed the coincidence trigger logic.
+         *
          * @param group:
          * optional channel group index
          * @param value:
@@ -2639,11 +2927,15 @@ namespace caen {
 
         /**
          * @brief Easy Get BoardConfiguration
+         *
+         * A convenience wrapper for the low-level function of the same
+         * name. Works on a struct with named variables rather than
+         * directly manipulating obscure bit patterns. Automatically
+         * takes care of translating from the bit mask returned by the
+         * the underlying low-level get funtion.
+         *
          * @returns
-         * A conveniently wrapped BoardConfiguration settings
-         * structure. Automatically takes care of translating from the
-         * bit mask returned by the the underlying low-level get
-         * BoardConfiguration mask funtion.
+         * EasyBoardConfiguration structure
          */
         EasyBoardConfiguration getEasyBoardConfiguration() override
         {
@@ -2653,11 +2945,15 @@ namespace caen {
         }
         /**
          * @brief Easy Set BoardConfiguration
+         *
+         * A convenience wrapper for the low-level function of the same
+         * name. Works on a struct with named variables rather than
+         * directly manipulating obscure bit patterns. Automatically
+         * takes care of translating to the bit mask needed by the
+         * the underlying low-level set funtion.
+         *
          * @param settings:
-         * Set the BoardConfiguration as specified in the provided
-         * settings structure. Automatically takes care of translating
-         * the structure to the proper bit mask needed for the
-         * underlying low-level set BoardConfiguration funtion.
+         * EasyBoardConfiguration structure
          */
         void setEasyBoardConfiguration(EasyBoardConfiguration settings) override
         {
@@ -2671,11 +2967,15 @@ namespace caen {
         }
         /**
          * @brief Easy Unset BoardConfiguration
+         *
+         * A convenience wrapper for the low-level function of the same
+         * name. Works on a struct with named variables rather than
+         * directly manipulating obscure bit patterns. Automatically
+         * takes care of translating to the bit mask needed by the
+         * the underlying low-level unset funtion.
+         *
          * @param settings:
-         * Unset the BoardConfiguration as specified in the provided
-         * settings structure. Automatically takes care of translating
-         * the structure to the proper bit mask needed for the
-         * underlying low-level unset BoardConfiguration funtion.
+         * EasyBoardConfiguration structure
          */
         void unsetEasyBoardConfiguration(EasyBoardConfiguration settings) override
         {
@@ -2692,6 +2992,14 @@ namespace caen {
 
         /**
          * @brief Get AggregateOrganization
+         *
+         * The internal memory of the digitizer can be divided into a
+         * programmable number of aggregates, where each aggregate
+         * contains a specific number of events. This register defines
+         * how many aggregates can be contained in the memory.\n
+         * Note: this register must not be modified while the
+         * acquisition is running.
+         *
          * @returns
          * Aggregate Organization. Nb: the number of aggregates is equal
          * to N_aggr = 2^Nb . Please refer to register doc for values -
@@ -2705,6 +3013,14 @@ namespace caen {
         }
         /**
          * @brief Set AggregateOrganization
+         *
+         * The internal memory of the digitizer can be divided into a
+         * programmable number of aggregates, where each aggregate
+         * contains a specific number of events. This register defines
+         * how many aggregates can be contained in the memory.\n
+         * Note: this register must not be modified while the
+         * acquisition is running.
+         *
          * @param value:
          * Aggregate Organization. Nb: the number of aggregates is equal
          * to N_aggr = 2^Nb . Please refer to register doc for values -
@@ -2727,6 +3043,8 @@ namespace caen {
 
         /* TODO: make sure Record Length is already covered by RecordLength */
 
+        /* TODO: what to do about these custom functions - now that they
+         * are exposed through BoardConfiguration helpers? */
         /**
          * @brief Get DPPAcquisitionMode
          * @returns
@@ -2789,11 +3107,15 @@ namespace caen {
 
         /**
          * @brief Easy Get AcquisitionControl
+         *
+         * A convenience wrapper for the low-level function of the same
+         * name. Works on a struct with named variables rather than
+         * directly manipulating obscure bit patterns. Automatically
+         * takes care of translating from the bit mask returned by the
+         * the underlying low-level get funtion.
+         *
          * @returns
-         * A conveniently wrapped AcquisitionControl settings
-         * structure. Automatically takes care of translating from the
-         * bit mask returned by the the underlying low-level get
-         * AcquisitionControl mask funtion.
+         * EasyAcquisitionControl structure
          */
         EasyAcquisitionControl getEasyAcquisitionControl() override
         {
@@ -2803,11 +3125,15 @@ namespace caen {
         }
         /**
          * @brief Easy Set AcquisitionControl
+         *
+         * A convenience wrapper for the low-level function of the same
+         * name. Works on a struct with named variables rather than
+         * directly manipulating obscure bit patterns. Automatically
+         * takes care of translating to the bit mask needed by the
+         * the underlying low-level set funtion.
+         *
          * @param settings:
-         * Set the AcquisitionControl as specified in the provided
-         * settings structure. Automatically takes care of translating
-         * the structure to the proper bit mask needed for the
-         * underlying low-level set AcquisitionControl funtion.
+         * EasyAcquisitionControl structure
          */
         void setEasyAcquisitionControl(EasyAcquisitionControl settings) override
         {
@@ -2819,11 +3145,15 @@ namespace caen {
 
         /**
          * @brief Easy Get AcquisitionStatus
+         *
+         * A convenience wrapper for the low-level function of the same
+         * name. Works on a struct with named variables rather than
+         * directly manipulating obscure bit patterns. Automatically
+         * takes care of translating from the bit mask returned by the
+         * the underlying low-level get funtion.
+         *
          * @returns
-         * A conveniently wrapped AcquisitionStatus settings
-         * structure. Automatically takes care of translating from the
-         * bit mask returned by the the underlying low-level get
-         * AcquisitionStatus mask funtion.
+         * EasyAcquisitionStatus structure
          */
         EasyAcquisitionStatus getEasyAcquisitionStatus() override
         {
@@ -2832,18 +3162,21 @@ namespace caen {
             return bits2eas(mask);
         }
 
-        /* TODO: is Software Trigger from register docs already covered
-         * by sendSWtrigger? */
+        /* NOTE: Reuse get / set SoftwareTrigger from parent? */
 
         /* NOTE: Reuse get / set GlobalTriggerMask from parent */
 
         /**
          * @brief Easy Get GlobalTriggerMask
+         *
+         * A convenience wrapper for the low-level function of the same
+         * name. Works on a struct with named variables rather than
+         * directly manipulating obscure bit patterns. Automatically
+         * takes care of translating from the bit mask returned by the
+         * the underlying low-level get funtion.
+         *
          * @returns
-         * A conveniently wrapped GlobalTriggerMask settings
-         * structure. Automatically takes care of translating from the
-         * bit mask returned by the the underlying low-level get
-         * GlobalTriggerMask funtion.
+         * EasyGlobalTriggerMask structure
          */
         EasyGlobalTriggerMask getEasyGlobalTriggerMask() override
         {
@@ -2853,11 +3186,15 @@ namespace caen {
         }
         /**
          * @brief Easy Set GlobalTriggerMask
+         *
+         * A convenience wrapper for the low-level function of the same
+         * name. Works on a struct with named variables rather than
+         * directly manipulating obscure bit patterns. Automatically
+         * takes care of translating to the bit mask needed by the
+         * the underlying low-level set funtion.
+         *
          * @param settings:
-         * Set the GlobalTriggerMask as specified in the provided
-         * settings structure. Automatically takes care of translating
-         * the structure to the proper bit mask needed for the
-         * underlying low-level set GlobalTriggerMask funtion.
+         * EasyGlobalTriggerMask structure
          */
         void setEasyGlobalTriggerMask(EasyGlobalTriggerMask settings) override
         {
@@ -2869,11 +3206,15 @@ namespace caen {
 
         /**
          * @brief Easy Get FrontPanelTRGOUTEnableMask
+         *
+         * A convenience wrapper for the low-level function of the same
+         * name. Works on a struct with named variables rather than
+         * directly manipulating obscure bit patterns. Automatically
+         * takes care of translating from the bit mask returned by the
+         * the underlying low-level get funtion.
+         *
          * @returns
-         * A conveniently wrapped FrontPanelTRGOUTEnableMask settings
-         * structure. Automatically takes care of translating from the
-         * bit mask returned by the the underlying low-level get
-         * FrontPanelTRGOUTEnableMask funtion.
+         * EasyFrontPanelTRGOUTEnableMask structure
          */
         EasyFrontPanelTRGOUTEnableMask getEasyFrontPanelTRGOUTEnableMask() override
         {
@@ -2883,11 +3224,15 @@ namespace caen {
         }
         /**
          * @brief Easy Set FrontPanelTRGOUTEnableMask
+         *
+         * A convenience wrapper for the low-level function of the same
+         * name. Works on a struct with named variables rather than
+         * directly manipulating obscure bit patterns. Automatically
+         * takes care of translating to the bit mask needed by the
+         * the underlying low-level set funtion.
+         *
          * @param settings:
-         * Set the FrontPanelTRGOUTEnableMask as specified in the provided
-         * settings structure. Automatically takes care of translating
-         * the structure to the proper bit mask needed for the
-         * underlying low-level set FrontPanelTRGOUTEnableMask funtion.
+         * EasyFrontPanelTRGOUTEnableMask structure
          */
         void setEasyFrontPanelTRGOUTEnableMask(EasyFrontPanelTRGOUTEnableMask settings) override
         {
@@ -2899,11 +3244,15 @@ namespace caen {
 
         /**
          * @brief Easy Get FrontPanelIOControl
+         *
+         * A convenience wrapper for the low-level function of the same
+         * name. Works on a struct with named variables rather than
+         * directly manipulating obscure bit patterns. Automatically
+         * takes care of translating from the bit mask returned by the
+         * the underlying low-level get funtion.
+         *
          * @returns
-         * A conveniently wrapped FrontPanelIOControl settings
-         * structure. Automatically takes care of translating from the
-         * bit mask returned by the the underlying low-level get
-         * FrontPanelIOControl mask funtion.
+         * EasyFrontPanelIOControl structure
          */
         EasyFrontPanelIOControl getEasyFrontPanelIOControl() override
         {
@@ -2913,11 +3262,15 @@ namespace caen {
         }
         /**
          * @brief Easy Set FrontPanelIOControl
+         *
+         * A convenience wrapper for the low-level function of the same
+         * name. Works on a struct with named variables rather than
+         * directly manipulating obscure bit patterns. Automatically
+         * takes care of translating to the bit mask needed by the
+         * the underlying low-level set funtion.
+         *
          * @param settings:
-         * Set the FrontPanelIOControl as specified in the provided
-         * settings structure. Automatically takes care of translating
-         * the structure to the proper bit mask needed for the
-         * underlying low-level set FrontPanelIOControl funtion.
+         * EasyFrontPanelIOControl structure
          */
         void setEasyFrontPanelIOControl(EasyFrontPanelIOControl settings) override
         {
@@ -2925,20 +3278,13 @@ namespace caen {
             setFrontPanelIOControl(mask);
         }
 
-        /* TODO: is Group Enable Mask from register docs equal to
-         * GroupEnableMask? */
-
         /* NOTE: ROCFPGAFirmwareRevision is inherited from Digitizer740  */
+        /* NOTE: EasyROCFPGAFirmwareRevision is inherited from Digitizer740  */
         
         /* TODO: wrap Voltage Level Mode Configuration from register docs? */
-        /* TODO: wrap Software Clock Sync from register docs? */
 
-        /* TODO: is Board Info from register docs equal to GetInfo? */
-
-        /* TODO: wrap Analog Monitor Mode from register docs? */
-
-        /* TODO: is Event Size Info from register docs already covered
-         * by existing Event function? */
+        /* NOTE: Analog Monitor Mode from DPP register docs looks equal
+         * to Monitor DAC Mode from generic model */
 
         /* TODO: wrap Time Bomb Downcounter from register docs? */
 
@@ -2947,16 +3293,31 @@ namespace caen {
         /* NOTE: Get / Set Run/Start/Stop Delay from register docs is
          * already covered by RunDelay. */
 
-        /* TODO: wrap Board Failure Status from register docs? */
+        /**
+         * @brief Get DisableExternalTrigger
+         * @returns
+         * A boolean to set external trigger state - 1 bit.
+         */
+        uint32_t getDisableExternalTrigger() override
+        {
+            uint32_t value;
+            errorHandler(CAEN_DGTZ_ReadRegister(handle_, 0x817C, &value));
+            return value;
+        }
+        /**
+         * @brief Set DisableExternalTrigger value
+         * @param value:
+         * Set the low-level DisableExternalTrigger value - 1 bit.
+         */
+        void setDisableExternalTrigger(uint32_t value) override
+        { errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x817C, value & 0x1)); }
 
-        /* TODO: wrap Front Panel LVDS I/O New Features from register docs? */
+        /* NOTE: Buffer Occupancy Gain from general register docs is NOT
+         * in DPP register docs */
+        /* TODO: explicitly disable Buffer Occupancy Gain here if
+         * implemented in parent? */
 
         /* TODO: wrap ReadoutControl in user-friendly struct */
-
-        /* TODO: wrap MCST Base Address and Control from register docs? */
-        /* TODO: wrap Relocation Address from register docs? */
-        /* TODO: wrap Interrupt Status/ID from register docs? */
-        /* TODO: wrap Interrupt Event Number from register docs? */
 
         /**
          * @brief Get AggregateNumberPerBLT value
@@ -2978,23 +3339,6 @@ namespace caen {
          */
         void setAggregateNumberPerBLT(uint32_t value) override
         { errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0xEF1C, value & 0x03FF)); }
-
-        /* TODO: wrap Scratch from register docs? */
-        /* TODO: wrap Software Reset from register docs? */
-        /* TODO: wrap Software Clear from register docs? */
-        /* TODO: wrap Configuration Reload from register docs? */
-        /* TODO: wrap Configuration ROM Checksum from register docs? */
-        /* TODO: wrap Configuration ROM Checksum Length BYTE 0 1 2  from register docs? */
-        /* TODO: wrap Configuration ROM Constant BYTE 0 1 2 from register docs? */
-        /* TODO: wrap Configuration ROM C R Code from register docs? */
-        /* TODO: wrap Configuration ROM IEEE OUI BYTE 0 1 2 from register docs? */
-        /* TODO: wrap Configuration ROM Board Version from register docs? */
-        /* TODO: wrap Configuration ROM Board Form Factor from register docs? */
-        /* TODO: wrap Configuration ROM Board ID BYTE 0 1 from register docs */
-        /* TODO: wrap Configuration ROM PCB Revision BYTE 0 1 2 3 from register docs? */
-        /* TODO: wrap Configuration ROM FLASH Type from register docs? */
-        /* TODO: wrap Configuration ROM Board Serial Number BYTE 0 1 from register docs? */
-        /* TODO: wrap Configuration ROM VCXO Type from register docs? */
 
     };
 

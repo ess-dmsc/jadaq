@@ -52,7 +52,6 @@ static std::unordered_map<std::string,FunctionID > functionMap =
                 MAP_ENTRY(DPPAcquisitionMode),
                 MAP_ENTRY(DPPTriggerMode),
                 MAP_ENTRY(MaxNumAggregatesBLT),
-                MAP_ENTRY(RunDelay),
                 MAP_ENTRY(SAMCorrectionLevel),
                 MAP_ENTRY(SAMSamplingFrequency),
                 MAP_ENTRY(SAMAcquisitionMode),
@@ -74,6 +73,7 @@ static std::unordered_map<std::string,FunctionID > functionMap =
                 MAP_ENTRY(EasyROCFPGAFirmwareRevision),
                 MAP_ENTRY(FanSpeedControl),
                 MAP_ENTRY(DisableExternalTrigger),
+                MAP_ENTRY(RunStartStopDelay),
                 MAP_ENTRY(ReadoutControl),
                 MAP_ENTRY(AggregateNumberPerBLT),
                 MAP_ENTRY(ChannelDCOffset),
@@ -129,7 +129,6 @@ const std::string to_string(FunctionID id) {
         CASE_TO_STR(DPPAcquisitionMode)
         CASE_TO_STR(DPPTriggerMode)
         CASE_TO_STR(MaxNumAggregatesBLT)
-        CASE_TO_STR(RunDelay)
         CASE_TO_STR(SAMCorrectionLevel)
         CASE_TO_STR(SAMSamplingFrequency)
         CASE_TO_STR(SAMAcquisitionMode)
@@ -151,6 +150,7 @@ const std::string to_string(FunctionID id) {
         CASE_TO_STR(EasyROCFPGAFirmwareRevision)
         CASE_TO_STR(FanSpeedControl)
         CASE_TO_STR(DisableExternalTrigger)
+        CASE_TO_STR(RunStartStopDelay)
         CASE_TO_STR(ReadoutControl)
         CASE_TO_STR(AggregateNumberPerBLT)
         CASE_TO_STR(ChannelDCOffset)

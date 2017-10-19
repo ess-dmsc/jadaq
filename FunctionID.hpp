@@ -52,7 +52,6 @@ enum FunctionID {
     DPPAcquisitionMode,
     DPPTriggerMode,
     MaxNumAggregatesBLT,
-    RunDelay,
     SAMCorrectionLevel,
     SAMSamplingFrequency,
     SAMAcquisitionMode,
@@ -74,6 +73,7 @@ enum FunctionID {
     EasyROCFPGAFirmwareRevision,
     FanSpeedControl,
     DisableExternalTrigger,
+    RunStartStopDelay,
     ReadoutControl,
     AggregateNumberPerBLT,
     // Channel/group setting
