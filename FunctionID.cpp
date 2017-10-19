@@ -78,6 +78,8 @@ static std::unordered_map<std::string,FunctionID > functionMap =
                 MAP_ENTRY(AggregateNumberPerBLT),
                 MAP_ENTRY(ChannelDCOffset),
                 MAP_ENTRY(GroupDCOffset),
+                MAP_ENTRY(AMCFirmwareRevision),
+                MAP_ENTRY(EasyAMCFirmwareRevision),
                 MAP_ENTRY(ChannelSelfTrigger),
                 MAP_ENTRY(GroupSelfTrigger),
                 MAP_ENTRY(ChannelTriggerThreshold),
@@ -155,6 +157,8 @@ const std::string to_string(FunctionID id) {
         CASE_TO_STR(AggregateNumberPerBLT)
         CASE_TO_STR(ChannelDCOffset)
         CASE_TO_STR(GroupDCOffset)
+        CASE_TO_STR(AMCFirmwareRevision)
+        CASE_TO_STR(EasyAMCFirmwareRevision)
         CASE_TO_STR(ChannelSelfTrigger)
         CASE_TO_STR(GroupSelfTrigger)
         CASE_TO_STR(ChannelTriggerThreshold)

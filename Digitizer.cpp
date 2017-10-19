@@ -205,6 +205,8 @@ static std::string get_(caen::Digitizer* digitizer, FunctionID functionID, int i
     switch (functionID) {
         GET_ICASE(digitizer,ChannelDCOffset,index,to_string)
         GET_ICASE(digitizer,GroupDCOffset,index,to_string)
+        GET_ICASE(digitizer,AMCFirmwareRevision,index,to_string)
+        GET_ICASE(digitizer,EasyAMCFirmwareRevision,index,to_string)
         GET_ICASE(digitizer,ChannelSelfTrigger,index,to_string)
         GET_ICASE(digitizer,GroupSelfTrigger,index,to_string)
         GET_ICASE(digitizer,ChannelTriggerThreshold,index,to_string)

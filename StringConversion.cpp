@@ -273,6 +273,30 @@ caen::SAMTriggerCountVetoParams s2samtcvp(const std::string& s)
     throw std::invalid_argument{"Invalid SAMTriggerCountVetoParams"};
 }
 
+std::string to_string(const caen::EasyAMCFirmwareRevision &eafr)
+{
+    std::stringstream ss;
+    /* Firmware Revision Date = Y/M/DD (16 higher bits)
+       EXAMPLE 1: revision 3.08, November 12th, 2007 is 0x7B120308. */
+    /* NOTE: We unwrap each of the revisionDate bytes in turn for proper
+       translation and printing */
+    ss << '{' << ui_to_string(eafr.minorRevisionNumber) << ',' << ui_to_string(eafr.majorRevisionNumber) << ',' << ui_to_string(eafr.revisionDate >> 12) << ui_to_string((eafr.revisionDate & 0x0F00) >> 8) << ui_to_string((eafr.revisionDate & 0xF0) >> 4) << ui_to_string(eafr.revisionDate & 0xF) << '}';
+    return ss.str();
+}
+
+caen::EasyAMCFirmwareRevision s2eafr(const std::string& s)
+{
+    std::regex rx("\\{(\\w+),(\\w+),(\\w+)\\}");
+    std::smatch match;
+    if (std::regex_search(s, match, rx))
+    {
+        /* NOTE: date is encoded as four individual byte integer values
+         * as described above. Thus, we unpack as int and force to uint16. */
+        return caen::EasyAMCFirmwareRevision{s2ui8(match[1]),s2ui8(match[2]),(uint16_t)s2ui(match[3])};
+    }
+    throw std::invalid_argument{"Invalid EasyAMCFirmwareRevision"};
+}
+
 std::string to_string(const caen::EasyDPPAlgorithmControl &edppac)
 {
     std::stringstream ss;

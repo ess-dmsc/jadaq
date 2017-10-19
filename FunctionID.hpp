@@ -79,6 +79,8 @@ enum FunctionID {
     // Channel/group setting
     ChannelDCOffset,
     GroupDCOffset,
+    AMCFirmwareRevision,
+    EasyAMCFirmwareRevision,
     ChannelSelfTrigger,
     GroupSelfTrigger,
     ChannelTriggerThreshold,

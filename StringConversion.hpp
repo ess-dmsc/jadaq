@@ -96,6 +96,8 @@ std::string to_string(const caen::TriggerLogicParams &tlp);
 caen::TriggerLogicParams s2tlp(const std::string& s);
 std::string to_string(const caen::SAMTriggerCountVetoParams &samtcvp);
 caen::SAMTriggerCountVetoParams s2samtcvp(const std::string& s);
+std::string to_string(const caen::EasyAMCFirmwareRevision &eafr);
+caen::EasyAMCFirmwareRevision s2eafr(const std::string& s);
 std::string to_string(const caen::EasyDPPAlgorithmControl &edppac);
 caen::EasyDPPAlgorithmControl s2edppac(const std::string& s);
 std::string to_string(const caen::EasyBoardConfiguration &ebc);

@@ -316,6 +316,34 @@ namespace caen {
     };
 
     /**
+     * @struct EasyAMCFirmwareRevision
+     * @brief For user-friendly configuration of ROC FPGA Firmware Revision.
+     *
+     * This register contains the motherboard FPGA (ROC) firmware
+     * revision information.\n
+     * The complete format is:\n
+     * Firmware Revision = X.Y (16 lower bits)\n
+     * Firmware Revision Date = Y/M/DD (16 higher bits)\n
+     * EXAMPLE 1: revision 3.08, November 12th, 2007 is 0x7B120308.\n
+     * EXAMPLE 2: revision 4.09, March 7th, 2016 is 0x03070409.\n
+     * NOTE: the nibble code for the year makes this information to roll
+     * over each 16 years.
+     *
+     * @var EasyAMCFirmwareRevision::minorRevisionNumber
+     * ROC Firmware Minor Revision Number (Y).
+     * @var EasyAMCFirmwareRevision::majorRevisionNumber
+     * ROC Firmware Major Revision Number (X).
+     * @var EasyAMCFirmwareRevision::revisionDate
+     * ROC Firmware Revision Date (Y/M/DD).
+     */
+    struct EasyAMCFirmwareRevision {
+        /* Only allow the expected number of bits per field */
+        uint8_t minorRevisionNumber : 8;
+        uint8_t majorRevisionNumber : 8;
+        uint16_t revisionDate : 16;
+    };
+
+    /**
      * @struct EasyDPPAlgorithmControl
      * @brief For user-friendly configuration of DPP Algorithm Control mask.
      *
@@ -908,6 +936,45 @@ namespace caen {
      */
     static uint32_t packBits(uint8_t value, uint8_t bits, uint8_t offset)
     { return (value & ((1 << bits) - 1)) << offset; }
+
+
+    /**
+     * @brief pack EasyAMCFirmwareRevision settings into bit mask
+     * @param settings:
+     * Settings structure to pack
+     * @returns
+     * Bit mask ready for low-level set function.
+     * @internal
+     * EasyAMCFirmwareRevision fields:
+     * minor revision number in [0:7], major revision number in [8:15],
+     * revision date in [16:31]
+     */
+    static uint32_t eafr2bits(EasyAMCFirmwareRevision settings)
+    {
+        uint32_t mask = 0;
+        mask |= packBits(settings.minorRevisionNumber, 8, 0);
+        mask |= packBits(settings.majorRevisionNumber, 8, 8);
+        /* revisionDate is 16-bit - manually pack in two steps */
+        mask |= packBits(settings.revisionDate & 0xFF, 8, 16);
+        mask |= packBits(settings.revisionDate >> 8 & 0xFF, 8, 24);
+        return mask;
+    }
+    /**
+     * @brief unpack bit mask into EasyAMCFirmwareRevision settings
+     * @param mask:
+     * Bit mask from low-level get function to unpack
+     * @returns
+     * Settings structure for convenient use.
+     */
+    static EasyAMCFirmwareRevision bits2eafr(uint32_t mask)
+    {
+        EasyAMCFirmwareRevision settings;
+        /* revisionDate is 16-bit - manually unpack in two steps */
+        settings = {unpackBits(mask, 8, 0), unpackBits(mask, 8, 8),
+                    (uint16_t)(unpackBits(mask, 8, 24) << 8 |
+                               unpackBits(mask, 8, 16))};
+        return settings;
+    }
 
     /**
      * @brief pack EasyDPPAlgorithmControl settings into bit mask
@@ -1910,6 +1977,9 @@ namespace caen {
         void setDPPParameters(uint32_t channelmask, void *params)
         { errorHandler(CAEN_DGTZ_SetDPPParameters(handle_, channelmask, params)); }
 
+        virtual uint32_t getAMCFirmwareRevision(uint32_t group) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual EasyAMCFirmwareRevision getEasyAMCFirmwareRevision(uint32_t group) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+
         virtual uint32_t getRunDelay() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         virtual void setRunDelay(uint32_t delay) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
 
@@ -2023,7 +2093,57 @@ namespace caen {
         virtual uint32_t filterBoardConfigurationUnsetMask(uint32_t mask) override
         { return (mask & (0xFFFFFFFF ^ 0x00000010)); }
 
-        /* TODO: wrap AMC Firmware Revision from register docs? */
+        /**
+         * @brief Get AMCFirmwareRevision mask
+         *
+         * This register contains the channel FPGA (AMC) firmware
+         * revision information.\n
+         * The complete format is:\n
+         * Firmware Revision = X.Y (16 lower bits)\n
+         * Firmware Revision Date = Y/M/DD (16 higher bits)\n
+         * EXAMPLE 1: revision 1.03, November 12th, 2007 is 0x7B120103.\n
+         * EXAMPLE 2: revision 2.09, March 7th, 2016 is 0x03070209.\n
+         * NOTE: the nibble code for the year makes this informa on to
+         * roll over each 16 years.
+         *
+         * Get the low-level AMCFirmwareRevision mask in line with
+         * register docs. It is recommended to use the EasyX wrapper
+         * version instead.
+         *
+         * @param group:
+         * group index
+         * @returns
+         * 32-bit mask with layout described in register docs
+         */
+        uint32_t getAMCFirmwareRevision(uint32_t group) override
+        {
+            uint32_t mask;
+            if (group >= groups())
+                errorHandler(CAEN_DGTZ_InvalidChannelNumber);
+            errorHandler(CAEN_DGTZ_ReadRegister(handle_, 0x108C | group<<8, &mask));
+            return mask;
+        }
+        /**
+         * @brief Easy Get AMCFirmwareRevision
+         *
+         * A convenience wrapper for the low-level function of the same
+         * name. Works on a struct with named variables rather than
+         * directly manipulating obscure bit patterns. Automatically
+         * takes care of translating from the bit mask returned by the
+         * the underlying low-level get funtion.
+         *
+         * @param group:
+         * group index
+         * @returns
+         * EasyAMCFirmwareRevision structure
+         */
+        EasyAMCFirmwareRevision getEasyAMCFirmwareRevision(uint32_t group) override
+        {
+            uint32_t mask;
+            mask = getAMCFirmwareRevision(group);
+            return bits2eafr(mask);
+        }
+
 
         /* NOTE: Get / Set DC Offset is handled in GroupDCOffset */
 
@@ -2274,7 +2394,7 @@ namespace caen {
          * NOTE: the nibble code for the year makes this informa on to
          * roll over each 16 years.
          *
-         * Get the low-level ROCFirmwareRevision mask in line with
+         * Get the low-level ROCFPGAFirmwareRevision mask in line with
          * register docs. It is recommended to use the EasyX wrapper
          * version instead.
          *
