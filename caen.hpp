@@ -2122,6 +2122,7 @@ namespace caen {
 
         virtual uint32_t getROCFPGAFirmwareRevision() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         virtual EasyROCFPGAFirmwareRevision getEasyROCFPGAFirmwareRevision() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual uint32_t getEventSize() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
 
         virtual uint32_t getFanSpeedControl() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         virtual void setFanSpeedControl(uint32_t value) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
@@ -2555,8 +2556,24 @@ namespace caen {
 
         /* TODO: wrap Monitor DAC Mode from register docs? */
 
-        /* TODO: is Event Size Info from register docs already covered
-         * by existing Event function? */
+        /**
+         * @brief Get EventSize
+         *
+         * This register contains the current available event size in
+         * 32-bit words. The value is updated a er a complete readout of
+         * each event.
+         *
+         * Get the low-level EventSize in line with register docs.
+         *
+         * @returns
+         * Event Size (32-bit words).
+         */
+        uint32_t getEventSize() override
+        {
+            uint32_t value;
+            errorHandler(CAEN_DGTZ_ReadRegister(handle_, 0x814C, &value));
+            return value;
+        }
 
         /**
          * @brief Get FanSpeedControl mask
@@ -2627,8 +2644,7 @@ namespace caen {
          * backwards along the chain.
          *
          * Get the low-level Run/Start/Stop Delay in line with
-         * register docs. It is recommended to use the EasyX wrapper
-         * version instead.
+         * register docs.
          *
          * @returns
          * Delay (in units of 8 ns).
@@ -2649,8 +2665,7 @@ namespace caen {
          * backwards along the chain.
          *
          * Set the low-level Run/Start/Stop Delay in line with
-         * register docs. It is recommended to use the EasyX wrapper
-         * version instead.
+         * register docs.
          *
          * @param delay:
          * Delay (in units of 8 ns).
