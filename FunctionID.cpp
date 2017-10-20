@@ -59,7 +59,7 @@ static std::unordered_map<std::string,FunctionID > functionMap =
                 MAP_ENTRY(BoardConfiguration),
                 MAP_ENTRY(EasyBoardConfiguration),
                 MAP_ENTRY(EasyDPPBoardConfiguration),
-                MAP_ENTRY(AggregateOrganization),
+                MAP_ENTRY(DPPAggregateOrganization),
                 MAP_ENTRY(AcquisitionControl),
                 MAP_ENTRY(EasyAcquisitionControl),
                 MAP_ENTRY(EasyDPPAcquisitionControl),
@@ -82,10 +82,10 @@ static std::unordered_map<std::string,FunctionID > functionMap =
                 MAP_ENTRY(FanSpeedControl),
                 MAP_ENTRY(EasyFanSpeedControl),
                 MAP_ENTRY(EasyDPPFanSpeedControl),
-                MAP_ENTRY(DisableExternalTrigger),
+                MAP_ENTRY(DPPDisableExternalTrigger),
                 MAP_ENTRY(RunStartStopDelay),
                 MAP_ENTRY(ReadoutControl),
-                MAP_ENTRY(AggregateNumberPerBLT),
+                MAP_ENTRY(DPPAggregateNumberPerBLT),
                 MAP_ENTRY(ChannelDCOffset),
                 MAP_ENTRY(GroupDCOffset),
                 MAP_ENTRY(AMCFirmwareRevision),
@@ -106,13 +106,13 @@ static std::unordered_map<std::string,FunctionID > functionMap =
                 MAP_ENTRY(ChannelPulsePolarity),
                 MAP_ENTRY(RecordLength),
                 MAP_ENTRY(NumEventsPerAggregate),
-                MAP_ENTRY(GateWidth),
-                MAP_ENTRY(GateOffset),
-                MAP_ENTRY(FixedBaseline),
+                MAP_ENTRY(DPPGateWidth),
+                MAP_ENTRY(DPPGateOffset),
+                MAP_ENTRY(DPPFixedBaseline),
                 MAP_ENTRY(DPPAlgorithmControl),
                 MAP_ENTRY(EasyDPPAlgorithmControl),
-                MAP_ENTRY(TriggerHoldOffWidth),
-                MAP_ENTRY(ShapedTriggerWidth),
+                MAP_ENTRY(DPPTriggerHoldOffWidth),
+                MAP_ENTRY(DPPShapedTriggerWidth),
         };
 
 
@@ -149,7 +149,7 @@ const std::string to_string(FunctionID id) {
         CASE_TO_STR(BoardConfiguration)
         CASE_TO_STR(EasyBoardConfiguration)
         CASE_TO_STR(EasyDPPBoardConfiguration)
-        CASE_TO_STR(AggregateOrganization)
+        CASE_TO_STR(DPPAggregateOrganization)
         CASE_TO_STR(AcquisitionControl)
         CASE_TO_STR(EasyAcquisitionControl)
         CASE_TO_STR(EasyDPPAcquisitionControl)
@@ -172,10 +172,10 @@ const std::string to_string(FunctionID id) {
         CASE_TO_STR(FanSpeedControl)
         CASE_TO_STR(EasyFanSpeedControl)
         CASE_TO_STR(EasyDPPFanSpeedControl)
-        CASE_TO_STR(DisableExternalTrigger)
+        CASE_TO_STR(DPPDisableExternalTrigger)
         CASE_TO_STR(RunStartStopDelay)
         CASE_TO_STR(ReadoutControl)
-        CASE_TO_STR(AggregateNumberPerBLT)
+        CASE_TO_STR(DPPAggregateNumberPerBLT)
         CASE_TO_STR(ChannelDCOffset)
         CASE_TO_STR(GroupDCOffset)
         CASE_TO_STR(AMCFirmwareRevision)
@@ -196,13 +196,13 @@ const std::string to_string(FunctionID id) {
         CASE_TO_STR(ChannelPulsePolarity)
         CASE_TO_STR(RecordLength)
         CASE_TO_STR(NumEventsPerAggregate)
-        CASE_TO_STR(GateWidth)
-        CASE_TO_STR(GateOffset)
-        CASE_TO_STR(FixedBaseline)
+        CASE_TO_STR(DPPGateWidth)
+        CASE_TO_STR(DPPGateOffset)
+        CASE_TO_STR(DPPFixedBaseline)
         CASE_TO_STR(DPPAlgorithmControl)
         CASE_TO_STR(EasyDPPAlgorithmControl)
-        CASE_TO_STR(TriggerHoldOffWidth)
-        CASE_TO_STR(ShapedTriggerWidth)
+        CASE_TO_STR(DPPTriggerHoldOffWidth)
+        CASE_TO_STR(DPPShapedTriggerWidth)
         default :
             throw std::invalid_argument{"Unknown function ID"};
     }
