@@ -2285,14 +2285,6 @@ namespace caen {
         void unsetBoardConfiguration(uint32_t mask) override
         { errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x8008, filterBoardConfigurationUnsetMask(mask))); }
 
-        /* TODO: figure out a good way to handle differences in
-         * BoardConfiguration mask meaning between generic and DPP
-         * version.
-         * Maybe define own BoardConfiguration struct in each
-         * class?
-         * What about read,write for conf handling?
-         */
-
         /**
          * @brief Easy Get BoardConfiguration
          *
@@ -3174,6 +3166,12 @@ namespace caen {
         /* TODO: implement these optional TODOs as virtual:NotImpemented? */
 
         /* TODO: wrap Individual Trigger Threshold of Group n Sub Channel m from register docs? */
+
+        /* NOTE: disable inherited 740 BoardConfiguration since we only
+         * support DPPBoardConfiguration here. */
+        virtual EasyBoardConfiguration getEasyBoardConfiguration() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual void setEasyBoardConfiguration(EasyBoardConfiguration settings) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual void unsetEasyBoardConfiguration(EasyBoardConfiguration settings) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
 
         /**
          * @brief Easy Get DPP BoardConfiguration
