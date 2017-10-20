@@ -462,19 +462,37 @@ caen::EasyDPPGlobalTriggerMask s2edgtm(const std::string& s)
 std::string to_string(const caen::EasyFrontPanelTRGOUTEnableMask &efptoem)
 {
     std::stringstream ss;
-    ss << '{' << ui_to_string(efptoem.lVDSTriggerEnable) << ',' << ui_to_string(efptoem.externalTrigger) << ',' << ui_to_string(efptoem.softwareTrigger) << '}';
+    ss << '{' << ui_to_string(efptoem.groupTriggerMask) << ',' << ui_to_string(efptoem.tRGOUTGenerationLogic) << ',' << ui_to_string(efptoem.majorityLevel) << ',' << ui_to_string(efptoem.lVDSTriggerEnable) << ',' << ui_to_string(efptoem.externalTrigger) << ',' << ui_to_string(efptoem.softwareTrigger) << '}';
     return ss.str();
 }
 
 caen::EasyFrontPanelTRGOUTEnableMask s2efptoem(const std::string& s)
 {
+    std::regex rx("\\{(\\w+),(\\w+),(\\w+),(\\w+),(\\w+),(\\w+)\\}");
+    std::smatch match;
+    if (std::regex_search(s, match, rx))
+    {
+        return caen::EasyFrontPanelTRGOUTEnableMask{s2ui8(match[1]),s2ui8(match[2]),s2ui8(match[3]),s2ui8(match[4]),s2ui8(match[5]),s2ui8(match[6])};
+    }
+    throw std::invalid_argument{"Invalid EasyFrontPanelTRGOUTEnableMask"};
+}
+
+std::string to_string(const caen::EasyDPPFrontPanelTRGOUTEnableMask &edfptoem)
+{
+    std::stringstream ss;
+    ss << '{' << ui_to_string(edfptoem.lVDSTriggerEnable) << ',' << ui_to_string(edfptoem.externalTrigger) << ',' << ui_to_string(edfptoem.softwareTrigger) << '}';
+    return ss.str();
+}
+
+caen::EasyDPPFrontPanelTRGOUTEnableMask s2edfptoem(const std::string& s)
+{
     std::regex rx("\\{(\\w+),(\\w+),(\\w+)\\}");
     std::smatch match;
     if (std::regex_search(s, match, rx))
     {
-        return caen::EasyFrontPanelTRGOUTEnableMask{s2ui8(match[1]),s2ui8(match[2]),s2ui8(match[3])};
+        return caen::EasyDPPFrontPanelTRGOUTEnableMask{s2ui8(match[1]),s2ui8(match[2]),s2ui8(match[3])};
     }
-    throw std::invalid_argument{"Invalid EasyFrontPanelTRGOUTEnableMask"};
+    throw std::invalid_argument{"Invalid EasyDPPFrontPanelTRGOUTEnableMask"};
 }
 
 std::string to_string(const caen::EasyFrontPanelIOControl &efpioc)

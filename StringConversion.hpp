@@ -118,6 +118,8 @@ std::string to_string(const caen::EasyDPPGlobalTriggerMask &edgtm);
 caen::EasyDPPGlobalTriggerMask s2edgtm(const std::string& s);
 std::string to_string(const caen::EasyFrontPanelTRGOUTEnableMask &efptoem);
 caen::EasyFrontPanelTRGOUTEnableMask s2efptoem(const std::string& s);
+std::string to_string(const caen::EasyDPPFrontPanelTRGOUTEnableMask &edfptoem);
+caen::EasyDPPFrontPanelTRGOUTEnableMask s2edfptoem(const std::string& s);
 std::string to_string(const caen::EasyFrontPanelIOControl &efpioc);
 caen::EasyFrontPanelIOControl s2efpioc(const std::string& s);
 std::string to_string(const caen::EasyROCFPGAFirmwareRevision &erffr);

@@ -71,6 +71,7 @@ enum FunctionID {
     EasyDPPGlobalTriggerMask,
     FrontPanelTRGOUTEnableMask,
     EasyFrontPanelTRGOUTEnableMask,
+    EasyDPPFrontPanelTRGOUTEnableMask,
     FrontPanelIOControl,
     EasyFrontPanelIOControl,
     ROCFPGAFirmwareRevision,
