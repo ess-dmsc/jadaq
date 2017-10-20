@@ -732,6 +732,14 @@ namespace caen {
      * 0 = internal (PLL uses the internal 50 MHz oscillator as reference)\n
      * 1 = external (PLL uses the external clock on CLK-IN connector as
      * reference).
+     * @var EasyAcquisitionStatus::pLLBypassMode
+     * PLL Bypass Mode. This bit drives the front panel 'PLL BYPS' LED.\n
+     * Options are:\n
+     * 0 = PLL bypass mode is not ac ve ('PLL BYPS' is off)\n
+     * 1 = PLL bypass mode is ac ve and the VCXO frequency directly
+     * drives the clock distribution chain ('PLL BYPS' lits).\n
+     * WARNING: before operating in PLL Bypass Mode, it is recommended
+     * to contact CAEN for feasibility.
      * @var EasyAcquisitionStatus::pLLUnlockDetect
      * PLL Unlock Detect. This bit flags a PLL unlock condition. Options
      * are:\n
@@ -758,6 +766,73 @@ namespace caen {
      * panel connector.
      */
     struct EasyAcquisitionStatus {
+        /* Only allow the expected number of bits per field */
+        uint8_t acquisitionStatus : 1;
+        uint8_t eventReady : 1;
+        uint8_t eventFull : 1;
+        uint8_t clockSource : 1;
+        uint8_t pLLBypassMode : 1;
+        uint8_t pLLUnlockDetect : 1;
+        uint8_t boardReady : 1;
+        uint8_t s_IN : 1;
+        uint8_t tRG_IN : 1;
+    };
+
+    /**
+     * @struct EasyDPPAcquisitionStatus
+     * @brief For user-friendly configuration of Acquisition Status mask.
+     *
+     * This register monitors a set of conditions related to the
+     * acquisition status.
+     *
+     * @var EasyDPPAcquisitionStatus::acquisitionStatus
+     * Acquisition Status. It reflects the status of the acquisition and
+     * drivers the front panel ’RUN’ LED. Options are:\n
+     * 0 = acquisition is stopped (’RUN’ is off)\n
+     * 1 = acquisition is running (’RUN’ lits).
+     * @var EasyDPPAcquisitionStatus::eventReady
+     * Event Ready. Indicates if any events are available for
+     * readout. Options are:\n
+     * 0 = no event is available for readout\n
+     * 1 = at least one event is available for readout.\n
+     * NOTE: the status of this bit must be considered when managing the
+     * readout from the digitizer.
+     * @var EasyDPPAcquisitionStatus::eventFull
+     * Event Full. Indicates if at least one channel has reached the
+     * FULL condition. Options are:\n
+     * 0 = no channel has reached the FULL condition\n
+     * 1 = the maximum number of events to be read is reached.
+     * @var EasyDPPAcquisitionStatus::clockSource
+     * Clock Source. Indicates the clock source status. Options are:\n
+     * 0 = internal (PLL uses the internal 50 MHz oscillator as reference)\n
+     * 1 = external (PLL uses the external clock on CLK-IN connector as
+     * reference).
+     * @var EasyDPPAcquisitionStatus::pLLUnlockDetect
+     * PLL Unlock Detect. This bit flags a PLL unlock condition. Options
+     * are:\n
+     * 0 = PLL has had an unlock condition since the last register read
+     * access\n
+     * 1 = PLL has not had any unlock condition since the last register
+     * read access.\n
+     * NOTE: flag can be restored to 1 via read access to register 0xEF04.
+     * @var EasyDPPAcquisitionStatus::boardReady
+     * Board Ready. This flag indicates if the board is ready for
+     * acquisition (PLL and ADCs are correctly synchronised). Options
+     * are:\n
+     * 0 = board is not ready to start the acquisition\n
+     * 1 = board is ready to start the acquisition.\n
+     * NOTE: this bit should be checked a er software reset to ensure
+     * that the board will enter immediately in run mode a er the RUN
+     * mode setting; otherwise, a latency between RUN mode setting and
+     * Acquisition start might occur.
+     * @var EasyDPPAcquisitionStatus::s_IN
+     * S-IN (VME boards) or GPI (DT/NIM boards) Status. Reads the
+     * current logical level on S-IN (GPI) front panel connector.
+     * @var EasyDPPAcquisitionStatus::tRG_IN
+     * TRG-IN Status. Reads the current logical level on TRG-IN front
+     * panel connector.
+     */
+    struct EasyDPPAcquisitionStatus {
         /* Only allow the expected number of bits per field */
         uint8_t acquisitionStatus : 1;
         uint8_t eventReady : 1;
@@ -1324,8 +1399,9 @@ namespace caen {
      * @internal
      * EasyAcquisitionStatus fields:
      * acquisition status [2], event ready [3], event full in [4],
-     * clock source in [5], PLL unlock detect in [7], board ready in [8],
-     * S-In in [15], TRG-IN in [16].
+     * clock source in [5], PLL bypass mode in [6],
+     * PLL unlock detect in [7], board ready in [8], S-In in [15],
+     * TRG-IN in [16].
      */
     static uint32_t eas2bits(EasyAcquisitionStatus settings)
     {
@@ -1334,6 +1410,7 @@ namespace caen {
         mask |= packBits(settings.eventReady, 1, 3);
         mask |= packBits(settings.eventFull, 1, 4);
         mask |= packBits(settings.clockSource, 1, 5);
+        mask |= packBits(settings.pLLBypassMode, 1, 6);
         mask |= packBits(settings.pLLUnlockDetect, 1, 7);
         mask |= packBits(settings.boardReady, 1, 8);
         mask |= packBits(settings.s_IN, 1, 15);
@@ -1350,6 +1427,49 @@ namespace caen {
     static EasyAcquisitionStatus bits2eas(uint32_t mask)
     {
         EasyAcquisitionStatus settings;
+        settings = {unpackBits(mask, 1, 2), unpackBits(mask, 1, 3),
+                    unpackBits(mask, 1, 4), unpackBits(mask, 1, 5),
+                    unpackBits(mask, 1, 6), unpackBits(mask, 1, 7),
+                    unpackBits(mask, 1, 8), unpackBits(mask, 1, 15),
+                    unpackBits(mask, 1, 16)};
+        return settings;
+    }
+
+    /**
+     * @brief pack EasyDPPAcquisitionStatus settings into bit mask
+     * @param settings:
+     * Settings structure to pack
+     * @returns
+     * Bit mask ready for low-level set function.
+     * @internal
+     * EasyDPPAcquisitionStatus fields:
+     * acquisition status [2], event ready [3], event full in [4],
+     * clock source in [5], PLL unlock detect in [7], board ready in [8],
+     * S-In in [15], TRG-IN in [16].
+     */
+    static uint32_t edas2bits(EasyDPPAcquisitionStatus settings)
+    {
+        uint32_t mask = 0;
+        mask |= packBits(settings.acquisitionStatus, 1, 2);
+        mask |= packBits(settings.eventReady, 1, 3);
+        mask |= packBits(settings.eventFull, 1, 4);
+        mask |= packBits(settings.clockSource, 1, 5);
+        mask |= packBits(settings.pLLUnlockDetect, 1, 7);
+        mask |= packBits(settings.boardReady, 1, 8);
+        mask |= packBits(settings.s_IN, 1, 15);
+        mask |= packBits(settings.tRG_IN, 1, 16);
+        return mask;
+    }
+    /**
+     * @brief unpack bit mask into EasyDPPAcquisitionStatus settings
+     * @param mask:
+     * Bit mask from low-level get function to unpack
+     * @returns
+     * Settings structure for convenient use.
+     */
+    static EasyDPPAcquisitionStatus bits2edas(uint32_t mask)
+    {
+        EasyDPPAcquisitionStatus settings;
         settings = {unpackBits(mask, 1, 2), unpackBits(mask, 1, 3),
                     unpackBits(mask, 1, 4), unpackBits(mask, 1, 5),
                     unpackBits(mask, 1, 7), unpackBits(mask, 1, 8),
@@ -2238,6 +2358,8 @@ namespace caen {
 
         virtual uint32_t getAcquisitionStatus() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         virtual EasyAcquisitionStatus getEasyAcquisitionStatus() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual uint32_t getDPPAcquisitionStatus() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual EasyDPPAcquisitionStatus getEasyDPPAcquisitionStatus() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
 
         virtual uint32_t getGlobalTriggerMask() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         virtual void setGlobalTriggerMask(uint32_t value) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
@@ -2559,6 +2681,24 @@ namespace caen {
             uint32_t mask;
             errorHandler(CAEN_DGTZ_ReadRegister(handle_, 0x8104, &mask));
             return mask;
+        }
+        /**
+         * @brief Easy Get AcquisitionStatus
+         *
+         * A convenience wrapper for the low-level function of the same
+         * name. Works on a struct with named variables rather than
+         * directly manipulating obscure bit patterns. Automatically
+         * takes care of translating from the bit mask returned by the
+         * the underlying low-level get funtion.
+         *
+         * @returns
+         * EasyAcquisitionStatus structure
+         */
+        EasyAcquisitionStatus getEasyAcquisitionStatus() override
+        {
+            uint32_t mask;
+            mask = getAcquisitionStatus();
+            return bits2eas(mask);
         }
 
         /* TODO: is Software Trigger from register docs already covered
@@ -3577,9 +3717,11 @@ namespace caen {
         }
 
         /* NOTE: reuse get / set AcquisitionStatus from parent class */
-
+        /* NOTE: disable inherited 740 AcquisitionStatus since we only
+         * support DPPAcquisitionStatus here. */
+        virtual EasyAcquisitionStatus getEasyAcquisitionStatus() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         /**
-         * @brief Easy Get AcquisitionStatus
+         * @brief Easy Get DPPAcquisitionStatus
          *
          * A convenience wrapper for the low-level function of the same
          * name. Works on a struct with named variables rather than
@@ -3588,13 +3730,13 @@ namespace caen {
          * the underlying low-level get funtion.
          *
          * @returns
-         * EasyAcquisitionStatus structure
+         * EasyDPPAcquisitionStatus structure
          */
-        EasyAcquisitionStatus getEasyAcquisitionStatus() override
+        EasyDPPAcquisitionStatus getEasyDPPAcquisitionStatus() override
         {
             uint32_t mask;
             mask = getAcquisitionStatus();
-            return bits2eas(mask);
+            return bits2edas(mask);
         }
 
         /* NOTE: Reuse get / set SoftwareTrigger from parent? */

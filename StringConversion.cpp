@@ -390,19 +390,37 @@ caen::EasyDPPAcquisitionControl s2edac(const std::string& s)
 std::string to_string(const caen::EasyAcquisitionStatus &eas)
 {
     std::stringstream ss;
-    ss << '{' << ui_to_string(eas.acquisitionStatus) << ',' << ui_to_string(eas.eventReady) << ',' << ui_to_string(eas.eventFull) << ',' << ui_to_string(eas.clockSource) << ',' << ui_to_string(eas.pLLUnlockDetect) << ',' << ui_to_string(eas.boardReady) << ',' << ui_to_string(eas.s_IN) << ',' << ui_to_string(eas.tRG_IN) << '}';
+    ss << '{' << ui_to_string(eas.acquisitionStatus) << ',' << ui_to_string(eas.eventReady) << ',' << ui_to_string(eas.eventFull) << ',' << ui_to_string(eas.clockSource) << ',' << ui_to_string(eas.pLLBypassMode) << ',' << ui_to_string(eas.pLLUnlockDetect) << ',' << ui_to_string(eas.boardReady) << ',' << ui_to_string(eas.s_IN) << ',' << ui_to_string(eas.tRG_IN) << '}';
     return ss.str();
 }
 
 caen::EasyAcquisitionStatus s2eas(const std::string& s)
 {
+    std::regex rx("\\{(\\w+),(\\w+),(\\w+),(\\w+),(\\w+),(\\w+),(\\w+),(\\w+),(\\w+)\\}");
+    std::smatch match;
+    if (std::regex_search(s, match, rx))
+    {
+        return caen::EasyAcquisitionStatus{s2ui8(match[1]),s2ui8(match[2]),s2ui8(match[3]),s2ui8(match[4]),s2ui8(match[5]),s2ui8(match[6]),s2ui8(match[7]),s2ui8(match[8]),s2ui8(match[9])};
+    }
+    throw std::invalid_argument{"Invalid EasyAcquisitionStatus"};
+}
+
+std::string to_string(const caen::EasyDPPAcquisitionStatus &edas)
+{
+    std::stringstream ss;
+    ss << '{' << ui_to_string(edas.acquisitionStatus) << ',' << ui_to_string(edas.eventReady) << ',' << ui_to_string(edas.eventFull) << ',' << ui_to_string(edas.clockSource) << ',' << ui_to_string(edas.pLLUnlockDetect) << ',' << ui_to_string(edas.boardReady) << ',' << ui_to_string(edas.s_IN) << ',' << ui_to_string(edas.tRG_IN) << '}';
+    return ss.str();
+}
+
+caen::EasyDPPAcquisitionStatus s2edas(const std::string& s)
+{
     std::regex rx("\\{(\\w+),(\\w+),(\\w+),(\\w+),(\\w+),(\\w+),(\\w+),(\\w+)\\}");
     std::smatch match;
     if (std::regex_search(s, match, rx))
     {
-        return caen::EasyAcquisitionStatus{s2ui8(match[1]),s2ui8(match[2]),s2ui8(match[3]),s2ui8(match[4]),s2ui8(match[5]),s2ui8(match[6]),s2ui8(match[7]),s2ui8(match[8])};
+        return caen::EasyDPPAcquisitionStatus{s2ui8(match[1]),s2ui8(match[2]),s2ui8(match[3]),s2ui8(match[4]),s2ui8(match[5]),s2ui8(match[6]),s2ui8(match[7]),s2ui8(match[8])};
     }
-    throw std::invalid_argument{"Invalid EasyAcquisitionStatus"};
+    throw std::invalid_argument{"Invalid EasyDPPAcquisitionStatus"};
 }
 
 std::string to_string(const caen::EasyGlobalTriggerMask &egtm)

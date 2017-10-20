@@ -110,6 +110,8 @@ std::string to_string(const caen::EasyDPPAcquisitionControl &edac);
 caen::EasyDPPAcquisitionControl s2edac(const std::string& s);
 std::string to_string(const caen::EasyAcquisitionStatus &eas);
 caen::EasyAcquisitionStatus s2eas(const std::string& s);
+std::string to_string(const caen::EasyDPPAcquisitionStatus &edas);
+caen::EasyDPPAcquisitionStatus s2edas(const std::string& s);
 std::string to_string(const caen::EasyGlobalTriggerMask &egtm);
 caen::EasyGlobalTriggerMask s2egtm(const std::string& s);
 std::string to_string(const caen::EasyFrontPanelTRGOUTEnableMask &efptoem);
