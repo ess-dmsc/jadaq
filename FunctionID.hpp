@@ -68,6 +68,7 @@ enum FunctionID {
     EasyDPPAcquisitionStatus,
     GlobalTriggerMask,
     EasyGlobalTriggerMask,
+    EasyDPPGlobalTriggerMask,
     FrontPanelTRGOUTEnableMask,
     EasyFrontPanelTRGOUTEnableMask,
     FrontPanelIOControl,

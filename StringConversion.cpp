@@ -426,19 +426,37 @@ caen::EasyDPPAcquisitionStatus s2edas(const std::string& s)
 std::string to_string(const caen::EasyGlobalTriggerMask &egtm)
 {
     std::stringstream ss;
-    ss << '{' << ui_to_string(egtm.lVDSTrigger) << ',' << ui_to_string(egtm.externalTrigger) << ',' << ui_to_string(egtm.softwareTrigger) << '}';
+    ss << '{' << ui_to_string(egtm.groupTriggerMask) << ',' << ui_to_string(egtm.majorityCoincidenceWindow) << ',' << ui_to_string(egtm.majorityLevel) << ',' << ui_to_string(egtm.lVDSTrigger) << ',' << ui_to_string(egtm.externalTrigger) << ',' << ui_to_string(egtm.softwareTrigger) << '}';
     return ss.str();
 }
 
 caen::EasyGlobalTriggerMask s2egtm(const std::string& s)
 {
+    std::regex rx("\\{(\\w+),(\\w+),(\\w+),(\\w+),(\\w+),(\\w+)\\}");
+    std::smatch match;
+    if (std::regex_search(s, match, rx))
+    {
+        return caen::EasyGlobalTriggerMask{s2ui8(match[1]),s2ui8(match[2]),s2ui8(match[3]),s2ui8(match[4]),s2ui8(match[5]),s2ui8(match[6])};
+    }
+    throw std::invalid_argument{"Invalid EasyGlobalTriggerMask"};
+}
+
+std::string to_string(const caen::EasyDPPGlobalTriggerMask &edgtm)
+{
+    std::stringstream ss;
+    ss << '{' << ui_to_string(edgtm.lVDSTrigger) << ',' << ui_to_string(edgtm.externalTrigger) << ',' << ui_to_string(edgtm.softwareTrigger) << '}';
+    return ss.str();
+}
+
+caen::EasyDPPGlobalTriggerMask s2edgtm(const std::string& s)
+{
     std::regex rx("\\{(\\w+),(\\w+),(\\w+)\\}");
     std::smatch match;
     if (std::regex_search(s, match, rx))
     {
-        return caen::EasyGlobalTriggerMask{s2ui8(match[1]),s2ui8(match[2]),s2ui8(match[3])};
+        return caen::EasyDPPGlobalTriggerMask{s2ui8(match[1]),s2ui8(match[2]),s2ui8(match[3])};
     }
-    throw std::invalid_argument{"Invalid EasyGlobalTriggerMask"};
+    throw std::invalid_argument{"Invalid EasyDPPGlobalTriggerMask"};
 }
 
 std::string to_string(const caen::EasyFrontPanelTRGOUTEnableMask &efptoem)

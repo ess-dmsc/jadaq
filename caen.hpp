@@ -851,6 +851,26 @@ namespace caen {
      * This register sets which signal can contribute to the global
      * trigger generation.
      *
+     * @var EasyGlobalTriggerMask::groupTriggerMask
+     * Bit n corresponds to the trigger request from group n that
+     * participates to the global trigger generation (n = 0,...,3 for DT
+     * and NIM; n = 0,...,7 for VME boards). Options are:\n
+     * 0 = trigger request is not sensed for global trigger generation\n
+     * 1 = trigger request participates in the global trigger generation.\n
+     * NOTE: in case of DT and NIMboards, only bits[3:0] are meaningful,
+     * while bits[7:4] are reserved.
+     * @var EasyGlobalTriggerMask::majorityCoincidenceWindow
+     * Majority Coincidence Window. Sets the me window (in units of the
+     * trigger clock) for the majority coincidence. Majority level must
+     * be set different from 0 through bits[26:24].
+     * @var EasyGlobalTriggerMask::majorityLevel
+     * Majority Level. Sets the majority level for the global trigger
+     * generation. For a level m, the trigger fires when at least m+1 of
+     * the enabled trigger requests (bits[7:0] or [3:0]) are
+     * over-threshold inside the majority coincidence window
+     * (bits[23:20]).\n
+     * NOTE: the majority level must be smaller than the number of
+     * trigger requests enabled via bits[7:0] mask (or [3:0]).
      * @var EasyGlobalTriggerMask::lVDSTrigger
      * LVDS Trigger (VME boards only). When enabled, the trigger from
      * LVDS I/O participates to the global trigger generation (in logic
@@ -871,6 +891,42 @@ namespace caen {
      * 1 = enabled.
      */
     struct EasyGlobalTriggerMask {
+        /* Only allow the expected number of bits per field */
+        uint8_t groupTriggerMask : 8;
+        uint8_t majorityCoincidenceWindow : 4;
+        uint8_t majorityLevel : 3;
+        uint8_t lVDSTrigger : 1;
+        uint8_t externalTrigger : 1;
+        uint8_t softwareTrigger : 1;
+    };
+
+    /**
+     * @struct EasyDPPGlobalTriggerMask
+     * @brief For user-friendly configuration of Global Trigger Mask.
+     *
+     * This register sets which signal can contribute to the global
+     * trigger generation.
+     *
+     * @var EasyDPPGlobalTriggerMask::lVDSTrigger
+     * LVDS Trigger (VME boards only). When enabled, the trigger from
+     * LVDS I/O participates to the global trigger generation (in logic
+     * OR). Options are:\n
+     * 0 = disabled\n
+     * 1 = enabled.
+     * @var EasyDPPGlobalTriggerMask::externalTrigger
+     * External Trigger (default value is 1). When enabled, the external
+     * trigger on TRG-IN participates to the global trigger generation
+     * in logic OR with the other enabled signals. Options are:\n
+     * 0 = disabled\n
+     * 1 = enabled.
+     * @var EasyDPPGlobalTriggerMask::softwareTrigger
+     * Software Trigger (default value is 1). When enabled, the software
+     * trigger participates to the global trigger signal generation in
+     * logic OR with the other enabled signals. Options are:\n
+     * 0 = disabled\n
+     * 1 = enabled.
+     */
+    struct EasyDPPGlobalTriggerMask {
         /* Only allow the expected number of bits per field */
         uint8_t lVDSTrigger : 1;
         uint8_t externalTrigger : 1;
@@ -1485,12 +1541,16 @@ namespace caen {
      * Bit mask ready for low-level set function.
      * @internal
      * EasyGlobalTriggerMask fields:
-     * LVDS trigger in [29], external trigger in [30],
-     * software trigger in [31].
+     * groupTriggerMask in [0:7], majorityCoincidenceWindow in [20:23],
+     * majorityLevel in [24:26], LVDS trigger in [29],
+     * external trigger in [30], software trigger in [31].
      */
     static uint32_t egtm2bits(EasyGlobalTriggerMask settings)
     {
         uint32_t mask = 0;
+        mask |= packBits(settings.groupTriggerMask, 8, 0);
+        mask |= packBits(settings.majorityCoincidenceWindow, 4, 20);
+        mask |= packBits(settings.majorityLevel, 3, 24);
         mask |= packBits(settings.lVDSTrigger, 1, 29);
         mask |= packBits(settings.externalTrigger, 1, 30);
         mask |= packBits(settings.softwareTrigger, 1, 31);
@@ -1506,6 +1566,41 @@ namespace caen {
     static EasyGlobalTriggerMask bits2egtm(uint32_t mask)
     {
         EasyGlobalTriggerMask settings;
+        settings = {unpackBits(mask, 8, 0), unpackBits(mask, 4, 20),
+                    unpackBits(mask, 3, 24), unpackBits(mask, 1, 29),
+                    unpackBits(mask, 1, 30), unpackBits(mask, 1, 31)};
+        return settings;
+    }
+
+    /**
+     * @brief pack EasyDPPGlobalTriggerMask settings into bit mask
+     * @param settings:
+     * Settings structure to pack
+     * @returns
+     * Bit mask ready for low-level set function.
+     * @internal
+     * EasyDPPGlobalTriggerMask fields:
+     * LVDS trigger in [29], external trigger in [30],
+     * software trigger in [31].
+     */
+    static uint32_t edgtm2bits(EasyDPPGlobalTriggerMask settings)
+    {
+        uint32_t mask = 0;
+        mask |= packBits(settings.lVDSTrigger, 1, 29);
+        mask |= packBits(settings.externalTrigger, 1, 30);
+        mask |= packBits(settings.softwareTrigger, 1, 31);
+        return mask;
+    }
+    /**
+     * @brief unpack bit mask into EasyDPPGlobalTriggerMask settings
+     * @param mask:
+     * Bit mask from low-level get function to unpack
+     * @returns
+     * Settings structure for convenient use.
+     */
+    static EasyDPPGlobalTriggerMask bits2edgtm(uint32_t mask)
+    {
+        EasyDPPGlobalTriggerMask settings;
         settings = {unpackBits(mask, 1, 29), unpackBits(mask, 1, 30),
                     unpackBits(mask, 1, 31)};
         return settings;
@@ -2365,6 +2460,8 @@ namespace caen {
         virtual void setGlobalTriggerMask(uint32_t value) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         virtual EasyGlobalTriggerMask getEasyGlobalTriggerMask() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         virtual void setEasyGlobalTriggerMask(EasyGlobalTriggerMask settings) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual EasyDPPGlobalTriggerMask getEasyDPPGlobalTriggerMask() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual void setEasyDPPGlobalTriggerMask(EasyDPPGlobalTriggerMask settings) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
 
         virtual uint32_t getFrontPanelTRGOUTEnableMask() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         virtual void setFrontPanelTRGOUTEnableMask(uint32_t value) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
@@ -2738,6 +2835,41 @@ namespace caen {
          */
         void setGlobalTriggerMask(uint32_t mask) override
         { errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x810C, mask)); }
+        /**
+         * @brief Easy Get GlobalTriggerMask
+         *
+         * A convenience wrapper for the low-level function of the same
+         * name. Works on a struct with named variables rather than
+         * directly manipulating obscure bit patterns. Automatically
+         * takes care of translating from the bit mask returned by the
+         * the underlying low-level get funtion.
+         *
+         * @returns
+         * EasyGlobalTriggerMask structure
+         */
+        EasyGlobalTriggerMask getEasyGlobalTriggerMask() override
+        {
+            uint32_t mask;
+            mask = getGlobalTriggerMask();
+            return bits2egtm(mask);
+        }
+        /**
+         * @brief Easy Set GlobalTriggerMask
+         *
+         * A convenience wrapper for the low-level function of the same
+         * name. Works on a struct with named variables rather than
+         * directly manipulating obscure bit patterns. Automatically
+         * takes care of translating to the bit mask needed by the
+         * the underlying low-level set funtion.
+         *
+         * @param settings:
+         * EasyGlobalTriggerMask structure
+         */
+        void setEasyGlobalTriggerMask(EasyGlobalTriggerMask settings) override
+        {
+            uint32_t mask = egtm2bits(settings);
+            setGlobalTriggerMask(mask);
+        }
 
         /**
          * @brief Get FrontPanelTRGOUTEnableMask
@@ -3742,9 +3874,12 @@ namespace caen {
         /* NOTE: Reuse get / set SoftwareTrigger from parent? */
 
         /* NOTE: Reuse get / set GlobalTriggerMask from parent */
-
+        /* NOTE: disable inherited 740 GlobalTriggerMask since we only
+         * support DPPGlobalTriggerMask here. */
+        virtual EasyGlobalTriggerMask getEasyGlobalTriggerMask() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual void setEasyGlobalTriggerMask(EasyGlobalTriggerMask settings) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         /**
-         * @brief Easy Get GlobalTriggerMask
+         * @brief Easy Get DPP GlobalTriggerMask
          *
          * A convenience wrapper for the low-level function of the same
          * name. Works on a struct with named variables rather than
@@ -3753,16 +3888,16 @@ namespace caen {
          * the underlying low-level get funtion.
          *
          * @returns
-         * EasyGlobalTriggerMask structure
+         * EasyDPPGlobalTriggerMask structure
          */
-        EasyGlobalTriggerMask getEasyGlobalTriggerMask() override
+        EasyDPPGlobalTriggerMask getEasyDPPGlobalTriggerMask() override
         {
             uint32_t mask;
             mask = getGlobalTriggerMask();
-            return bits2egtm(mask);
+            return bits2edgtm(mask);
         }
         /**
-         * @brief Easy Set GlobalTriggerMask
+         * @brief Easy Set DPP GlobalTriggerMask
          *
          * A convenience wrapper for the low-level function of the same
          * name. Works on a struct with named variables rather than
@@ -3771,11 +3906,11 @@ namespace caen {
          * the underlying low-level set funtion.
          *
          * @param settings:
-         * EasyGlobalTriggerMask structure
+         * EasyDPPGlobalTriggerMask structure
          */
-        void setEasyGlobalTriggerMask(EasyGlobalTriggerMask settings) override
+        void setEasyDPPGlobalTriggerMask(EasyDPPGlobalTriggerMask settings) override
         {
-            uint32_t mask = egtm2bits(settings);
+            uint32_t mask = edgtm2bits(settings);
             setGlobalTriggerMask(mask);
         }
 
