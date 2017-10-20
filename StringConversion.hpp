@@ -106,6 +106,8 @@ std::string to_string(const caen::EasyDPPBoardConfiguration &edbc);
 caen::EasyDPPBoardConfiguration s2edbc(const std::string& s);
 std::string to_string(const caen::EasyAcquisitionControl &eac);
 caen::EasyAcquisitionControl s2eac(const std::string& s);
+std::string to_string(const caen::EasyDPPAcquisitionControl &edac);
+caen::EasyDPPAcquisitionControl s2edac(const std::string& s);
 std::string to_string(const caen::EasyAcquisitionStatus &eas);
 caen::EasyAcquisitionStatus s2eas(const std::string& s);
 std::string to_string(const caen::EasyGlobalTriggerMask &egtm);

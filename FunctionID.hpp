@@ -62,6 +62,7 @@ enum FunctionID {
     AggregateOrganization,
     AcquisitionControl,
     EasyAcquisitionControl,
+    EasyDPPAcquisitionControl,
     AcquisitionStatus,
     EasyAcquisitionStatus,
     GlobalTriggerMask,

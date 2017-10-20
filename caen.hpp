@@ -569,6 +569,12 @@ namespace caen {
      * 0 = accepted triggers from combination of channels\n
      * 1 = triggers from combination of channels, in addition to TRG-IN
      * and SW TRG.
+     * @var EasyAcquisitionControl::memoryFullModeSelection
+     * Memory Full Mode Selection (default value is 0). Options are:\n
+     * 0 = NORMAL. The board is full whenever all buffers are full\n
+     * 1 = ONE BUFFER FREE. The board is full whenever Nb-1 buffers are
+     * full, where Nb is the overall number of buffers in which the
+     * channel memory is divided.
      * @var EasyAcquisitionControl::pLLRefererenceClock
      * PLL Reference Clock Source (Desktop/NIM only). Default value is 0.\n
      * Options are:\n
@@ -604,6 +610,89 @@ namespace caen {
      * 0x811C). Register 0x81A0 must also be configured for nBusy/nVeto.
      */
     struct EasyAcquisitionControl {
+        /* Only allow the expected number of bits per field */
+        uint8_t startStopMode : 2;
+        uint8_t acquisitionStartArm : 1;
+        uint8_t triggerCountingMode : 1;
+        uint8_t memoryFullModeSelection : 1;
+        uint8_t pLLRefererenceClock : 1;
+        uint8_t lVDSIOBusyEnable : 1;
+        uint8_t lVDSVetoEnable : 1;
+        uint8_t lVDSIORunInEnable : 1;
+    };
+
+    /**
+     * @struct EasyDPPAcquisitionControl
+     * @brief For user-friendly configuration of Acquisition Control mask.
+     *
+     * This register manages the acquisition settings.
+     *
+     * @var EasyDPPAcquisitionControl::startStopMode
+     * Start/Stop Mode Selection (default value is 00). Options are:\n
+     * 00 = SW CONTROLLED. Start/stop of the run takes place on software
+     * command by setting/resetting bit[2] of this register\n
+     * 01 = S-IN/GPI CONTROLLED (S-IN for VME, GPI for Desktop/NIM). If
+     * the acquisition is armed (i.e. bit[2] = 1), then the acquisition
+     * starts when S-IN/GPI is asserted and stops when S-IN/GPI returns
+     * inactive. If bit[2] = 0, the acquisition is always off\n
+     * 10 = FIRST TRIGGER CONTROLLED. If the acquisition is armed
+     * (i.e. bit[2] = 1), then the run starts on the first trigger pulse
+     * (rising edge on TRG-IN); this pulse is not used as input trigger,
+     * while actual triggers start from the second pulse. The stop of
+     * Run must be SW controlled (i.e. bit[2] = 0)\n
+     * 11 = LVDS CONTROLLED (VME only). It is like option 01 but using
+     * LVDS (RUN) instead of S-IN.\n
+     * The LVDS can be set using registers 0x811C and 0x81A0.
+     * @var EasyDPPAcquisitionControl::acquisitionStartArm
+     * Acquisition Start/Arm (default value is 0).\n
+     * When bits[1:0] = 00, this bit acts as a Run Start/Stop. When
+     * bits[1:0] = 01, 10, 11, this bit arms the acquisition and the
+     * actual Start/Stop is controlled by an external signal. Options
+     * are:\n
+     * 0 = Acquisition STOP (if bits[1:0]=00); Acquisition DISARMED (others)\n
+     * 1 = Acquisition RUN (if bits[1:0]=00); Acquisition ARMED (others).
+     * @var EasyDPPAcquisitionControl::triggerCountingMode
+     * Trigger Counting Mode (default value is 0). Through this bit it
+     * is possible to count the reading requests from channels to mother
+     * board. The reading requests may come from the following options:\n
+     * 0 = accepted triggers from combination of channels\n
+     * 1 = triggers from combination of channels, in addition to TRG-IN
+     * and SW TRG.
+     * @var EasyDPPAcquisitionControl::pLLRefererenceClock
+     * PLL Reference Clock Source (Desktop/NIM only). Default value is 0.\n
+     * Options are:\n
+     * 0 = internal oscillator (50 MHz)\n
+     * 1 = external clock from front panel CLK-IN connector.\n
+     * NOTE: this bit is reserved in case of VME boards.
+     * @var EasyDPPAcquisitionControl::lVDSIOBusyEnable
+     * LVDS I/O Busy Enable (VME only). Default value is 0.\n
+     * The LVDS I/Os can be programmed to accept a Busy signal as input,
+     * or to propagate it as output. Options are:\n
+     * 0 = disabled\n
+     * 1 = enabled.\n
+     * NOTE: this bit is supported only by VME boards and meaningful
+     * only if the LVDS new features are enabled (bit[8]=1 of register
+     * 0x811C). Register 0x81A0 should also be configured for nBusy/nVeto.
+     * @var EasyDPPAcquisitionControl::lVDSVetoEnable
+     * LVDS I/O Veto Enable (VME only). Default value is 0.\n
+     * The LVDS I/Os can be programmed to accept a Veto signal as input,
+     * or to transfer it as output. Options are:\n
+     * 0 = disabled (default)\n
+     * 1 = enabled.\n
+     * NOTE: this bit is supported only by VME boards and meaningful
+     * only if the LVDS new features are enabled (bit[8]=1 of register
+     * 0x811C). Register 0x81A0 should also be configured for nBusy/nVeto.
+     * @var EasyDPPAcquisitionControl::lVDSIORunInEnable
+     * LVDS I/O RunIn Enable Mode (VME only). Default value is 0.\n
+     * The LVDS I/Os can be programmed to accept a RunIn signal as
+     * input, or to transfer it as output. Options are:\n
+     * 0 = starts on RunIn level (default)\n
+     * 1 = starts on RunIn rising edge.\n
+     * NOTE: this bit is supported only by VME boards and meaningful
+     * only if the LVDS new features are enabled (bit[8]=1 of register
+     * 0x811C). Register 0x81A0 must also be configured for nBusy/nVeto.
+     */
+    struct EasyDPPAcquisitionControl {
         /* Only allow the expected number of bits per field */
         uint8_t startStopMode : 2;
         uint8_t acquisitionStartArm : 1;
@@ -1150,8 +1239,8 @@ namespace caen {
      * @internal
      * EasyAcquisitionControl fields:
      * start/stop mode [0:1], acquisition start/arm in [2],
-     * trigger counting mode in [3], PLL reference clock
-     * source in [6], LVDS I/O busy enable in [8], 
+     * trigger counting mode in [3], memory full mode selection in [5],
+     * PLL reference clock source in [6], LVDS I/O busy enable in [8],
      * LVDS veto enable in [9], LVDS I/O RunIn enable in [11].
      */
     static uint32_t eac2bits(EasyAcquisitionControl settings)
@@ -1160,6 +1249,7 @@ namespace caen {
         mask |= packBits(settings.startStopMode, 2, 0);
         mask |= packBits(settings.acquisitionStartArm, 1, 2);
         mask |= packBits(settings.triggerCountingMode, 1, 3);
+        mask |= packBits(settings.memoryFullModeSelection, 1, 5);
         mask |= packBits(settings.pLLRefererenceClock, 1, 6);
         mask |= packBits(settings.lVDSIOBusyEnable, 1, 8);
         mask |= packBits(settings.lVDSVetoEnable, 1, 9);
@@ -1176,6 +1266,48 @@ namespace caen {
     static EasyAcquisitionControl bits2eac(uint32_t mask)
     {
         EasyAcquisitionControl settings;
+        settings = {unpackBits(mask, 2, 0), unpackBits(mask, 1, 2),
+                    unpackBits(mask, 1, 3), unpackBits(mask, 1, 5),
+                    unpackBits(mask, 1, 6), unpackBits(mask, 1, 8),
+                    unpackBits(mask, 1, 9), unpackBits(mask, 1, 11)};
+        return settings;
+    }
+
+    /**
+     * @brief pack EasyDPPAcquisitionControl settings into bit mask
+     * @param settings:
+     * Settings structure to pack
+     * @returns
+     * Bit mask ready for low-level set function.
+     * @internal
+     * EasyDPPAcquisitionControl fields:
+     * start/stop mode [0:1], acquisition start/arm in [2],
+     * trigger counting mode in [3], PLL reference clock
+     * source in [6], LVDS I/O busy enable in [8],
+     * LVDS veto enable in [9], LVDS I/O RunIn enable in [11].
+     */
+    static uint32_t edac2bits(EasyDPPAcquisitionControl settings)
+    {
+        uint32_t mask = 0;
+        mask |= packBits(settings.startStopMode, 2, 0);
+        mask |= packBits(settings.acquisitionStartArm, 1, 2);
+        mask |= packBits(settings.triggerCountingMode, 1, 3);
+        mask |= packBits(settings.pLLRefererenceClock, 1, 6);
+        mask |= packBits(settings.lVDSIOBusyEnable, 1, 8);
+        mask |= packBits(settings.lVDSVetoEnable, 1, 9);
+        mask |= packBits(settings.lVDSIORunInEnable, 1, 11);
+        return mask;
+    }
+    /**
+     * @brief unpack bit mask into EasyDPPAcquisitionControl settings
+     * @param mask:
+     * Bit mask from low-level get function to unpack
+     * @returns
+     * Settings structure for convenient use.
+     */
+    static EasyDPPAcquisitionControl bits2edac(uint32_t mask)
+    {
+        EasyDPPAcquisitionControl settings;
         settings = {unpackBits(mask, 2, 0), unpackBits(mask, 1, 2),
                     unpackBits(mask, 1, 3), unpackBits(mask, 1, 6),
                     unpackBits(mask, 1, 8), unpackBits(mask, 1, 9),
@@ -2101,6 +2233,8 @@ namespace caen {
         virtual void setAcquisitionControl(uint32_t value) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         virtual EasyAcquisitionControl getEasyAcquisitionControl() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         virtual void setEasyAcquisitionControl(EasyAcquisitionControl settings) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual EasyDPPAcquisitionControl getEasyDPPAcquisitionControl() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual void setEasyDPPAcquisitionControl(EasyDPPAcquisitionControl settings) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
 
         virtual uint32_t getAcquisitionStatus() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         virtual EasyAcquisitionStatus getEasyAcquisitionStatus() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
@@ -2371,6 +2505,41 @@ namespace caen {
          */
         void setAcquisitionControl(uint32_t mask) override
         { errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x8100, mask & 0x0FFF)); }
+        /**
+         * @brief Easy Get AcquisitionControl
+         *
+         * A convenience wrapper for the low-level function of the same
+         * name. Works on a struct with named variables rather than
+         * directly manipulating obscure bit patterns. Automatically
+         * takes care of translating from the bit mask returned by the
+         * the underlying low-level get funtion.
+         *
+         * @returns
+         * EasyAcquisitionControl structure
+         */
+        EasyAcquisitionControl getEasyAcquisitionControl() override
+        {
+            uint32_t mask;
+            mask = getAcquisitionControl();
+            return bits2eac(mask);
+        }
+        /**
+         * @brief Easy Set AcquisitionControl
+         *
+         * A convenience wrapper for the low-level function of the same
+         * name. Works on a struct with named variables rather than
+         * directly manipulating obscure bit patterns. Automatically
+         * takes care of translating to the bit mask needed by the
+         * the underlying low-level set funtion.
+         *
+         * @param settings:
+         * EasyAcquisitionControl structure
+         */
+        void setEasyAcquisitionControl(EasyAcquisitionControl settings) override
+        {
+            uint32_t mask = eac2bits(settings);
+            setAcquisitionControl(mask);
+        }
 
         /**
          * @brief Get AcquisitionStatus mask
@@ -3367,9 +3536,12 @@ namespace caen {
         }
 
         /* NOTE: reuse get / set AcquisitionControl from parent class */
-
+        /* NOTE: disable inherited 740 AcquisitionControl since we only
+         * support DPPAcquisitionControl here. */
+        virtual EasyAcquisitionControl getEasyAcquisitionControl() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual void setEasyAcquisitionControl(EasyAcquisitionControl settings) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         /**
-         * @brief Easy Get AcquisitionControl
+         * @brief Easy Get DPP AcquisitionControl
          *
          * A convenience wrapper for the low-level function of the same
          * name. Works on a struct with named variables rather than
@@ -3378,16 +3550,16 @@ namespace caen {
          * the underlying low-level get funtion.
          *
          * @returns
-         * EasyAcquisitionControl structure
+         * EasyDPPAcquisitionControl structure
          */
-        EasyAcquisitionControl getEasyAcquisitionControl() override
+        EasyDPPAcquisitionControl getEasyDPPAcquisitionControl() override
         {
             uint32_t mask;
             mask = getAcquisitionControl();
-            return bits2eac(mask);
+            return bits2edac(mask);
         }
         /**
-         * @brief Easy Set AcquisitionControl
+         * @brief Easy Set DPP AcquisitionControl
          *
          * A convenience wrapper for the low-level function of the same
          * name. Works on a struct with named variables rather than
@@ -3396,11 +3568,11 @@ namespace caen {
          * the underlying low-level set funtion.
          *
          * @param settings:
-         * EasyAcquisitionControl structure
+         * EasyDPPAcquisitionControl structure
          */
-        void setEasyAcquisitionControl(EasyAcquisitionControl settings) override
+        void setEasyDPPAcquisitionControl(EasyDPPAcquisitionControl settings) override
         {
-            uint32_t mask = eac2bits(settings);
+            uint32_t mask = edac2bits(settings);
             setAcquisitionControl(mask);
         }
 
