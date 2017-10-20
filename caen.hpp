@@ -317,30 +317,66 @@ namespace caen {
 
     /**
      * @struct EasyAMCFirmwareRevision
-     * @brief For user-friendly configuration of ROC FPGA Firmware Revision.
+     * @brief For user-friendly configuration of AMC Firmware Revision.
      *
-     * This register contains the motherboard FPGA (ROC) firmware
-     * revision information.\n
-     * The complete format is:\n
+     * This register contains the channel FPGA (AMC) firmware revision
+     * information. The complete format is:\n
      * Firmware Revision = X.Y (16 lower bits)\n
      * Firmware Revision Date = Y/M/DD (16 higher bits)\n
-     * EXAMPLE 1: revision 3.08, November 12th, 2007 is 0x7B120308.\n
-     * EXAMPLE 2: revision 4.09, March 7th, 2016 is 0x03070409.\n
-     * NOTE: the nibble code for the year makes this information to roll
+     * EXAMPLE 1: revision 1.03, November 12th, 2007 is 0x7B120103.\n
+     * EXAMPLE 2: revision 2.09, March 7th, 2016 is 0x03070209.\n
+     * NOTE: the nibble code for the year makes this informa on to roll
      * over each 16 years.
      *
      * @var EasyAMCFirmwareRevision::minorRevisionNumber
-     * ROC Firmware Minor Revision Number (Y).
+     * AMC Firmware Minor Revision Number (Y).
      * @var EasyAMCFirmwareRevision::majorRevisionNumber
-     * ROC Firmware Major Revision Number (X).
+     * AMC Firmware Major Revision Number (X).
      * @var EasyAMCFirmwareRevision::revisionDate
-     * ROC Firmware Revision Date (Y/M/DD).
+     * AMC Firmware Revision Date (Y/M/DD).
      */
     struct EasyAMCFirmwareRevision {
         /* Only allow the expected number of bits per field */
         uint8_t minorRevisionNumber : 8;
         uint8_t majorRevisionNumber : 8;
         uint16_t revisionDate : 16;
+    };
+
+    /**
+     * @struct EasyDPPAMCFirmwareRevision
+     * @brief For user-friendly configuration of DPP AMC FPGA Firmware Revision.
+     *
+     * Returns the DPP firmware revision (mezzanine level).
+     * To control the mother board firmware revision see register 0x8124.\n
+     * For example: if the register value is 0xC3218303:\n
+     * - Firmware Code and Firmware Revision are 131.3\n
+     * - Build Day is 21\n
+     * - Build Month is March\n
+     * - Build Year is 2012.\n
+     * NOTE: since 2016 the build year started again from 0.
+     *
+     * @var EasyDPPAMCFirmwareRevision::firmwareRevisionNumber
+     * Firmware revision number
+     * @var EasyDPPAMCFirmwareRevision::firmwareDPPCode
+     * Firmware DPP code. Each DPP firmware has a unique code.
+     * @var EasyDPPAMCFirmwareRevision::buildDayLower
+     * Build Day (lower digit)
+     * @var EasyDPPAMCFirmwareRevision::buildDayUpper
+     * Build Day (upper digit)
+     * @var EasyDPPAMCFirmwareRevision::buildMonth
+     * Build Month. For example: 3 means March, 12 is December.
+     * @var EasyDPPAMCFirmwareRevision::buildYear
+     * Build Year. For example: 0 means 2000, 12 means 2012. NOTE: since
+     * 2016 the build year started again from 0.
+     */
+    struct EasyDPPAMCFirmwareRevision {
+        /* Only allow the expected number of bits per field */
+        uint8_t firmwareRevisionNumber : 8;
+        uint8_t firmwareDPPCode : 8;
+        uint8_t buildDayLower : 4;
+        uint8_t buildDayUpper : 4;
+        uint8_t buildMonth : 4;
+        uint8_t buildYear : 4;
     };
 
     /**
@@ -1197,6 +1233,8 @@ namespace caen {
         uint8_t motherboardVirtualProbePropagation : 1;
         uint8_t patternConfiguration : 2;
     };
+    /* NOTE: 740 and 740DPP layout is identical */
+    using EasyDPPFrontPanelIOControl = EasyFrontPanelIOControl;
 
     /**
      * @struct EasyROCFPGAFirmwareRevision
@@ -1225,7 +1263,37 @@ namespace caen {
         uint8_t majorRevisionNumber : 8;
         uint16_t revisionDate : 16;
     };
+    /* NOTE: 740 and 740DPP layout is identical */
+    using EasyDPPROCFPGAFirmwareRevision = EasyROCFPGAFirmwareRevision;
 
+    /**
+     * @struct EasyFanSpeedControl
+     * @brief For user-friendly configuration of Fan Speed Control mask.
+     *
+     * This register manages the on-board fan speed in order to
+     * guarantee an appropriate cooling according to the internal
+     * temperature variations.\n
+     * NOTE: from revision 4 of the motherboard PCB (see register 0xF04C
+     * of the Configuration ROM), the automatic fan speed control has
+     * been implemented, and it is supported by ROC FPGA firmware
+     * revision greater than 4.4 (see register 0x8124).\n
+     * Independently of the revision, the user can set the fan speed
+     * high by setting bit[3] = 1. Setting bit[3] = 0 will restore the
+     * automatic control for revision 4 or higher, or the low fan speed
+     * in case of revisions lower than 4.\n
+     * NOTE: this register is supported by Desktop (DT) boards only.
+     *
+     * @var EasyFanSpeedControl::fanSpeedMode
+     * Fan Speed Mode. Options are:\n
+     * 0 = slow speed or automa c speed tuning\n
+     * 1 = high speed.
+     */
+    struct EasyFanSpeedControl {
+        /* Only allow the expected number of bits per field */
+        uint8_t fanSpeedMode : 1;
+    };
+    /* NOTE: 740 and 740DPP layout is identical */
+    using EasyDPPFanSpeedControl = EasyFanSpeedControl;
 
     /* Bit-banging helpers to translate between EasyX struct and bitmask.
      * Please refer to the register docs for the individual mask
@@ -1291,6 +1359,45 @@ namespace caen {
         settings = {unpackBits(mask, 8, 0), unpackBits(mask, 8, 8),
                     (uint16_t)(unpackBits(mask, 8, 24) << 8 |
                                unpackBits(mask, 8, 16))};
+        return settings;
+    }
+
+    /**
+     * @brief pack EasyDPPAMCFirmwareRevision settings into bit mask
+     * @param settings:
+     * Settings structure to pack
+     * @returns
+     * Bit mask ready for low-level set function.
+     * @internal
+     * EasyDPPAMCFirmwareRevision fields:
+     * firmware revision number in [0:7], firmware DPP code in [8:15],
+     * build day lower in [16:19], build day upper in [20:23],
+     * build month in [24:27], build year in [28:31]
+     */
+    static uint32_t edafr2bits(EasyDPPAMCFirmwareRevision settings)
+    {
+        uint32_t mask = 0;
+        mask |= packBits(settings.firmwareRevisionNumber, 8, 0);
+        mask |= packBits(settings.firmwareDPPCode, 8, 8);
+        mask |= packBits(settings.buildDayLower, 4, 16);
+        mask |= packBits(settings.buildDayUpper, 4, 20);
+        mask |= packBits(settings.buildMonth, 4, 24);
+        mask |= packBits(settings.buildYear, 4, 28);
+        return mask;
+    }
+    /**
+     * @brief unpack bit mask into EasyDPPAMCFirmwareRevision settings
+     * @param mask:
+     * Bit mask from low-level get function to unpack
+     * @returns
+     * Settings structure for convenient use.
+     */
+    static EasyDPPAMCFirmwareRevision bits2edafr(uint32_t mask)
+    {
+        EasyDPPAMCFirmwareRevision settings;
+        settings = {unpackBits(mask, 8, 0), unpackBits(mask, 8, 8),
+                    unpackBits(mask, 4, 16), unpackBits(mask, 4, 20),
+                    unpackBits(mask, 4, 24), unpackBits(mask, 4, 28)};
         return settings;
     }
 
@@ -1839,6 +1946,33 @@ namespace caen {
         settings = {unpackBits(mask, 8, 0), unpackBits(mask, 8, 8),
                     (uint16_t)(unpackBits(mask, 8, 24) << 8 |
                                unpackBits(mask, 8, 16))};
+        return settings;
+    }
+
+    /**
+     * @brief pack EasyFanSpeedControl settings into bit mask
+     * @param settings:
+     * Settings structure to pack
+     * @returns
+     * Bit mask ready for low-level set function.
+     */
+    static uint32_t efsc2bits(EasyFanSpeedControl settings)
+    {
+        uint32_t mask = 0;
+        mask |= packBits(settings.fanSpeedMode, 1, 3);
+        return mask;
+    }
+    /**
+     * @brief unpack bit mask into EasyFanSpeedControl settings
+     * @param mask:
+     * Bit mask from low-level get function to unpack
+     * @returns
+     * Settings structure for convenient use.
+     */
+    static EasyFanSpeedControl bits2efsc(uint32_t mask)
+    {
+        EasyFanSpeedControl settings;
+        settings = {unpackBits(mask, 1, 3)};
         return settings;
     }
 
@@ -2499,6 +2633,7 @@ namespace caen {
 
         virtual uint32_t getAMCFirmwareRevision(uint32_t group) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         virtual EasyAMCFirmwareRevision getEasyAMCFirmwareRevision(uint32_t group) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual EasyDPPAMCFirmwareRevision getEasyDPPAMCFirmwareRevision(uint32_t group) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
 
         virtual uint32_t getRunDelay() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         virtual void setRunDelay(uint32_t delay) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
@@ -2573,13 +2708,20 @@ namespace caen {
         virtual void setFrontPanelIOControl(uint32_t value) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         virtual EasyFrontPanelIOControl getEasyFrontPanelIOControl() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         virtual void setEasyFrontPanelIOControl(EasyFrontPanelIOControl settings) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual EasyDPPFrontPanelIOControl getEasyDPPFrontPanelIOControl() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual void setEasyDPPFrontPanelIOControl(EasyDPPFrontPanelIOControl settings) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
 
         virtual uint32_t getROCFPGAFirmwareRevision() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         virtual EasyROCFPGAFirmwareRevision getEasyROCFPGAFirmwareRevision() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual EasyDPPROCFPGAFirmwareRevision getEasyDPPROCFPGAFirmwareRevision() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         virtual uint32_t getEventSize() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
 
         virtual uint32_t getFanSpeedControl() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         virtual void setFanSpeedControl(uint32_t value) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual EasyFanSpeedControl getEasyFanSpeedControl() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual void setEasyFanSpeedControl(EasyFanSpeedControl settings) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual EasyDPPFanSpeedControl getEasyDPPFanSpeedControl() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual void setEasyDPPFanSpeedControl(EasyDPPFanSpeedControl settings) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
 
         virtual uint32_t getDisableExternalTrigger() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         virtual void setDisableExternalTrigger(uint32_t value) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
@@ -2607,7 +2749,7 @@ namespace caen {
     public:
         virtual uint32_t channels() const override { return groups()*channelsPerGroup(); }
         virtual uint32_t groups() const override { return boardInfo_.Channels; } // for x740: boardInfo.Channels stores number of groups
-        virtual uint32_t channelsPerGroup() const override { return 8; }  // 8 channels per group for x740
+        virtual uint32_t channelsPerGroup() const override { return 8; } // 8 channels per group for x740
 
         /* NOTE: BoardConfiguration differs in forced ones and zeros
          * between generic and DPP version. Use a class-specific mask.
@@ -3243,6 +3385,41 @@ namespace caen {
          */
         void setFanSpeedControl(uint32_t mask) override
         { errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x8168, mask)); }
+        /**
+         * @brief Easy Get FanSpeedControl
+         *
+         * A convenience wrapper for the low-level function of the same
+         * name. Works on a struct with named variables rather than
+         * directly manipulating obscure bit patterns. Automatically
+         * takes care of translating from the bit mask returned by the
+         * the underlying low-level get funtion.
+         *
+         * @returns
+         * EasyFanSpeedControl structure
+         */
+        EasyFanSpeedControl getEasyFanSpeedControl() override
+        {
+            uint32_t mask;
+            mask = getFanSpeedControl();
+            return bits2efsc(mask);
+        }
+        /**
+         * @brief Easy Set FanSpeedControl
+         *
+         * A convenience wrapper for the low-level function of the same
+         * name. Works on a struct with named variables rather than
+         * directly manipulating obscure bit patterns. Automatically
+         * takes care of translating to the bit mask needed by the
+         * the underlying low-level set funtion.
+         *
+         * @param settings:
+         * EasyFanSpeedControl structure
+         */
+        void setEasyFanSpeedControl(EasyFanSpeedControl settings) override
+        {
+            uint32_t mask = efsc2bits(settings);
+            setFanSpeedControl(mask);
+        }
 
         /**
          * @brief Get Run/Start/Stop Delay
@@ -3779,6 +3956,34 @@ namespace caen {
         void setShapedTriggerWidth(uint32_t value) override
         { errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x8078, value & 0xFFFF)); }
 
+        /* NOTE: reuse get AMCFirmwareRevision from parent */
+        /* NOTE: disable inherited 740 EasyAMCFirmwareRevision since we only
+         * support EasyDPPAMCFirmwareRevision here. */
+        /**
+         * @brief use getEasyDPPX version instead
+         */
+        virtual EasyAMCFirmwareRevision getEasyAMCFirmwareRevision() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        /**
+         * @brief Easy Get DPP AMCFirmwareRevision
+         *
+         * A convenience wrapper for the low-level function of the same
+         * name. Works on a struct with named variables rather than
+         * directly manipulating obscure bit patterns. Automatically
+         * takes care of translating from the bit mask returned by the
+         * the underlying low-level get funtion.
+         *
+         * @param group:
+         * group index
+         * @returns
+         * EasyDPPAMCFirmwareRevision structure
+         */
+        EasyDPPAMCFirmwareRevision getEasyDPPAMCFirmwareRevision(uint32_t group) override
+        {
+            uint32_t mask;
+            mask = getAMCFirmwareRevision(group);
+            return bits2edafr(mask);
+        }
+
         /* TODO: auto-comment conf files with e.g. EasyX struct names.
          *       # EasyBoardConfiguration: structure with ordered values:
          *       # individualTrigger, analogProbe, ..., externalTriggerMode
@@ -3796,10 +4001,19 @@ namespace caen {
 
         /* TODO: wrap Individual Trigger Threshold of Group n Sub Channel m from register docs? */
 
-        /* NOTE: disable inherited 740 BoardConfiguration since we only
-         * support DPPBoardConfiguration here. */
+        /* NOTE: disable inherited 740 EasyBoardConfiguration since we only
+         * support EasyDPPBoardConfiguration here. */
+        /**
+         * @brief use getEasyDPPX version instead
+         */
         virtual EasyBoardConfiguration getEasyBoardConfiguration() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        /**
+         * @brief use setEasyDPPX version instead
+         */
         virtual void setEasyBoardConfiguration(EasyBoardConfiguration settings) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        /**
+         * @brief use unsetEasyDPPX version instead
+         */
         virtual void unsetEasyBoardConfiguration(EasyBoardConfiguration settings) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
 
         /**
@@ -3981,9 +4195,15 @@ namespace caen {
         }
 
         /* NOTE: reuse get / set AcquisitionControl from parent class */
-        /* NOTE: disable inherited 740 AcquisitionControl since we only
-         * support DPPAcquisitionControl here. */
+        /* NOTE: disable inherited 740 EasyAcquisitionControl since we only
+         * support EasyDPPAcquisitionControl here. */
+        /**
+         * @brief use getEasyDPPX version instead
+         */
         virtual EasyAcquisitionControl getEasyAcquisitionControl() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        /**
+         * @brief use setEasyDPPX version instead
+         */
         virtual void setEasyAcquisitionControl(EasyAcquisitionControl settings) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         /**
          * @brief Easy Get DPP AcquisitionControl
@@ -4022,8 +4242,11 @@ namespace caen {
         }
 
         /* NOTE: reuse get / set AcquisitionStatus from parent class */
-        /* NOTE: disable inherited 740 AcquisitionStatus since we only
-         * support DPPAcquisitionStatus here. */
+        /* NOTE: disable inherited 740 EasyAcquisitionStatus since we only
+         * support EasyDPPAcquisitionStatus here. */
+        /**
+         * @brief use getEasyDPPX version instead
+         */
         virtual EasyAcquisitionStatus getEasyAcquisitionStatus() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         /**
          * @brief Easy Get DPPAcquisitionStatus
@@ -4047,9 +4270,15 @@ namespace caen {
         /* NOTE: Reuse get / set SoftwareTrigger from parent? */
 
         /* NOTE: Reuse get / set GlobalTriggerMask from parent */
-        /* NOTE: disable inherited 740 GlobalTriggerMask since we only
-         * support DPPGlobalTriggerMask here. */
+        /* NOTE: disable inherited 740 EasyGlobalTriggerMask since we only
+         * support EasyDPPGlobalTriggerMask here. */
+        /**
+         * @brief use getEasyDPPX version instead
+         */
         virtual EasyGlobalTriggerMask getEasyGlobalTriggerMask() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        /**
+         * @brief use setEasyDPPX version instead
+         */
         virtual void setEasyGlobalTriggerMask(EasyGlobalTriggerMask settings) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         /**
          * @brief Easy Get DPP GlobalTriggerMask
@@ -4088,9 +4317,15 @@ namespace caen {
         }
 
         /* NOTE: reuse get / set FrontPanelTRGOUTEnableMask from parent */
-        /* NOTE: disable inherited 740 FrontPanelTRGOUTEnableMask since we only
-         * support DPPFrontPanelTRGOUTEnableMask here. */
+        /* NOTE: disable inherited 740 EasyFrontPanelTRGOUTEnableMask since we only
+         * support EasyDPPFrontPanelTRGOUTEnableMask here. */
+        /**
+         * @brief use getEasyDPPX version instead
+         */
         virtual EasyFrontPanelTRGOUTEnableMask getEasyFrontPanelTRGOUTEnableMask() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        /**
+         * @brief use setEasyDPPX version instead
+         */
         virtual void setEasyFrontPanelTRGOUTEnableMask(EasyFrontPanelTRGOUTEnableMask settings) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         /**
          * @brief Easy Get DPP FrontPanelTRGOUTEnableMask
@@ -4128,11 +4363,72 @@ namespace caen {
             setFrontPanelTRGOUTEnableMask(mask);
         }
 
+        /* TODO: can we use a function reference instead to simplify
+         * re-exposure of shared structure EasyX helpers? */
+
         /* NOTE: reuse get / set FrontPanelIOControl from parent */
-        /* NOTE: reuse get / set Easy FrontPanelIOControl from parent */
+        /* NOTE: disable inherited 740 EasyFrontPanelIOControl since we only
+         * support EasyDPPFrontPanelIOControl here. */
+        /**
+         * @brief use getEasyDPPX version instead
+         */
+        virtual EasyFrontPanelIOControl getEasyFrontPanelIOControl() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        /**
+         * @brief use setEasyDPPX version instead
+         */
+        virtual void setEasyFrontPanelIOControl(EasyFrontPanelIOControl settings) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        /* NOTE: 740 and 740DPP share this structure - just re-expose it */
+        /**
+         * @brief Easy Get DPP FrontPanelIOControl
+         *
+         * A convenience wrapper for the low-level function of the same
+         * name. Works on a struct with named variables rather than
+         * directly manipulating obscure bit patterns. Automatically
+         * takes care of translating from the bit mask returned by the
+         * the underlying low-level get funtion.
+         *
+         * @returns
+         * EasyDPPFrontPanelIOControl structure
+         */
+        EasyDPPFrontPanelIOControl getEasyDPPFrontPanelIOControl() override
+        { return (EasyDPPFrontPanelIOControl) Digitizer740::getEasyFrontPanelIOControl(); }
+        /**
+         * @brief Easy Set DPP FrontPanelIOControl
+         *
+         * A convenience wrapper for the low-level function of the same
+         * name. Works on a struct with named variables rather than
+         * directly manipulating obscure bit patterns. Automatically
+         * takes care of translating to the bit mask needed by the
+         * the underlying low-level set funtion.
+         *
+         * @param settings:
+         * EasyDPPFrontPanelIOControl structure
+         */
+        void setEasyDPPFrontPanelIOControl(EasyDPPFrontPanelIOControl settings) override
+        { return setEasyFrontPanelIOControl((EasyFrontPanelIOControl)settings); }
 
         /* NOTE: ROCFPGAFirmwareRevision is inherited from Digitizer740  */
-        /* NOTE: EasyROCFPGAFirmwareRevision is inherited from Digitizer740  */
+        /* NOTE: disable inherited 740 EasyROCFPGAFirmwareRevision since we only
+         * support EasyDPPROCFPGAFirmwareRevision here. */
+        /**
+         * @brief use getEasyDPPX version instead
+         */
+        virtual EasyROCFPGAFirmwareRevision getEasyROCFPGAFirmwareRevision() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        /* NOTE: 740 and 740DPP share this structure - just re-expose it */
+        /**
+         * @brief Easy Get DPPROCFPGAFirmwareRevision
+         *
+         * A convenience wrapper for the low-level function of the same
+         * name. Works on a struct with named variables rather than
+         * directly manipulating obscure bit patterns. Automatically
+         * takes care of translating from the bit mask returned by the
+         * the underlying low-level get funtion.
+         *
+         * @returns
+         * EasyDPPROCFPGAFirmwareRevision structure
+         */
+        EasyDPPROCFPGAFirmwareRevision getEasyDPPROCFPGAFirmwareRevision() override
+        { return (EasyDPPROCFPGAFirmwareRevision)Digitizer740::getEasyROCFPGAFirmwareRevision(); }
         
         /* TODO: wrap Voltage Level Mode Configuration from register docs? */
 
@@ -4141,7 +4437,46 @@ namespace caen {
 
         /* TODO: wrap Time Bomb Downcounter from register docs? */
 
-        /* TODO: wrap FanSpeedControl in user-friendly struct */
+        /* NOTE: reuse get / set FanSpeedControl from parent */
+        /* NOTE: disable inherited 740 EasyFanSpeedControl since we only
+         * support EasyDPPFanSpeedControl here. */
+        /**
+         * @brief use getEasyDPPX version instead
+         */
+        virtual EasyFanSpeedControl getEasyFanSpeedControl() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        /**
+         * @brief use setEasyDPPX version instead
+         */
+        virtual void setEasyFanSpeedControl(EasyFanSpeedControl settings) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        /* NOTE: 740 and 740DPP share this structure - just re-expose it */
+        /**
+         * @brief Easy Get DPP FanSpeedControl
+         *
+         * A convenience wrapper for the low-level function of the same
+         * name. Works on a struct with named variables rather than
+         * directly manipulating obscure bit patterns. Automatically
+         * takes care of translating from the bit mask returned by the
+         * the underlying low-level get funtion.
+         *
+         * @returns
+         * EasyDPPFanSpeedControl structure
+         */
+        EasyDPPFanSpeedControl getEasyDPPFanSpeedControl() override
+        { return (EasyDPPFanSpeedControl) Digitizer740::getEasyFanSpeedControl(); }
+        /**
+         * @brief Easy Set DPP FanSpeedControl
+         *
+         * A convenience wrapper for the low-level function of the same
+         * name. Works on a struct with named variables rather than
+         * directly manipulating obscure bit patterns. Automatically
+         * takes care of translating to the bit mask needed by the
+         * the underlying low-level set funtion.
+         *
+         * @param settings:
+         * EasyDPPFanSpeedControl structure
+         */
+        void setEasyDPPFanSpeedControl(EasyDPPFanSpeedControl settings) override
+        { return setEasyFanSpeedControl((EasyFanSpeedControl)settings); }
 
         /* NOTE: Get / Set Run/Start/Stop Delay from register docs is
          * already covered by RunDelay. */

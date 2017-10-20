@@ -98,6 +98,8 @@ std::string to_string(const caen::SAMTriggerCountVetoParams &samtcvp);
 caen::SAMTriggerCountVetoParams s2samtcvp(const std::string& s);
 std::string to_string(const caen::EasyAMCFirmwareRevision &eafr);
 caen::EasyAMCFirmwareRevision s2eafr(const std::string& s);
+std::string to_string(const caen::EasyDPPAMCFirmwareRevision &edafr);
+caen::EasyDPPAMCFirmwareRevision s2edafr(const std::string& s);
 std::string to_string(const caen::EasyDPPAlgorithmControl &edppac);
 caen::EasyDPPAlgorithmControl s2edppac(const std::string& s);
 std::string to_string(const caen::EasyBoardConfiguration &ebc);
@@ -124,6 +126,8 @@ std::string to_string(const caen::EasyFrontPanelIOControl &efpioc);
 caen::EasyFrontPanelIOControl s2efpioc(const std::string& s);
 std::string to_string(const caen::EasyROCFPGAFirmwareRevision &erffr);
 caen::EasyROCFPGAFirmwareRevision s2erffr(const std::string& s);
+std::string to_string(const caen::EasyFanSpeedControl &efsc);
+caen::EasyFanSpeedControl s2efsc(const std::string& s);
 
 std::string to_string(CAEN_DGTZ_DPP_AcqMode_t mode);
 CAEN_DGTZ_DPP_AcqMode_t s2dam(const std::string& s);

@@ -297,6 +297,24 @@ caen::EasyAMCFirmwareRevision s2eafr(const std::string& s)
     throw std::invalid_argument{"Invalid EasyAMCFirmwareRevision"};
 }
 
+std::string to_string(const caen::EasyDPPAMCFirmwareRevision &edafr)
+{
+    std::stringstream ss;
+    ss << '{' << ui_to_string(edafr.firmwareRevisionNumber) << ',' << ui_to_string(edafr.firmwareDPPCode) << ',' << ui_to_string(edafr.buildDayLower) << ',' << ui_to_string(edafr.buildDayUpper) << ',' << ui_to_string(edafr.buildMonth) << ',' << ui_to_string(edafr.buildYear) << '}';
+    return ss.str();
+}
+
+caen::EasyDPPAMCFirmwareRevision s2edafr(const std::string& s)
+{
+    std::regex rx("\\{(\\w+),(\\w+),(\\w+),(\\w+),(\\w+),(\\w+)\\}");
+    std::smatch match;
+    if (std::regex_search(s, match, rx))
+    {
+        return caen::EasyDPPAMCFirmwareRevision{s2ui8(match[1]),s2ui8(match[2]),s2ui8(match[3]),s2ui8(match[4]),s2ui8(match[5]),s2ui8(match[6])};
+    }
+    throw std::invalid_argument{"Invalid EasyDPPAMCFirmwareRevision"};
+}
+
 std::string to_string(const caen::EasyDPPAlgorithmControl &edppac)
 {
     std::stringstream ss;
@@ -535,6 +553,24 @@ caen::EasyROCFPGAFirmwareRevision s2erffr(const std::string& s)
         return caen::EasyROCFPGAFirmwareRevision{s2ui8(match[1]),s2ui8(match[2]),(uint16_t)s2ui(match[3])};
     }
     throw std::invalid_argument{"Invalid EasyROCFPGAFirmwareRevision"};
+}
+
+std::string to_string(const caen::EasyFanSpeedControl &efsc)
+{
+    std::stringstream ss;
+    ss << '{' << ui_to_string(efsc.fanSpeedMode) << '}';
+    return ss.str();
+}
+
+caen::EasyFanSpeedControl s2efsc(const std::string& s)
+{
+    std::regex rx("\\{(\\w+)\\}");
+    std::smatch match;
+    if (std::regex_search(s, match, rx))
+    {
+        return caen::EasyFanSpeedControl{s2ui8(match[1])};
+    }
+    throw std::invalid_argument{"Invalid EasyFanSpeedControl"};
 }
 
 std::string to_string(CAEN_DGTZ_DPP_AcqMode_t mode)

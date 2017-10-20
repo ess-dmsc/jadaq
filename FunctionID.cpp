@@ -74,10 +74,14 @@ static std::unordered_map<std::string,FunctionID > functionMap =
                 MAP_ENTRY(EasyDPPFrontPanelTRGOUTEnableMask),
                 MAP_ENTRY(FrontPanelIOControl),
                 MAP_ENTRY(EasyFrontPanelIOControl),
+                MAP_ENTRY(EasyDPPFrontPanelIOControl),
                 MAP_ENTRY(ROCFPGAFirmwareRevision),
                 MAP_ENTRY(EasyROCFPGAFirmwareRevision),
+                MAP_ENTRY(EasyDPPROCFPGAFirmwareRevision),
                 MAP_ENTRY(EventSize),
                 MAP_ENTRY(FanSpeedControl),
+                MAP_ENTRY(EasyFanSpeedControl),
+                MAP_ENTRY(EasyDPPFanSpeedControl),
                 MAP_ENTRY(DisableExternalTrigger),
                 MAP_ENTRY(RunStartStopDelay),
                 MAP_ENTRY(ReadoutControl),
@@ -86,6 +90,7 @@ static std::unordered_map<std::string,FunctionID > functionMap =
                 MAP_ENTRY(GroupDCOffset),
                 MAP_ENTRY(AMCFirmwareRevision),
                 MAP_ENTRY(EasyAMCFirmwareRevision),
+                MAP_ENTRY(EasyDPPAMCFirmwareRevision),
                 MAP_ENTRY(ChannelSelfTrigger),
                 MAP_ENTRY(GroupSelfTrigger),
                 MAP_ENTRY(ChannelTriggerThreshold),
@@ -159,10 +164,14 @@ const std::string to_string(FunctionID id) {
         CASE_TO_STR(EasyDPPFrontPanelTRGOUTEnableMask)
         CASE_TO_STR(FrontPanelIOControl)
         CASE_TO_STR(EasyFrontPanelIOControl)
+        CASE_TO_STR(EasyDPPFrontPanelIOControl)
         CASE_TO_STR(ROCFPGAFirmwareRevision)
         CASE_TO_STR(EasyROCFPGAFirmwareRevision)
+        CASE_TO_STR(EasyDPPROCFPGAFirmwareRevision)
         CASE_TO_STR(EventSize)
         CASE_TO_STR(FanSpeedControl)
+        CASE_TO_STR(EasyFanSpeedControl)
+        CASE_TO_STR(EasyDPPFanSpeedControl)
         CASE_TO_STR(DisableExternalTrigger)
         CASE_TO_STR(RunStartStopDelay)
         CASE_TO_STR(ReadoutControl)
@@ -171,6 +180,7 @@ const std::string to_string(FunctionID id) {
         CASE_TO_STR(GroupDCOffset)
         CASE_TO_STR(AMCFirmwareRevision)
         CASE_TO_STR(EasyAMCFirmwareRevision)
+        CASE_TO_STR(EasyDPPAMCFirmwareRevision)
         CASE_TO_STR(ChannelSelfTrigger)
         CASE_TO_STR(GroupSelfTrigger)
         CASE_TO_STR(ChannelTriggerThreshold)
