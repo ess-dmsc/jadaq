@@ -3044,6 +3044,8 @@ namespace caen {
             setFrontPanelTRGOUTEnableMask(mask);
         }
 
+        /* TODO: wrap Post Trigger from register docs? */
+
         /* TODO: wrap LVDS I/O Data from register docs? */
 
         /**
@@ -3078,6 +3080,41 @@ namespace caen {
          */
         void setFrontPanelIOControl(uint32_t mask) override
         { errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x811C, mask)); }
+        /**
+         * @brief Easy Get FrontPanelIOControl
+         *
+         * A convenience wrapper for the low-level function of the same
+         * name. Works on a struct with named variables rather than
+         * directly manipulating obscure bit patterns. Automatically
+         * takes care of translating from the bit mask returned by the
+         * the underlying low-level get funtion.
+         *
+         * @returns
+         * EasyFrontPanelIOControl structure
+         */
+        EasyFrontPanelIOControl getEasyFrontPanelIOControl() override
+        {
+            uint32_t mask;
+            mask = getFrontPanelIOControl();
+            return bits2efpioc(mask);
+        }
+        /**
+         * @brief Easy Set FrontPanelIOControl
+         *
+         * A convenience wrapper for the low-level function of the same
+         * name. Works on a struct with named variables rather than
+         * directly manipulating obscure bit patterns. Automatically
+         * takes care of translating to the bit mask needed by the
+         * the underlying low-level set funtion.
+         *
+         * @param settings:
+         * EasyFrontPanelIOControl structure
+         */
+        void setEasyFrontPanelIOControl(EasyFrontPanelIOControl settings) override
+        {
+            uint32_t mask = efpioc2bits(settings);
+            setFrontPanelIOControl(mask);
+        }
 
         /* NOTE: Group Enable Mask from register is handled by GroupEnableMask */
 
@@ -4092,42 +4129,7 @@ namespace caen {
         }
 
         /* NOTE: reuse get / set FrontPanelIOControl from parent */
-
-        /**
-         * @brief Easy Get FrontPanelIOControl
-         *
-         * A convenience wrapper for the low-level function of the same
-         * name. Works on a struct with named variables rather than
-         * directly manipulating obscure bit patterns. Automatically
-         * takes care of translating from the bit mask returned by the
-         * the underlying low-level get funtion.
-         *
-         * @returns
-         * EasyFrontPanelIOControl structure
-         */
-        EasyFrontPanelIOControl getEasyFrontPanelIOControl() override
-        {
-            uint32_t mask;
-            mask = getFrontPanelIOControl();
-            return bits2efpioc(mask);
-        }
-        /**
-         * @brief Easy Set FrontPanelIOControl
-         *
-         * A convenience wrapper for the low-level function of the same
-         * name. Works on a struct with named variables rather than
-         * directly manipulating obscure bit patterns. Automatically
-         * takes care of translating to the bit mask needed by the
-         * the underlying low-level set funtion.
-         *
-         * @param settings:
-         * EasyFrontPanelIOControl structure
-         */
-        void setEasyFrontPanelIOControl(EasyFrontPanelIOControl settings) override
-        {
-            uint32_t mask = efpioc2bits(settings);
-            setFrontPanelIOControl(mask);
-        }
+        /* NOTE: reuse get / set Easy FrontPanelIOControl from parent */
 
         /* NOTE: ROCFPGAFirmwareRevision is inherited from Digitizer740  */
         /* NOTE: EasyROCFPGAFirmwareRevision is inherited from Digitizer740  */
