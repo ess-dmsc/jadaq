@@ -2818,7 +2818,6 @@ namespace caen {
             return bits2eafr(mask);
         }
 
-
         /* NOTE: Get / Set DC Offset is handled in GroupDCOffset */
 
         /* NOTE: Get / Set Channel Enable Mask of Group is handled in
@@ -3962,7 +3961,7 @@ namespace caen {
         /**
          * @brief use getEasyDPPX version instead
          */
-        virtual EasyAMCFirmwareRevision getEasyAMCFirmwareRevision() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual EasyAMCFirmwareRevision getEasyAMCFirmwareRevision(uint32_t group) override { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         /**
          * @brief Easy Get DPP AMCFirmwareRevision
          *
@@ -4006,15 +4005,15 @@ namespace caen {
         /**
          * @brief use getEasyDPPX version instead
          */
-        virtual EasyBoardConfiguration getEasyBoardConfiguration() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual EasyBoardConfiguration getEasyBoardConfiguration() override { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         /**
          * @brief use setEasyDPPX version instead
          */
-        virtual void setEasyBoardConfiguration(EasyBoardConfiguration settings) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual void setEasyBoardConfiguration(EasyBoardConfiguration settings) override { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         /**
          * @brief use unsetEasyDPPX version instead
          */
-        virtual void unsetEasyBoardConfiguration(EasyBoardConfiguration settings) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual void unsetEasyBoardConfiguration(EasyBoardConfiguration settings) override { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
 
         /**
          * @brief Easy Get DPP BoardConfiguration
@@ -4200,11 +4199,11 @@ namespace caen {
         /**
          * @brief use getEasyDPPX version instead
          */
-        virtual EasyAcquisitionControl getEasyAcquisitionControl() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual EasyAcquisitionControl getEasyAcquisitionControl() override { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         /**
          * @brief use setEasyDPPX version instead
          */
-        virtual void setEasyAcquisitionControl(EasyAcquisitionControl settings) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual void setEasyAcquisitionControl(EasyAcquisitionControl settings) override { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         /**
          * @brief Easy Get DPP AcquisitionControl
          *
@@ -4247,7 +4246,7 @@ namespace caen {
         /**
          * @brief use getEasyDPPX version instead
          */
-        virtual EasyAcquisitionStatus getEasyAcquisitionStatus() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual EasyAcquisitionStatus getEasyAcquisitionStatus() override { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         /**
          * @brief Easy Get DPPAcquisitionStatus
          *
@@ -4275,11 +4274,11 @@ namespace caen {
         /**
          * @brief use getEasyDPPX version instead
          */
-        virtual EasyGlobalTriggerMask getEasyGlobalTriggerMask() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual EasyGlobalTriggerMask getEasyGlobalTriggerMask() override { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         /**
          * @brief use setEasyDPPX version instead
          */
-        virtual void setEasyGlobalTriggerMask(EasyGlobalTriggerMask settings) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual void setEasyGlobalTriggerMask(EasyGlobalTriggerMask settings) override { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         /**
          * @brief Easy Get DPP GlobalTriggerMask
          *
@@ -4322,11 +4321,11 @@ namespace caen {
         /**
          * @brief use getEasyDPPX version instead
          */
-        virtual EasyFrontPanelTRGOUTEnableMask getEasyFrontPanelTRGOUTEnableMask() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual EasyFrontPanelTRGOUTEnableMask getEasyFrontPanelTRGOUTEnableMask() override { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         /**
          * @brief use setEasyDPPX version instead
          */
-        virtual void setEasyFrontPanelTRGOUTEnableMask(EasyFrontPanelTRGOUTEnableMask settings) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual void setEasyFrontPanelTRGOUTEnableMask(EasyFrontPanelTRGOUTEnableMask settings) override { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         /**
          * @brief Easy Get DPP FrontPanelTRGOUTEnableMask
          *
@@ -4372,11 +4371,11 @@ namespace caen {
         /**
          * @brief use getEasyDPPX version instead
          */
-        virtual EasyFrontPanelIOControl getEasyFrontPanelIOControl() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual EasyFrontPanelIOControl getEasyFrontPanelIOControl() override { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         /**
          * @brief use setEasyDPPX version instead
          */
-        virtual void setEasyFrontPanelIOControl(EasyFrontPanelIOControl settings) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual void setEasyFrontPanelIOControl(EasyFrontPanelIOControl settings) override { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         /* NOTE: 740 and 740DPP share this structure - just re-expose it */
         /**
          * @brief Easy Get DPP FrontPanelIOControl
@@ -4413,7 +4412,7 @@ namespace caen {
         /**
          * @brief use getEasyDPPX version instead
          */
-        virtual EasyROCFPGAFirmwareRevision getEasyROCFPGAFirmwareRevision() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual EasyROCFPGAFirmwareRevision getEasyROCFPGAFirmwareRevision() override { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         /* NOTE: 740 and 740DPP share this structure - just re-expose it */
         /**
          * @brief Easy Get DPPROCFPGAFirmwareRevision
@@ -4443,11 +4442,11 @@ namespace caen {
         /**
          * @brief use getEasyDPPX version instead
          */
-        virtual EasyFanSpeedControl getEasyFanSpeedControl() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual EasyFanSpeedControl getEasyFanSpeedControl() override { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         /**
          * @brief use setEasyDPPX version instead
          */
-        virtual void setEasyFanSpeedControl(EasyFanSpeedControl settings) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual void setEasyFanSpeedControl(EasyFanSpeedControl settings) override { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         /* NOTE: 740 and 740DPP share this structure - just re-expose it */
         /**
          * @brief Easy Get DPP FanSpeedControl
