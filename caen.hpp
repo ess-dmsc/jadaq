@@ -32,8 +32,16 @@
 #include "_CAENDigitizer.h"
 #include <CAENDigitizerType.h>
 #include <string>
+#include <sstream>
 #include <cstdint>
 #include <cassert>
+#include <iostream>
+#include <map>
+#include <vector>
+#include <tuple>
+#include <boost/any.hpp>
+
+/* TODO: add doxygen comments to all important functions and structs */
 
 namespace caen {
     class Error : public std::exception
@@ -314,6 +322,10 @@ namespace caen {
         CAEN_DGTZ_EnaDis_t enable;
         uint32_t vetoWindow;
     };
+
+    /* TODO: change EasyX to class or map to allow iteration in conf
+     * readout. Consider default values and immutable values where it is
+     * specified in the docs. */
 
     /**
      * @struct EasyAMCFirmwareRevision
@@ -1295,6 +1307,335 @@ namespace caen {
     /* NOTE: 740 and 740DPP layout is identical */
     using EasyDPPFanSpeedControl = EasyFanSpeedControl;
 
+    class EasyHelper
+    {
+    protected:
+        const std::string className = "EasyHelper";
+        /* We save variables in a standard map using boost::any values
+         * to allow simple variable lookup based on string name but
+         * variable value types. The map also allows easy iteration
+         * through all variable names and values. */
+        typedef std::map<const std::string, boost::any> var_map;
+        var_map variables;
+        typedef std::pair< std::string, std::pair<uint8_t, uint8_t>> layout_entry;
+        typedef std::vector<layout_entry> var_layout;
+        var_layout layout;
+        /**
+         * @brief unpack at most 8 bits from 32 bit mask
+         * @param mask:
+         * bit mask
+         * @param bits:
+         * number of bits to unpack
+         * @param offset:
+         * offset to the bits to unpack, i.e. how many bits to right-shift
+         */
+        const uint8_t unpackBits(const uint32_t mask, const uint8_t bits, const uint8_t offset) const
+        {
+            return (const uint8_t)((mask >> offset) & ((1 << bits) - 1));
+        }
+        /**
+         * @brief pack at most 8 bits into 32 bit mask
+         * @param value:
+         * value to pack
+         * @param bits:
+         * number of bits to pack
+         * @param offset:
+         * offset to the packed bits, i.e. how many bits to left-shift
+         */
+        const uint32_t packBits(const uint8_t value, const uint8_t bits, const uint8_t offset) const
+        {
+            return (const uint32_t)((value & ((1 << bits) - 1)) << offset);
+        }
+
+        /* force small integers to full unsigned int for proper printing */
+        template<typename T>
+        const std::string ui_to_string(const T v) const
+        {
+            std::stringstream ss;
+            ss << unsigned(v);
+            return ss.str();
+        }
+        /* Shared base since one constructor cannot reuse the other */
+        void construct() {
+            /* Default construct helper - do nothing */
+        };
+    public:
+        EasyHelper()
+        {
+            /* Default constructor - do nothing */
+            construct();
+        }
+        EasyHelper(const uint32_t mask)
+        {
+            /* Construct from bit mask - override in children */
+            construct();
+        }
+        ~EasyHelper()
+        {
+            /* Do nothing */
+        }
+        /* Convert to low-level bit mask in line with docs */
+        virtual const uint32_t toBits() const
+        {
+            uint32_t mask = 0;
+            /* NOTE: we must use variables.at() rather than variables[] here
+             * to avoid 'argument discards qualifiers' error during compile */
+            for (const auto &keyVal : layout) {
+                mask |= packBits(boost::any_cast<uint8_t>(variables.at(keyVal.first)), keyVal.second.first, keyVal.second.second);
+            }
+            return mask;
+        }
+        /* Convert to (constant) configuration doc string */
+        virtual const std::string toConfHelpString(const std::string name, bool header=false) const
+        {
+            std::stringstream ss;
+            if (header) {
+                ss << "### Format for " << name << " is:" << std::endl;
+            }
+            ss << '{';
+            int i = variables.size()-1;
+            /* NOTE: map does not preserve insert order so we use layout
+             * for ordering. */
+            for (const auto &keyVal : layout) {
+                ss << keyVal.first;
+                // Skip comma after last entry
+                if (i > 0) {
+                    ss << ",";
+                }
+                i--;
+            }
+            ss << '}';
+            if (header) {
+                ss << std::endl;
+            }
+            return ss.str();
+        }
+        /* Convert to (constant) configuration string */
+        virtual const std::string toConfValueString() const
+        {
+            /* NOTE: map does not preserve insert order so we use layout
+             * for ordering. */
+            std::stringstream ss;
+            ss << '{';
+            int i = variables.size()-1;
+            for (const auto &keyVal : layout) {
+                /* NOTE: we must use variables.at rather than variables[] here
+                 * to avoid 'argument discards qualifiers' compile problems */
+                uint8_t val = boost::any_cast<uint8_t>(variables.at(keyVal.first));
+                ss << ui_to_string(val);
+                if (i > 0) {
+                    ss << ",";
+                }
+                i--;
+            }
+            ss<< '}' << " # " << toConfHelpString(className);
+            return ss.str();
+        }
+    }; // class EasyHelper
+
+
+    class EasyGlobalTriggerMaskHelper : public EasyHelper
+    {
+    protected:
+        const std::string className = "EasyGlobalTriggerMaskHelper";
+        /* Shared base since one constructor cannot reuse the other */
+        void construct(const uint8_t groupTriggerMask, const uint8_t majorityCoincidenceWindow, const uint8_t majorityLevel, const uint8_t lVDSTrigger, const uint8_t externalTrigger, const uint8_t softwareTrigger) {
+            /*
+             * EasyGlobalTriggerMask fields:
+             * groupTriggerMask in [0:7], majorityCoincidenceWindow in [20:23],
+             * majorityLevel in [24:26], LVDS trigger in [29],
+             * external trigger in [30], software trigger in [31].
+             */
+            layout = {{"groupTriggerMask", {(const uint8_t)8, (const uint8_t)0}},
+                      {"majorityCoincidenceWindow", {(const uint8_t)4, (const uint8_t)20}},
+                      {"majorityLevel", {(const uint8_t)3, (const uint8_t)24}},
+                      {"lVDSTrigger", {(const uint8_t)1, (const uint8_t)29}},
+                      {"externalTrigger", {(const uint8_t)1, (const uint8_t)30}},
+                      {"softwareTrigger", {(const uint8_t)1, (const uint8_t)31}}};
+            variables = {{"groupTriggerMask", (const uint8_t)(groupTriggerMask & 0xFF)},
+                         {"majorityCoincidenceWindow", (const uint8_t)(majorityCoincidenceWindow & 0xF)},
+                         {"majorityLevel", (const uint8_t)(majorityLevel & 0x7)},
+                         {"lVDSTrigger", (const uint8_t)(lVDSTrigger & 0x1)},
+                         {"externalTrigger", (const uint8_t)(externalTrigger & 0x1)},
+                         {"softwareTrigger", (const uint8_t)(softwareTrigger & 0x1)}};
+        };
+
+    public:
+        /* Construct using default values from docs */
+        EasyGlobalTriggerMaskHelper(const uint8_t groupTriggerMask, const uint8_t majorityCoincidenceWindow, const uint8_t majorityLevel, const uint8_t lVDSTrigger, const uint8_t externalTrigger, const uint8_t softwareTrigger) : EasyHelper()
+        {
+            construct(groupTriggerMask, majorityCoincidenceWindow, majorityLevel, lVDSTrigger, externalTrigger, softwareTrigger);
+        }
+        /* Construct from low-level bit mask in line with docs */
+        EasyGlobalTriggerMaskHelper(const uint32_t mask) : EasyHelper(mask)
+        {
+            /* TODO: extract size and offset from layout like this */
+            //construct((const uint8_t)(unpackBits(mask, layout[0].second.first, layout[0].second.second)));
+            construct((const uint8_t)(unpackBits(mask, 8, 0)),
+                      (const uint8_t)(unpackBits(mask, 4, 20)),
+                      (const uint8_t)(unpackBits(mask, 3, 24)),
+                      (const uint8_t)(unpackBits(mask, 1, 29)),
+                      (const uint8_t)(unpackBits(mask, 1, 30)),
+                      (const uint8_t)(unpackBits(mask, 1, 31)));
+        }
+    }; // class EasyGlobalTriggerMaskHelper
+
+    class EasyFanSpeedControlHelper : public EasyHelper
+    {
+    protected:
+        const std::string className = "EasyFanSpeedControlHelper";
+
+        /* Shared base since one constructor cannot reuse the other */
+        void construct(const uint8_t fanSpeedMode) {
+            /*
+             * EasyFanSpeedControl fields:
+             * fan Speed mode in [3].
+             */
+            layout = {{"fanSpeedMode", {(const uint8_t)1, (const uint8_t)3}}};
+            variables = {{"fanSpeedMode", (const uint8_t)(fanSpeedMode & 0x1)}};
+        };
+
+    public:
+        /* Construct using default values from docs */
+        EasyFanSpeedControlHelper(const uint8_t fanSpeedMode=0) : EasyHelper()
+        {
+            construct(fanSpeedMode);
+        }
+        /* Construct from low-level bit mask in line with docs */
+        EasyFanSpeedControlHelper(const uint32_t mask) : EasyHelper(mask)
+        {
+            /* TODO: extract size and offset from layout like this */
+            //construct((const uint8_t)(unpackBits(mask, layout[0].second.first, layout[0].second.second)));
+            construct((const uint8_t)(unpackBits(mask, 1, 3)));
+        }
+    }; // class EasyFanSpeedControlHelper
+
+    class EasyDPPFanSpeedControlHelper : public EasyFanSpeedControlHelper
+    {
+    protected:
+        const std::string className = "EasyDPPFanSpeedControlHelper";
+
+        /* Just inherit everything else from parent class */
+    public:
+        EasyDPPFanSpeedControlHelper(uint8_t fanSpeedMode) : EasyFanSpeedControlHelper(fanSpeedMode) {};
+        EasyDPPFanSpeedControlHelper(uint32_t mask) : EasyFanSpeedControlHelper(mask) {};
+
+    }; // class EasyDPPFanSpeedControlHelper
+
+    class EasyAMCFirmwareRevisionHelper : public EasyHelper
+    {
+    protected:
+        const std::string className = "EasyAMCFirmwareRevisionHelper";
+
+        /* Shared base since one constructor cannot reuse the other */
+        void construct(const uint8_t minorRevisionNumber, const uint8_t majorRevisionNumber, const uint16_t revisionDate)
+        {
+            /*
+             * EasyAMCFirmwareRevision fields:
+             * minor revision number in [0:7], major revision number in [8:15],
+             * revision date in [16:31]
+             */
+            layout = {{"minorRevisionNumber", {(const uint8_t)8, (const uint8_t)0}},
+                      {"majorRevisionNumber", {(const uint8_t)8, (const uint8_t)8}},
+                      {"revisionDate", {(const uint8_t)16, (const uint8_t)16}}};
+            variables = {{"minorRevisionNumber", (const uint8_t)minorRevisionNumber},
+                         {"majorRevisionNumber", (const uint8_t)majorRevisionNumber},
+                         {"revisionDate", (const uint16_t)revisionDate}};
+        }
+
+    public:
+        /* Construct using default values from docs */
+        EasyAMCFirmwareRevisionHelper(const uint8_t minorRevisionNumber, const uint8_t majorRevisionNumber, const uint16_t revisionDate) : EasyHelper()
+        {
+            construct(minorRevisionNumber, majorRevisionNumber, revisionDate);
+        }
+        /* Construct from low-level bit mask in line with docs */
+        EasyAMCFirmwareRevisionHelper(const uint32_t mask) : EasyHelper(mask)
+        {
+            /* TODO: switch to use layout values? */
+            construct((const uint8_t)(unpackBits(mask, 8, 0)),
+                      (const uint8_t)(unpackBits(mask, 8, 8)),
+                      (const uint16_t)(unpackBits(mask, 8, 24) << 8 |
+                                       unpackBits(mask, 8, 16)));
+        }
+        /* Convert to low-level bit mask in line with docs */
+        const uint32_t toBits() const override
+        {
+            uint32_t mask = 0;
+            /* NOTE: we must use variables.at() rather than variables[] here
+             * to avoid 'argument discards qualifiers' error during compile */
+            mask |= packBits(boost::any_cast<uint8_t>(variables.at("minorRevisionNumber")), 8, 0);
+            mask |= packBits(boost::any_cast<uint8_t>(variables.at("majorRevisionNumber")), 8, 8);
+            /* revisionDate is 16-bit - manually pack in two steps */
+            mask |= packBits(boost::any_cast<uint8_t>(variables.at("revisionDate")) & 0xFF, 8, 16);
+            mask |= packBits(boost::any_cast<uint8_t>(variables.at("revisionDate")) >> 8 & 0xFF, 8, 24);
+            return mask;
+        }
+        /* Convert to (constant) configuration string */
+        virtual const std::string toConfValueString() const override
+        {
+            std::stringstream ss;
+            /* TODO: we could even loop through these in most cases */
+            /* Firmware Revision Date = Y/M/DD (16 higher bits)
+               EXAMPLE 1: revision 3.08, November 12th, 2007 is 0x7B120308. */
+            /* NOTE: we must use variables.at rather than variables[] here
+             * to avoid 'argument discards qualifiers' compile problems */
+            uint8_t minor = boost::any_cast<uint8_t>(variables.at("minorRevisionNumber"));
+            uint8_t major = boost::any_cast<uint8_t>(variables.at("majorRevisionNumber"));
+            uint16_t rev = boost::any_cast<uint16_t>(variables.at("revisionDate"));
+            /* NOTE: We unwrap each of the revisionDate bytes in turn for proper
+               translation and printing */
+            ss << '{' << ui_to_string(minor) << ',' << ui_to_string(major) << ',' << ui_to_string(rev >> 12) << ui_to_string((rev & 0x0F00) >> 8) << ui_to_string((rev & 0xF0) >> 4) << ui_to_string(rev & 0xF) << '}' << " # " << toConfHelpString(className);
+            return ss.str();
+        }
+    }; // class EasyAMCFirmwareRevisionHelper
+
+    class EasyDPPAMCFirmwareRevisionHelper : public EasyHelper
+    {
+    protected:
+        const std::string className = "EasyDPPAMCFirmwareRevisionHelper";
+
+        /* Shared base since one constructor cannot reuse the other */
+        void construct(const uint8_t firmwareRevisionNumber, const uint8_t firmwareDPPCode, const uint8_t buildDayLower, const uint8_t buildDayUpper, const uint8_t buildMonth, const uint8_t buildYear)
+        {
+            /*
+             * EasyDPPAMCFirmwareRevision fields:
+             * firmware revision number in [0:7], firmware DPP code in [8:15],
+             * build day lower in [16:19], build day upper in [20:23],
+             * build month in [24:27], build year in [28:31]
+             */
+            layout = {{"firmwareRevisionNumber", {(const uint8_t)8, (const uint8_t)0}},
+                      {"firmwareDPPCode", {(const uint8_t)8, (const uint8_t)8}},
+                      {"buildDayLower", {(const uint8_t)4, (const uint8_t)16}},
+                      {"buildDayUpper", {(const uint8_t)4, (const uint8_t)20}},
+                      {"buildMonth", {(const uint8_t)4, (const uint8_t)24}},
+                      {"buildYear", {(const uint8_t)4, (const uint8_t)28}}};
+            variables = {{"firmwareRevisionNumber", (const uint8_t)firmwareRevisionNumber},
+                         {"firmwareDPPCode", (const uint8_t)firmwareDPPCode},
+                         {"buildDayLower", (const uint8_t)(buildDayLower & 0xF)},
+                         {"buildDayUpper", (const uint8_t)(buildDayUpper & 0xF)},
+                         {"buildMonth", (const uint8_t)(buildMonth & 0xF)},
+                         {"buildYear", (const uint8_t)(buildYear & 0xF)}};
+        }
+    public:
+        EasyDPPAMCFirmwareRevisionHelper(const uint8_t firmwareRevisionNumber, const uint8_t firmwareDPPCode, const uint8_t buildDayLower, const uint8_t buildDayUpper, const uint8_t buildMonth, const uint8_t buildYear) : EasyHelper()
+        {
+            construct(firmwareRevisionNumber, firmwareDPPCode, buildDayLower, buildDayUpper, buildMonth, buildYear);
+        }
+        /* Construct from low-level bit mask in line with docs */
+        EasyDPPAMCFirmwareRevisionHelper(const uint32_t mask) : EasyHelper(mask)
+        {
+            /* TODO: switch to use layout values */
+            construct((const uint8_t)(unpackBits(mask, 8, 0)),
+                      (const uint8_t)(unpackBits(mask, 8, 8)),
+                      (const uint8_t)(unpackBits(mask, 4, 16)),
+                      (const uint8_t)(unpackBits(mask, 4, 20)),
+                      (const uint8_t)(unpackBits(mask, 4, 24)),
+                      (const uint8_t)(unpackBits(mask, 4, 28)));
+        }
+    }; // class EasyDPPAMCFirmwareRevisionHelper
+
+
     /* Bit-banging helpers to translate between EasyX struct and bitmask.
      * Please refer to the register docs for the individual mask
      * layouts.
@@ -1310,7 +1651,7 @@ namespace caen {
      * offset to the bits to unpack, i.e. how many bits to right-shift
      */
     static uint8_t unpackBits(uint32_t mask, uint8_t bits, uint8_t offset)
-    { return (uint8_t)((mask >> offset) & ((1 << bits) - 1) ); }
+    { return (uint8_t)((mask >> offset) & ((1 << bits) - 1)); }
     /**
      * @brief pack at most 8 bits into 32 bit mask
      * @param value:
@@ -1955,6 +2296,9 @@ namespace caen {
      * Settings structure to pack
      * @returns
      * Bit mask ready for low-level set function.
+     * @internal
+     * EasyFanSpeedControl fields:
+     * fan Speed mode in [3].
      */
     static uint32_t efsc2bits(EasyFanSpeedControl settings)
     {
@@ -2634,6 +2978,8 @@ namespace caen {
         virtual uint32_t getAMCFirmwareRevision(uint32_t group) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         virtual EasyAMCFirmwareRevision getEasyAMCFirmwareRevision(uint32_t group) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         virtual EasyDPPAMCFirmwareRevision getEasyDPPAMCFirmwareRevision(uint32_t group) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual EasyAMCFirmwareRevisionHelper getEasyAMCFirmwareRevisionHelper(uint32_t group) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual EasyDPPAMCFirmwareRevisionHelper getEasyDPPAMCFirmwareRevisionHelper(uint32_t group) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
 
         virtual uint32_t getRunDelay() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         virtual void setRunDelay(uint32_t delay) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
@@ -2696,6 +3042,8 @@ namespace caen {
         virtual void setEasyGlobalTriggerMask(EasyGlobalTriggerMask settings) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         virtual EasyDPPGlobalTriggerMask getEasyDPPGlobalTriggerMask() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         virtual void setEasyDPPGlobalTriggerMask(EasyDPPGlobalTriggerMask settings) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual EasyGlobalTriggerMaskHelper getEasyGlobalTriggerMaskHelper() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual void setEasyGlobalTriggerMaskHelper(EasyGlobalTriggerMaskHelper settings) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
 
         virtual uint32_t getFrontPanelTRGOUTEnableMask() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         virtual void setFrontPanelTRGOUTEnableMask(uint32_t value) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
@@ -2722,6 +3070,10 @@ namespace caen {
         virtual void setEasyFanSpeedControl(EasyFanSpeedControl settings) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         virtual EasyDPPFanSpeedControl getEasyDPPFanSpeedControl() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         virtual void setEasyDPPFanSpeedControl(EasyDPPFanSpeedControl settings) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual EasyFanSpeedControlHelper getEasyFanSpeedControlHelper() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual void setEasyFanSpeedControlHelper(EasyFanSpeedControlHelper settings) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual EasyDPPFanSpeedControlHelper getEasyDPPFanSpeedControlHelper() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual void setEasyDPPFanSpeedControlHelper(EasyDPPFanSpeedControlHelper settings) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
 
         virtual uint32_t getDPPDisableExternalTrigger() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         virtual void setDPPDisableExternalTrigger(uint32_t value) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
@@ -2734,6 +3086,8 @@ namespace caen {
 
         virtual uint32_t getDPPAggregateNumberPerBLT() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         virtual void setDPPAggregateNumberPerBLT(uint32_t value) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+
+        /* TODO: implement remaining register wrappers as virtual:NotImpemented? */
 
     }; // class Digitizer
 
@@ -2816,6 +3170,26 @@ namespace caen {
             uint32_t mask;
             mask = getAMCFirmwareRevision(group);
             return bits2eafr(mask);
+        }
+        /**
+         * @brief Easy Get AMCFirmwareRevisionHelper
+         *
+         * A convenience wrapper for the low-level function of the same
+         * name. Works on a struct with named variables rather than
+         * directly manipulating obscure bit patterns. Automatically
+         * takes care of translating from the bit mask returned by the
+         * the underlying low-level get funtion.
+         *
+         * @param group:
+         * group index
+         * @returns
+         * EasyAMCFirmwareRevisionHelper object
+         */
+        EasyAMCFirmwareRevisionHelper getEasyAMCFirmwareRevisionHelper(uint32_t group) override
+        {
+            uint32_t mask;
+            mask = getAMCFirmwareRevision(group);
+            return EasyAMCFirmwareRevisionHelper(mask);
         }
 
         /* NOTE: Get / Set DC Offset is handled in GroupDCOffset */
@@ -3110,6 +3484,41 @@ namespace caen {
         void setEasyGlobalTriggerMask(EasyGlobalTriggerMask settings) override
         {
             uint32_t mask = egtm2bits(settings);
+            setGlobalTriggerMask(mask);
+        }
+        /**
+         * @brief Easy Get GlobalTriggerMaskHelper
+         *
+         * A convenience wrapper for the low-level function of the same
+         * name. Works on a struct with named variables rather than
+         * directly manipulating obscure bit patterns. Automatically
+         * takes care of translating from the bit mask returned by the
+         * the underlying low-level get funtion.
+         *
+         * @returns
+         * EasyGlobalTriggerMask object
+         */
+        EasyGlobalTriggerMaskHelper getEasyGlobalTriggerMaskHelper() override
+        {
+            uint32_t mask;
+            mask = getGlobalTriggerMask();
+            return EasyGlobalTriggerMaskHelper(mask);
+        }
+        /**
+         * @brief Easy Set GlobalTriggerMaskHelper
+         *
+         * A convenience wrapper for the low-level function of the same
+         * name. Works on a struct with named variables rather than
+         * directly manipulating obscure bit patterns. Automatically
+         * takes care of translating to the bit mask needed by the
+         * the underlying low-level set funtion.
+         *
+         * @param settings:
+         * EasyGlobalTriggerMask object
+         */
+        void setEasyGlobalTriggerMaskHelper(EasyGlobalTriggerMaskHelper settings) override
+        {
+            uint32_t mask = settings.toBits();
             setGlobalTriggerMask(mask);
         }
 
@@ -3419,6 +3828,42 @@ namespace caen {
             uint32_t mask = efsc2bits(settings);
             setFanSpeedControl(mask);
         }
+        /**
+         * @brief Easy Get FanSpeedControlHelper
+         *
+         * A convenience wrapper for the low-level function of the same
+         * name. Works on a struct with named variables rather than
+         * directly manipulating obscure bit patterns. Automatically
+         * takes care of translating from the bit mask returned by the
+         * the underlying low-level get funtion.
+         *
+         * @returns
+         * EasyFanSpeedControlHelper object
+         */
+        EasyFanSpeedControlHelper getEasyFanSpeedControlHelper() override
+        {
+            uint32_t mask;
+            mask = getFanSpeedControl();
+            return EasyFanSpeedControlHelper(mask);
+        }
+        /**
+         * @brief Easy Set FanSpeedControlHelper
+         *
+         * A convenience wrapper for the low-level function of the same
+         * name. Works on a struct with named variables rather than
+         * directly manipulating obscure bit patterns. Automatically
+         * takes care of translating to the bit mask needed by the
+         * the underlying low-level set funtion.
+         *
+         * @param settings:
+         * EasyFanSpeedControl object
+         */
+        void setEasyFanSpeedControlHelper(EasyFanSpeedControlHelper settings) override
+        {
+            uint32_t mask = settings.toBits();
+            setFanSpeedControl(mask);
+        }
+
 
         /**
          * @brief Get Run/Start/Stop Delay
@@ -3521,6 +3966,7 @@ namespace caen {
         /* TODO: wrap Software Reset from register docs? */
         /* TODO: wrap Software Clear from register docs? */
         /* TODO: wrap Configuration Reload from register docs? */
+
         /* TODO: wrap Configuration ROM Checksum from register docs? */
         /* TODO: wrap Configuration ROM Checksum Length BYTE 0 1 2  from register docs? */
         /* TODO: wrap Configuration ROM Constant BYTE 0 1 2 from register docs? */
@@ -3980,6 +4426,26 @@ namespace caen {
             mask = getAMCFirmwareRevision(group);
             return bits2edafr(mask);
         }
+        /**
+         * @brief Easy Get DPP AMCFirmwareRevisionHelper
+         *
+         * A convenience wrapper for the low-level function of the same
+         * name. Works on a struct with named variables rather than
+         * directly manipulating obscure bit patterns. Automatically
+         * takes care of translating from the bit mask returned by the
+         * the underlying low-level get funtion.
+         *
+         * @param group:
+         * group index
+         * @returns
+         * EasyAMCFirmwareRevisionHelper object
+         */
+        EasyDPPAMCFirmwareRevisionHelper getEasyDPPAMCFirmwareRevisionHelper(uint32_t group) override
+        {
+            uint32_t mask;
+            mask = getAMCFirmwareRevision(group);
+            return EasyDPPAMCFirmwareRevisionHelper(mask);
+        }
 
         /* TODO: auto-comment conf files with e.g. EasyX struct names.
          *       # EasyBoardConfiguration: structure with ordered values:
@@ -3992,12 +4458,10 @@ namespace caen {
          *         EasyX[Field1,..,FieldN] = {1,..,1}
          *       ... must be parsed into a single set operation if so.
          */
-        /* TODO: add doxygen comments to all important functions and structs */
-
-        /* TODO: implement these optional TODOs as virtual:NotImpemented? */
 
         /* TODO: wrap Individual Trigger Threshold of Group n Sub Channel m from register docs? */
 
+        /* NOTE: reuse get / set BoardConfiguration from parent */
         /* NOTE: disable inherited 740 EasyBoardConfiguration since we only
          * support EasyDPPBoardConfiguration here. */
         /**
@@ -4476,6 +4940,42 @@ namespace caen {
          */
         void setEasyDPPFanSpeedControl(EasyDPPFanSpeedControl settings) override
         { return setEasyFanSpeedControl((EasyFanSpeedControl)settings); }
+        /**
+         * @brief Easy Get FanSpeedControlHelper
+         *
+         * A convenience wrapper for the low-level function of the same
+         * name. Works on a struct with named variables rather than
+         * directly manipulating obscure bit patterns. Automatically
+         * takes care of translating from the bit mask returned by the
+         * the underlying low-level get funtion.
+         *
+         * @returns
+         * EasyFanSpeedControlHelper object
+         */
+        EasyDPPFanSpeedControlHelper getEasyDPPFanSpeedControlHelper() override
+        {
+            uint32_t mask;
+            mask = getFanSpeedControl();
+            return EasyDPPFanSpeedControlHelper(mask);
+        }
+        /**
+         * @brief Easy Set FanSpeedControlHelper
+         *
+         * A convenience wrapper for the low-level function of the same
+         * name. Works on a struct with named variables rather than
+         * directly manipulating obscure bit patterns. Automatically
+         * takes care of translating to the bit mask needed by the
+         * the underlying low-level set funtion.
+         *
+         * @param settings:
+         * EasyFanSpeedControl object
+         */
+        void setEasyDPPFanSpeedControlHelper(EasyDPPFanSpeedControlHelper settings) override
+        {
+            uint32_t mask = settings.toBits();
+            setFanSpeedControl(mask);
+        }
+
 
         /* NOTE: Get / Set Run/Start/Stop Delay from register docs is
          * already covered by RunDelay. */

@@ -69,6 +69,7 @@ static std::unordered_map<std::string,FunctionID > functionMap =
                 MAP_ENTRY(GlobalTriggerMask),
                 MAP_ENTRY(EasyGlobalTriggerMask),
                 MAP_ENTRY(EasyDPPGlobalTriggerMask),
+                MAP_ENTRY(EasyGlobalTriggerMaskHelper),
                 MAP_ENTRY(FrontPanelTRGOUTEnableMask),
                 MAP_ENTRY(EasyFrontPanelTRGOUTEnableMask),
                 MAP_ENTRY(EasyDPPFrontPanelTRGOUTEnableMask),
@@ -82,6 +83,7 @@ static std::unordered_map<std::string,FunctionID > functionMap =
                 MAP_ENTRY(FanSpeedControl),
                 MAP_ENTRY(EasyFanSpeedControl),
                 MAP_ENTRY(EasyDPPFanSpeedControl),
+                MAP_ENTRY(EasyFanSpeedControlHelper),
                 MAP_ENTRY(DPPDisableExternalTrigger),
                 MAP_ENTRY(RunStartStopDelay),
                 MAP_ENTRY(ReadoutControl),
@@ -91,6 +93,8 @@ static std::unordered_map<std::string,FunctionID > functionMap =
                 MAP_ENTRY(AMCFirmwareRevision),
                 MAP_ENTRY(EasyAMCFirmwareRevision),
                 MAP_ENTRY(EasyDPPAMCFirmwareRevision),
+                MAP_ENTRY(EasyAMCFirmwareRevisionHelper),
+                MAP_ENTRY(EasyDPPAMCFirmwareRevisionHelper),
                 MAP_ENTRY(ChannelSelfTrigger),
                 MAP_ENTRY(GroupSelfTrigger),
                 MAP_ENTRY(ChannelTriggerThreshold),
@@ -159,6 +163,7 @@ const std::string to_string(FunctionID id) {
         CASE_TO_STR(GlobalTriggerMask)
         CASE_TO_STR(EasyGlobalTriggerMask)
         CASE_TO_STR(EasyDPPGlobalTriggerMask)
+        CASE_TO_STR(EasyGlobalTriggerMaskHelper)
         CASE_TO_STR(FrontPanelTRGOUTEnableMask)
         CASE_TO_STR(EasyFrontPanelTRGOUTEnableMask)
         CASE_TO_STR(EasyDPPFrontPanelTRGOUTEnableMask)
@@ -172,6 +177,8 @@ const std::string to_string(FunctionID id) {
         CASE_TO_STR(FanSpeedControl)
         CASE_TO_STR(EasyFanSpeedControl)
         CASE_TO_STR(EasyDPPFanSpeedControl)
+        CASE_TO_STR(EasyFanSpeedControlHelper)
+        CASE_TO_STR(EasyDPPFanSpeedControlHelper)
         CASE_TO_STR(DPPDisableExternalTrigger)
         CASE_TO_STR(RunStartStopDelay)
         CASE_TO_STR(ReadoutControl)
@@ -181,6 +188,8 @@ const std::string to_string(FunctionID id) {
         CASE_TO_STR(AMCFirmwareRevision)
         CASE_TO_STR(EasyAMCFirmwareRevision)
         CASE_TO_STR(EasyDPPAMCFirmwareRevision)
+        CASE_TO_STR(EasyAMCFirmwareRevisionHelper)
+        CASE_TO_STR(EasyDPPAMCFirmwareRevisionHelper)
         CASE_TO_STR(ChannelSelfTrigger)
         CASE_TO_STR(GroupSelfTrigger)
         CASE_TO_STR(ChannelTriggerThreshold)
