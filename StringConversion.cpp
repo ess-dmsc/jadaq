@@ -369,6 +369,22 @@ caen::EasyDPPBoardConfiguration s2edbc(const std::string& s)
     throw std::invalid_argument{"Invalid EasyDPPBoardConfiguration"};
 }
 
+std::string to_string(const caen::EasyBoardConfigurationHelper &ebch)
+{
+    return ebch.toConfValueString();
+}
+
+caen::EasyBoardConfigurationHelper s2ebch(const std::string& s)
+{
+    std::regex rx("\\{(\\w+),(\\w+),(\\w+)\\}");
+    std::smatch match;
+    if (std::regex_search(s, match, rx))
+    {
+        return caen::EasyBoardConfigurationHelper(s2ui8(match[1]),s2ui8(match[2]),s2ui8(match[3]));
+    }
+    throw std::invalid_argument{"Invalid EasyBoardConfigurationHelper"};
+}
+
 std::string to_string(const caen::EasyAcquisitionControl &eac)
 {
     std::stringstream ss;
@@ -405,6 +421,22 @@ caen::EasyDPPAcquisitionControl s2edac(const std::string& s)
     throw std::invalid_argument{"Invalid EasyDPPAcquisitionControl"};
 }
 
+std::string to_string(const caen::EasyAcquisitionControlHelper &each)
+{
+    return each.toConfValueString();
+}
+
+caen::EasyAcquisitionControlHelper s2each(const std::string& s)
+{
+    std::regex rx("\\{(\\w+),(\\w+),(\\w+),(\\w+),(\\w+),(\\w+),(\\w+),(\\w+)\\}");
+    std::smatch match;
+    if (std::regex_search(s, match, rx))
+    {
+        return caen::EasyAcquisitionControlHelper(s2ui8(match[1]),s2ui8(match[2]),s2ui8(match[3]),s2ui8(match[4]),s2ui8(match[5]),s2ui8(match[6]),s2ui8(match[7]),s2ui8(match[8]));
+    }
+    throw std::invalid_argument{"Invalid EasyAcquisitionControlHelper"};
+}
+
 std::string to_string(const caen::EasyAcquisitionStatus &eas)
 {
     std::stringstream ss;
@@ -439,6 +471,22 @@ caen::EasyDPPAcquisitionStatus s2edas(const std::string& s)
         return caen::EasyDPPAcquisitionStatus{s2ui8(match[1]),s2ui8(match[2]),s2ui8(match[3]),s2ui8(match[4]),s2ui8(match[5]),s2ui8(match[6]),s2ui8(match[7]),s2ui8(match[8])};
     }
     throw std::invalid_argument{"Invalid EasyDPPAcquisitionStatus"};
+}
+
+std::string to_string(const caen::EasyAcquisitionStatusHelper &eash)
+{
+    return eash.toConfValueString();
+}
+
+caen::EasyAcquisitionStatusHelper s2eash(const std::string& s)
+{
+    std::regex rx("\\{(\\w+),(\\w+),(\\w+),(\\w+),(\\w+),(\\w+),(\\w+),(\\w+),(\\w+)\\}");
+    std::smatch match;
+    if (std::regex_search(s, match, rx))
+    {
+        return caen::EasyAcquisitionStatusHelper(s2ui8(match[1]),s2ui8(match[2]),s2ui8(match[3]),s2ui8(match[4]),s2ui8(match[5]),s2ui8(match[6]),s2ui8(match[7]),s2ui8(match[8]),s2ui8(match[9]));
+    }
+    throw std::invalid_argument{"Invalid EasyAcquisitionStatusHelper"};
 }
 
 std::string to_string(const caen::EasyGlobalTriggerMask &egtm)
@@ -491,6 +539,22 @@ caen::EasyGlobalTriggerMaskHelper s2egtmh(const std::string& s)
         return caen::EasyGlobalTriggerMaskHelper(s2ui8(match[1]),s2ui8(match[2]),s2ui8(match[3]),s2ui8(match[4]),s2ui8(match[5]),s2ui8(match[6]));
     }
     throw std::invalid_argument{"Invalid EasyGlobalTriggerMaskHelper"};
+}
+
+std::string to_string(const caen::EasyDPPGlobalTriggerMaskHelper &edgtmh)
+{
+    return edgtmh.toConfValueString();
+}
+
+caen::EasyDPPGlobalTriggerMaskHelper s2edgtmh(const std::string& s)
+{
+    std::regex rx("\\{(\\w+),(\\w+),(\\w+)\\}");
+    std::smatch match;
+    if (std::regex_search(s, match, rx))
+    {
+        return caen::EasyDPPGlobalTriggerMaskHelper(s2ui8(match[1]),s2ui8(match[2]),s2ui8(match[3]));
+    }
+    throw std::invalid_argument{"Invalid EasyDPPGlobalTriggerMaskHelper"};
 }
 
 std::string to_string(const caen::EasyFrontPanelTRGOUTEnableMask &efptoem)

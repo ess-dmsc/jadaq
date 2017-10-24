@@ -59,17 +59,21 @@ static std::unordered_map<std::string,FunctionID > functionMap =
                 MAP_ENTRY(BoardConfiguration),
                 MAP_ENTRY(EasyBoardConfiguration),
                 MAP_ENTRY(EasyDPPBoardConfiguration),
+                MAP_ENTRY(EasyBoardConfigurationHelper),
                 MAP_ENTRY(DPPAggregateOrganization),
                 MAP_ENTRY(AcquisitionControl),
                 MAP_ENTRY(EasyAcquisitionControl),
                 MAP_ENTRY(EasyDPPAcquisitionControl),
+                MAP_ENTRY(EasyAcquisitionControlHelper),
                 MAP_ENTRY(AcquisitionStatus),
                 MAP_ENTRY(EasyAcquisitionStatus),
                 MAP_ENTRY(EasyDPPAcquisitionStatus),
+                MAP_ENTRY(EasyAcquisitionStatusHelper),
                 MAP_ENTRY(GlobalTriggerMask),
                 MAP_ENTRY(EasyGlobalTriggerMask),
                 MAP_ENTRY(EasyDPPGlobalTriggerMask),
                 MAP_ENTRY(EasyGlobalTriggerMaskHelper),
+                MAP_ENTRY(EasyDPPGlobalTriggerMaskHelper),
                 MAP_ENTRY(FrontPanelTRGOUTEnableMask),
                 MAP_ENTRY(EasyFrontPanelTRGOUTEnableMask),
                 MAP_ENTRY(EasyDPPFrontPanelTRGOUTEnableMask),
@@ -153,17 +157,21 @@ const std::string to_string(FunctionID id) {
         CASE_TO_STR(BoardConfiguration)
         CASE_TO_STR(EasyBoardConfiguration)
         CASE_TO_STR(EasyDPPBoardConfiguration)
+        CASE_TO_STR(EasyBoardConfigurationHelper)
         CASE_TO_STR(DPPAggregateOrganization)
         CASE_TO_STR(AcquisitionControl)
         CASE_TO_STR(EasyAcquisitionControl)
         CASE_TO_STR(EasyDPPAcquisitionControl)
+        CASE_TO_STR(EasyAcquisitionControlHelper)
         CASE_TO_STR(AcquisitionStatus)
         CASE_TO_STR(EasyAcquisitionStatus)
         CASE_TO_STR(EasyDPPAcquisitionStatus)
+        CASE_TO_STR(EasyAcquisitionStatusHelper)
         CASE_TO_STR(GlobalTriggerMask)
         CASE_TO_STR(EasyGlobalTriggerMask)
         CASE_TO_STR(EasyDPPGlobalTriggerMask)
         CASE_TO_STR(EasyGlobalTriggerMaskHelper)
+        CASE_TO_STR(EasyDPPGlobalTriggerMaskHelper)
         CASE_TO_STR(FrontPanelTRGOUTEnableMask)
         CASE_TO_STR(EasyFrontPanelTRGOUTEnableMask)
         CASE_TO_STR(EasyDPPFrontPanelTRGOUTEnableMask)
