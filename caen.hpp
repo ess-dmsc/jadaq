@@ -323,10 +323,6 @@ namespace caen {
         uint32_t vetoWindow;
     };
 
-    /* TODO: change EasyX to class or map to allow iteration in conf
-     * readout. Consider default values and immutable values where it is
-     * specified in the docs. */
-
     /**
      * @struct EasyAMCFirmwareRevision
      * @brief For user-friendly configuration of AMC Firmware Revision.
@@ -1471,7 +1467,14 @@ namespace caen {
                 ss << ui_to_string(val);
                 i++;
             }
-            ss<< '}' << " # " << toConfHelpString(className);
+            ss<< '}';
+            return ss.str();
+        }
+        /* Convert to (constant) configuration string */
+        virtual const std::string toConfString() const
+        {
+            std::stringstream ss;
+            ss << toConfValueString() << " # " << toConfHelpString(className);
             return ss.str();
         }
     }; // class EasyHelper
@@ -1960,6 +1963,281 @@ namespace caen {
     }; // class EasyDPPFrontPanelTRGOUTEnableMaskHelper
 
 
+    class EasyFrontPanelIOControlHelper : public EasyHelper
+    {
+    protected:
+        const std::string className = "EasyFrontPanelIOControlHelper";
+        /* Shared base since one constructor cannot reuse the other */
+        /*
+         * EasyFrontPanelIOControl fields:
+         * LEMO I/O electrical level [0], TRG-OUT enable [1],
+         * LVDS I/O 1st Direction in [2], LVDS I/O 2nd Direction in [3],
+         * LVDS I/O 3rd Direction in [4], LVDS I/O 4th Direction in [5],
+         * LVDS I/O signal configuration [6:7],
+         * LVDS I/O new features selection in [8],
+         * LVDS I/Os pattern latch mode in [9],
+         * TRG-IN control in [10], TRG-IN to mezzanines in [11],
+         * force TRG-OUT in [14], TRG-OUT mode in [15],
+         * TRG-OUT mode selection in [16:17],
+         * motherboard virtual probe selection in [18:19],
+         * motherboard virtual probe propagation in [20],
+         * pattern configuration in [21:22]
+         */
+        virtual void initLayout() override
+        {
+            layout = {{"lEMOIOElectricalLevel", {(const uint8_t)1, (const uint8_t)0}},
+                      {"tRGOUTEnable", {(const uint8_t)1, (const uint8_t)1}},
+                      {"lVDSIODirectionFirst", {(const uint8_t)1, (const uint8_t)2}},
+                      {"lVDSIODirectionSecond", {(const uint8_t)1, (const uint8_t)3}},
+                      {"lVDSIODirectionThird", {(const uint8_t)1, (const uint8_t)4}},
+                      {"lVDSIODirectionFourth", {(const uint8_t)1, (const uint8_t)5}},
+                      {"lVDSIOSignalConfiguration", {(const uint8_t)2, (const uint8_t)6}},
+                      {"lVDSIONewFeaturesSelection", {(const uint8_t)1, (const uint8_t)8}},
+                      {"lVDSIOPatternLatchMode", {(const uint8_t)1, (const uint8_t)9}},
+                      {"tRGINControl", {(const uint8_t)1, (const uint8_t)10}},
+                      {"tRGINMezzanines", {(const uint8_t)1, (const uint8_t)11}},
+                      {"forceTRGOUT", {(const uint8_t)1, (const uint8_t)14}},
+                      {"tRGOUTMode", {(const uint8_t)1, (const uint8_t)15}},
+                      {"tRGOUTModeSelection", {(const uint8_t)2, (const uint8_t)16}},
+                      {"motherboardVirtualProbeSelection", {(const uint8_t)2, (const uint8_t)18}},
+                      {"motherboardVirtualProbePropagation", {(const uint8_t)1, (const uint8_t)20}},
+                      {"patternConfiguration", {(const uint8_t)2, (const uint8_t)21}}
+            };
+        }
+        /* NOTE: use inherited generic constructFromMask(mask) */
+        void construct(const uint8_t lEMOIOElectricalLevel, const uint8_t tRGOUTEnable, const uint8_t lVDSIODirectionFirst, const uint8_t lVDSIODirectionSecond, const uint8_t lVDSIODirectionThird, const uint8_t lVDSIODirectionFourth, const uint8_t lVDSIOSignalConfiguration, const uint8_t lVDSIONewFeaturesSelection, const uint8_t lVDSIOPatternLatchMode, const uint8_t tRGINControl, const uint8_t tRGINMezzanines, const uint8_t forceTRGOUT, const uint8_t tRGOUTMode, const uint8_t tRGOUTModeSelection, const uint8_t motherboardVirtualProbeSelection, const uint8_t motherboardVirtualProbePropagation, const uint8_t patternConfiguration) {
+            initLayout();
+            variables = {
+                {"lEMOIOElectricalLevel", (const uint8_t)(lEMOIOElectricalLevel & 0x1)},
+                {"tRGOUTEnable", (const uint8_t)(tRGOUTEnable & 0x1)},
+                {"lVDSIODirectionFirst", (const uint8_t)(lVDSIODirectionFirst & 0x1)},
+                {"lVDSIODirectionSecond", (const uint8_t)(lVDSIODirectionSecond & 0x1)},
+                {"lVDSIODirectionThird", (const uint8_t)(lVDSIODirectionThird & 0x1)},
+                {"lVDSIODirectionFourth", (const uint8_t)(lVDSIODirectionFourth & 0x1)},
+                {"lVDSIOSignalConfiguration", (const uint8_t)(lVDSIOSignalConfiguration & 0x3)},
+                {"lVDSIONewFeaturesSelection", (const uint8_t)(lVDSIONewFeaturesSelection & 0x1)},
+                {"lVDSIOPatternLatchMode", (const uint8_t)(lVDSIOPatternLatchMode & 0x1)},
+                {"tRGINControl", (const uint8_t)(tRGINControl & 0x1)},
+                {"tRGINMezzanines", (const uint8_t)(tRGINMezzanines & 0x1)},
+                {"forceTRGOUT", (const uint8_t)(forceTRGOUT & 0x1)},
+                {"tRGOUTMode", (const uint8_t)(tRGOUTMode & 0x1)},
+                {"tRGOUTModeSelection", (const uint8_t)(tRGOUTModeSelection & 0x3)},
+                {"motherboardVirtualProbeSelection", (const uint8_t)(motherboardVirtualProbeSelection & 0x3)},
+                {"motherboardVirtualProbePropagation", (const uint8_t)(motherboardVirtualProbePropagation & 0x1)},
+                {"patternConfiguration", (const uint8_t)(patternConfiguration & 0x3)}
+            };
+        };
+    public:
+        /* Construct using default values from docs */
+        EasyFrontPanelIOControlHelper(const uint8_t lEMOIOElectricalLevel, const uint8_t tRGOUTEnable, const uint8_t lVDSIODirectionFirst, const uint8_t lVDSIODirectionSecond, const uint8_t lVDSIODirectionThird, const uint8_t lVDSIODirectionFourth, const uint8_t lVDSIOSignalConfiguration, const uint8_t lVDSIONewFeaturesSelection, const uint8_t lVDSIOPatternLatchMode, const uint8_t tRGINControl, const uint8_t tRGINMezzanines, const uint8_t forceTRGOUT, const uint8_t tRGOUTMode, const uint8_t tRGOUTModeSelection, const uint8_t motherboardVirtualProbeSelection, const uint8_t motherboardVirtualProbePropagation, const uint8_t patternConfiguration)
+        {
+            construct(lEMOIOElectricalLevel, tRGOUTEnable, lVDSIODirectionFirst, lVDSIODirectionSecond, lVDSIODirectionThird, lVDSIODirectionFourth, lVDSIOSignalConfiguration, lVDSIONewFeaturesSelection, lVDSIOPatternLatchMode, tRGINControl, tRGINMezzanines, forceTRGOUT, tRGOUTMode, tRGOUTModeSelection, motherboardVirtualProbeSelection, motherboardVirtualProbePropagation, patternConfiguration);
+        }
+        /* Construct from low-level bit mask in line with docs */
+        EasyFrontPanelIOControlHelper(const uint32_t mask)
+        {
+            constructFromMask(mask);
+        }
+    }; // class EasyFrontPanelIOControlHelper
+
+
+    /* TODO: DPP Shares all fields with generic version - just inherit everything? */
+    class EasyDPPFrontPanelIOControlHelper : public EasyHelper
+    {
+    protected:
+        const std::string className = "EasyDPPFrontPanelIOControlHelper";
+        /* Shared base since one constructor cannot reuse the other */
+        /*
+         * EasyDPPFrontPanelIOControl fields:
+         * LEMO I/O electrical level [0], TRG-OUT enable [1],
+         * LVDS I/O 1st Direction in [2], LVDS I/O 2nd Direction in [3],
+         * LVDS I/O 3rd Direction in [4], LVDS I/O 4th Direction in [5],
+         * LVDS I/O signal configuration [6:7],
+         * LVDS I/O new features selection in [8],
+         * LVDS I/Os pattern latch mode in [9],
+         * TRG-IN control in [10], TRG-IN to mezzanines in [11],
+         * force TRG-OUT in [14], TRG-OUT mode in [15],
+         * TRG-OUT mode selection in [16:17],
+         * motherboard virtual probe selection in [18:19],
+         * motherboard virtual probe propagation in [20],
+         * pattern configuration in [21:22]
+         */
+        virtual void initLayout() override
+        {
+            layout = {{"lEMOIOElectricalLevel", {(const uint8_t)1, (const uint8_t)0}},
+                      {"tRGOUTEnable", {(const uint8_t)1, (const uint8_t)1}},
+                      {"lVDSIODirectionFirst", {(const uint8_t)1, (const uint8_t)2}},
+                      {"lVDSIODirectionSecond", {(const uint8_t)1, (const uint8_t)3}},
+                      {"lVDSIODirectionThird", {(const uint8_t)1, (const uint8_t)4}},
+                      {"lVDSIODirectionFourth", {(const uint8_t)1, (const uint8_t)5}},
+                      {"lVDSIOSignalConfiguration", {(const uint8_t)2, (const uint8_t)6}},
+                      {"lVDSIONewFeaturesSelection", {(const uint8_t)1, (const uint8_t)8}},
+                      {"lVDSIOPatternLatchMode", {(const uint8_t)1, (const uint8_t)9}},
+                      {"tRGINControl", {(const uint8_t)1, (const uint8_t)10}},
+                      {"tRGINMezzanines", {(const uint8_t)1, (const uint8_t)11}},
+                      {"forceTRGOUT", {(const uint8_t)1, (const uint8_t)14}},
+                      {"tRGOUTMode", {(const uint8_t)1, (const uint8_t)15}},
+                      {"tRGOUTModeSelection", {(const uint8_t)2, (const uint8_t)16}},
+                      {"motherboardVirtualProbeSelection", {(const uint8_t)2, (const uint8_t)18}},
+                      {"motherboardVirtualProbePropagation", {(const uint8_t)1, (const uint8_t)20}},
+                      {"patternConfiguration", {(const uint8_t)2, (const uint8_t)21}}
+            };
+        }
+        /* NOTE: use inherited generic constructFromMask(mask) */
+        void construct(const uint8_t lEMOIOElectricalLevel, const uint8_t tRGOUTEnable, const uint8_t lVDSIODirectionFirst, const uint8_t lVDSIODirectionSecond, const uint8_t lVDSIODirectionThird, const uint8_t lVDSIODirectionFourth, const uint8_t lVDSIOSignalConfiguration, const uint8_t lVDSIONewFeaturesSelection, const uint8_t lVDSIOPatternLatchMode, const uint8_t tRGINControl, const uint8_t tRGINMezzanines, const uint8_t forceTRGOUT, const uint8_t tRGOUTMode, const uint8_t tRGOUTModeSelection, const uint8_t motherboardVirtualProbeSelection, const uint8_t motherboardVirtualProbePropagation, const uint8_t patternConfiguration) {
+            initLayout();
+            variables = {
+                {"lEMOIOElectricalLevel", (const uint8_t)(lEMOIOElectricalLevel & 0x1)},
+                {"tRGOUTEnable", (const uint8_t)(tRGOUTEnable & 0x1)},
+                {"lVDSIODirectionFirst", (const uint8_t)(lVDSIODirectionFirst & 0x1)},
+                {"lVDSIODirectionSecond", (const uint8_t)(lVDSIODirectionSecond & 0x1)},
+                {"lVDSIODirectionThird", (const uint8_t)(lVDSIODirectionThird & 0x1)},
+                {"lVDSIODirectionFourth", (const uint8_t)(lVDSIODirectionFourth & 0x1)},
+                {"lVDSIOSignalConfiguration", (const uint8_t)(lVDSIOSignalConfiguration & 0x3)},
+                {"lVDSIONewFeaturesSelection", (const uint8_t)(lVDSIONewFeaturesSelection & 0x1)},
+                {"lVDSIOPatternLatchMode", (const uint8_t)(lVDSIOPatternLatchMode & 0x1)},
+                {"tRGINControl", (const uint8_t)(tRGINControl & 0x1)},
+                {"tRGINMezzanines", (const uint8_t)(tRGINMezzanines & 0x1)},
+                {"forceTRGOUT", (const uint8_t)(forceTRGOUT & 0x1)},
+                {"tRGOUTMode", (const uint8_t)(tRGOUTMode & 0x1)},
+                {"tRGOUTModeSelection", (const uint8_t)(tRGOUTModeSelection & 0x3)},
+                {"motherboardVirtualProbeSelection", (const uint8_t)(motherboardVirtualProbeSelection & 0x3)},
+                {"motherboardVirtualProbePropagation", (const uint8_t)(motherboardVirtualProbePropagation & 0x1)},
+                {"patternConfiguration", (const uint8_t)(patternConfiguration & 0x3)}
+            };
+        };
+    public:
+        /* Construct using default values from docs */
+        EasyDPPFrontPanelIOControlHelper(const uint8_t lEMOIOElectricalLevel, const uint8_t tRGOUTEnable, const uint8_t lVDSIODirectionFirst, const uint8_t lVDSIODirectionSecond, const uint8_t lVDSIODirectionThird, const uint8_t lVDSIODirectionFourth, const uint8_t lVDSIOSignalConfiguration, const uint8_t lVDSIONewFeaturesSelection, const uint8_t lVDSIOPatternLatchMode, const uint8_t tRGINControl, const uint8_t tRGINMezzanines, const uint8_t forceTRGOUT, const uint8_t tRGOUTMode, const uint8_t tRGOUTModeSelection, const uint8_t motherboardVirtualProbeSelection, const uint8_t motherboardVirtualProbePropagation, const uint8_t patternConfiguration)
+        {
+            construct(lEMOIOElectricalLevel, tRGOUTEnable, lVDSIODirectionFirst, lVDSIODirectionSecond, lVDSIODirectionThird, lVDSIODirectionFourth, lVDSIOSignalConfiguration, lVDSIONewFeaturesSelection, lVDSIOPatternLatchMode, tRGINControl, tRGINMezzanines, forceTRGOUT, tRGOUTMode, tRGOUTModeSelection, motherboardVirtualProbeSelection, motherboardVirtualProbePropagation, patternConfiguration);
+        }
+        /* Construct from low-level bit mask in line with docs */
+        EasyDPPFrontPanelIOControlHelper(const uint32_t mask)
+        {
+            constructFromMask(mask);
+        }
+    }; // class EasyDPPFrontPanelIOControlHelper
+
+
+    class EasyROCFPGAFirmwareRevisionHelper : public EasyHelper
+    {
+    protected:
+        const std::string className = "EasyROCFPGAFirmwareRevisionHelper";
+        /* Shared base since one constructor cannot reuse the other */
+        /*
+         * EasyROCFPGAFirmwareRevision fields:
+         * minor revision number in [0:7], major revision number in [8:15],
+         * revision date in [16:31].
+         */
+        /* NOTE: we split revision date into the four digits internally
+         since it is just four 4-bit values clamped into 16-bit anyway.
+         This makes the generic and DPP version much more similar, too. */
+        void initLayout()
+        {
+            layout = {
+                {"minorRevisionNumber", {(const uint8_t)8, (const uint8_t)0}},
+                {"majorRevisionNumber", {(const uint8_t)8, (const uint8_t)8}},
+                {"revisionDayLower", {(const uint8_t)4, (const uint8_t)16}},
+                {"revisionDayUpper", {(const uint8_t)4, (const uint8_t)20}},
+                {"revisionMonth", {(const uint8_t)4, (const uint8_t)24}},
+                {"revisionYear", {(const uint8_t)4, (const uint8_t)28}}
+            };
+        }
+        void construct(const uint8_t minorRevisionNumber, const uint8_t majorRevisionNumber, const uint8_t revisionDayLower, const uint8_t revisionDayUpper, const uint8_t revisionMonth, const uint8_t revisionYear)
+        {
+            initLayout();
+            variables = {
+                {"minorRevisionNumber", (const uint8_t)minorRevisionNumber},
+                {"majorRevisionNumber", (const uint8_t)majorRevisionNumber},
+                {"revisionDayLower", (const uint8_t)(revisionDayLower & 0x7)},
+                {"revisionDayUpper", (const uint8_t)(revisionDayUpper & 0x7)},
+                {"revisionMonth", (const uint8_t)(revisionMonth & 0x7)},
+                {"revisionYear", (const uint8_t)(revisionYear & 0x7)}
+            };
+        }
+    public:
+        /* Construct using default values from docs */
+        /* We allow both clamped and individual revision date format here */
+        EasyROCFPGAFirmwareRevisionHelper(const uint8_t minorRevisionNumber, const uint8_t majorRevisionNumber, const uint16_t revisionDate)
+        {
+            const uint8_t revisionDayLower = (const uint8_t)(revisionDate & 0x7);
+            const uint8_t revisionDayUpper = (const uint8_t)((revisionDate >> 4) & 0x7);
+            const uint8_t revisionMonth = (const uint8_t)((revisionDate >> 8) & 0x7);
+            const uint8_t revisionYear = (const uint8_t)((revisionDate >> 12) & 0x7);
+            construct(minorRevisionNumber, majorRevisionNumber, revisionDayLower, revisionDayUpper, revisionMonth, revisionYear);
+        }
+        EasyROCFPGAFirmwareRevisionHelper(const uint8_t minorRevisionNumber, const uint8_t majorRevisionNumber, const uint8_t revisionDayLower, const uint8_t revisionDayUpper, const uint8_t revisionMonth, const uint8_t revisionYear)
+        {
+            construct(minorRevisionNumber, majorRevisionNumber, revisionDayLower, revisionDayUpper, revisionMonth, revisionYear);
+        }
+        /* Construct from low-level bit mask in line with docs */
+        EasyROCFPGAFirmwareRevisionHelper(const uint32_t mask)
+        {
+            constructFromMask(mask);
+        }
+    }; // class EasyROCFPGAFirmwareRevisionHelper
+
+
+    class EasyDPPROCFPGAFirmwareRevisionHelper : public EasyHelper
+    {
+    protected:
+        const std::string className = "EasyDPPROCFPGAFirmwareRevisionHelper";
+
+        /* Shared base since one constructor cannot reuse the other */
+        /*
+         * EasyDPPROCFPGAFirmwareRevision fields:
+         * firmware revision number in [0:7], firmware DPP code in [8:15],
+         * build day lower in [16:19], build day upper in [20:23],
+         * build month in [24:27], build year in [28:31]
+         */
+        void initLayout()
+        {
+            layout = {
+                {"firmwareRevisionNumber", {(const uint8_t)8, (const uint8_t)0}},
+                {"firmwareDPPCode", {(const uint8_t)8, (const uint8_t)8}},
+                {"buildDayLower", {(const uint8_t)4, (const uint8_t)16}},
+                {"buildDayUpper", {(const uint8_t)4, (const uint8_t)20}},
+                {"buildMonth", {(const uint8_t)4, (const uint8_t)24}},
+                {"buildYear", {(const uint8_t)4, (const uint8_t)28}}
+            };
+        }
+        /* NOTE: use inherited generic constructFromMask(mask) */
+        void construct(const uint8_t firmwareRevisionNumber, const uint8_t firmwareDPPCode, const uint8_t buildDayLower, const uint8_t buildDayUpper, const uint8_t buildMonth, const uint8_t buildYear)
+        {
+            initLayout();
+            variables = {
+                {"firmwareRevisionNumber", (const uint8_t)firmwareRevisionNumber},
+                {"firmwareDPPCode", (const uint8_t)firmwareDPPCode},
+                {"buildDayLower", (const uint8_t)(buildDayLower & 0xF)},
+                {"buildDayUpper", (const uint8_t)(buildDayUpper & 0xF)},
+                {"buildMonth", (const uint8_t)(buildMonth & 0xF)},
+                {"buildYear", (const uint8_t)(buildYear & 0xF)}
+            };
+        }
+    public:
+        /* Construct using default values from docs */
+        /* We allow both clamped and individual revision date format here */
+        EasyDPPROCFPGAFirmwareRevisionHelper(const uint8_t minorRevisionNumber, const uint8_t majorRevisionNumber, const uint16_t revisionDate)
+        {
+            const uint8_t revisionDayLower = (const uint8_t)(revisionDate & 0x7);
+            const uint8_t revisionDayUpper = (const uint8_t)((revisionDate >> 4) & 0x7);
+            const uint8_t revisionMonth = (const uint8_t)((revisionDate >> 8) & 0x7);
+            const uint8_t revisionYear = (const uint8_t)((revisionDate >> 12) & 0x7);
+            construct(minorRevisionNumber, majorRevisionNumber, revisionDayLower, revisionDayUpper, revisionMonth, revisionYear);
+        }
+        EasyDPPROCFPGAFirmwareRevisionHelper(const uint8_t firmwareRevisionNumber, const uint8_t firmwareDPPCode, const uint8_t buildDayLower, const uint8_t buildDayUpper, const uint8_t buildMonth, const uint8_t buildYear)
+        {
+            construct(firmwareRevisionNumber, firmwareDPPCode, buildDayLower, buildDayUpper, buildMonth, buildYear);
+        }
+        /* Construct from low-level bit mask in line with docs */
+        EasyDPPROCFPGAFirmwareRevisionHelper(const uint32_t mask)
+        {
+            constructFromMask(mask);
+        }
+    }; // class EasyDPPROCFPGAFirmwareRevisionHelper
+
+
     class EasyFanSpeedControlHelper : public EasyHelper
     {
     protected:
@@ -2019,73 +2297,53 @@ namespace caen {
         /*
          * EasyAMCFirmwareRevision fields:
          * minor revision number in [0:7], major revision number in [8:15],
-         * revision date in [16:31]
+         * revision date in [16:31].
          */
+        /* NOTE: we split revision date into the four digits internally
+         since it is just four 4-bit values clamped into 16-bit anyway.
+         This makes the generic and DPP version much more similar, too. */
         void initLayout()
         {
             layout = {
                 {"minorRevisionNumber", {(const uint8_t)8, (const uint8_t)0}},
                 {"majorRevisionNumber", {(const uint8_t)8, (const uint8_t)8}},
-                {"revisionDate", {(const uint8_t)16, (const uint8_t)16}}
+                {"revisionDayLower", {(const uint8_t)4, (const uint8_t)16}},
+                {"revisionDayUpper", {(const uint8_t)4, (const uint8_t)20}},
+                {"revisionMonth", {(const uint8_t)4, (const uint8_t)24}},
+                {"revisionYear", {(const uint8_t)4, (const uint8_t)28}}
             };
         }
-        void construct(const uint8_t minorRevisionNumber, const uint8_t majorRevisionNumber, const uint16_t revisionDate)
+        void construct(const uint8_t minorRevisionNumber, const uint8_t majorRevisionNumber, const uint8_t revisionDayLower, const uint8_t revisionDayUpper, const uint8_t revisionMonth, const uint8_t revisionYear)
         {
             initLayout();
             variables = {
                 {"minorRevisionNumber", (const uint8_t)minorRevisionNumber},
                 {"majorRevisionNumber", (const uint8_t)majorRevisionNumber},
-                {"revisionDate", (const uint16_t)revisionDate}
+                {"revisionDayLower", (const uint8_t)(revisionDayLower & 0x7)},
+                {"revisionDayUpper", (const uint8_t)(revisionDayUpper & 0x7)},
+                {"revisionMonth", (const uint8_t)(revisionMonth & 0x7)},
+                {"revisionYear", (const uint8_t)(revisionYear & 0x7)}
             };
         }
     public:
         /* Construct using default values from docs */
+        /* We allow both clamped and individual revision date format here */
         EasyAMCFirmwareRevisionHelper(const uint8_t minorRevisionNumber, const uint8_t majorRevisionNumber, const uint16_t revisionDate)
         {
-            construct(minorRevisionNumber, majorRevisionNumber, revisionDate);
+            const uint8_t revisionDayLower = (const uint8_t)(revisionDate & 0x7);
+            const uint8_t revisionDayUpper = (const uint8_t)((revisionDate >> 4) & 0x7);
+            const uint8_t revisionMonth = (const uint8_t)((revisionDate >> 8) & 0x7);
+            const uint8_t revisionYear = (const uint8_t)((revisionDate >> 12) & 0x7);
+            construct(minorRevisionNumber, majorRevisionNumber, revisionDayLower, revisionDayUpper, revisionMonth, revisionYear);
+        }
+        EasyAMCFirmwareRevisionHelper(const uint8_t minorRevisionNumber, const uint8_t majorRevisionNumber, const uint8_t revisionDayLower, const uint8_t revisionDayUpper, const uint8_t revisionMonth, const uint8_t revisionYear)
+        {
+            construct(minorRevisionNumber, majorRevisionNumber, revisionDayLower, revisionDayUpper, revisionMonth, revisionYear);
         }
         /* Construct from low-level bit mask in line with docs */
         EasyAMCFirmwareRevisionHelper(const uint32_t mask)
         {
-            /* NOTE: we use manual unpack for now to allow uint16 field */
-            /* TODO: switch to use layout values?
-             We need to rework bit banging to support 16bit values or
-             force a split up of the concatenated revisionDate for that */
-            construct((const uint8_t)(unpackBits(mask, 8, 0)),
-                      (const uint8_t)(unpackBits(mask, 8, 8)),
-                      (const uint16_t)(unpackBits(mask, 8, 24) << 8 |
-                                       unpackBits(mask, 8, 16)));
-        }
-        /* Convert to low-level bit mask in line with docs */
-        const uint32_t toBits() const override
-        {
-            /* NOTE: we use manual unpack for now to allow uint16 field */
-            uint32_t mask = 0;
-            /* NOTE: we must use variables.at() rather than variables[] here
-             * to avoid 'argument discards qualifiers' error during compile */
-            mask |= packBits(boost::any_cast<uint8_t>(variables.at("minorRevisionNumber")), 8, 0);
-            mask |= packBits(boost::any_cast<uint8_t>(variables.at("majorRevisionNumber")), 8, 8);
-            /* revisionDate is 16-bit - manually pack in two steps */
-            mask |= packBits(boost::any_cast<uint8_t>(variables.at("revisionDate")) & 0xFF, 8, 16);
-            mask |= packBits(boost::any_cast<uint8_t>(variables.at("revisionDate")) >> 8 & 0xFF, 8, 24);
-            return mask;
-        }
-        /* Convert to (constant) configuration string */
-        virtual const std::string toConfValueString() const override
-        {
-            std::stringstream ss;
-            /* NOTE: we use manual wrap for now to allow uint16 field */
-            /* Firmware Revision Date = Y/M/DD (16 higher bits)
-               EXAMPLE 1: revision 3.08, November 12th, 2007 is 0x7B120308. */
-            /* NOTE: we must use variables.at rather than variables[] here
-             * to avoid 'argument discards qualifiers' compile problems */
-            uint8_t minor = boost::any_cast<uint8_t>(variables.at("minorRevisionNumber"));
-            uint8_t major = boost::any_cast<uint8_t>(variables.at("majorRevisionNumber"));
-            uint16_t rev = boost::any_cast<uint16_t>(variables.at("revisionDate"));
-            /* NOTE: We unwrap each of the revisionDate bytes in turn for proper
-               translation and printing */
-            ss << '{' << ui_to_string(minor) << ',' << ui_to_string(major) << ',' << ui_to_string(rev >> 12) << ui_to_string((rev & 0x0F00) >> 8) << ui_to_string((rev & 0xF0) >> 4) << ui_to_string(rev & 0xF) << '}' << " # " << toConfHelpString(className);
-            return ss.str();
+            constructFromMask(mask);
         }
     }; // class EasyAMCFirmwareRevisionHelper
 
@@ -3579,10 +3837,17 @@ namespace caen {
         virtual void setEasyFrontPanelIOControl(EasyFrontPanelIOControl settings) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         virtual EasyDPPFrontPanelIOControl getEasyDPPFrontPanelIOControl() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         virtual void setEasyDPPFrontPanelIOControl(EasyDPPFrontPanelIOControl settings) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual EasyFrontPanelIOControlHelper getEasyFrontPanelIOControlHelper() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual void setEasyFrontPanelIOControlHelper(EasyFrontPanelIOControlHelper settings) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual EasyDPPFrontPanelIOControlHelper getEasyDPPFrontPanelIOControlHelper() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual void setEasyDPPFrontPanelIOControlHelper(EasyDPPFrontPanelIOControlHelper settings) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
 
         virtual uint32_t getROCFPGAFirmwareRevision() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         virtual EasyROCFPGAFirmwareRevision getEasyROCFPGAFirmwareRevision() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         virtual EasyDPPROCFPGAFirmwareRevision getEasyDPPROCFPGAFirmwareRevision() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual EasyROCFPGAFirmwareRevisionHelper getEasyROCFPGAFirmwareRevisionHelper() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual EasyDPPROCFPGAFirmwareRevisionHelper getEasyDPPROCFPGAFirmwareRevisionHelper() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+
         virtual uint32_t getEventSize() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
 
         virtual uint32_t getFanSpeedControl() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
@@ -4326,6 +4591,41 @@ namespace caen {
             uint32_t mask = efpioc2bits(settings);
             setFrontPanelIOControl(mask);
         }
+        /**
+         * @brief Easy Get FrontPanelIOControlHelper
+         *
+         * A convenience wrapper for the low-level function of the same
+         * name. Works on a struct with named variables rather than
+         * directly manipulating obscure bit patterns. Automatically
+         * takes care of translating from the bit mask returned by the
+         * the underlying low-level get funtion.
+         *
+         * @returns
+         * EasyFrontPanelIOControl object
+         */
+        EasyFrontPanelIOControlHelper getEasyFrontPanelIOControlHelper() override
+        {
+            uint32_t mask;
+            mask = getFrontPanelIOControl();
+            return EasyFrontPanelIOControlHelper(mask);
+        }
+        /**
+         * @brief Easy Set FrontPanelIOControlHelper
+         *
+         * A convenience wrapper for the low-level function of the same
+         * name. Works on a struct with named variables rather than
+         * directly manipulating obscure bit patterns. Automatically
+         * takes care of translating to the bit mask needed by the
+         * the underlying low-level set funtion.
+         *
+         * @param settings:
+         * EasyFrontPanelIOControl object
+         */
+        void setEasyFrontPanelIOControlHelper(EasyFrontPanelIOControlHelper settings) override
+        {
+            uint32_t mask = settings.toBits();
+            setFrontPanelIOControl(mask);
+        }
 
         /* NOTE: Group Enable Mask from register is handled by GroupEnableMask */
 
@@ -4372,6 +4672,24 @@ namespace caen {
             uint32_t mask;
             mask = getROCFPGAFirmwareRevision();
             return bits2erffr(mask);
+        }
+        /**
+         * @brief Easy Get ROCFPGAFirmwareRevisionHelper
+         *
+         * A convenience wrapper for the low-level function of the same
+         * name. Works on a struct with named variables rather than
+         * directly manipulating obscure bit patterns. Automatically
+         * takes care of translating from the bit mask returned by the
+         * the underlying low-level get funtion.
+         *
+         * @returns
+         * EasyROCFPGAFirmwareRevision structure
+         */
+        EasyROCFPGAFirmwareRevisionHelper getEasyROCFPGAFirmwareRevisionHelper() override
+        {
+            uint32_t mask;
+            mask = getROCFPGAFirmwareRevision();
+            return EasyROCFPGAFirmwareRevisionHelper(mask);
         }
 
         /* TODO: wrap Software Clock Sync from register docs? */
@@ -5112,11 +5430,7 @@ namespace caen {
             return EasyDPPAMCFirmwareRevisionHelper(mask);
         }
 
-        /* TODO: auto-comment conf files with e.g. EasyX struct names.
-         *       # EasyBoardConfiguration: structure with ordered values:
-         *       # individualTrigger, analogProbe, ..., externalTriggerMode
-         *       EasyBoardConfiguration={1,0,0,0,0,0,0}
-         *       Switch to bitmasks read-in and write-out in struct confs?
+        /* TODO: Switch to bitmasks read-in and write-out in struct confs?
          *       ... preferably using the bit length of the field.
          *       Can we support more user-friendly aliases?
          *         EasyX[enableTrigger] = 1
@@ -5250,7 +5564,7 @@ namespace caen {
          */
         void setEasyDPPBoardConfigurationHelper(EasyDPPBoardConfigurationHelper settings) override
         {
-            /* TODO: add check for forced ones ? */
+            /* TODO: add check for forced ones here or in EasyHelper? */
             uint32_t mask = settings.toBits();
             setBoardConfiguration(mask);
         }
@@ -5268,7 +5582,7 @@ namespace caen {
          */
         void unsetEasyDPPBoardConfigurationHelper(EasyDPPBoardConfigurationHelper settings) override
         {
-            /* TODO: add check for forced ones ? */
+            /* TODO: add check for forced ones here or in EasyHelper? */
             uint32_t mask = settings.toBits();
             unsetBoardConfiguration(mask);
         }
@@ -5722,6 +6036,14 @@ namespace caen {
          * @brief use setEasyDPPX version instead
          */
         virtual void setEasyFrontPanelIOControl(EasyFrontPanelIOControl settings) override { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        /**
+         * @brief use getEasyDPPX version instead
+         */
+        virtual EasyFrontPanelIOControlHelper getEasyFrontPanelIOControlHelper() override { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        /**
+         * @brief use setEasyDPPX version instead
+         */
+        virtual void setEasyFrontPanelIOControlHelper(EasyFrontPanelIOControlHelper settings) override { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         /* NOTE: 740 and 740DPP share this structure - just re-expose it */
         /**
          * @brief Easy Get DPP FrontPanelIOControl
@@ -5751,6 +6073,41 @@ namespace caen {
          */
         void setEasyDPPFrontPanelIOControl(EasyDPPFrontPanelIOControl settings) override
         { return setEasyFrontPanelIOControl((EasyFrontPanelIOControl)settings); }
+        /**
+         * @brief Easy Get DPP FrontPanelIOControlHelper
+         *
+         * A convenience wrapper for the low-level function of the same
+         * name. Works on a struct with named variables rather than
+         * directly manipulating obscure bit patterns. Automatically
+         * takes care of translating from the bit mask returned by the
+         * the underlying low-level get funtion.
+         *
+         * @returns
+         * EasyDPPFrontPanelIOControl object
+         */
+        EasyDPPFrontPanelIOControlHelper getEasyDPPFrontPanelIOControlHelper() override
+        {
+            uint32_t mask;
+            mask = getFrontPanelIOControl();
+            return EasyDPPFrontPanelIOControlHelper(mask);
+        }
+        /**
+         * @brief Easy Set DPP FrontPanelIOControlHelper
+         *
+         * A convenience wrapper for the low-level function of the same
+         * name. Works on a struct with named variables rather than
+         * directly manipulating obscure bit patterns. Automatically
+         * takes care of translating to the bit mask needed by the
+         * the underlying low-level set funtion.
+         *
+         * @param settings:
+         * EasyDPPFrontPanelIOControl object
+         */
+        void setEasyDPPFrontPanelIOControlHelper(EasyDPPFrontPanelIOControlHelper settings) override
+        {
+            uint32_t mask = settings.toBits();
+            setFrontPanelIOControl(mask);
+        }
 
         /* NOTE: ROCFPGAFirmwareRevision is inherited from Digitizer740  */
         /* NOTE: disable inherited 740 EasyROCFPGAFirmwareRevision since we only
@@ -5759,9 +6116,13 @@ namespace caen {
          * @brief use getEasyDPPX version instead
          */
         virtual EasyROCFPGAFirmwareRevision getEasyROCFPGAFirmwareRevision() override { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        /**
+         * @brief use getEasyDPPX version instead
+         */
+        virtual EasyROCFPGAFirmwareRevisionHelper getEasyROCFPGAFirmwareRevisionHelper() override { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         /* NOTE: 740 and 740DPP share this structure - just re-expose it */
         /**
-         * @brief Easy Get DPPROCFPGAFirmwareRevision
+         * @brief Easy Get DPP ROCFPGAFirmwareRevision
          *
          * A convenience wrapper for the low-level function of the same
          * name. Works on a struct with named variables rather than
@@ -5774,6 +6135,24 @@ namespace caen {
          */
         EasyDPPROCFPGAFirmwareRevision getEasyDPPROCFPGAFirmwareRevision() override
         { return (EasyDPPROCFPGAFirmwareRevision)Digitizer740::getEasyROCFPGAFirmwareRevision(); }
+        /**
+         * @brief Easy Get DPP ROCFPGAFirmwareRevisionHelper
+         *
+         * A convenience wrapper for the low-level function of the same
+         * name. Works on a struct with named variables rather than
+         * directly manipulating obscure bit patterns. Automatically
+         * takes care of translating from the bit mask returned by the
+         * the underlying low-level get funtion.
+         *
+         * @returns
+         * EasyDPPROCFPGAFirmwareRevision object
+         */
+        EasyDPPROCFPGAFirmwareRevisionHelper getEasyDPPROCFPGAFirmwareRevisionHelper() override
+        {
+            uint32_t mask;
+            mask = getROCFPGAFirmwareRevision();
+            return EasyDPPROCFPGAFirmwareRevisionHelper(mask);
+        }
         
         /* TODO: wrap Voltage Level Mode Configuration from register docs? */
 

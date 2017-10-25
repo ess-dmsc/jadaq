@@ -144,8 +144,16 @@ std::string to_string(const caen::EasyDPPFrontPanelTRGOUTEnableMaskHelper &edfpt
 caen::EasyDPPFrontPanelTRGOUTEnableMaskHelper s2edfptoemh(const std::string& s);
 std::string to_string(const caen::EasyFrontPanelIOControl &efpioc);
 caen::EasyFrontPanelIOControl s2efpioc(const std::string& s);
+std::string to_string(const caen::EasyFrontPanelIOControlHelper &efpioch);
+caen::EasyFrontPanelIOControlHelper s2efpioch(const std::string& s);
+std::string to_string(const caen::EasyDPPFrontPanelIOControlHelper &edfpioch);
+caen::EasyDPPFrontPanelIOControlHelper s2edfpioch(const std::string& s);
 std::string to_string(const caen::EasyROCFPGAFirmwareRevision &erffr);
 caen::EasyROCFPGAFirmwareRevision s2erffr(const std::string& s);
+std::string to_string(const caen::EasyROCFPGAFirmwareRevisionHelper &erffrh);
+caen::EasyROCFPGAFirmwareRevisionHelper s2erffrh(const std::string& s);
+std::string to_string(const caen::EasyDPPROCFPGAFirmwareRevisionHelper &edrffrh);
+caen::EasyDPPROCFPGAFirmwareRevisionHelper s2edrffrh(const std::string& s);
 std::string to_string(const caen::EasyFanSpeedControl &efsc);
 caen::EasyFanSpeedControl s2efsc(const std::string& s);
 std::string to_string(const caen::EasyFanSpeedControlHelper &efsch);

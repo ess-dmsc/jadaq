@@ -85,9 +85,13 @@ static std::unordered_map<std::string,FunctionID > functionMap =
                 MAP_ENTRY(FrontPanelIOControl),
                 MAP_ENTRY(EasyFrontPanelIOControl),
                 MAP_ENTRY(EasyDPPFrontPanelIOControl),
+                MAP_ENTRY(EasyFrontPanelIOControlHelper),
+                MAP_ENTRY(EasyDPPFrontPanelIOControlHelper),
                 MAP_ENTRY(ROCFPGAFirmwareRevision),
                 MAP_ENTRY(EasyROCFPGAFirmwareRevision),
                 MAP_ENTRY(EasyDPPROCFPGAFirmwareRevision),
+                MAP_ENTRY(EasyROCFPGAFirmwareRevisionHelper),
+                MAP_ENTRY(EasyDPPROCFPGAFirmwareRevisionHelper),
                 MAP_ENTRY(EventSize),
                 MAP_ENTRY(FanSpeedControl),
                 MAP_ENTRY(EasyFanSpeedControl),
@@ -188,9 +192,13 @@ const std::string to_string(FunctionID id) {
         CASE_TO_STR(FrontPanelIOControl)
         CASE_TO_STR(EasyFrontPanelIOControl)
         CASE_TO_STR(EasyDPPFrontPanelIOControl)
+        CASE_TO_STR(EasyFrontPanelIOControlHelper)
+        CASE_TO_STR(EasyDPPFrontPanelIOControlHelper)
         CASE_TO_STR(ROCFPGAFirmwareRevision)
         CASE_TO_STR(EasyROCFPGAFirmwareRevision)
         CASE_TO_STR(EasyDPPROCFPGAFirmwareRevision)
+        CASE_TO_STR(EasyROCFPGAFirmwareRevisionHelper)
+        CASE_TO_STR(EasyDPPROCFPGAFirmwareRevisionHelper)
         CASE_TO_STR(EventSize)
         CASE_TO_STR(FanSpeedControl)
         CASE_TO_STR(EasyFanSpeedControl)
