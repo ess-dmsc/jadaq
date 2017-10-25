@@ -1425,22 +1425,21 @@ namespace caen {
                 ss << "### Format for " << name << " is:" << std::endl;
             }
             ss << '{';
-            int i = variables.size()-1;
+            int i = 0;
             /* NOTE: map does not preserve insert order so we use layout
              * for ordering. */
             for (const auto &keyVal : layout) {
                 /* NOTE: some registers have forced values that we need
                  * to keep track of but not show user. */
                 if ((keyVal.first).substr(0, 12) == "__reserved__") {
-                    i--;
                     continue;
                 }
-                ss << keyVal.first;
-                // Skip comma after last entry
+                // No comma before first entry
                 if (i > 0) {
                     ss << ",";
                 }
-                i--;
+                ss << keyVal.first;
+                i++;
             }
             ss << '}';
             if (header) {
@@ -1455,22 +1454,22 @@ namespace caen {
              * for ordering. */
             std::stringstream ss;
             ss << '{';
-            int i = variables.size()-1;
+            int i = 0;
             for (const auto &keyVal : layout) {
                 /* NOTE: some registers have forced values that we need
                  * to keep track of but not show user. */
                 if ((keyVal.first).substr(0, 12) == "__reserved__") {
-                    i--;
                     continue;
                 }
                 /* NOTE: we must use variables.at rather than variables[] here
                  * to avoid 'argument discards qualifiers' compile problems */
                 uint8_t val = boost::any_cast<uint8_t>(variables.at(keyVal.first));
-                ss << ui_to_string(val);
+                // No comma before first entry
                 if (i > 0) {
                     ss << ",";
                 }
-                i--;
+                ss << ui_to_string(val);
+                i++;
             }
             ss<< '}' << " # " << toConfHelpString(className);
             return ss.str();
