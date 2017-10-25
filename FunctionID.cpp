@@ -66,6 +66,7 @@ static std::unordered_map<std::string,FunctionID > functionMap =
                 MAP_ENTRY(EasyAcquisitionControl),
                 MAP_ENTRY(EasyDPPAcquisitionControl),
                 MAP_ENTRY(EasyAcquisitionControlHelper),
+                MAP_ENTRY(EasyDPPAcquisitionControlHelper),
                 MAP_ENTRY(AcquisitionStatus),
                 MAP_ENTRY(EasyAcquisitionStatus),
                 MAP_ENTRY(EasyDPPAcquisitionStatus),
@@ -167,6 +168,7 @@ const std::string to_string(FunctionID id) {
         CASE_TO_STR(EasyAcquisitionControl)
         CASE_TO_STR(EasyDPPAcquisitionControl)
         CASE_TO_STR(EasyAcquisitionControlHelper)
+        CASE_TO_STR(EasyDPPAcquisitionControlHelper)
         CASE_TO_STR(AcquisitionStatus)
         CASE_TO_STR(EasyAcquisitionStatus)
         CASE_TO_STR(EasyDPPAcquisitionStatus)

@@ -116,6 +116,8 @@ std::string to_string(const caen::EasyDPPAcquisitionControl &edac);
 caen::EasyDPPAcquisitionControl s2edac(const std::string& s);
 std::string to_string(const caen::EasyAcquisitionControlHelper &each);
 caen::EasyAcquisitionControlHelper s2each(const std::string& s);
+std::string to_string(const caen::EasyDPPAcquisitionControlHelper &edach);
+caen::EasyDPPAcquisitionControlHelper s2edach(const std::string& s);
 std::string to_string(const caen::EasyAcquisitionStatus &eas);
 caen::EasyAcquisitionStatus s2eas(const std::string& s);
 std::string to_string(const caen::EasyDPPAcquisitionStatus &edas);

@@ -623,7 +623,7 @@ namespace caen {
      * 1 = ONE BUFFER FREE. The board is full whenever Nb-1 buffers are
      * full, where Nb is the overall number of buffers in which the
      * channel memory is divided.
-     * @var EasyAcquisitionControl::pLLRefererenceClock
+     * @var EasyAcquisitionControl::pLLRefererenceClockSource
      * PLL Reference Clock Source (Desktop/NIM only). Default value is 0.\n
      * Options are:\n
      * 0 = internal oscillator (50 MHz)\n
@@ -663,7 +663,7 @@ namespace caen {
         uint8_t acquisitionStartArm : 1;
         uint8_t triggerCountingMode : 1;
         uint8_t memoryFullModeSelection : 1;
-        uint8_t pLLRefererenceClock : 1;
+        uint8_t pLLRefererenceClockSource : 1;
         uint8_t lVDSIOBusyEnable : 1;
         uint8_t lVDSVetoEnable : 1;
         uint8_t lVDSIORunInEnable : 1;
@@ -706,7 +706,7 @@ namespace caen {
      * 0 = accepted triggers from combination of channels\n
      * 1 = triggers from combination of channels, in addition to TRG-IN
      * and SW TRG.
-     * @var EasyDPPAcquisitionControl::pLLRefererenceClock
+     * @var EasyDPPAcquisitionControl::pLLRefererenceClockSource
      * PLL Reference Clock Source (Desktop/NIM only). Default value is 0.\n
      * Options are:\n
      * 0 = internal oscillator (50 MHz)\n
@@ -745,7 +745,7 @@ namespace caen {
         uint8_t startStopMode : 2;
         uint8_t acquisitionStartArm : 1;
         uint8_t triggerCountingMode : 1;
-        uint8_t pLLRefererenceClock : 1;
+        uint8_t pLLRefererenceClockSource : 1;
         uint8_t lVDSIOBusyEnable : 1;
         uint8_t lVDSVetoEnable : 1;
         uint8_t lVDSIORunInEnable : 1;
@@ -1591,21 +1591,21 @@ namespace caen {
                       {"acquisitionStartArm", {(const uint8_t)1, (const uint8_t)2}},
                       {"triggerCountingMode", {(const uint8_t)1, (const uint8_t)3}},
                       {"memoryFullModeSelection", {(const uint8_t)1, (const uint8_t)5}},
-                      {"pLLRefererenceClock", {(const uint8_t)1, (const uint8_t)6}},
+                      {"pLLRefererenceClockSource", {(const uint8_t)1, (const uint8_t)6}},
                       {"lVDSIOBusyEnable", {(const uint8_t)1, (const uint8_t)8}},
                       {"lVDSVetoEnable", {(const uint8_t)1, (const uint8_t)9}},
                       {"lVDSIORunInEnable", {(const uint8_t)1, (const uint8_t)11}}
             };
         }
         /* NOTE: use inherited generic constructFromMask(mask) */
-        void construct(const uint8_t startStopMode, const uint8_t acquisitionStartArm, const uint8_t triggerCountingMode, const uint8_t memoryFullModeSelection, const uint8_t pLLRefererenceClock, const uint8_t lVDSIOBusyEnable, const uint8_t lVDSVetoEnable, const uint8_t lVDSIORunInEnable) {
+        void construct(const uint8_t startStopMode, const uint8_t acquisitionStartArm, const uint8_t triggerCountingMode, const uint8_t memoryFullModeSelection, const uint8_t pLLRefererenceClockSource, const uint8_t lVDSIOBusyEnable, const uint8_t lVDSVetoEnable, const uint8_t lVDSIORunInEnable) {
             initLayout();
             variables = {
                 {"startStopMode", (const uint8_t)(startStopMode & 0x3)},
                 {"acquisitionStartArm", (const uint8_t)(acquisitionStartArm & 0x1)},
                 {"triggerCountingMode", (const uint8_t)(triggerCountingMode & 0x1)},
                 {"memoryFullModeSelection", (const uint8_t)(memoryFullModeSelection & 0x1)},
-                {"pLLRefererenceClock", (const uint8_t)(pLLRefererenceClock & 0x1)},
+                {"pLLRefererenceClockSource", (const uint8_t)(pLLRefererenceClockSource & 0x1)},
                 {"lVDSIOBusyEnable", (const uint8_t)(lVDSIOBusyEnable & 0x1)},
                 {"lVDSVetoEnable", (const uint8_t)(lVDSVetoEnable & 0x1)},
                 {"lVDSIORunInEnable", (const uint8_t)(lVDSIORunInEnable & 0x1)}
@@ -1613,9 +1613,9 @@ namespace caen {
         };
     public:
         /* Construct using default values from docs */
-        EasyAcquisitionControlHelper(const uint8_t startStopMode, const uint8_t acquisitionStartArm, const uint8_t triggerCountingMode, const uint8_t memoryFullModeSelection, const uint8_t pLLRefererenceClock, const uint8_t lVDSIOBusyEnable, const uint8_t lVDSVetoEnable, const uint8_t lVDSIORunInEnable)
+        EasyAcquisitionControlHelper(const uint8_t startStopMode, const uint8_t acquisitionStartArm, const uint8_t triggerCountingMode, const uint8_t memoryFullModeSelection, const uint8_t pLLRefererenceClockSource, const uint8_t lVDSIOBusyEnable, const uint8_t lVDSVetoEnable, const uint8_t lVDSIORunInEnable)
         {
-            construct(startStopMode, acquisitionStartArm, triggerCountingMode, memoryFullModeSelection, pLLRefererenceClock, lVDSIOBusyEnable, lVDSVetoEnable, lVDSIORunInEnable);
+            construct(startStopMode, acquisitionStartArm, triggerCountingMode, memoryFullModeSelection, pLLRefererenceClockSource, lVDSIOBusyEnable, lVDSVetoEnable, lVDSIORunInEnable);
         }
         /* Construct from low-level bit mask in line with docs */
         EasyAcquisitionControlHelper(const uint32_t mask)
@@ -1623,6 +1623,56 @@ namespace caen {
             constructFromMask(mask);
         }
     }; // class EasyAcquisitionControlHelper
+
+
+    class EasyDPPAcquisitionControlHelper : public EasyHelper
+    {
+    protected:
+        const std::string className = "EasyDPPAcquisitionControlHelper";
+        /* Shared base since one constructor cannot reuse the other */
+        /*
+         * EasyDPPAcquisitionControl fields:
+         * start/stop mode [0:1], acquisition start/arm in [2],
+         * trigger counting mode in [3], PLL reference clock
+         * source in [6], LVDS I/O busy enable in [8],
+         * LVDS veto enable in [9], LVDS I/O RunIn enable in [11].
+         */
+        virtual void initLayout() override
+        {
+            layout = {{"startStopMode", {(const uint8_t)2, (const uint8_t)0}},
+                      {"acquisitionStartArm", {(const uint8_t)1, (const uint8_t)2}},
+                      {"triggerCountingMode", {(const uint8_t)1, (const uint8_t)3}},
+                      {"pLLRefererenceClockSource", {(const uint8_t)1, (const uint8_t)6}},
+                      {"lVDSIOBusyEnable", {(const uint8_t)1, (const uint8_t)8}},
+                      {"lVDSVetoEnable", {(const uint8_t)1, (const uint8_t)9}},
+                      {"lVDSIORunInEnable", {(const uint8_t)1, (const uint8_t)11}}
+            };
+        }
+        /* NOTE: use inherited generic constructFromMask(mask) */
+        void construct(const uint8_t startStopMode, const uint8_t acquisitionStartArm, const uint8_t triggerCountingMode, const uint8_t pLLRefererenceClockSource, const uint8_t lVDSIOBusyEnable, const uint8_t lVDSVetoEnable, const uint8_t lVDSIORunInEnable) {
+            initLayout();
+            variables = {
+                {"startStopMode", (const uint8_t)(startStopMode & 0x3)},
+                {"acquisitionStartArm", (const uint8_t)(acquisitionStartArm & 0x1)},
+                {"triggerCountingMode", (const uint8_t)(triggerCountingMode & 0x1)},
+                {"pLLRefererenceClockSource", (const uint8_t)(pLLRefererenceClockSource & 0x1)},
+                {"lVDSIOBusyEnable", (const uint8_t)(lVDSIOBusyEnable & 0x1)},
+                {"lVDSVetoEnable", (const uint8_t)(lVDSVetoEnable & 0x1)},
+                {"lVDSIORunInEnable", (const uint8_t)(lVDSIORunInEnable & 0x1)}
+            };
+        };
+    public:
+        /* Construct using default values from docs */
+        EasyDPPAcquisitionControlHelper(const uint8_t startStopMode, const uint8_t acquisitionStartArm, const uint8_t triggerCountingMode, const uint8_t pLLRefererenceClockSource, const uint8_t lVDSIOBusyEnable, const uint8_t lVDSVetoEnable, const uint8_t lVDSIORunInEnable)
+        {
+            construct(startStopMode, acquisitionStartArm, triggerCountingMode, pLLRefererenceClockSource, lVDSIOBusyEnable, lVDSVetoEnable, lVDSIORunInEnable);
+        }
+        /* Construct from low-level bit mask in line with docs */
+        EasyDPPAcquisitionControlHelper(const uint32_t mask)
+        {
+            constructFromMask(mask);
+        }
+    }; // class EasyDPPAcquisitionControlHelper
 
 
     class EasyAcquisitionStatusHelper : public EasyHelper
@@ -2290,7 +2340,7 @@ namespace caen {
         mask |= packBits(settings.acquisitionStartArm, 1, 2);
         mask |= packBits(settings.triggerCountingMode, 1, 3);
         mask |= packBits(settings.memoryFullModeSelection, 1, 5);
-        mask |= packBits(settings.pLLRefererenceClock, 1, 6);
+        mask |= packBits(settings.pLLRefererenceClockSource, 1, 6);
         mask |= packBits(settings.lVDSIOBusyEnable, 1, 8);
         mask |= packBits(settings.lVDSVetoEnable, 1, 9);
         mask |= packBits(settings.lVDSIORunInEnable, 1, 11);
@@ -2332,7 +2382,7 @@ namespace caen {
         mask |= packBits(settings.startStopMode, 2, 0);
         mask |= packBits(settings.acquisitionStartArm, 1, 2);
         mask |= packBits(settings.triggerCountingMode, 1, 3);
-        mask |= packBits(settings.pLLRefererenceClock, 1, 6);
+        mask |= packBits(settings.pLLRefererenceClockSource, 1, 6);
         mask |= packBits(settings.lVDSIOBusyEnable, 1, 8);
         mask |= packBits(settings.lVDSVetoEnable, 1, 9);
         mask |= packBits(settings.lVDSIORunInEnable, 1, 11);
@@ -3439,6 +3489,8 @@ namespace caen {
         virtual void setEasyDPPAcquisitionControl(EasyDPPAcquisitionControl settings) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         virtual EasyAcquisitionControlHelper getEasyAcquisitionControlHelper() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         virtual void setEasyAcquisitionControlHelper(EasyAcquisitionControlHelper settings) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual EasyDPPAcquisitionControlHelper getEasyDPPAcquisitionControlHelper() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual void setEasyDPPAcquisitionControlHelper(EasyDPPAcquisitionControlHelper settings) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
 
         virtual uint32_t getAcquisitionStatus() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         virtual EasyAcquisitionStatus getEasyAcquisitionStatus() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
@@ -5293,6 +5345,14 @@ namespace caen {
          */
         virtual void setEasyAcquisitionControl(EasyAcquisitionControl settings) override { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         /**
+         * @brief use getEasyDPPX version instead
+         */
+        virtual EasyAcquisitionControlHelper getEasyAcquisitionControlHelper() override { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        /**
+         * @brief use setEasyDPPX version instead
+         */
+        virtual void setEasyAcquisitionControlHelper(EasyAcquisitionControlHelper settings) override { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        /**
          * @brief Easy Get DPP AcquisitionControl
          *
          * A convenience wrapper for the low-level function of the same
@@ -5325,6 +5385,41 @@ namespace caen {
         void setEasyDPPAcquisitionControl(EasyDPPAcquisitionControl settings) override
         {
             uint32_t mask = edac2bits(settings);
+            setAcquisitionControl(mask);
+        }
+        /**
+         * @brief Easy Get DPP AcquisitionControlHelper
+         *
+         * A convenience wrapper for the low-level function of the same
+         * name. Works on a struct with named variables rather than
+         * directly manipulating obscure bit patterns. Automatically
+         * takes care of translating from the bit mask returned by the
+         * the underlying low-level get funtion.
+         *
+         * @returns
+         * EasyDPPAcquisitionControl object
+         */
+        EasyDPPAcquisitionControlHelper getEasyDPPAcquisitionControlHelper() override
+        {
+            uint32_t mask;
+            mask = getAcquisitionControl();
+            return EasyDPPAcquisitionControlHelper(mask);
+        }
+        /**
+         * @brief Easy Set DPP AcquisitionControlHelper
+         *
+         * A convenience wrapper for the low-level function of the same
+         * name. Works on a struct with named variables rather than
+         * directly manipulating obscure bit patterns. Automatically
+         * takes care of translating to the bit mask needed by the
+         * the underlying low-level set funtion.
+         *
+         * @param settings:
+         * EasyDPPAcquisitionControl object
+         */
+        void setEasyDPPAcquisitionControlHelper(EasyDPPAcquisitionControlHelper settings) override
+        {
+            uint32_t mask = settings.toBits();
             setAcquisitionControl(mask);
         }
 

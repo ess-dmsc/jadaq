@@ -66,6 +66,7 @@ enum FunctionID {
     EasyAcquisitionControl,
     EasyDPPAcquisitionControl,
     EasyAcquisitionControlHelper,
+    EasyDPPAcquisitionControlHelper,
     AcquisitionStatus,
     EasyAcquisitionStatus,
     EasyDPPAcquisitionStatus,
