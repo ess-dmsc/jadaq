@@ -71,6 +71,7 @@ enum FunctionID {
     EasyAcquisitionStatus,
     EasyDPPAcquisitionStatus,
     EasyAcquisitionStatusHelper,
+    EasyDPPAcquisitionStatusHelper,
     GlobalTriggerMask,
     EasyGlobalTriggerMask,
     EasyDPPGlobalTriggerMask,

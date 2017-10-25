@@ -521,6 +521,22 @@ caen::EasyAcquisitionStatusHelper s2eash(const std::string& s)
     throw std::invalid_argument{"Invalid EasyAcquisitionStatusHelper"};
 }
 
+std::string to_string(const caen::EasyDPPAcquisitionStatusHelper &edash)
+{
+    return edash.toConfValueString();
+}
+
+caen::EasyDPPAcquisitionStatusHelper s2edash(const std::string& s)
+{
+    std::regex rx("\\{(\\w+),(\\w+),(\\w+),(\\w+),(\\w+),(\\w+),(\\w+),(\\w+)\\}");
+    std::smatch match;
+    if (std::regex_search(s, match, rx))
+    {
+        return caen::EasyDPPAcquisitionStatusHelper(s2ui8(match[1]),s2ui8(match[2]),s2ui8(match[3]),s2ui8(match[4]),s2ui8(match[5]),s2ui8(match[6]),s2ui8(match[7]),s2ui8(match[8]));
+    }
+    throw std::invalid_argument{"Invalid EasyDPPAcquisitionStatusHelper"};
+}
+
 std::string to_string(const caen::EasyGlobalTriggerMask &egtm)
 {
     std::stringstream ss;

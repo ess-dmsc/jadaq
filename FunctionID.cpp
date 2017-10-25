@@ -71,6 +71,7 @@ static std::unordered_map<std::string,FunctionID > functionMap =
                 MAP_ENTRY(EasyAcquisitionStatus),
                 MAP_ENTRY(EasyDPPAcquisitionStatus),
                 MAP_ENTRY(EasyAcquisitionStatusHelper),
+                MAP_ENTRY(EasyDPPAcquisitionStatusHelper),
                 MAP_ENTRY(GlobalTriggerMask),
                 MAP_ENTRY(EasyGlobalTriggerMask),
                 MAP_ENTRY(EasyDPPGlobalTriggerMask),
@@ -173,6 +174,7 @@ const std::string to_string(FunctionID id) {
         CASE_TO_STR(EasyAcquisitionStatus)
         CASE_TO_STR(EasyDPPAcquisitionStatus)
         CASE_TO_STR(EasyAcquisitionStatusHelper)
+        CASE_TO_STR(EasyDPPAcquisitionStatusHelper)
         CASE_TO_STR(GlobalTriggerMask)
         CASE_TO_STR(EasyGlobalTriggerMask)
         CASE_TO_STR(EasyDPPGlobalTriggerMask)

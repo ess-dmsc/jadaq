@@ -1730,6 +1730,58 @@ namespace caen {
     }; // class EasyAcquisitionStatusHelper
 
 
+    class EasyDPPAcquisitionStatusHelper : public EasyHelper
+    {
+    protected:
+        const std::string className = "EasyDPPAcquisitionStatusHelper";
+        /* Shared base since one constructor cannot reuse the other */
+        /*
+         * EasyDPPAcquisitionStatus fields:
+         * acquisition status [2], event ready [3], event full in [4],
+         * clock source in [5], PLL unlock detect in [7], board ready in [8],
+         * S-In in [15], TRG-IN in [16].
+         */
+        virtual void initLayout() override
+        {
+            layout = {
+                {"acquisitionStatus", {(const uint8_t)1, (const uint8_t)2}},
+                {"eventReady", {(const uint8_t)1, (const uint8_t)3}},
+                {"eventFull", {(const uint8_t)1, (const uint8_t)4}},
+                {"clockSource", {(const uint8_t)1, (const uint8_t)5}},
+                {"pLLUnlockDetect", {(const uint8_t)1, (const uint8_t)7}},
+                {"boardReady", {(const uint8_t)1, (const uint8_t)8}},
+                {"s_IN", {(const uint8_t)1, (const uint8_t)15}},
+                {"tRG_IN", {(const uint8_t)1, (const uint8_t)16}}
+            };
+        }
+        /* NOTE: use inherited generic constructFromMask(mask) */
+        void construct(const uint8_t acquisitionStatus, const uint8_t eventReady, const uint8_t eventFull, const uint8_t clockSource, const uint8_t pLLUnlockDetect, const uint8_t boardReady, const uint8_t s_IN, const uint8_t tRG_IN) {
+            initLayout();
+            variables = {
+                {"acquisitionStatus", (const uint8_t)(acquisitionStatus & 0x1)},
+                {"eventReady", (const uint8_t)(eventReady & 0x1)},
+                {"eventFull", (const uint8_t)(eventFull & 0x1)},
+                {"clockSource", (const uint8_t)(clockSource & 0x1)},
+                {"pLLUnlockDetect", (const uint8_t)(pLLUnlockDetect & 0x1)},
+                {"boardReady", (const uint8_t)(boardReady & 0x1)},
+                {"s_IN", (const uint8_t)(s_IN & 0x1)},
+                {"tRG_IN", (const uint8_t)(tRG_IN & 0x1)}
+            };
+        };
+    public:
+        /* Construct using default values from docs */
+        EasyDPPAcquisitionStatusHelper(const uint8_t acquisitionStatus, const uint8_t eventReady, const uint8_t eventFull, const uint8_t clockSource, const uint8_t pLLUnlockDetect, const uint8_t boardReady, const uint8_t s_IN, const uint8_t tRG_IN)
+        {
+            construct(acquisitionStatus, eventReady, eventFull, clockSource, pLLUnlockDetect, boardReady, s_IN, tRG_IN);
+        }
+        /* Construct from low-level bit mask in line with docs */
+        EasyDPPAcquisitionStatusHelper(const uint32_t mask)
+        {
+            constructFromMask(mask);
+        }
+    }; // class EasyDPPAcquisitionStatusHelper
+
+
     class EasyGlobalTriggerMaskHelper : public EasyHelper
     {
     protected:
@@ -3497,6 +3549,7 @@ namespace caen {
         virtual uint32_t getDPPAcquisitionStatus() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         virtual EasyDPPAcquisitionStatus getEasyDPPAcquisitionStatus() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         virtual EasyAcquisitionStatusHelper getEasyAcquisitionStatusHelper() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual EasyDPPAcquisitionStatusHelper getEasyDPPAcquisitionStatusHelper() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
 
         virtual uint32_t getGlobalTriggerMask() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         virtual void setGlobalTriggerMask(uint32_t value) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
@@ -5431,6 +5484,10 @@ namespace caen {
          */
         virtual EasyAcquisitionStatus getEasyAcquisitionStatus() override { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         /**
+         * @brief use getEasyDPPX version instead
+         */
+        virtual EasyAcquisitionStatusHelper getEasyAcquisitionStatusHelper() override { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        /**
          * @brief Easy Get DPPAcquisitionStatus
          *
          * A convenience wrapper for the low-level function of the same
@@ -5447,6 +5504,24 @@ namespace caen {
             uint32_t mask;
             mask = getAcquisitionStatus();
             return bits2edas(mask);
+        }
+        /**
+         * @brief Easy Get DPP AcquisitionStatusHelper
+         *
+         * A convenience wrapper for the low-level function of the same
+         * name. Works on a struct with named variables rather than
+         * directly manipulating obscure bit patterns. Automatically
+         * takes care of translating from the bit mask returned by the
+         * the underlying low-level get funtion.
+         *
+         * @returns
+         * EasyDPPAcquisitionStatus object
+         */
+        EasyDPPAcquisitionStatusHelper getEasyDPPAcquisitionStatusHelper() override
+        {
+            uint32_t mask;
+            mask = getAcquisitionStatus();
+            return EasyDPPAcquisitionStatusHelper(mask);
         }
 
         /* NOTE: Reuse get / set SoftwareTrigger from parent? */
