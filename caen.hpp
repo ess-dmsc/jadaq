@@ -1769,6 +1769,95 @@ namespace caen {
     }; // class EasyDPPGlobalTriggerMaskHelper
 
 
+    class EasyFrontPanelTRGOUTEnableMaskHelper : public EasyHelper
+    {
+    protected:
+        const std::string className = "EasyFrontPanelTRGOUTEnableMaskHelper";
+        /* Shared base since one constructor cannot reuse the other */
+        /*
+         * EasyFrontPanelTRGOUTEnableMask fields:
+         * group Trigger mask in [0:7], TRG-OUT generation logic in [8:9],
+         * majority level in [10:12], LVDS trigger enable in [29],
+         * external trigger in [30], software trigger in [31].
+         */
+        virtual void initLayout() override
+        {
+            layout = {
+                {"groupTriggerMask", {(const uint8_t)8, (const uint8_t)0}},
+                {"tRGOUTGenerationLogic", {(const uint8_t)2, (const uint8_t)8}},
+                {"majorityLevel", {(const uint8_t)3, (const uint8_t)10}},
+                {"lVDSTriggerEnable", {(const uint8_t)1, (const uint8_t)29}},
+                {"externalTrigger", {(const uint8_t)1, (const uint8_t)30}},
+                {"softwareTrigger", {(const uint8_t)1, (const uint8_t)31}}
+            };
+        }
+        /* NOTE: use inherited generic constructFromMask(mask) */
+        void construct(const uint8_t groupTriggerMask, const uint8_t tRGOUTGenerationLogic, const uint8_t majorityLevel, const uint8_t lVDSTriggerEnable, const uint8_t externalTrigger, const uint8_t softwareTrigger) {
+            initLayout();
+            variables = {
+                {"groupTriggerMask", (const uint8_t)(groupTriggerMask & 0xFF)},
+                {"tRGOUTGenerationLogic", (const uint8_t)(tRGOUTGenerationLogic & 0x3)},
+                {"majorityLevel", (const uint8_t)(majorityLevel & 0x7)},
+                {"lVDSTriggerEnable", (const uint8_t)(lVDSTriggerEnable & 0x1)},
+                {"externalTrigger", (const uint8_t)(externalTrigger & 0x1)},
+                {"softwareTrigger", (const uint8_t)(softwareTrigger & 0x1)}
+            };
+        };
+    public:
+        /* Construct using default values from docs */
+        EasyFrontPanelTRGOUTEnableMaskHelper(const uint8_t groupTriggerMask, const uint8_t tRGOUTGenerationLogic, const uint8_t majorityLevel, const uint8_t lVDSTriggerEnable, const uint8_t externalTrigger, const uint8_t softwareTrigger)
+        {
+            construct(groupTriggerMask, tRGOUTGenerationLogic, majorityLevel, lVDSTriggerEnable, externalTrigger, softwareTrigger);
+        }
+        /* Construct from low-level bit mask in line with docs */
+        EasyFrontPanelTRGOUTEnableMaskHelper(const uint32_t mask)
+        {
+            constructFromMask(mask);
+        }
+    }; // class EasyFrontPanelTRGOUTEnableMaskHelper
+
+
+    class EasyDPPFrontPanelTRGOUTEnableMaskHelper : public EasyHelper
+    {
+    protected:
+        const std::string className = "EasyDPPFrontPanelTRGOUTEnableMaskHelper";
+        /* Shared base since one constructor cannot reuse the other */
+        /*
+         * EasyDPPFrontPanelTRGOUTEnableMask fields:
+         * LVDS trigger enable in [29], external trigger in [30],
+         * software trigger in [31].
+         */
+        virtual void initLayout() override
+        {
+            layout = {
+                {"lVDSTriggerEnable", {(const uint8_t)1, (const uint8_t)29}},
+                {"externalTrigger", {(const uint8_t)1, (const uint8_t)30}},
+                {"softwareTrigger", {(const uint8_t)1, (const uint8_t)31}}
+            };
+        }
+        /* NOTE: use inherited generic constructFromMask(mask) */
+        void construct(const uint8_t lVDSTriggerEnable, const uint8_t externalTrigger, const uint8_t softwareTrigger) {
+            initLayout();
+            variables = {
+                {"lVDSTriggerEnable", (const uint8_t)(lVDSTriggerEnable & 0x1)},
+                {"externalTrigger", (const uint8_t)(externalTrigger & 0x1)},
+                {"softwareTrigger", (const uint8_t)(softwareTrigger & 0x1)}
+            };
+        };
+    public:
+        /* Construct using default values from docs */
+        EasyDPPFrontPanelTRGOUTEnableMaskHelper(const uint8_t lVDSTriggerEnable, const uint8_t externalTrigger, const uint8_t softwareTrigger)
+        {
+            construct(lVDSTriggerEnable, externalTrigger, softwareTrigger);
+        }
+        /* Construct from low-level bit mask in line with docs */
+        EasyDPPFrontPanelTRGOUTEnableMaskHelper(const uint32_t mask)
+        {
+            constructFromMask(mask);
+        }
+    }; // class EasyDPPFrontPanelTRGOUTEnableMaskHelper
+
+
     class EasyFanSpeedControlHelper : public EasyHelper
     {
     protected:
@@ -3374,6 +3463,10 @@ namespace caen {
         virtual void setEasyFrontPanelTRGOUTEnableMask(EasyFrontPanelTRGOUTEnableMask settings) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         virtual EasyDPPFrontPanelTRGOUTEnableMask getEasyDPPFrontPanelTRGOUTEnableMask() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         virtual void setEasyDPPFrontPanelTRGOUTEnableMask(EasyDPPFrontPanelTRGOUTEnableMask settings) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual EasyFrontPanelTRGOUTEnableMaskHelper getEasyFrontPanelTRGOUTEnableMaskHelper() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual void setEasyFrontPanelTRGOUTEnableMaskHelper(EasyFrontPanelTRGOUTEnableMaskHelper settings) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual EasyDPPFrontPanelTRGOUTEnableMaskHelper getEasyDPPFrontPanelTRGOUTEnableMaskHelper() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual void setEasyDPPFrontPanelTRGOUTEnableMaskHelper(EasyDPPFrontPanelTRGOUTEnableMaskHelper settings) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
 
         virtual uint32_t getFrontPanelIOControl() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         virtual void setFrontPanelIOControl(uint32_t value) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
@@ -4019,6 +4112,41 @@ namespace caen {
         void setEasyFrontPanelTRGOUTEnableMask(EasyFrontPanelTRGOUTEnableMask settings) override
         {
             uint32_t mask = efptoem2bits(settings);
+            setFrontPanelTRGOUTEnableMask(mask);
+        }
+        /**
+         * @brief Easy Get FrontPanelTRGOUTEnableMaskHelper
+         *
+         * A convenience wrapper for the low-level function of the same
+         * name. Works on a struct with named variables rather than
+         * directly manipulating obscure bit patterns. Automatically
+         * takes care of translating from the bit mask returned by the
+         * the underlying low-level get funtion.
+         *
+         * @returns
+         * EasyFrontPanelTRGOUTEnableMask object
+         */
+        EasyFrontPanelTRGOUTEnableMaskHelper getEasyFrontPanelTRGOUTEnableMaskHelper() override
+        {
+            uint32_t mask;
+            mask = getFrontPanelTRGOUTEnableMask();
+            return EasyFrontPanelTRGOUTEnableMaskHelper(mask);
+        }
+        /**
+         * @brief Easy Set FrontPanelTRGOUTEnableMaskHelper
+         *
+         * A convenience wrapper for the low-level function of the same
+         * name. Works on a struct with named variables rather than
+         * directly manipulating obscure bit patterns. Automatically
+         * takes care of translating to the bit mask needed by the
+         * the underlying low-level set funtion.
+         *
+         * @param settings:
+         * EasyFrontPanelTRGOUTEnableMask object
+         */
+        void setEasyFrontPanelTRGOUTEnableMaskHelper(EasyFrontPanelTRGOUTEnableMaskHelper settings) override
+        {
+            uint32_t mask = settings.toBits();
             setFrontPanelTRGOUTEnableMask(mask);
         }
 
@@ -5330,6 +5458,14 @@ namespace caen {
          */
         virtual void setEasyFrontPanelTRGOUTEnableMask(EasyFrontPanelTRGOUTEnableMask settings) override { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         /**
+         * @brief use getEasyDPPX version instead
+         */
+        virtual EasyFrontPanelTRGOUTEnableMaskHelper getEasyFrontPanelTRGOUTEnableMaskHelper() override { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        /**
+         * @brief use setEasyDPPX version instead
+         */
+        virtual void setEasyFrontPanelTRGOUTEnableMaskHelper(EasyFrontPanelTRGOUTEnableMaskHelper settings) override { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        /**
          * @brief Easy Get DPP FrontPanelTRGOUTEnableMask
          *
          * A convenience wrapper for the low-level function of the same
@@ -5362,6 +5498,41 @@ namespace caen {
         void setEasyDPPFrontPanelTRGOUTEnableMask(EasyDPPFrontPanelTRGOUTEnableMask settings) override
         {
             uint32_t mask = edfptoem2bits(settings);
+            setFrontPanelTRGOUTEnableMask(mask);
+        }
+        /**
+         * @brief Easy Get DPP FrontPanelTRGOUTEnableMaskHelper
+         *
+         * A convenience wrapper for the low-level function of the same
+         * name. Works on a struct with named variables rather than
+         * directly manipulating obscure bit patterns. Automatically
+         * takes care of translating from the bit mask returned by the
+         * the underlying low-level get funtion.
+         *
+         * @returns
+         * EasyDPPFrontPanelTRGOUTEnableMask object
+         */
+        EasyDPPFrontPanelTRGOUTEnableMaskHelper getEasyDPPFrontPanelTRGOUTEnableMaskHelper() override
+        {
+            uint32_t mask;
+            mask = getFrontPanelTRGOUTEnableMask();
+            return EasyDPPFrontPanelTRGOUTEnableMaskHelper(mask);
+        }
+        /**
+         * @brief Easy Set DPP FrontPanelTRGOUTEnableMaskHelper
+         *
+         * A convenience wrapper for the low-level function of the same
+         * name. Works on a struct with named variables rather than
+         * directly manipulating obscure bit patterns. Automatically
+         * takes care of translating to the bit mask needed by the
+         * the underlying low-level set funtion.
+         *
+         * @param settings:
+         * EasyDPPFrontPanelTRGOUTEnableMask object
+         */
+        void setEasyDPPFrontPanelTRGOUTEnableMaskHelper(EasyDPPFrontPanelTRGOUTEnableMaskHelper settings) override
+        {
+            uint32_t mask = settings.toBits();
             setFrontPanelTRGOUTEnableMask(mask);
         }
 

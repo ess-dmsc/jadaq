@@ -78,6 +78,8 @@ enum FunctionID {
     FrontPanelTRGOUTEnableMask,
     EasyFrontPanelTRGOUTEnableMask,
     EasyDPPFrontPanelTRGOUTEnableMask,
+    EasyFrontPanelTRGOUTEnableMaskHelper,
+    EasyDPPFrontPanelTRGOUTEnableMaskHelper,
     FrontPanelIOControl,
     EasyFrontPanelIOControl,
     EasyDPPFrontPanelIOControl,

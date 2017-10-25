@@ -78,6 +78,8 @@ static std::unordered_map<std::string,FunctionID > functionMap =
                 MAP_ENTRY(FrontPanelTRGOUTEnableMask),
                 MAP_ENTRY(EasyFrontPanelTRGOUTEnableMask),
                 MAP_ENTRY(EasyDPPFrontPanelTRGOUTEnableMask),
+                MAP_ENTRY(EasyFrontPanelTRGOUTEnableMaskHelper),
+                MAP_ENTRY(EasyDPPFrontPanelTRGOUTEnableMaskHelper),
                 MAP_ENTRY(FrontPanelIOControl),
                 MAP_ENTRY(EasyFrontPanelIOControl),
                 MAP_ENTRY(EasyDPPFrontPanelIOControl),
@@ -177,6 +179,8 @@ const std::string to_string(FunctionID id) {
         CASE_TO_STR(FrontPanelTRGOUTEnableMask)
         CASE_TO_STR(EasyFrontPanelTRGOUTEnableMask)
         CASE_TO_STR(EasyDPPFrontPanelTRGOUTEnableMask)
+        CASE_TO_STR(EasyFrontPanelTRGOUTEnableMaskHelper)
+        CASE_TO_STR(EasyDPPFrontPanelTRGOUTEnableMaskHelper)
         CASE_TO_STR(FrontPanelIOControl)
         CASE_TO_STR(EasyFrontPanelIOControl)
         CASE_TO_STR(EasyDPPFrontPanelIOControl)

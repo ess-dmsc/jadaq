@@ -609,6 +609,38 @@ caen::EasyDPPFrontPanelTRGOUTEnableMask s2edfptoem(const std::string& s)
     throw std::invalid_argument{"Invalid EasyDPPFrontPanelTRGOUTEnableMask"};
 }
 
+std::string to_string(const caen::EasyFrontPanelTRGOUTEnableMaskHelper &efptoemh)
+{
+    return efptoemh.toConfValueString();
+}
+
+caen::EasyFrontPanelTRGOUTEnableMaskHelper s2efptoemh(const std::string& s)
+{
+    std::regex rx("\\{(\\w+),(\\w+),(\\w+),(\\w+),(\\w+),(\\w+)\\}");
+    std::smatch match;
+    if (std::regex_search(s, match, rx))
+    {
+        return caen::EasyFrontPanelTRGOUTEnableMaskHelper(s2ui8(match[1]),s2ui8(match[2]),s2ui8(match[3]),s2ui8(match[4]),s2ui8(match[5]),s2ui8(match[6]));
+    }
+    throw std::invalid_argument{"Invalid EasyFrontPanelTRGOUTEnableMaskHelper"};
+}
+
+std::string to_string(const caen::EasyDPPFrontPanelTRGOUTEnableMaskHelper &edfptoemh)
+{
+    return edfptoemh.toConfValueString();
+}
+
+caen::EasyDPPFrontPanelTRGOUTEnableMaskHelper s2edfptoemh(const std::string& s)
+{
+    std::regex rx("\\{(\\w+),(\\w+),(\\w+)\\}");
+    std::smatch match;
+    if (std::regex_search(s, match, rx))
+    {
+        return caen::EasyDPPFrontPanelTRGOUTEnableMaskHelper(s2ui8(match[1]),s2ui8(match[2]),s2ui8(match[3]));
+    }
+    throw std::invalid_argument{"Invalid EasyDPPFrontPanelTRGOUTEnableMaskHelper"};
+}
+
 std::string to_string(const caen::EasyFrontPanelIOControl &efpioc)
 {
     std::stringstream ss;
