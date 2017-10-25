@@ -60,6 +60,7 @@ enum FunctionID {
     EasyBoardConfiguration,
     EasyDPPBoardConfiguration,
     EasyBoardConfigurationHelper,
+    EasyDPPBoardConfigurationHelper,
     DPPAggregateOrganization,
     AcquisitionControl,
     EasyAcquisitionControl,

@@ -1492,6 +1492,53 @@ namespace caen {
     }; // class EasyBoardConfigurationHelper
 
 
+    class EasyDPPBoardConfigurationHelper : public EasyHelper
+    {
+    protected:
+        const std::string className = "EasyDPPBoardConfigurationHelper";
+        /* Shared base since one constructor cannot reuse the other */
+        /*
+         * EasyDPPBoardConfiguration fields:
+         * individual trigger in [8], analog probe in [12:13],
+         * waveform recording in [16], extras recording in [17],
+         * time stamp recording in [18], charge recording in [19],
+         * external trigger mode in [20:21].
+         */
+        virtual void initLayout() override
+        {
+            layout = {{"individualTrigger", {(const uint8_t)1, (const uint8_t)8}},
+                      {"analogProbe", {(const uint8_t)2, (const uint8_t)12}},
+                      {"waveformRecording", {(const uint8_t)1, (const uint8_t)16}},
+                      {"extrasRecording", {(const uint8_t)1, (const uint8_t)17}},
+                      {"timeStampRecording", {(const uint8_t)1, (const uint8_t)18}},
+                      {"chargeRecording", {(const uint8_t)1, (const uint8_t)19}},
+                      {"externalTriggerMode", {(const uint8_t)2, (const uint8_t)20}}};
+        }
+        /* NOTE: use inherited generic constructFromMask(mask) */
+        void construct(const uint8_t individualTrigger, const uint8_t analogProbe, const uint8_t waveformRecording, const uint8_t extrasRecording, const uint8_t timeStampRecording, const uint8_t chargeRecording, const uint8_t externalTriggerMode) {
+            initLayout();
+            variables = {{"individualTrigger", (const uint8_t)(individualTrigger & 0x1)},
+                         {"analogProbe", (const uint8_t)(analogProbe & 0x3)},
+                         {"waveformRecording", (const uint8_t)(waveformRecording & 0x1)},
+                         {"extrasRecording", (const uint8_t)(extrasRecording & 0x1)},
+                         {"timeStampRecording", (const uint8_t)(timeStampRecording & 0x1)},
+                         {"chargeRecording", (const uint8_t)(chargeRecording & 0x1)},
+                         {"externalTriggerMode", (const uint8_t)(externalTriggerMode & 0x3)}};
+        };
+    public:
+        /* Construct using default values from docs */
+        EasyDPPBoardConfigurationHelper(const uint8_t individualTrigger, const uint8_t analogProbe, const uint8_t waveformRecording, const uint8_t extrasRecording, const uint8_t timeStampRecording, const uint8_t chargeRecording, const uint8_t externalTriggerMode) : EasyHelper()
+        {
+            construct(individualTrigger, analogProbe, waveformRecording, extrasRecording, timeStampRecording, chargeRecording, externalTriggerMode);
+        }
+        /* Construct from low-level bit mask in line with docs */
+        EasyDPPBoardConfigurationHelper(const uint32_t mask)  : EasyHelper(mask)
+        {
+            constructFromMask(mask);
+        }
+    }; // class EasyDPPBoardConfigurationHelper
+
+
     class EasyAcquisitionControlHelper : public EasyHelper
     {
     protected:
@@ -3225,6 +3272,9 @@ namespace caen {
         virtual EasyBoardConfigurationHelper getEasyBoardConfigurationHelper() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         virtual void setEasyBoardConfigurationHelper(EasyBoardConfigurationHelper settings) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         virtual void unsetEasyBoardConfigurationHelper(EasyBoardConfigurationHelper settings) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual EasyDPPBoardConfigurationHelper getEasyDPPBoardConfigurationHelper() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual void setEasyDPPBoardConfigurationHelper(EasyDPPBoardConfigurationHelper settings) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual void unsetEasyDPPBoardConfigurationHelper(EasyDPPBoardConfigurationHelper settings) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
 
         virtual uint32_t getDPPAggregateOrganization() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         virtual void setDPPAggregateOrganization(uint32_t value) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
@@ -4854,6 +4904,70 @@ namespace caen {
             assert(settings.timeStampRecording == 0);
             assert(settings.chargeRecording == 0);
             uint32_t mask = edbc2bits(settings);
+            unsetBoardConfiguration(mask);
+        }
+        /**
+         * @brief use getEasyDPPX version instead
+         */
+        virtual EasyBoardConfigurationHelper getEasyBoardConfigurationHelper() override { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        /**
+         * @brief use setEasyDPPX version instead
+         */
+        virtual void setEasyBoardConfigurationHelper(EasyBoardConfigurationHelper settings) override { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        /**
+         * @brief use unsetEasyDPPX version instead
+         */
+        virtual void unsetEasyBoardConfigurationHelper(EasyBoardConfigurationHelper settings) override { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        /**
+         * @brief Easy Get DPP BoardConfigurationHelper
+         *
+         * A convenience wrapper for the low-level function of the same
+         * name. Works on a struct with named variables rather than
+         * directly manipulating obscure bit patterns. Automatically
+         * takes care of translating from the bit mask returned by the
+         * the underlying low-level get funtion.
+         *
+         * @returns
+         * EasyDPPBoardConfiguration object
+         */
+        EasyDPPBoardConfigurationHelper getEasyDPPBoardConfigurationHelper() override
+        {
+            uint32_t mask;
+            mask = getBoardConfiguration();
+            return EasyDPPBoardConfigurationHelper(mask);
+        }
+        /**
+         * @brief Easy Set DPP BoardConfigurationHelper
+         *
+         * A convenience wrapper for the low-level function of the same
+         * name. Works on a struct with named variables rather than
+         * directly manipulating obscure bit patterns. Automatically
+         * takes care of translating to the bit mask needed by the
+         * the underlying low-level set funtion.
+         *
+         * @param settings:
+         * EasyDPPBoardConfiguration object
+         */
+        void setEasyDPPBoardConfigurationHelper(EasyDPPBoardConfigurationHelper settings) override
+        {
+            uint32_t mask = settings.toBits();
+            setBoardConfiguration(mask);
+        }
+        /**
+         * @brief Easy Unset DPP BoardConfigurationHelper
+         *
+         * A convenience wrapper for the low-level function of the same
+         * name. Works on a struct with named variables rather than
+         * directly manipulating obscure bit patterns. Automatically
+         * takes care of translating to the bit mask needed by the
+         * the underlying low-level unset funtion.
+         *
+         * @param settings:
+         * EasyDPPBoardConfiguration object
+         */
+        void unsetEasyDPPBoardConfigurationHelper(EasyDPPBoardConfigurationHelper settings) override
+        {
+            uint32_t mask = settings.toBits();
             unsetBoardConfiguration(mask);
         }
 

@@ -108,6 +108,8 @@ std::string to_string(const caen::EasyDPPBoardConfiguration &edbc);
 caen::EasyDPPBoardConfiguration s2edbc(const std::string& s);
 std::string to_string(const caen::EasyBoardConfigurationHelper &ebch);
 caen::EasyBoardConfigurationHelper s2ebch(const std::string& s);
+std::string to_string(const caen::EasyDPPBoardConfigurationHelper &edbch);
+caen::EasyDPPBoardConfigurationHelper s2edbch(const std::string& s);
 std::string to_string(const caen::EasyAcquisitionControl &eac);
 caen::EasyAcquisitionControl s2eac(const std::string& s);
 std::string to_string(const caen::EasyDPPAcquisitionControl &edac);
