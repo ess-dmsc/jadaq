@@ -1364,11 +1364,17 @@ namespace caen {
             /* Default layout helper - do nothing */
         };
         virtual void autoInit(const uint32_t mask) {
+            uint8_t val;
             for (const auto &keyVal : layout) {
-                variables[keyVal.first] = (const uint8_t)(unpackBits(mask, keyVal.second.first, keyVal.second.second));
+                val = (unpackBits(mask, keyVal.second.first, keyVal.second.second));
+                variables[keyVal.first] = (const uint8_t)val;
             }
             /* Make sure parsing is correct */
-            assert (mask == toBits());
+            if (mask != toBits()) {
+                std::cerr << "mismatch between mask " << mask << " and parsed value " << toBits() << std::endl;
+                std::cerr << variables.size() << " variables, " << layout.size() << " layouts" << std::endl;
+            }
+            assert(mask == toBits());
         };
         void construct() {
             /* Default construct helper - just call initLayout */
@@ -1395,6 +1401,11 @@ namespace caen {
         {
             /* Do nothing */
         }
+        /* Show class name */
+        const std::string getClassName() const
+        {
+            return className;
+        }
         /* Convert to low-level bit mask in line with docs */
         virtual const uint32_t toBits() const
         {
@@ -1418,6 +1429,12 @@ namespace caen {
             /* NOTE: map does not preserve insert order so we use layout
              * for ordering. */
             for (const auto &keyVal : layout) {
+                /* NOTE: some registers have forced values that we need
+                 * to keep track of but not show user. */
+                if ((keyVal.first).substr(0, 12) == "__reserved__") {
+                    i--;
+                    continue;
+                }
                 ss << keyVal.first;
                 // Skip comma after last entry
                 if (i > 0) {
@@ -1440,6 +1457,12 @@ namespace caen {
             ss << '{';
             int i = variables.size()-1;
             for (const auto &keyVal : layout) {
+                /* NOTE: some registers have forced values that we need
+                 * to keep track of but not show user. */
+                if ((keyVal.first).substr(0, 12) == "__reserved__") {
+                    i--;
+                    continue;
+                }
                 /* NOTE: we must use variables.at rather than variables[] here
                  * to avoid 'argument discards qualifiers' compile problems */
                 uint8_t val = boost::any_cast<uint8_t>(variables.at(keyVal.first));
@@ -1463,29 +1486,35 @@ namespace caen {
         /*
          * EasyBoardConfiguration fields:
          * trigger overlap setting in [1], test pattern enable in [3],
-         * self-trigger polarity in [6].
+         * (reserved forced 1) in [4], self-trigger polarity in [6].
          */
         virtual void initLayout() override
         {
-            layout = {{"triggerOverlapSetting", {(const uint8_t)1, (const uint8_t)1}},
-                      {"testPatternEnable", {(const uint8_t)1, (const uint8_t)3}},
-                      {"selfTriggerPolarity", {(const uint8_t)1, (const uint8_t)6}}};
+            layout = {
+                {"triggerOverlapSetting", {(const uint8_t)1, (const uint8_t)1}},
+                {"testPatternEnable", {(const uint8_t)1, (const uint8_t)3}},
+                {"__reserved__0_", {(const uint8_t)1, (const uint8_t)4}},
+                {"selfTriggerPolarity", {(const uint8_t)1, (const uint8_t)6}}
+            };
         }
         /* NOTE: use inherited generic constructFromMask(mask) */
         void construct(const uint8_t triggerOverlapSetting, const uint8_t testPatternEnable, const uint8_t selfTriggerPolarity) {
             initLayout();
-            variables = {{"triggerOverlapSetting", (const uint8_t)(triggerOverlapSetting & 0x1)},
-                         {"testPatternEnable", (const uint8_t)(testPatternEnable & 0x1)},
-                         {"selfTriggerPolarity", (const uint8_t)(selfTriggerPolarity & 0x1)}};
+            variables = {
+                {"triggerOverlapSetting", (const uint8_t)(triggerOverlapSetting & 0x1)},
+                {"testPatternEnable", (const uint8_t)(testPatternEnable & 0x1)},
+                {"__reserved__0_", (const uint8_t)(0x1)},
+                {"selfTriggerPolarity", (const uint8_t)(selfTriggerPolarity & 0x1)}
+            };
         };
     public:
         /* Construct using default values from docs */
-        EasyBoardConfigurationHelper(const uint8_t triggerOverlapSetting, const uint8_t testPatternEnable, const uint8_t selfTriggerPolarity) : EasyHelper()
+        EasyBoardConfigurationHelper(const uint8_t triggerOverlapSetting, const uint8_t testPatternEnable, const uint8_t selfTriggerPolarity)
         {
             construct(triggerOverlapSetting, testPatternEnable, selfTriggerPolarity);
         }
         /* Construct from low-level bit mask in line with docs */
-        EasyBoardConfigurationHelper(const uint32_t mask)  : EasyHelper(mask)
+        EasyBoardConfigurationHelper(const uint32_t mask)
         {
             constructFromMask(mask);
         }
@@ -1499,40 +1528,46 @@ namespace caen {
         /* Shared base since one constructor cannot reuse the other */
         /*
          * EasyDPPBoardConfiguration fields:
-         * individual trigger in [8], analog probe in [12:13],
-         * waveform recording in [16], extras recording in [17],
-         * time stamp recording in [18], charge recording in [19],
-         * external trigger mode in [20:21].
+         * (reserved forced 1) in [4], individual trigger in [8],
+         * analog probe in [12:13], waveform recording in [16],
+         * extras recording in [17], time stamp recording in [18],
+         * charge recording in [19], external trigger mode in [20:21].
          */
         virtual void initLayout() override
         {
-            layout = {{"individualTrigger", {(const uint8_t)1, (const uint8_t)8}},
-                      {"analogProbe", {(const uint8_t)2, (const uint8_t)12}},
-                      {"waveformRecording", {(const uint8_t)1, (const uint8_t)16}},
-                      {"extrasRecording", {(const uint8_t)1, (const uint8_t)17}},
-                      {"timeStampRecording", {(const uint8_t)1, (const uint8_t)18}},
-                      {"chargeRecording", {(const uint8_t)1, (const uint8_t)19}},
-                      {"externalTriggerMode", {(const uint8_t)2, (const uint8_t)20}}};
+            layout = {
+                {"__reserved__0_", {(const uint8_t)1, (const uint8_t)4}},
+                {"individualTrigger", {(const uint8_t)1, (const uint8_t)8}},
+                {"analogProbe", {(const uint8_t)2, (const uint8_t)12}},
+                {"waveformRecording", {(const uint8_t)1, (const uint8_t)16}},
+                {"extrasRecording", {(const uint8_t)1, (const uint8_t)17}},
+                {"timeStampRecording", {(const uint8_t)1, (const uint8_t)18}},
+                {"chargeRecording", {(const uint8_t)1, (const uint8_t)19}},
+                {"externalTriggerMode", {(const uint8_t)2, (const uint8_t)20}}
+            };
         }
         /* NOTE: use inherited generic constructFromMask(mask) */
         void construct(const uint8_t individualTrigger, const uint8_t analogProbe, const uint8_t waveformRecording, const uint8_t extrasRecording, const uint8_t timeStampRecording, const uint8_t chargeRecording, const uint8_t externalTriggerMode) {
             initLayout();
-            variables = {{"individualTrigger", (const uint8_t)(individualTrigger & 0x1)},
-                         {"analogProbe", (const uint8_t)(analogProbe & 0x3)},
-                         {"waveformRecording", (const uint8_t)(waveformRecording & 0x1)},
-                         {"extrasRecording", (const uint8_t)(extrasRecording & 0x1)},
-                         {"timeStampRecording", (const uint8_t)(timeStampRecording & 0x1)},
-                         {"chargeRecording", (const uint8_t)(chargeRecording & 0x1)},
-                         {"externalTriggerMode", (const uint8_t)(externalTriggerMode & 0x3)}};
+            variables = {
+                {"__reserved__0_", (const uint8_t)(0x1)},
+                {"individualTrigger", (const uint8_t)(individualTrigger & 0x1)},
+                {"analogProbe", (const uint8_t)(analogProbe & 0x3)},
+                {"waveformRecording", (const uint8_t)(waveformRecording & 0x1)},
+                {"extrasRecording", (const uint8_t)(extrasRecording & 0x1)},
+                {"timeStampRecording", (const uint8_t)(timeStampRecording & 0x1)},
+                {"chargeRecording", (const uint8_t)(chargeRecording & 0x1)},
+                {"externalTriggerMode", (const uint8_t)(externalTriggerMode & 0x3)}
+            };
         };
     public:
         /* Construct using default values from docs */
-        EasyDPPBoardConfigurationHelper(const uint8_t individualTrigger, const uint8_t analogProbe, const uint8_t waveformRecording, const uint8_t extrasRecording, const uint8_t timeStampRecording, const uint8_t chargeRecording, const uint8_t externalTriggerMode) : EasyHelper()
+        EasyDPPBoardConfigurationHelper(const uint8_t individualTrigger, const uint8_t analogProbe, const uint8_t waveformRecording, const uint8_t extrasRecording, const uint8_t timeStampRecording, const uint8_t chargeRecording, const uint8_t externalTriggerMode)
         {
             construct(individualTrigger, analogProbe, waveformRecording, extrasRecording, timeStampRecording, chargeRecording, externalTriggerMode);
         }
         /* Construct from low-level bit mask in line with docs */
-        EasyDPPBoardConfigurationHelper(const uint32_t mask)  : EasyHelper(mask)
+        EasyDPPBoardConfigurationHelper(const uint32_t mask)
         {
             constructFromMask(mask);
         }
@@ -1560,28 +1595,31 @@ namespace caen {
                       {"pLLRefererenceClock", {(const uint8_t)1, (const uint8_t)6}},
                       {"lVDSIOBusyEnable", {(const uint8_t)1, (const uint8_t)8}},
                       {"lVDSVetoEnable", {(const uint8_t)1, (const uint8_t)9}},
-                      {"lVDSIORunInEnable", {(const uint8_t)1, (const uint8_t)11}}};
+                      {"lVDSIORunInEnable", {(const uint8_t)1, (const uint8_t)11}}
+            };
         }
         /* NOTE: use inherited generic constructFromMask(mask) */
         void construct(const uint8_t startStopMode, const uint8_t acquisitionStartArm, const uint8_t triggerCountingMode, const uint8_t memoryFullModeSelection, const uint8_t pLLRefererenceClock, const uint8_t lVDSIOBusyEnable, const uint8_t lVDSVetoEnable, const uint8_t lVDSIORunInEnable) {
             initLayout();
-            variables = {{"startStopMode", (const uint8_t)(startStopMode & 0x3)},
-                         {"acquisitionStartArm", (const uint8_t)(acquisitionStartArm & 0x1)},
-                         {"triggerCountingMode", (const uint8_t)(triggerCountingMode & 0x1)},
-                         {"memoryFullModeSelection", (const uint8_t)(memoryFullModeSelection & 0x1)},
-                         {"pLLRefererenceClock", (const uint8_t)(pLLRefererenceClock & 0x1)},
-                         {"lVDSIOBusyEnable", (const uint8_t)(lVDSIOBusyEnable & 0x1)},
-                         {"lVDSVetoEnable", (const uint8_t)(lVDSVetoEnable & 0x1)},
-                         {"lVDSIORunInEnable", (const uint8_t)(lVDSIORunInEnable & 0x1)}};
+            variables = {
+                {"startStopMode", (const uint8_t)(startStopMode & 0x3)},
+                {"acquisitionStartArm", (const uint8_t)(acquisitionStartArm & 0x1)},
+                {"triggerCountingMode", (const uint8_t)(triggerCountingMode & 0x1)},
+                {"memoryFullModeSelection", (const uint8_t)(memoryFullModeSelection & 0x1)},
+                {"pLLRefererenceClock", (const uint8_t)(pLLRefererenceClock & 0x1)},
+                {"lVDSIOBusyEnable", (const uint8_t)(lVDSIOBusyEnable & 0x1)},
+                {"lVDSVetoEnable", (const uint8_t)(lVDSVetoEnable & 0x1)},
+                {"lVDSIORunInEnable", (const uint8_t)(lVDSIORunInEnable & 0x1)}
+            };
         };
     public:
         /* Construct using default values from docs */
-        EasyAcquisitionControlHelper(const uint8_t startStopMode, const uint8_t acquisitionStartArm, const uint8_t triggerCountingMode, const uint8_t memoryFullModeSelection, const uint8_t pLLRefererenceClock, const uint8_t lVDSIOBusyEnable, const uint8_t lVDSVetoEnable, const uint8_t lVDSIORunInEnable) : EasyHelper()
+        EasyAcquisitionControlHelper(const uint8_t startStopMode, const uint8_t acquisitionStartArm, const uint8_t triggerCountingMode, const uint8_t memoryFullModeSelection, const uint8_t pLLRefererenceClock, const uint8_t lVDSIOBusyEnable, const uint8_t lVDSVetoEnable, const uint8_t lVDSIORunInEnable)
         {
             construct(startStopMode, acquisitionStartArm, triggerCountingMode, memoryFullModeSelection, pLLRefererenceClock, lVDSIOBusyEnable, lVDSVetoEnable, lVDSIORunInEnable);
         }
         /* Construct from low-level bit mask in line with docs */
-        EasyAcquisitionControlHelper(const uint32_t mask)  : EasyHelper(mask)
+        EasyAcquisitionControlHelper(const uint32_t mask)
         {
             constructFromMask(mask);
         }
@@ -1602,37 +1640,41 @@ namespace caen {
          */
         virtual void initLayout() override
         {
-            layout = {{"acquisitionStatus", {(const uint8_t)1, (const uint8_t)2}},
-                      {"eventReady", {(const uint8_t)1, (const uint8_t)3}},
-                      {"eventFull", {(const uint8_t)1, (const uint8_t)4}},
-                      {"clockSource", {(const uint8_t)1, (const uint8_t)5}},
-                      {"pLLBypassMode", {(const uint8_t)1, (const uint8_t)6}},
-                      {"pLLUnlockDetect", {(const uint8_t)1, (const uint8_t)7}},
-                      {"boardReady", {(const uint8_t)1, (const uint8_t)8}},
-                      {"s_IN", {(const uint8_t)1, (const uint8_t)15}},
-                      {"tRG_IN", {(const uint8_t)1, (const uint8_t)16}}};
+            layout = {
+                {"acquisitionStatus", {(const uint8_t)1, (const uint8_t)2}},
+                {"eventReady", {(const uint8_t)1, (const uint8_t)3}},
+                {"eventFull", {(const uint8_t)1, (const uint8_t)4}},
+                {"clockSource", {(const uint8_t)1, (const uint8_t)5}},
+                {"pLLBypassMode", {(const uint8_t)1, (const uint8_t)6}},
+                {"pLLUnlockDetect", {(const uint8_t)1, (const uint8_t)7}},
+                {"boardReady", {(const uint8_t)1, (const uint8_t)8}},
+                {"s_IN", {(const uint8_t)1, (const uint8_t)15}},
+                {"tRG_IN", {(const uint8_t)1, (const uint8_t)16}}
+            };
         }
         /* NOTE: use inherited generic constructFromMask(mask) */
         void construct(const uint8_t acquisitionStatus, const uint8_t eventReady, const uint8_t eventFull, const uint8_t clockSource, const uint8_t pLLBypassMode, const uint8_t pLLUnlockDetect, const uint8_t boardReady, const uint8_t s_IN, const uint8_t tRG_IN) {
             initLayout();
-            variables = {{"acquisitionStatus", (const uint8_t)(acquisitionStatus & 0x1)},
-                         {"eventReady", (const uint8_t)(eventReady & 0x1)},
-                         {"eventFull", (const uint8_t)(eventFull & 0x1)},
-                         {"clockSource", (const uint8_t)(clockSource & 0x1)},
-                         {"pLLBypassMode", (const uint8_t)(pLLBypassMode & 0x1)},
-                         {"pLLUnlockDetect", (const uint8_t)(pLLUnlockDetect & 0x1)},
-                         {"boardReady", (const uint8_t)(boardReady & 0x1)},
-                         {"s_IN", (const uint8_t)(s_IN & 0x1)},
-                         {"tRG_IN", (const uint8_t)(tRG_IN & 0x1)}};
+            variables = {
+                {"acquisitionStatus", (const uint8_t)(acquisitionStatus & 0x1)},
+                {"eventReady", (const uint8_t)(eventReady & 0x1)},
+                {"eventFull", (const uint8_t)(eventFull & 0x1)},
+                {"clockSource", (const uint8_t)(clockSource & 0x1)},
+                {"pLLBypassMode", (const uint8_t)(pLLBypassMode & 0x1)},
+                {"pLLUnlockDetect", (const uint8_t)(pLLUnlockDetect & 0x1)},
+                {"boardReady", (const uint8_t)(boardReady & 0x1)},
+                {"s_IN", (const uint8_t)(s_IN & 0x1)},
+                {"tRG_IN", (const uint8_t)(tRG_IN & 0x1)}
+            };
         };
     public:
         /* Construct using default values from docs */
-        EasyAcquisitionStatusHelper(const uint8_t acquisitionStatus, const uint8_t eventReady, const uint8_t eventFull, const uint8_t clockSource, const uint8_t pLLBypassMode, const uint8_t pLLUnlockDetect, const uint8_t boardReady, const uint8_t s_IN, const uint8_t tRG_IN) : EasyHelper()
+        EasyAcquisitionStatusHelper(const uint8_t acquisitionStatus, const uint8_t eventReady, const uint8_t eventFull, const uint8_t clockSource, const uint8_t pLLBypassMode, const uint8_t pLLUnlockDetect, const uint8_t boardReady, const uint8_t s_IN, const uint8_t tRG_IN)
         {
             construct(acquisitionStatus, eventReady, eventFull, clockSource, pLLBypassMode, pLLUnlockDetect, boardReady, s_IN, tRG_IN);
         }
         /* Construct from low-level bit mask in line with docs */
-        EasyAcquisitionStatusHelper(const uint32_t mask)  : EasyHelper(mask)
+        EasyAcquisitionStatusHelper(const uint32_t mask)
         {
             constructFromMask(mask);
         }
@@ -1652,31 +1694,35 @@ namespace caen {
          */
         virtual void initLayout() override
         {
-            layout = {{"groupTriggerMask", {(const uint8_t)8, (const uint8_t)0}},
-                      {"majorityCoincidenceWindow", {(const uint8_t)4, (const uint8_t)20}},
-                      {"majorityLevel", {(const uint8_t)3, (const uint8_t)24}},
-                      {"lVDSTrigger", {(const uint8_t)1, (const uint8_t)29}},
-                      {"externalTrigger", {(const uint8_t)1, (const uint8_t)30}},
-                      {"softwareTrigger", {(const uint8_t)1, (const uint8_t)31}}};
+            layout = {
+                {"groupTriggerMask", {(const uint8_t)8, (const uint8_t)0}},
+                {"majorityCoincidenceWindow", {(const uint8_t)4, (const uint8_t)20}},
+                {"majorityLevel", {(const uint8_t)3, (const uint8_t)24}},
+                {"lVDSTrigger", {(const uint8_t)1, (const uint8_t)29}},
+                {"externalTrigger", {(const uint8_t)1, (const uint8_t)30}},
+                {"softwareTrigger", {(const uint8_t)1, (const uint8_t)31}}
+            };
         }
         /* NOTE: use inherited generic constructFromMask(mask) */
         void construct(const uint8_t groupTriggerMask, const uint8_t majorityCoincidenceWindow, const uint8_t majorityLevel, const uint8_t lVDSTrigger, const uint8_t externalTrigger, const uint8_t softwareTrigger) {
             initLayout();
-            variables = {{"groupTriggerMask", (const uint8_t)(groupTriggerMask & 0xFF)},
-                         {"majorityCoincidenceWindow", (const uint8_t)(majorityCoincidenceWindow & 0xF)},
-                         {"majorityLevel", (const uint8_t)(majorityLevel & 0x7)},
-                         {"lVDSTrigger", (const uint8_t)(lVDSTrigger & 0x1)},
-                         {"externalTrigger", (const uint8_t)(externalTrigger & 0x1)},
-                         {"softwareTrigger", (const uint8_t)(softwareTrigger & 0x1)}};
+            variables = {
+                {"groupTriggerMask", (const uint8_t)(groupTriggerMask & 0xFF)},
+                {"majorityCoincidenceWindow", (const uint8_t)(majorityCoincidenceWindow & 0xF)},
+                {"majorityLevel", (const uint8_t)(majorityLevel & 0x7)},
+                {"lVDSTrigger", (const uint8_t)(lVDSTrigger & 0x1)},
+                {"externalTrigger", (const uint8_t)(externalTrigger & 0x1)},
+                {"softwareTrigger", (const uint8_t)(softwareTrigger & 0x1)}
+            };
         };
     public:
         /* Construct using default values from docs */
-        EasyGlobalTriggerMaskHelper(const uint8_t groupTriggerMask, const uint8_t majorityCoincidenceWindow, const uint8_t majorityLevel, const uint8_t lVDSTrigger, const uint8_t externalTrigger, const uint8_t softwareTrigger) : EasyHelper()
+        EasyGlobalTriggerMaskHelper(const uint8_t groupTriggerMask, const uint8_t majorityCoincidenceWindow, const uint8_t majorityLevel, const uint8_t lVDSTrigger, const uint8_t externalTrigger, const uint8_t softwareTrigger)
         {
             construct(groupTriggerMask, majorityCoincidenceWindow, majorityLevel, lVDSTrigger, externalTrigger, softwareTrigger);
         }
         /* Construct from low-level bit mask in line with docs */
-        EasyGlobalTriggerMaskHelper(const uint32_t mask)  : EasyHelper(mask)
+        EasyGlobalTriggerMaskHelper(const uint32_t mask)
         {
             constructFromMask(mask);
         }
@@ -1695,25 +1741,29 @@ namespace caen {
          */
         virtual void initLayout() override
         {
-            layout = {{"lVDSTrigger", {(const uint8_t)1, (const uint8_t)29}},
-                      {"externalTrigger", {(const uint8_t)1, (const uint8_t)30}},
-                      {"softwareTrigger", {(const uint8_t)1, (const uint8_t)31}}};
+            layout = {
+                {"lVDSTrigger", {(const uint8_t)1, (const uint8_t)29}},
+                {"externalTrigger", {(const uint8_t)1, (const uint8_t)30}},
+                {"softwareTrigger", {(const uint8_t)1, (const uint8_t)31}}
+            };
         }
         /* NOTE: use inherited generic constructFromMask(mask) */
         void construct(const uint8_t lVDSTrigger, const uint8_t externalTrigger, const uint8_t softwareTrigger) {
             initLayout();
-            variables = {{"lVDSTrigger", (const uint8_t)(lVDSTrigger & 0x1)},
-                         {"externalTrigger", (const uint8_t)(externalTrigger & 0x1)},
-                         {"softwareTrigger", (const uint8_t)(softwareTrigger & 0x1)}};
+            variables = {
+                {"lVDSTrigger", (const uint8_t)(lVDSTrigger & 0x1)},
+                {"externalTrigger", (const uint8_t)(externalTrigger & 0x1)},
+                {"softwareTrigger", (const uint8_t)(softwareTrigger & 0x1)}
+            };
         };
     public:
         /* Construct using default values from docs */
-        EasyDPPGlobalTriggerMaskHelper(const uint8_t lVDSTrigger, const uint8_t externalTrigger, const uint8_t softwareTrigger) : EasyHelper()
+        EasyDPPGlobalTriggerMaskHelper(const uint8_t lVDSTrigger, const uint8_t externalTrigger, const uint8_t softwareTrigger)
         {
             construct(lVDSTrigger, externalTrigger, softwareTrigger);
         }
         /* Construct from low-level bit mask in line with docs */
-        EasyDPPGlobalTriggerMaskHelper(const uint32_t mask)  : EasyHelper(mask)
+        EasyDPPGlobalTriggerMaskHelper(const uint32_t mask)
         {
             constructFromMask(mask);
         }
@@ -1727,25 +1777,31 @@ namespace caen {
         /* Shared helpers since one constructor cannot reuse the other */
         /*
          * EasyFanSpeedControl fields:
-         * fan Speed mode in [3].
+         * fan Speed mode in [3], (reserved forced 1) in [4:5].
          */
         void initLayout() override
         {
-            layout = {{"fanSpeedMode", {(const uint8_t)1, (const uint8_t)3}}};
+            layout = {
+                {"fanSpeedMode", {(const uint8_t)1, (const uint8_t)3}},
+                {"__reserved__0_", {(const uint8_t)2, (const uint8_t)4}}
+            };
         }
         /* NOTE: use inherited generic constructFromMask(mask) */
         void construct(const uint8_t fanSpeedMode) {
             initLayout();
-            variables = {{"fanSpeedMode", (const uint8_t)(fanSpeedMode & 0x1)}};
+            variables = {
+                {"fanSpeedMode", (const uint8_t)(fanSpeedMode & 0x1)},
+                {"__reserved__0_", (const uint8_t)(0x1)}
+            };
         };
     public:
         /* Construct using default values from docs */
-        EasyFanSpeedControlHelper(const uint8_t fanSpeedMode=0) : EasyHelper()
+        EasyFanSpeedControlHelper(const uint8_t fanSpeedMode=0)
         {
             construct(fanSpeedMode);
         }
         /* Construct from low-level bit mask in line with docs */
-        EasyFanSpeedControlHelper(const uint32_t mask) : EasyHelper(mask)
+        EasyFanSpeedControlHelper(const uint32_t mask)
         {
             constructFromMask(mask);
         }
@@ -1777,25 +1833,29 @@ namespace caen {
          */
         void initLayout()
         {
-            layout = {{"minorRevisionNumber", {(const uint8_t)8, (const uint8_t)0}},
-                      {"majorRevisionNumber", {(const uint8_t)8, (const uint8_t)8}},
-                      {"revisionDate", {(const uint8_t)16, (const uint8_t)16}}};
+            layout = {
+                {"minorRevisionNumber", {(const uint8_t)8, (const uint8_t)0}},
+                {"majorRevisionNumber", {(const uint8_t)8, (const uint8_t)8}},
+                {"revisionDate", {(const uint8_t)16, (const uint8_t)16}}
+            };
         }
         void construct(const uint8_t minorRevisionNumber, const uint8_t majorRevisionNumber, const uint16_t revisionDate)
         {
             initLayout();
-            variables = {{"minorRevisionNumber", (const uint8_t)minorRevisionNumber},
-                         {"majorRevisionNumber", (const uint8_t)majorRevisionNumber},
-                         {"revisionDate", (const uint16_t)revisionDate}};
+            variables = {
+                {"minorRevisionNumber", (const uint8_t)minorRevisionNumber},
+                {"majorRevisionNumber", (const uint8_t)majorRevisionNumber},
+                {"revisionDate", (const uint16_t)revisionDate}
+            };
         }
     public:
         /* Construct using default values from docs */
-        EasyAMCFirmwareRevisionHelper(const uint8_t minorRevisionNumber, const uint8_t majorRevisionNumber, const uint16_t revisionDate) : EasyHelper()
+        EasyAMCFirmwareRevisionHelper(const uint8_t minorRevisionNumber, const uint8_t majorRevisionNumber, const uint16_t revisionDate)
         {
             construct(minorRevisionNumber, majorRevisionNumber, revisionDate);
         }
         /* Construct from low-level bit mask in line with docs */
-        EasyAMCFirmwareRevisionHelper(const uint32_t mask) : EasyHelper(mask)
+        EasyAMCFirmwareRevisionHelper(const uint32_t mask)
         {
             /* NOTE: we use manual unpack for now to allow uint16 field */
             /* TODO: switch to use layout values?
@@ -1854,31 +1914,35 @@ namespace caen {
          */
         void initLayout()
         {
-            layout = {{"firmwareRevisionNumber", {(const uint8_t)8, (const uint8_t)0}},
-                      {"firmwareDPPCode", {(const uint8_t)8, (const uint8_t)8}},
-                      {"buildDayLower", {(const uint8_t)4, (const uint8_t)16}},
-                      {"buildDayUpper", {(const uint8_t)4, (const uint8_t)20}},
-                      {"buildMonth", {(const uint8_t)4, (const uint8_t)24}},
-                      {"buildYear", {(const uint8_t)4, (const uint8_t)28}}};
+            layout = {
+                {"firmwareRevisionNumber", {(const uint8_t)8, (const uint8_t)0}},
+                {"firmwareDPPCode", {(const uint8_t)8, (const uint8_t)8}},
+                {"buildDayLower", {(const uint8_t)4, (const uint8_t)16}},
+                {"buildDayUpper", {(const uint8_t)4, (const uint8_t)20}},
+                {"buildMonth", {(const uint8_t)4, (const uint8_t)24}},
+                {"buildYear", {(const uint8_t)4, (const uint8_t)28}}
+            };
         }
         /* NOTE: use inherited generic constructFromMask(mask) */
         void construct(const uint8_t firmwareRevisionNumber, const uint8_t firmwareDPPCode, const uint8_t buildDayLower, const uint8_t buildDayUpper, const uint8_t buildMonth, const uint8_t buildYear)
         {
             initLayout();
-            variables = {{"firmwareRevisionNumber", (const uint8_t)firmwareRevisionNumber},
-                         {"firmwareDPPCode", (const uint8_t)firmwareDPPCode},
-                         {"buildDayLower", (const uint8_t)(buildDayLower & 0xF)},
-                         {"buildDayUpper", (const uint8_t)(buildDayUpper & 0xF)},
-                         {"buildMonth", (const uint8_t)(buildMonth & 0xF)},
-                         {"buildYear", (const uint8_t)(buildYear & 0xF)}};
+            variables = {
+                {"firmwareRevisionNumber", (const uint8_t)firmwareRevisionNumber},
+                {"firmwareDPPCode", (const uint8_t)firmwareDPPCode},
+                {"buildDayLower", (const uint8_t)(buildDayLower & 0xF)},
+                {"buildDayUpper", (const uint8_t)(buildDayUpper & 0xF)},
+                {"buildMonth", (const uint8_t)(buildMonth & 0xF)},
+                {"buildYear", (const uint8_t)(buildYear & 0xF)}
+            };
         }
     public:
-        EasyDPPAMCFirmwareRevisionHelper(const uint8_t firmwareRevisionNumber, const uint8_t firmwareDPPCode, const uint8_t buildDayLower, const uint8_t buildDayUpper, const uint8_t buildMonth, const uint8_t buildYear) : EasyHelper()
+        EasyDPPAMCFirmwareRevisionHelper(const uint8_t firmwareRevisionNumber, const uint8_t firmwareDPPCode, const uint8_t buildDayLower, const uint8_t buildDayUpper, const uint8_t buildMonth, const uint8_t buildYear)
         {
             construct(firmwareRevisionNumber, firmwareDPPCode, buildDayLower, buildDayUpper, buildMonth, buildYear);
         }
         /* Construct from low-level bit mask in line with docs */
-        EasyDPPAMCFirmwareRevisionHelper(const uint32_t mask) : EasyHelper(mask)
+        EasyDPPAMCFirmwareRevisionHelper(const uint32_t mask)
         {
             constructFromMask(mask);
         }
@@ -4772,6 +4836,10 @@ namespace caen {
          */
         virtual EasyAMCFirmwareRevision getEasyAMCFirmwareRevision(uint32_t group) override { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         /**
+         * @brief use getEasyDPPX version instead
+         */
+        virtual EasyAMCFirmwareRevisionHelper getEasyAMCFirmwareRevisionHelper(uint32_t group) override { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        /**
          * @brief Easy Get DPP AMCFirmwareRevision
          *
          * A convenience wrapper for the low-level function of the same
@@ -4950,6 +5018,7 @@ namespace caen {
          */
         void setEasyDPPBoardConfigurationHelper(EasyDPPBoardConfigurationHelper settings) override
         {
+            /* TODO: add check for forced ones ? */
             uint32_t mask = settings.toBits();
             setBoardConfiguration(mask);
         }
@@ -4967,6 +5036,7 @@ namespace caen {
          */
         void unsetEasyDPPBoardConfigurationHelper(EasyDPPBoardConfigurationHelper settings) override
         {
+            /* TODO: add check for forced ones ? */
             uint32_t mask = settings.toBits();
             unsetBoardConfiguration(mask);
         }
@@ -5170,6 +5240,14 @@ namespace caen {
          * @brief use setEasyDPPX version instead
          */
         virtual void setEasyGlobalTriggerMask(EasyGlobalTriggerMask settings) override { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        /**
+         * @brief use getEasyDPPX version instead
+         */
+        virtual EasyGlobalTriggerMaskHelper getEasyGlobalTriggerMaskHelper() override { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        /**
+         * @brief use setEasyDPPX version instead
+         */
+        virtual void setEasyGlobalTriggerMaskHelper(EasyGlobalTriggerMaskHelper settings) override { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         /**
          * @brief Easy Get DPP GlobalTriggerMask
          *
@@ -5375,6 +5453,14 @@ namespace caen {
          * @brief use setEasyDPPX version instead
          */
         virtual void setEasyFanSpeedControl(EasyFanSpeedControl settings) override { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        /**
+         * @brief use getEasyDPPX version instead
+         */
+        virtual EasyFanSpeedControlHelper getEasyFanSpeedControlHelper() override { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        /**
+         * @brief use setEasyDPPX version instead
+         */
+        virtual void setEasyFanSpeedControlHelper(EasyFanSpeedControlHelper settings) override { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         /* NOTE: 740 and 740DPP share this structure - just re-expose it */
         /**
          * @brief Easy Get DPP FanSpeedControl
