@@ -875,6 +875,38 @@ caen::EasyDPPFanSpeedControlHelper s2edfsch(const std::string& s)
     throw std::invalid_argument{"Invalid EasyDPPFanSpeedControlHelper"};
 }
 
+std::string to_string(const caen::EasyReadoutControlHelper &erch)
+{
+    return erch.toConfString();
+}
+
+caen::EasyReadoutControlHelper s2erch(const std::string& s)
+{
+    std::regex rx("\\{(\\w+),(\\w+),(\\w+),(\\w+),(\\w+),(\\w+),(\\w+)\\}");
+    std::smatch match;
+    if (std::regex_search(s, match, rx))
+    {
+        return caen::EasyReadoutControlHelper(s2ui8(match[1]),s2ui8(match[2]),s2ui8(match[3]),s2ui8(match[4]),s2ui8(match[5]),s2ui8(match[6]),s2ui8(match[7]));
+    }
+    throw std::invalid_argument{"Invalid EasyReadoutControlHelper"};
+}
+
+std::string to_string(const caen::EasyDPPReadoutControlHelper &edrch)
+{
+    return edrch.toConfString();
+}
+
+caen::EasyDPPReadoutControlHelper s2edrch(const std::string& s)
+{
+    std::regex rx("\\{(\\w+),(\\w+),(\\w+),(\\w+),(\\w+),(\\w+),(\\w+)\\}");
+    std::smatch match;
+    if (std::regex_search(s, match, rx))
+    {
+        return caen::EasyDPPReadoutControlHelper(s2ui8(match[1]),s2ui8(match[2]),s2ui8(match[3]),s2ui8(match[4]),s2ui8(match[5]),s2ui8(match[6]),s2ui8(match[7]));
+    }
+    throw std::invalid_argument{"Invalid EasyDPPReadoutControlHelper"};
+}
+
 std::string to_string(const caen::EasyAMCFirmwareRevisionHelper &eafrh)
 {
     /* NOTE: we use a simpler format for revisionDate internally so we

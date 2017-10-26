@@ -2290,6 +2290,110 @@ namespace caen {
     }; // class EasyDPPFanSpeedControlHelper
 
 
+    class EasyReadoutControlHelper : public EasyHelper
+    {
+    protected:
+        const std::string className = "EasyReadoutControlHelper";
+        /* Shared helpers since one constructor cannot reuse the other */
+        /*
+         * EasyReadoutControl fields:
+         * VME interrupt level in [0:2], optical link interrupt enable in [3],
+         * VME bus error / event aligned readout enable in [4],
+         * VME align64 mode in [5], VME base address relocation in [6],
+         * Interrupt release mode in [7], 
+         * extended block transfer enable in [8].
+         */
+        void initLayout() override
+        {
+            layout = {
+                {"vMEInterruptLevel", {(const uint8_t)3, (const uint8_t)0}},
+                {"opticalLinkInterruptEnable", {(const uint8_t)1, (const uint8_t)3}},
+                {"vMEBusErrorEventAlignedEnable", {(const uint8_t)1, (const uint8_t)4}},
+                {"vMEAlign64Mode", {(const uint8_t)1, (const uint8_t)5}},
+                {"vMEBaseAddressRelocation", {(const uint8_t)1, (const uint8_t)6}},
+                {"interruptReleaseMode", {(const uint8_t)1, (const uint8_t)7}},
+                {"extendedBlockTransferEnable", {(const uint8_t)1, (const uint8_t)8}}
+            };
+        }
+        /* NOTE: use inherited generic constructFromMask(mask) */
+        void construct(const uint8_t vMEInterruptLevel, const uint8_t opticalLinkInterruptEnable, const uint8_t vMEBusErrorEventAlignedEnable, const uint8_t vMEAlign64Mode, const uint8_t vMEBaseAddressRelocation, const uint8_t interruptReleaseMode, const uint8_t extendedBlockTransferEnable) {
+            initLayout();
+            variables = {
+                {"vMEInterruptLevel", (const uint8_t)(vMEInterruptLevel & 0x7)},
+                {"opticalLinkInterruptEnable", (const uint8_t)(opticalLinkInterruptEnable & 0x1)},
+                {"vMEBusErrorEventAlignedEnable", (const uint8_t)(vMEBusErrorEventAlignedEnable & 0x1)},
+                {"vMEAlign64Mode", (const uint8_t)(vMEAlign64Mode & 0x1)},
+                {"vMEBaseAddressRelocation", (const uint8_t)(vMEBaseAddressRelocation & 0x1)},
+                {"interruptReleaseMode", (const uint8_t)(interruptReleaseMode & 0x1)},
+                {"extendedBlockTransferEnable", (const uint8_t)(extendedBlockTransferEnable & 0x1)}
+            };
+        };
+    public:
+        /* Construct using default values from docs */
+        EasyReadoutControlHelper(const uint8_t vMEInterruptLevel, const uint8_t opticalLinkInterruptEnable, const uint8_t vMEBusErrorEventAlignedEnable, const uint8_t vMEAlign64Mode, const uint8_t vMEBaseAddressRelocation, const uint8_t interruptReleaseMode, const uint8_t extendedBlockTransferEnable)
+        {
+            construct(vMEInterruptLevel, opticalLinkInterruptEnable, vMEBusErrorEventAlignedEnable, vMEAlign64Mode, vMEBaseAddressRelocation, interruptReleaseMode, extendedBlockTransferEnable);
+        }
+        /* Construct from low-level bit mask in line with docs */
+        EasyReadoutControlHelper(const uint32_t mask)
+        {
+            constructFromMask(mask);
+        }
+    }; // class EasyReadoutControlHelper
+
+    /* TODO: identical mask meaning for generic and DPP - just inherit? */
+    class EasyDPPReadoutControlHelper : public EasyHelper
+    {
+    protected:
+        const std::string className = "EasyDPPReadoutControlHelper";
+        /* Shared helpers since one constructor cannot reuse the other */
+        /*
+         * EasyDPPReadoutControl fields:
+         * VME interrupt level in [0:2], optical link interrupt enable in [3],
+         * VME bus error / event aligned readout enable in [4],
+         * VME align64 mode in [5], VME base address relocation in [6],
+         * Interrupt release mode in [7], 
+         * extended block transfer enable in [8].
+         */
+        void initLayout() override
+        {
+            layout = {
+                {"vMEInterruptLevel", {(const uint8_t)3, (const uint8_t)0}},
+                {"opticalLinkInterruptEnable", {(const uint8_t)1, (const uint8_t)3}},
+                {"vMEBusErrorEventAlignedEnable", {(const uint8_t)1, (const uint8_t)4}},
+                {"vMEAlign64Mode", {(const uint8_t)1, (const uint8_t)5}},
+                {"vMEBaseAddressRelocation", {(const uint8_t)1, (const uint8_t)6}},
+                {"interruptReleaseMode", {(const uint8_t)1, (const uint8_t)7}},
+                {"extendedBlockTransferEnable", {(const uint8_t)1, (const uint8_t)8}}
+            };
+        }
+        /* NOTE: use inherited generic constructFromMask(mask) */
+        void construct(const uint8_t vMEInterruptLevel, const uint8_t opticalLinkInterruptEnable, const uint8_t vMEBusErrorEventAlignedEnable, const uint8_t vMEAlign64Mode, const uint8_t vMEBaseAddressRelocation, const uint8_t interruptReleaseMode, const uint8_t extendedBlockTransferEnable) {
+            initLayout();
+            variables = {
+                {"vMEInterruptLevel", (const uint8_t)(vMEInterruptLevel & 0x7)},
+                {"opticalLinkInterruptEnable", (const uint8_t)(opticalLinkInterruptEnable & 0x1)},
+                {"vMEBusErrorEventAlignedEnable", (const uint8_t)(vMEBusErrorEventAlignedEnable & 0x1)},
+                {"vMEAlign64Mode", (const uint8_t)(vMEAlign64Mode & 0x1)},
+                {"vMEBaseAddressRelocation", (const uint8_t)(vMEBaseAddressRelocation & 0x1)},
+                {"interruptReleaseMode", (const uint8_t)(interruptReleaseMode & 0x1)},
+                {"extendedBlockTransferEnable", (const uint8_t)(extendedBlockTransferEnable & 0x1)}
+            };
+        };
+    public:
+        /* Construct using default values from docs */
+        EasyDPPReadoutControlHelper(const uint8_t vMEInterruptLevel, const uint8_t opticalLinkInterruptEnable, const uint8_t vMEBusErrorEventAlignedEnable, const uint8_t vMEAlign64Mode, const uint8_t vMEBaseAddressRelocation, const uint8_t interruptReleaseMode, const uint8_t extendedBlockTransferEnable)
+        {
+            construct(vMEInterruptLevel, opticalLinkInterruptEnable, vMEBusErrorEventAlignedEnable, vMEAlign64Mode, vMEBaseAddressRelocation, interruptReleaseMode, extendedBlockTransferEnable);
+        }
+        /* Construct from low-level bit mask in line with docs */
+        EasyDPPReadoutControlHelper(const uint32_t mask)
+        {
+            constructFromMask(mask);
+        }
+    }; // class EasyDPPReadoutControlHelper
+
+
     class EasyAMCFirmwareRevisionHelper : public EasyHelper
     {
     protected:
@@ -3932,6 +4036,10 @@ namespace caen {
 
         virtual uint32_t getReadoutControl() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         virtual void setReadoutControl(uint32_t value) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual EasyReadoutControlHelper getEasyReadoutControlHelper() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual void setEasyReadoutControlHelper(EasyReadoutControlHelper settings) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual EasyDPPReadoutControlHelper getEasyDPPReadoutControlHelper() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual void setEasyDPPReadoutControlHelper(EasyDPPReadoutControlHelper settings) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
 
         virtual uint32_t getReadoutStatus() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
 
@@ -4998,6 +5106,76 @@ namespace caen {
          */
         void setReadoutControl(uint32_t mask) override
         { errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0xEF00, mask)); }
+        /**
+         * @brief Easy Get ReadoutControlHelper
+         *
+         * A convenience wrapper for the low-level function of the same
+         * name. Works on a struct with named variables rather than
+         * directly manipulating obscure bit patterns. Automatically
+         * takes care of translating from the bit mask returned by the
+         * the underlying low-level get funtion.
+         *
+         * @returns
+         * EasyReadoutControlHelper object
+         */
+        EasyReadoutControlHelper getEasyReadoutControlHelper() override
+        {
+            uint32_t mask;
+            mask = getReadoutControl();
+            return EasyReadoutControlHelper(mask);
+        }
+        /**
+         * @brief Easy Set ReadoutControlHelper
+         *
+         * A convenience wrapper for the low-level function of the same
+         * name. Works on a struct with named variables rather than
+         * directly manipulating obscure bit patterns. Automatically
+         * takes care of translating to the bit mask needed by the
+         * the underlying low-level set funtion.
+         *
+         * @param settings:
+         * EasyReadoutControl object
+         */
+        void setEasyReadoutControlHelper(EasyReadoutControlHelper settings) override
+        {
+            uint32_t mask = settings.toBits();
+            setReadoutControl(mask);
+        }
+        /**
+         * @brief Easy Get DPP ReadoutControlHelper
+         *
+         * A convenience wrapper for the low-level function of the same
+         * name. Works on a struct with named variables rather than
+         * directly manipulating obscure bit patterns. Automatically
+         * takes care of translating from the bit mask returned by the
+         * the underlying low-level get funtion.
+         *
+         * @returns
+         * EasyDPPReadoutControlHelper object
+         */
+        EasyDPPReadoutControlHelper getEasyDPPReadoutControlHelper() override
+        {
+            uint32_t mask;
+            mask = getReadoutControl();
+            return EasyDPPReadoutControlHelper(mask);
+        }
+        /**
+         * @brief Easy Set DPP ReadoutControlHelper
+         *
+         * A convenience wrapper for the low-level function of the same
+         * name. Works on a struct with named variables rather than
+         * directly manipulating obscure bit patterns. Automatically
+         * takes care of translating to the bit mask needed by the
+         * the underlying low-level set funtion.
+         *
+         * @param settings:
+         * EasyDPPReadoutControl object
+         */
+        void setEasyDPPReadoutControlHelper(EasyDPPReadoutControlHelper settings) override
+        {
+            uint32_t mask = settings.toBits();
+            setReadoutControl(mask);
+        }
 
         /**
          * @brief Get ReadoutStatus mask
@@ -6400,7 +6578,6 @@ namespace caen {
         /* TODO: explicitly disable Buffer Occupancy Gain here if
          * implemented in parent? */
 
-        /* TODO: wrap ReadoutControl in user-friendly struct */
         /* TODO: wrap ReadoutStatus in user-friendly struct */
 
         /**
