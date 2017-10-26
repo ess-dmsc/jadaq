@@ -5141,41 +5141,6 @@ namespace caen {
             uint32_t mask = settings.toBits();
             setReadoutControl(mask);
         }
-        /**
-         * @brief Easy Get DPP ReadoutControlHelper
-         *
-         * A convenience wrapper for the low-level function of the same
-         * name. Works on a struct with named variables rather than
-         * directly manipulating obscure bit patterns. Automatically
-         * takes care of translating from the bit mask returned by the
-         * the underlying low-level get funtion.
-         *
-         * @returns
-         * EasyDPPReadoutControlHelper object
-         */
-        EasyDPPReadoutControlHelper getEasyDPPReadoutControlHelper() override
-        {
-            uint32_t mask;
-            mask = getReadoutControl();
-            return EasyDPPReadoutControlHelper(mask);
-        }
-        /**
-         * @brief Easy Set DPP ReadoutControlHelper
-         *
-         * A convenience wrapper for the low-level function of the same
-         * name. Works on a struct with named variables rather than
-         * directly manipulating obscure bit patterns. Automatically
-         * takes care of translating to the bit mask needed by the
-         * the underlying low-level set funtion.
-         *
-         * @param settings:
-         * EasyDPPReadoutControl object
-         */
-        void setEasyDPPReadoutControlHelper(EasyDPPReadoutControlHelper settings) override
-        {
-            uint32_t mask = settings.toBits();
-            setReadoutControl(mask);
-        }
 
         /**
          * @brief Get ReadoutStatus mask
@@ -6550,6 +6515,52 @@ namespace caen {
             setFanSpeedControl(mask);
         }
 
+        /* NOTE: reuse get ReadoutControl from parent */
+        /* NOTE: disable inherited 740 EasyReadoutControl since we only
+         * support EasyDPPReadoutControl here. */
+        /**
+         * @brief use getEasyDPPX version instead
+         */
+        virtual EasyReadoutControlHelper getEasyReadoutControlHelper() override { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        /**
+         * @brief use setEasyDPPX version instead
+         */
+        virtual void setEasyReadoutControlHelper(EasyReadoutControlHelper settings) override { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        /**
+         * @brief Easy Get DPP ReadoutControlHelper
+         *
+         * A convenience wrapper for the low-level function of the same
+         * name. Works on a struct with named variables rather than
+         * directly manipulating obscure bit patterns. Automatically
+         * takes care of translating from the bit mask returned by the
+         * the underlying low-level get funtion.
+         *
+         * @returns
+         * EasyDPPReadoutControlHelper object
+         */
+        EasyDPPReadoutControlHelper getEasyDPPReadoutControlHelper() override
+        {
+            uint32_t mask;
+            mask = getReadoutControl();
+            return EasyDPPReadoutControlHelper(mask);
+        }
+        /**
+         * @brief Easy Set DPP ReadoutControlHelper
+         *
+         * A convenience wrapper for the low-level function of the same
+         * name. Works on a struct with named variables rather than
+         * directly manipulating obscure bit patterns. Automatically
+         * takes care of translating to the bit mask needed by the
+         * the underlying low-level set funtion.
+         *
+         * @param settings:
+         * EasyDPPReadoutControl object
+         */
+        void setEasyDPPReadoutControlHelper(EasyDPPReadoutControlHelper settings) override
+        {
+            uint32_t mask = settings.toBits();
+            setReadoutControl(mask);
+        }
 
         /* NOTE: Get / Set Run/Start/Stop Delay from register docs is
          * already covered by RunDelay. */
