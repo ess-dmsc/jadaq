@@ -1402,6 +1402,7 @@ namespace caen {
         {
             return className;
         }
+        /* TODO: Add variable get/set helpers with value cap from layout? */
         /* Convert to low-level bit mask in line with docs */
         virtual const uint32_t toBits() const
         {
@@ -2395,6 +2396,65 @@ namespace caen {
             constructFromMask(mask);
         }
     }; // class EasyDPPAMCFirmwareRevisionHelper
+
+
+    class EasyDPPAlgorithmControlHelper : public EasyHelper
+    {
+    protected:
+        const std::string className = "EasyDPPAlgorithmControlHelper";
+
+        /* Shared base since one constructor cannot reuse the other */
+        /*
+         * EasyDPPAlgorithmControl fields:
+         * charge sensitivity in [0:2], internal test pulse in [4],
+         * test pulse rate in [5:6], charge pedestal in [8],
+         * input smoothing factor in [12:14], pulse polarity in [16],
+         * trigger mode in [18:19], baseline mean in [20:22],
+         * disable self trigger in [24], trigger hysteresis in [30].
+         */
+        void initLayout()
+        {
+            layout = {
+                {"chargeSensitivity", {(const uint8_t)3, (const uint8_t)0}},
+                {"internalTestPulse", {(const uint8_t)1, (const uint8_t)4}},
+                {"testPulseRate", {(const uint8_t)2, (const uint8_t)5}},
+                {"chargePedestal", {(const uint8_t)1, (const uint8_t)8}},
+                {"inputSmoothingFactor", {(const uint8_t)3, (const uint8_t)12}},
+                {"pulsePolarity", {(const uint8_t)1, (const uint8_t)16}},
+                {"triggerMode", {(const uint8_t)2, (const uint8_t)18}},
+                {"baselineMean", {(const uint8_t)3, (const uint8_t)20}},
+                {"disableSelfTrigger", {(const uint8_t)1, (const uint8_t)24}},
+                {"triggerHysteresis", {(const uint8_t)1, (const uint8_t)30}}
+            };
+        }
+        /* NOTE: use inherited generic constructFromMask(mask) */
+        void construct(const uint8_t chargeSensitivity, const uint8_t internalTestPulse, const uint8_t testPulseRate, const uint8_t chargePedestal, const uint8_t inputSmoothingFactor, const uint8_t pulsePolarity, const uint8_t triggerMode, const uint8_t baselineMean, const uint8_t disableSelfTrigger, const uint8_t triggerHysteresis)
+        {
+            initLayout();
+            variables = {
+                {"chargeSensitivity", (const uint8_t)(chargeSensitivity & 0x7)},
+                {"internalTestPulse", (const uint8_t)(internalTestPulse & 0x1)},
+                {"testPulseRate", (const uint8_t)(testPulseRate & 0x3)},
+                {"chargePedestal", (const uint8_t)(chargePedestal & 0x1)},
+                {"inputSmoothingFactor", (const uint8_t)(inputSmoothingFactor & 0x7)},
+                {"pulsePolarity", (const uint8_t)(pulsePolarity & 0x1)},
+                {"triggerMode", (const uint8_t)(triggerMode & 0x3)},
+                {"baselineMean", (const uint8_t)(baselineMean & 0x7)},
+                {"disableSelfTrigger", (const uint8_t)(disableSelfTrigger & 0x1)},
+                {"triggerHysteresis", (const uint8_t)(triggerHysteresis & 0x1)}
+            };
+        }
+    public:
+        EasyDPPAlgorithmControlHelper(const uint8_t chargeSensitivity, const uint8_t internalTestPulse, const uint8_t testPulseRate, const uint8_t chargePedestal, const uint8_t inputSmoothingFactor, const uint8_t pulsePolarity, const uint8_t triggerMode, const uint8_t baselineMean, const uint8_t disableSelfTrigger, const uint8_t triggerHysteresis)
+        {
+            construct(chargeSensitivity, internalTestPulse, testPulseRate, chargePedestal, inputSmoothingFactor, pulsePolarity, triggerMode, baselineMean, disableSelfTrigger, triggerHysteresis);
+        }
+        /* Construct from low-level bit mask in line with docs */
+        EasyDPPAlgorithmControlHelper(const uint32_t mask)
+        {
+            constructFromMask(mask);
+        }
+    }; // class EasyDPPAlgorithmControlHelper
 
 
     /* Bit-banging helpers to translate between EasyX struct and bitmask.
@@ -3767,6 +3827,9 @@ namespace caen {
         virtual EasyDPPAlgorithmControl getEasyDPPAlgorithmControl(uint32_t group) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         virtual void setEasyDPPAlgorithmControl(uint32_t group, EasyDPPAlgorithmControl settings) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         virtual void setEasyDPPAlgorithmControl(EasyDPPAlgorithmControl settings) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual EasyDPPAlgorithmControlHelper getEasyDPPAlgorithmControlHelper(uint32_t group) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual void setEasyDPPAlgorithmControlHelper(uint32_t group, EasyDPPAlgorithmControlHelper settings) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual void setEasyDPPAlgorithmControlHelper(EasyDPPAlgorithmControlHelper settings) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
 
         virtual uint32_t getDPPShapedTriggerWidth(uint32_t group) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         virtual void setDPPShapedTriggerWidth(uint32_t group, uint32_t value) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
@@ -5273,6 +5336,49 @@ namespace caen {
         void setEasyDPPAlgorithmControl(EasyDPPAlgorithmControl settings) override
         {
             uint32_t mask = edppac2bits(settings);
+            setDPPAlgorithmControl(mask);
+        }
+        /**
+         * @brief Easy Get DPPAlgorithmControlHelper
+         *
+         * A convenience wrapper for the low-level function of the same
+         * name. Works on a struct with named variables rather than
+         * directly manipulating obscure bit patterns. Automatically
+         * takes care of translating from the bit mask returned by the
+         * the underlying low-level get funtion.
+         *
+         * @returns
+         * EasyDPPAlgorithmControl object
+         */
+        EasyDPPAlgorithmControlHelper getEasyDPPAlgorithmControlHelper(uint32_t group) override
+        {
+            uint32_t mask = getDPPAlgorithmControl(group);
+            return EasyDPPAlgorithmControlHelper(mask);
+        }
+        /**
+         * @brief Easy Set DPPAlgorithmControlHelper
+         *
+         * A convenience wrapper for the low-level function of the same
+         * name. Works on a struct with named variables rather than
+         * directly manipulating obscure bit patterns. Automatically
+         * takes care of translating to the bit mask needed by the
+         * the underlying low-level set funtion.
+         *
+         * @param settings:
+         * EasyDPPAlgorithmControl object
+         */
+        void setEasyDPPAlgorithmControlHelper(uint32_t group, EasyDPPAlgorithmControlHelper settings) override
+        {
+            uint32_t mask = settings.toBits();
+            setDPPAlgorithmControl(group, mask);
+        }
+        /**
+         * @brief Broadcast version: please refer to details in
+         * single-group version.
+         */
+        void setEasyDPPAlgorithmControlHelper(EasyDPPAlgorithmControlHelper settings) override
+        {
+            uint32_t mask = settings.toBits();
             setDPPAlgorithmControl(mask);
         }
 

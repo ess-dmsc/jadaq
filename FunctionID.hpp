@@ -131,6 +131,7 @@ enum FunctionID {
     DPPFixedBaseline,
     DPPAlgorithmControl,
     EasyDPPAlgorithmControl,
+    EasyDPPAlgorithmControlHelper,
     DPPTriggerHoldOffWidth,
     DPPShapedTriggerWidth,
 };

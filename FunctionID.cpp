@@ -128,6 +128,7 @@ static std::unordered_map<std::string,FunctionID > functionMap =
                 MAP_ENTRY(DPPFixedBaseline),
                 MAP_ENTRY(DPPAlgorithmControl),
                 MAP_ENTRY(EasyDPPAlgorithmControl),
+                MAP_ENTRY(EasyDPPAlgorithmControlHelper),
                 MAP_ENTRY(DPPTriggerHoldOffWidth),
                 MAP_ENTRY(DPPShapedTriggerWidth),
         };
@@ -236,6 +237,7 @@ const std::string to_string(FunctionID id) {
         CASE_TO_STR(DPPFixedBaseline)
         CASE_TO_STR(DPPAlgorithmControl)
         CASE_TO_STR(EasyDPPAlgorithmControl)
+        CASE_TO_STR(EasyDPPAlgorithmControlHelper)
         CASE_TO_STR(DPPTriggerHoldOffWidth)
         CASE_TO_STR(DPPShapedTriggerWidth)
         default :

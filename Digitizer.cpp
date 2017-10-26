@@ -122,6 +122,7 @@ static void set_(caen::Digitizer* digitizer, FunctionID functionID, const std::s
         SET_CASE(digitizer,DPPFixedBaseline,s2ui(value))
         SET_CASE(digitizer,DPPAlgorithmControl,s2ui(value))
         SET_CASE(digitizer,EasyDPPAlgorithmControl,s2edppac(value))
+        SET_CASE(digitizer,EasyDPPAlgorithmControlHelper,s2edppach(value))
         SET_CASE(digitizer,DPPTriggerHoldOffWidth,s2ui(value))
         SET_CASE(digitizer,DPPShapedTriggerWidth,s2ui(value))
         default:
@@ -154,6 +155,7 @@ static void set_(caen::Digitizer* digitizer, FunctionID functionID, int index, c
         SET_ICASE(digitizer,DPPFixedBaseline,index,s2ui(value))
         SET_ICASE(digitizer,DPPAlgorithmControl,index,s2ui(value))
         SET_ICASE(digitizer,EasyDPPAlgorithmControl,index,s2edppac(value))
+        SET_ICASE(digitizer,EasyDPPAlgorithmControlHelper,index,s2edppach(value))
         SET_ICASE(digitizer,DPPTriggerHoldOffWidth,index,s2ui(value))
         SET_ICASE(digitizer,DPPShapedTriggerWidth,index,s2ui(value))
         default:
@@ -276,6 +278,7 @@ static std::string get_(caen::Digitizer* digitizer, FunctionID functionID, int i
         GET_ICASE(digitizer,DPPFixedBaseline,index,to_string)
         GET_ICASE(digitizer,DPPAlgorithmControl,index,to_string)
         GET_ICASE(digitizer,EasyDPPAlgorithmControl,index,to_string)
+        GET_ICASE(digitizer,EasyDPPAlgorithmControlHelper,index,to_string)
         GET_ICASE(digitizer,DPPTriggerHoldOffWidth,index,to_string)
         GET_ICASE(digitizer,DPPShapedTriggerWidth,index,to_string)
         default:

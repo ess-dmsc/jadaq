@@ -333,6 +333,22 @@ caen::EasyDPPAlgorithmControl s2edppac(const std::string& s)
     throw std::invalid_argument{"Invalid EasyDPPAlgorithmControl"};
 }
 
+std::string to_string(const caen::EasyDPPAlgorithmControlHelper &edppach)
+{
+    return edppach.toConfString();
+}
+
+caen::EasyDPPAlgorithmControlHelper s2edppach(const std::string& s)
+{
+    std::regex rx("\\{(\\w+),(\\w+),(\\w+),(\\w+),(\\w+),(\\w+),(\\w+),(\\w+),(\\w+),(\\w+)\\}");
+    std::smatch match;
+    if (std::regex_search(s, match, rx))
+    {
+        return caen::EasyDPPAlgorithmControlHelper(s2ui8(match[1]),s2ui8(match[2]),s2ui8(match[3]),s2ui8(match[4]),s2ui8(match[5]),s2ui8(match[6]),s2ui8(match[7]),s2ui8(match[8]),s2ui8(match[9]),s2ui8(match[10]));
+    }
+    throw std::invalid_argument{"Invalid EasyDPPAlgorithmControlHelper"};
+}
+
 std::string to_string(const caen::EasyBoardConfiguration &ebc)
 {
     std::stringstream ss;

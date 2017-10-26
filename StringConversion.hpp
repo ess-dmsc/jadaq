@@ -102,6 +102,8 @@ std::string to_string(const caen::EasyDPPAMCFirmwareRevision &edafr);
 caen::EasyDPPAMCFirmwareRevision s2edafr(const std::string& s);
 std::string to_string(const caen::EasyDPPAlgorithmControl &edppac);
 caen::EasyDPPAlgorithmControl s2edppac(const std::string& s);
+std::string to_string(const caen::EasyDPPAlgorithmControlHelper &edppach);
+caen::EasyDPPAlgorithmControlHelper s2edppach(const std::string& s);
 std::string to_string(const caen::EasyBoardConfiguration &ebc);
 caen::EasyBoardConfiguration s2ebc(const std::string& s);
 std::string to_string(const caen::EasyDPPBoardConfiguration &edbc);
