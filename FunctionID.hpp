@@ -101,6 +101,7 @@ enum FunctionID {
     DPPDisableExternalTrigger,
     RunStartStopDelay,
     ReadoutControl,
+    ReadoutStatus,
     DPPAggregateNumberPerBLT,
     // Channel/group setting
     ChannelDCOffset,

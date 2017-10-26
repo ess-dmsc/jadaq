@@ -100,6 +100,7 @@ static std::unordered_map<std::string,FunctionID > functionMap =
                 MAP_ENTRY(DPPDisableExternalTrigger),
                 MAP_ENTRY(RunStartStopDelay),
                 MAP_ENTRY(ReadoutControl),
+                MAP_ENTRY(ReadoutStatus),
                 MAP_ENTRY(DPPAggregateNumberPerBLT),
                 MAP_ENTRY(ChannelDCOffset),
                 MAP_ENTRY(GroupDCOffset),
@@ -209,6 +210,7 @@ const std::string to_string(FunctionID id) {
         CASE_TO_STR(DPPDisableExternalTrigger)
         CASE_TO_STR(RunStartStopDelay)
         CASE_TO_STR(ReadoutControl)
+        CASE_TO_STR(ReadoutStatus)
         CASE_TO_STR(DPPAggregateNumberPerBLT)
         CASE_TO_STR(ChannelDCOffset)
         CASE_TO_STR(GroupDCOffset)

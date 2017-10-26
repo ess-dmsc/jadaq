@@ -3933,6 +3933,8 @@ namespace caen {
         virtual uint32_t getReadoutControl() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         virtual void setReadoutControl(uint32_t value) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
 
+        virtual uint32_t getReadoutStatus() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+
         virtual uint32_t getDPPAggregateNumberPerBLT() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         virtual void setDPPAggregateNumberPerBLT(uint32_t value) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
 
@@ -4997,7 +4999,26 @@ namespace caen {
         void setReadoutControl(uint32_t mask) override
         { errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0xEF00, mask)); }
 
-        /* TODO: wrap Readout Status from register docs? */
+        /**
+         * @brief Get ReadoutStatus mask
+         *
+         * This register is mainly intended for VME boards, anyway some
+         * bits are applicable also for DT and NIM boards.
+         *
+         * Get the low-level ReadoutStatus mask in line with
+         * register docs. It is recommended to use the EasyX wrapper
+         * version instead.
+         *
+         * @returns
+         * 32-bit mask with layout described in register docs
+         */
+        uint32_t getReadoutStatus() override
+        {
+            uint32_t mask;
+            errorHandler(CAEN_DGTZ_ReadRegister(handle_, 0xEF04, &mask));
+            return mask;
+        }
+
         /* TODO: wrap Board ID from register docs? */
         /* TODO: wrap MCST Base Address and Control from register docs? */
         /* TODO: wrap Relocation Address from register docs? */
@@ -6380,6 +6401,7 @@ namespace caen {
          * implemented in parent? */
 
         /* TODO: wrap ReadoutControl in user-friendly struct */
+        /* TODO: wrap ReadoutStatus in user-friendly struct */
 
         /**
          * @brief Get DPP AggregateNumberPerBLT value
