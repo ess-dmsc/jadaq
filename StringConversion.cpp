@@ -907,6 +907,38 @@ caen::EasyDPPReadoutControlHelper s2edrch(const std::string& s)
     throw std::invalid_argument{"Invalid EasyDPPReadoutControlHelper"};
 }
 
+std::string to_string(const caen::EasyReadoutStatusHelper &ersh)
+{
+    return ersh.toConfString();
+}
+
+caen::EasyReadoutStatusHelper s2ersh(const std::string& s)
+{
+    std::regex rx("\\{(\\w+),(\\w+),(\\w+)\\}");
+    std::smatch match;
+    if (std::regex_search(s, match, rx))
+    {
+        return caen::EasyReadoutStatusHelper(s2ui8(match[1]),s2ui8(match[2]),s2ui8(match[3]));
+    }
+    throw std::invalid_argument{"Invalid EasyReadoutStatusHelper"};
+}
+
+std::string to_string(const caen::EasyDPPReadoutStatusHelper &edrsh)
+{
+    return edrsh.toConfString();
+}
+
+caen::EasyDPPReadoutStatusHelper s2edrsh(const std::string& s)
+{
+    std::regex rx("\\{(\\w+),(\\w+),(\\w+)\\}");
+    std::smatch match;
+    if (std::regex_search(s, match, rx))
+    {
+        return caen::EasyDPPReadoutStatusHelper(s2ui8(match[1]),s2ui8(match[2]),s2ui8(match[3]));
+    }
+    throw std::invalid_argument{"Invalid EasyDPPReadoutStatusHelper"};
+}
+
 std::string to_string(const caen::EasyAMCFirmwareRevisionHelper &eafrh)
 {
     /* NOTE: we use a simpler format for revisionDate internally so we

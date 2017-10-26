@@ -2341,6 +2341,7 @@ namespace caen {
         }
     }; // class EasyReadoutControlHelper
 
+
     /* TODO: identical mask meaning for generic and DPP - just inherit? */
     class EasyDPPReadoutControlHelper : public EasyHelper
     {
@@ -2392,6 +2393,66 @@ namespace caen {
             constructFromMask(mask);
         }
     }; // class EasyDPPReadoutControlHelper
+
+
+    class EasyReadoutStatusHelper : public EasyHelper
+    {
+    protected:
+        const std::string className = "EasyReadoutStatusHelper";
+        /* Shared helpers since one constructor cannot reuse the other */
+        /*
+         * EasyReadoutStatus fields:
+         * event ready [0], output buffer status in [1],
+         * bus error / slave terminated in [2].
+         */
+        void initLayout() override
+        {
+            layout = {
+                {"eventReady", {(const uint8_t)1, (const uint8_t)0}},
+                {"outputBufferStatus", {(const uint8_t)1, (const uint8_t)1}},
+                {"busErrorSlaveTerminated", {(const uint8_t)1, (const uint8_t)2}},
+            };
+        }
+        /* NOTE: use inherited generic constructFromMask(mask) */
+        void construct(const uint8_t eventReady, const uint8_t outputBufferStatus, const uint8_t busErrorSlaveTerminated) {
+            initLayout();
+            variables = {
+                {"eventReady", (const uint8_t)(eventReady & 0x1)},
+                {"outputBufferStatus", (const uint8_t)(outputBufferStatus & 0x1)},
+                {"busErrorSlaveTerminated", (const uint8_t)(busErrorSlaveTerminated & 0x1)}
+            };
+        };
+    public:
+        /* Construct using default values from docs */
+        EasyReadoutStatusHelper(const uint8_t eventReady, const uint8_t outputBufferStatus, const uint8_t busErrorSlaveTerminated)
+        {
+            construct(eventReady, outputBufferStatus, busErrorSlaveTerminated);
+        }
+        /* Construct from low-level bit mask in line with docs */
+        EasyReadoutStatusHelper(const uint32_t mask)
+        {
+            constructFromMask(mask);
+        }
+    }; // class EasyReadoutStatusHelper
+
+
+    /* NOTE: just inherit from identical genric version */
+    class EasyDPPReadoutStatusHelper : public EasyReadoutStatusHelper
+    {
+    protected:
+        const std::string className = "EasyDPPReadoutStatusHelper";
+    public:
+        /* Construct using default values from docs */
+        EasyDPPReadoutStatusHelper(const uint8_t eventReady, const uint8_t outputBufferStatus, const uint8_t busErrorSlaveTerminated) : EasyReadoutStatusHelper(eventReady, outputBufferStatus, busErrorSlaveTerminated)
+        {
+            //construct(eventReady, outputBufferStatus, busErrorSlaveTerminated);
+        }
+        /* Construct from low-level bit mask in line with docs */
+        EasyDPPReadoutStatusHelper(const uint32_t mask) : EasyReadoutStatusHelper(mask)
+        {
+            //constructFromMask(mask);
+        }
+    }; // class EasyDPPReadoutStatusHelper
 
 
     class EasyAMCFirmwareRevisionHelper : public EasyHelper
@@ -4042,6 +4103,8 @@ namespace caen {
         virtual void setEasyDPPReadoutControlHelper(EasyDPPReadoutControlHelper settings) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
 
         virtual uint32_t getReadoutStatus() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual EasyReadoutStatusHelper getEasyReadoutStatusHelper() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual EasyDPPReadoutStatusHelper getEasyDPPReadoutStatusHelper() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
 
         virtual uint32_t getDPPAggregateNumberPerBLT() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         virtual void setDPPAggregateNumberPerBLT(uint32_t value) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
@@ -5160,6 +5223,24 @@ namespace caen {
             uint32_t mask;
             errorHandler(CAEN_DGTZ_ReadRegister(handle_, 0xEF04, &mask));
             return mask;
+        }
+        /**
+         * @brief Easy Get ReadoutStatusHelper
+         *
+         * A convenience wrapper for the low-level function of the same
+         * name. Works on a struct with named variables rather than
+         * directly manipulating obscure bit patterns. Automatically
+         * takes care of translating from the bit mask returned by the
+         * the underlying low-level get funtion.
+         *
+         * @returns
+         * EasyReadoutStatusHelper object
+         */
+        virtual EasyReadoutStatusHelper getEasyReadoutStatusHelper() override
+        {
+            uint32_t mask;
+            mask = getReadoutStatus();
+            return EasyReadoutStatusHelper(mask);
         }
 
         /* TODO: wrap Board ID from register docs? */
@@ -6562,6 +6643,32 @@ namespace caen {
             setReadoutControl(mask);
         }
 
+        /* NOTE: reuse get ReadoutStatus from parent */
+        /* NOTE: disable inherited 740 EasyReadoutStatus since we only
+         * support EasyDPPReadoutStatus here. */
+        /**
+         * @brief use getEasyDPPX version instead
+         */
+        virtual EasyReadoutStatusHelper getEasyReadoutStatusHelper() override { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        /**
+         * @brief Easy Get DPP ReadoutStatusHelper
+         *
+         * A convenience wrapper for the low-level function of the same
+         * name. Works on a struct with named variables rather than
+         * directly manipulating obscure bit patterns. Automatically
+         * takes care of translating from the bit mask returned by the
+         * the underlying low-level get funtion.
+         *
+         * @returns
+         * EasyDPPReadoutStatusHelper object
+         */
+        virtual EasyDPPReadoutStatusHelper getEasyDPPReadoutStatusHelper() override
+        {
+            uint32_t mask;
+            mask = getReadoutStatus();
+            return EasyDPPReadoutStatusHelper(mask);
+        }
+
         /* NOTE: Get / Set Run/Start/Stop Delay from register docs is
          * already covered by RunDelay. */
 
@@ -6588,8 +6695,6 @@ namespace caen {
          * in DPP register docs */
         /* TODO: explicitly disable Buffer Occupancy Gain here if
          * implemented in parent? */
-
-        /* TODO: wrap ReadoutStatus in user-friendly struct */
 
         /**
          * @brief Get DPP AggregateNumberPerBLT value

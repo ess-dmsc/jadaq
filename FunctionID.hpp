@@ -104,6 +104,8 @@ enum FunctionID {
     EasyReadoutControlHelper,
     EasyDPPReadoutControlHelper,
     ReadoutStatus,
+    EasyReadoutStatusHelper,
+    EasyDPPReadoutStatusHelper,
     DPPAggregateNumberPerBLT,
     // Channel/group setting
     ChannelDCOffset,
