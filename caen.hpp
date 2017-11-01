@@ -40,6 +40,7 @@
 #include <vector>
 #include <tuple>
 #include <boost/any.hpp>
+#include <stdexcept>
 
 /* TODO: add doxygen comments to all important functions and structs */
 
@@ -1402,7 +1403,24 @@ namespace caen {
         {
             return className;
         }
-        /* TODO: Add variable get/set helpers with value cap from layout? */
+        /* NOTE: variable get/set helpers restricted to only declared names */
+        virtual const uint8_t getValue(const std::string name) const
+        {
+            if (variables.find(name) != variables.end()) {
+                return boost::any_cast<uint8_t>(variables.at(name));
+            }
+            std::cerr << "No such variable: " << name << std::endl;
+            throw std::invalid_argument(std::string("No such variable: ")+name);
+        }
+        virtual void setValue(const std::string name, uint8_t val)
+        {
+            /* TODO: add value check or enforce based on bits in layout? */
+            if (variables.find(name) != variables.end()) {
+                variables[name] = (const uint8_t)val;
+            }
+            std::cerr << "No such variable: " << name << std::endl;
+            throw std::invalid_argument(std::string("No such variable: ")+name);
+        }
         /* Convert to low-level bit mask in line with docs */
         virtual const uint32_t toBits() const
         {
@@ -2042,82 +2060,14 @@ namespace caen {
     }; // class EasyFrontPanelIOControlHelper
 
 
-    /* TODO: DPP Shares all fields with generic version - just inherit everything? */
-    class EasyDPPFrontPanelIOControlHelper : public EasyHelper
+    class EasyDPPFrontPanelIOControlHelper : public EasyFrontPanelIOControlHelper
     {
     protected:
         const std::string className = "EasyDPPFrontPanelIOControlHelper";
-        /* Shared base since one constructor cannot reuse the other */
-        /*
-         * EasyDPPFrontPanelIOControl fields:
-         * LEMO I/O electrical level [0], TRG-OUT enable [1],
-         * LVDS I/O 1st Direction in [2], LVDS I/O 2nd Direction in [3],
-         * LVDS I/O 3rd Direction in [4], LVDS I/O 4th Direction in [5],
-         * LVDS I/O signal configuration [6:7],
-         * LVDS I/O new features selection in [8],
-         * LVDS I/Os pattern latch mode in [9],
-         * TRG-IN control in [10], TRG-IN to mezzanines in [11],
-         * force TRG-OUT in [14], TRG-OUT mode in [15],
-         * TRG-OUT mode selection in [16:17],
-         * motherboard virtual probe selection in [18:19],
-         * motherboard virtual probe propagation in [20],
-         * pattern configuration in [21:22]
-         */
-        virtual void initLayout() override
-        {
-            layout = {{"lEMOIOElectricalLevel", {(const uint8_t)1, (const uint8_t)0}},
-                      {"tRGOUTEnable", {(const uint8_t)1, (const uint8_t)1}},
-                      {"lVDSIODirectionFirst", {(const uint8_t)1, (const uint8_t)2}},
-                      {"lVDSIODirectionSecond", {(const uint8_t)1, (const uint8_t)3}},
-                      {"lVDSIODirectionThird", {(const uint8_t)1, (const uint8_t)4}},
-                      {"lVDSIODirectionFourth", {(const uint8_t)1, (const uint8_t)5}},
-                      {"lVDSIOSignalConfiguration", {(const uint8_t)2, (const uint8_t)6}},
-                      {"lVDSIONewFeaturesSelection", {(const uint8_t)1, (const uint8_t)8}},
-                      {"lVDSIOPatternLatchMode", {(const uint8_t)1, (const uint8_t)9}},
-                      {"tRGINControl", {(const uint8_t)1, (const uint8_t)10}},
-                      {"tRGINMezzanines", {(const uint8_t)1, (const uint8_t)11}},
-                      {"forceTRGOUT", {(const uint8_t)1, (const uint8_t)14}},
-                      {"tRGOUTMode", {(const uint8_t)1, (const uint8_t)15}},
-                      {"tRGOUTModeSelection", {(const uint8_t)2, (const uint8_t)16}},
-                      {"motherboardVirtualProbeSelection", {(const uint8_t)2, (const uint8_t)18}},
-                      {"motherboardVirtualProbePropagation", {(const uint8_t)1, (const uint8_t)20}},
-                      {"patternConfiguration", {(const uint8_t)2, (const uint8_t)21}}
-            };
-        }
-        /* NOTE: use inherited generic constructFromMask(mask) */
-        void construct(const uint8_t lEMOIOElectricalLevel, const uint8_t tRGOUTEnable, const uint8_t lVDSIODirectionFirst, const uint8_t lVDSIODirectionSecond, const uint8_t lVDSIODirectionThird, const uint8_t lVDSIODirectionFourth, const uint8_t lVDSIOSignalConfiguration, const uint8_t lVDSIONewFeaturesSelection, const uint8_t lVDSIOPatternLatchMode, const uint8_t tRGINControl, const uint8_t tRGINMezzanines, const uint8_t forceTRGOUT, const uint8_t tRGOUTMode, const uint8_t tRGOUTModeSelection, const uint8_t motherboardVirtualProbeSelection, const uint8_t motherboardVirtualProbePropagation, const uint8_t patternConfiguration) {
-            initLayout();
-            variables = {
-                {"lEMOIOElectricalLevel", (const uint8_t)(lEMOIOElectricalLevel & 0x1)},
-                {"tRGOUTEnable", (const uint8_t)(tRGOUTEnable & 0x1)},
-                {"lVDSIODirectionFirst", (const uint8_t)(lVDSIODirectionFirst & 0x1)},
-                {"lVDSIODirectionSecond", (const uint8_t)(lVDSIODirectionSecond & 0x1)},
-                {"lVDSIODirectionThird", (const uint8_t)(lVDSIODirectionThird & 0x1)},
-                {"lVDSIODirectionFourth", (const uint8_t)(lVDSIODirectionFourth & 0x1)},
-                {"lVDSIOSignalConfiguration", (const uint8_t)(lVDSIOSignalConfiguration & 0x3)},
-                {"lVDSIONewFeaturesSelection", (const uint8_t)(lVDSIONewFeaturesSelection & 0x1)},
-                {"lVDSIOPatternLatchMode", (const uint8_t)(lVDSIOPatternLatchMode & 0x1)},
-                {"tRGINControl", (const uint8_t)(tRGINControl & 0x1)},
-                {"tRGINMezzanines", (const uint8_t)(tRGINMezzanines & 0x1)},
-                {"forceTRGOUT", (const uint8_t)(forceTRGOUT & 0x1)},
-                {"tRGOUTMode", (const uint8_t)(tRGOUTMode & 0x1)},
-                {"tRGOUTModeSelection", (const uint8_t)(tRGOUTModeSelection & 0x3)},
-                {"motherboardVirtualProbeSelection", (const uint8_t)(motherboardVirtualProbeSelection & 0x3)},
-                {"motherboardVirtualProbePropagation", (const uint8_t)(motherboardVirtualProbePropagation & 0x1)},
-                {"patternConfiguration", (const uint8_t)(patternConfiguration & 0x3)}
-            };
-        };
+        /* Just inherit everything else from parent class */
     public:
-        /* Construct using default values from docs */
-        EasyDPPFrontPanelIOControlHelper(const uint8_t lEMOIOElectricalLevel, const uint8_t tRGOUTEnable, const uint8_t lVDSIODirectionFirst, const uint8_t lVDSIODirectionSecond, const uint8_t lVDSIODirectionThird, const uint8_t lVDSIODirectionFourth, const uint8_t lVDSIOSignalConfiguration, const uint8_t lVDSIONewFeaturesSelection, const uint8_t lVDSIOPatternLatchMode, const uint8_t tRGINControl, const uint8_t tRGINMezzanines, const uint8_t forceTRGOUT, const uint8_t tRGOUTMode, const uint8_t tRGOUTModeSelection, const uint8_t motherboardVirtualProbeSelection, const uint8_t motherboardVirtualProbePropagation, const uint8_t patternConfiguration)
-        {
-            construct(lEMOIOElectricalLevel, tRGOUTEnable, lVDSIODirectionFirst, lVDSIODirectionSecond, lVDSIODirectionThird, lVDSIODirectionFourth, lVDSIOSignalConfiguration, lVDSIONewFeaturesSelection, lVDSIOPatternLatchMode, tRGINControl, tRGINMezzanines, forceTRGOUT, tRGOUTMode, tRGOUTModeSelection, motherboardVirtualProbeSelection, motherboardVirtualProbePropagation, patternConfiguration);
-        }
-        /* Construct from low-level bit mask in line with docs */
-        EasyDPPFrontPanelIOControlHelper(const uint32_t mask)
-        {
-            constructFromMask(mask);
-        }
+        EasyDPPFrontPanelIOControlHelper(const uint8_t lEMOIOElectricalLevel, const uint8_t tRGOUTEnable, const uint8_t lVDSIODirectionFirst, const uint8_t lVDSIODirectionSecond, const uint8_t lVDSIODirectionThird, const uint8_t lVDSIODirectionFourth, const uint8_t lVDSIOSignalConfiguration, const uint8_t lVDSIONewFeaturesSelection, const uint8_t lVDSIOPatternLatchMode, const uint8_t tRGINControl, const uint8_t tRGINMezzanines, const uint8_t forceTRGOUT, const uint8_t tRGOUTMode, const uint8_t tRGOUTModeSelection, const uint8_t motherboardVirtualProbeSelection, const uint8_t motherboardVirtualProbePropagation, const uint8_t patternConfiguration) : EasyFrontPanelIOControlHelper(lEMOIOElectricalLevel, tRGOUTEnable, lVDSIODirectionFirst, lVDSIODirectionSecond, lVDSIODirectionThird, lVDSIODirectionFourth, lVDSIOSignalConfiguration, lVDSIONewFeaturesSelection, lVDSIOPatternLatchMode, tRGINControl, tRGINMezzanines, forceTRGOUT, tRGOUTMode, tRGOUTModeSelection, motherboardVirtualProbeSelection, motherboardVirtualProbePropagation, patternConfiguration) {};
+        EasyDPPFrontPanelIOControlHelper(uint32_t mask) : EasyFrontPanelIOControlHelper(mask) {};
     }; // class EasyDPPFrontPanelIOControlHelper
 
 
@@ -2286,7 +2236,6 @@ namespace caen {
     public:
         EasyDPPFanSpeedControlHelper(uint8_t fanSpeedMode) : EasyFanSpeedControlHelper(fanSpeedMode) {};
         EasyDPPFanSpeedControlHelper(uint32_t mask) : EasyFanSpeedControlHelper(mask) {};
-
     }; // class EasyDPPFanSpeedControlHelper
 
 
@@ -2342,56 +2291,15 @@ namespace caen {
     }; // class EasyReadoutControlHelper
 
 
-    /* TODO: identical mask meaning for generic and DPP - just inherit? */
-    class EasyDPPReadoutControlHelper : public EasyHelper
+    class EasyDPPReadoutControlHelper : public EasyReadoutControlHelper
     {
     protected:
         const std::string className = "EasyDPPReadoutControlHelper";
-        /* Shared helpers since one constructor cannot reuse the other */
-        /*
-         * EasyDPPReadoutControl fields:
-         * VME interrupt level in [0:2], optical link interrupt enable in [3],
-         * VME bus error / event aligned readout enable in [4],
-         * VME align64 mode in [5], VME base address relocation in [6],
-         * Interrupt release mode in [7], 
-         * extended block transfer enable in [8].
-         */
-        void initLayout() override
-        {
-            layout = {
-                {"vMEInterruptLevel", {(const uint8_t)3, (const uint8_t)0}},
-                {"opticalLinkInterruptEnable", {(const uint8_t)1, (const uint8_t)3}},
-                {"vMEBusErrorEventAlignedEnable", {(const uint8_t)1, (const uint8_t)4}},
-                {"vMEAlign64Mode", {(const uint8_t)1, (const uint8_t)5}},
-                {"vMEBaseAddressRelocation", {(const uint8_t)1, (const uint8_t)6}},
-                {"interruptReleaseMode", {(const uint8_t)1, (const uint8_t)7}},
-                {"extendedBlockTransferEnable", {(const uint8_t)1, (const uint8_t)8}}
-            };
-        }
-        /* NOTE: use inherited generic constructFromMask(mask) */
-        void construct(const uint8_t vMEInterruptLevel, const uint8_t opticalLinkInterruptEnable, const uint8_t vMEBusErrorEventAlignedEnable, const uint8_t vMEAlign64Mode, const uint8_t vMEBaseAddressRelocation, const uint8_t interruptReleaseMode, const uint8_t extendedBlockTransferEnable) {
-            initLayout();
-            variables = {
-                {"vMEInterruptLevel", (const uint8_t)(vMEInterruptLevel & 0x7)},
-                {"opticalLinkInterruptEnable", (const uint8_t)(opticalLinkInterruptEnable & 0x1)},
-                {"vMEBusErrorEventAlignedEnable", (const uint8_t)(vMEBusErrorEventAlignedEnable & 0x1)},
-                {"vMEAlign64Mode", (const uint8_t)(vMEAlign64Mode & 0x1)},
-                {"vMEBaseAddressRelocation", (const uint8_t)(vMEBaseAddressRelocation & 0x1)},
-                {"interruptReleaseMode", (const uint8_t)(interruptReleaseMode & 0x1)},
-                {"extendedBlockTransferEnable", (const uint8_t)(extendedBlockTransferEnable & 0x1)}
-            };
-        };
+
+        /* Just inherit everything else from parent class */
     public:
-        /* Construct using default values from docs */
-        EasyDPPReadoutControlHelper(const uint8_t vMEInterruptLevel, const uint8_t opticalLinkInterruptEnable, const uint8_t vMEBusErrorEventAlignedEnable, const uint8_t vMEAlign64Mode, const uint8_t vMEBaseAddressRelocation, const uint8_t interruptReleaseMode, const uint8_t extendedBlockTransferEnable)
-        {
-            construct(vMEInterruptLevel, opticalLinkInterruptEnable, vMEBusErrorEventAlignedEnable, vMEAlign64Mode, vMEBaseAddressRelocation, interruptReleaseMode, extendedBlockTransferEnable);
-        }
-        /* Construct from low-level bit mask in line with docs */
-        EasyDPPReadoutControlHelper(const uint32_t mask)
-        {
-            constructFromMask(mask);
-        }
+        EasyDPPReadoutControlHelper(const uint8_t vMEInterruptLevel, const uint8_t opticalLinkInterruptEnable, const uint8_t vMEBusErrorEventAlignedEnable, const uint8_t vMEAlign64Mode, const uint8_t vMEBaseAddressRelocation, const uint8_t interruptReleaseMode, const uint8_t extendedBlockTransferEnable) : EasyReadoutControlHelper(vMEInterruptLevel, opticalLinkInterruptEnable, vMEBusErrorEventAlignedEnable, vMEAlign64Mode, vMEBaseAddressRelocation, interruptReleaseMode, extendedBlockTransferEnable){};
+        EasyDPPReadoutControlHelper(const uint32_t mask) : EasyReadoutControlHelper(mask) {};
     }; // class EasyDPPReadoutControlHelper
 
 
@@ -2443,15 +2351,8 @@ namespace caen {
         const std::string className = "EasyDPPReadoutStatusHelper";
     public:
         /* Construct using default values from docs */
-        EasyDPPReadoutStatusHelper(const uint8_t eventReady, const uint8_t outputBufferStatus, const uint8_t busErrorSlaveTerminated) : EasyReadoutStatusHelper(eventReady, outputBufferStatus, busErrorSlaveTerminated)
-        {
-            //construct(eventReady, outputBufferStatus, busErrorSlaveTerminated);
-        }
-        /* Construct from low-level bit mask in line with docs */
-        EasyDPPReadoutStatusHelper(const uint32_t mask) : EasyReadoutStatusHelper(mask)
-        {
-            //constructFromMask(mask);
-        }
+        EasyDPPReadoutStatusHelper(const uint8_t eventReady, const uint8_t outputBufferStatus, const uint8_t busErrorSlaveTerminated) : EasyReadoutStatusHelper(eventReady, outputBufferStatus, busErrorSlaveTerminated) {};
+        EasyDPPReadoutStatusHelper(const uint32_t mask) : EasyReadoutStatusHelper(mask) {};
     }; // class EasyDPPReadoutStatusHelper
 
 
