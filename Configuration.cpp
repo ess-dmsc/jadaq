@@ -96,6 +96,11 @@ static pt::ptree rangeNode(Digitizer& digitizer, FunctionID id, int begin, int e
             std::cerr << "WARNING: " << digitizer.name() << " could not read configuration range [" << i << ":" << end << "] for " << to_string(id) << ": " << e.what() << std::endl;
             ptree.put(to_string(Configuration::Range(begin,i-1)),prev);
             return ptree;
+        } catch (std::runtime_error& e)
+        {
+            //Internal helper init probably failed so we just skip it
+            std::cerr << "WARNING: " << digitizer.name() << " could not handle configuration range  [" << i << ":" << end << "] for " << to_string(id) << ": " << e.what() << std::endl;
+            return ptree;
         }
     }
     // We only get here if values are valid until end
@@ -124,6 +129,10 @@ pt::ptree Configuration::readBack()
                 {
                     //Function not supported so we just skip it
                     std::cerr << "WARNING: " << digitizer.name() << " could not read configuration for " << to_string(id) << ": " << e.what() << std::endl;
+                } catch (std::runtime_error& e)
+                {
+                    //Internal helper init probably failed so we just skip it
+                    std::cerr << "WARNING: " << digitizer.name() << " could not handle configuration for " << to_string(id) << ": " << e.what() << std::endl;
                 }
             }
             else

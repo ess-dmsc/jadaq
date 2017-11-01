@@ -1307,7 +1307,6 @@ namespace caen {
     class EasyHelper
     {
     protected:
-        const std::string className = "EasyHelper";
         /* We save variables in a standard map using boost::any values
          * to allow simple variable lookup based on string name but
          * variable value types. The map also allows easy iteration
@@ -1368,10 +1367,10 @@ namespace caen {
             }
             /* Make sure parsing is correct */
             if (mask != toBits()) {
-                std::cerr << "mismatch between mask " << mask << " and parsed value " << toBits() << std::endl;
+                std::cerr << "WARNING: mismatch between mask " << mask << " and parsed value " << toBits() << " in autoInit of " << getClassName() << std::endl;
                 std::cerr << variables.size() << " variables, " << layout.size() << " layouts" << std::endl;
+                throw std::runtime_error(std::string("autoInit failed for: ")+getClassName());
             }
-            assert(mask == toBits());
         };
         void construct() {
             /* Default construct helper - just call initLayout */
@@ -1384,6 +1383,7 @@ namespace caen {
             autoInit(mask);
         };
     public:
+        virtual const std::string getClassName() const { return "EasyHelper"; };
         EasyHelper()
         {
             /* Default constructor - do nothing */
@@ -1397,11 +1397,6 @@ namespace caen {
         ~EasyHelper()
         {
             /* Do nothing */
-        }
-        /* Show class name */
-        const std::string getClassName() const
-        {
-            return className;
         }
         /* NOTE: variable get/set helpers restricted to only declared names */
         virtual const uint8_t getValue(const std::string name) const
@@ -1493,7 +1488,7 @@ namespace caen {
         virtual const std::string toConfString() const
         {
             std::stringstream ss;
-            ss << toConfValueString() << " # " << toConfHelpString(className);
+            ss << toConfValueString() << " # " << toConfHelpString(getClassName());
             return ss.str();
         }
     }; // class EasyHelper
@@ -1502,7 +1497,6 @@ namespace caen {
     class EasyBoardConfigurationHelper : public EasyHelper
     {
     protected:
-        const std::string className = "EasyBoardConfigurationHelper";
         /* Shared base since one constructor cannot reuse the other */
         /*
          * EasyBoardConfiguration fields:
@@ -1529,6 +1523,7 @@ namespace caen {
             };
         };
     public:
+        virtual const std::string getClassName() const override { return "EasyBoardConfigurationHelper"; };
         /* Construct using default values from docs */
         EasyBoardConfigurationHelper(const uint8_t triggerOverlapSetting, const uint8_t testPatternEnable, const uint8_t selfTriggerPolarity)
         {
@@ -1545,7 +1540,6 @@ namespace caen {
     class EasyDPPBoardConfigurationHelper : public EasyHelper
     {
     protected:
-        const std::string className = "EasyDPPBoardConfigurationHelper";
         /* Shared base since one constructor cannot reuse the other */
         /*
          * EasyDPPBoardConfiguration fields:
@@ -1582,6 +1576,7 @@ namespace caen {
             };
         };
     public:
+        virtual const std::string getClassName() const override { return "EasyDPPBoardConfigurationHelper"; };
         /* Construct using default values from docs */
         EasyDPPBoardConfigurationHelper(const uint8_t individualTrigger, const uint8_t analogProbe, const uint8_t waveformRecording, const uint8_t extrasRecording, const uint8_t timeStampRecording, const uint8_t chargeRecording, const uint8_t externalTriggerMode)
         {
@@ -1598,7 +1593,6 @@ namespace caen {
     class EasyAcquisitionControlHelper : public EasyHelper
     {
     protected:
-        const std::string className = "EasyAcquisitionControlHelper";
         /* Shared base since one constructor cannot reuse the other */
         /*
          * EasyAcquisitionControl fields:
@@ -1634,6 +1628,7 @@ namespace caen {
             };
         };
     public:
+        virtual const std::string getClassName() const override { return "EasyAcquisitionControlHelper"; };
         /* Construct using default values from docs */
         EasyAcquisitionControlHelper(const uint8_t startStopMode, const uint8_t acquisitionStartArm, const uint8_t triggerCountingMode, const uint8_t memoryFullModeSelection, const uint8_t pLLRefererenceClockSource, const uint8_t lVDSIOBusyEnable, const uint8_t lVDSVetoEnable, const uint8_t lVDSIORunInEnable)
         {
@@ -1650,7 +1645,6 @@ namespace caen {
     class EasyDPPAcquisitionControlHelper : public EasyHelper
     {
     protected:
-        const std::string className = "EasyDPPAcquisitionControlHelper";
         /* Shared base since one constructor cannot reuse the other */
         /*
          * EasyDPPAcquisitionControl fields:
@@ -1684,6 +1678,7 @@ namespace caen {
             };
         };
     public:
+        virtual const std::string getClassName() const override { return "EasyDPPAcquisitionControlHelper"; };
         /* Construct using default values from docs */
         EasyDPPAcquisitionControlHelper(const uint8_t startStopMode, const uint8_t acquisitionStartArm, const uint8_t triggerCountingMode, const uint8_t pLLRefererenceClockSource, const uint8_t lVDSIOBusyEnable, const uint8_t lVDSVetoEnable, const uint8_t lVDSIORunInEnable)
         {
@@ -1700,7 +1695,6 @@ namespace caen {
     class EasyAcquisitionStatusHelper : public EasyHelper
     {
     protected:
-        const std::string className = "EasyAcquisitionStatusHelper";
         /* Shared base since one constructor cannot reuse the other */
         /*
          * EasyAcquisitionStatus fields:
@@ -1739,6 +1733,7 @@ namespace caen {
             };
         };
     public:
+        virtual const std::string getClassName() const override { return "EasyAcquisitionStatusHelper"; };
         /* Construct using default values from docs */
         EasyAcquisitionStatusHelper(const uint8_t acquisitionStatus, const uint8_t eventReady, const uint8_t eventFull, const uint8_t clockSource, const uint8_t pLLBypassMode, const uint8_t pLLUnlockDetect, const uint8_t boardReady, const uint8_t s_IN, const uint8_t tRG_IN)
         {
@@ -1755,7 +1750,6 @@ namespace caen {
     class EasyDPPAcquisitionStatusHelper : public EasyHelper
     {
     protected:
-        const std::string className = "EasyDPPAcquisitionStatusHelper";
         /* Shared base since one constructor cannot reuse the other */
         /*
          * EasyDPPAcquisitionStatus fields:
@@ -1791,6 +1785,7 @@ namespace caen {
             };
         };
     public:
+        virtual const std::string getClassName() const override { return "EasyDPPAcquisitionStatusHelper"; };
         /* Construct using default values from docs */
         EasyDPPAcquisitionStatusHelper(const uint8_t acquisitionStatus, const uint8_t eventReady, const uint8_t eventFull, const uint8_t clockSource, const uint8_t pLLUnlockDetect, const uint8_t boardReady, const uint8_t s_IN, const uint8_t tRG_IN)
         {
@@ -1807,7 +1802,6 @@ namespace caen {
     class EasyGlobalTriggerMaskHelper : public EasyHelper
     {
     protected:
-        const std::string className = "EasyGlobalTriggerMaskHelper";
         /* Shared base since one constructor cannot reuse the other */
         /*
          * EasyGlobalTriggerMask fields:
@@ -1839,6 +1833,7 @@ namespace caen {
             };
         };
     public:
+        virtual const std::string getClassName() const override { return "EasyGlobalTriggerMaskHelper"; };
         /* Construct using default values from docs */
         EasyGlobalTriggerMaskHelper(const uint8_t groupTriggerMask, const uint8_t majorityCoincidenceWindow, const uint8_t majorityLevel, const uint8_t lVDSTrigger, const uint8_t externalTrigger, const uint8_t softwareTrigger)
         {
@@ -1855,7 +1850,6 @@ namespace caen {
     class EasyDPPGlobalTriggerMaskHelper : public EasyHelper
     {
     protected:
-        const std::string className = "EasyDPPGlobalTriggerMaskHelper";
         /* Shared base since one constructor cannot reuse the other */
         /*
          * EasyDPPGlobalTriggerMask fields:
@@ -1880,6 +1874,7 @@ namespace caen {
             };
         };
     public:
+        virtual const std::string getClassName() const override { return "EasyDPPGlobalTriggerMaskHelper"; };
         /* Construct using default values from docs */
         EasyDPPGlobalTriggerMaskHelper(const uint8_t lVDSTrigger, const uint8_t externalTrigger, const uint8_t softwareTrigger)
         {
@@ -1896,7 +1891,6 @@ namespace caen {
     class EasyFrontPanelTRGOUTEnableMaskHelper : public EasyHelper
     {
     protected:
-        const std::string className = "EasyFrontPanelTRGOUTEnableMaskHelper";
         /* Shared base since one constructor cannot reuse the other */
         /*
          * EasyFrontPanelTRGOUTEnableMask fields:
@@ -1928,6 +1922,7 @@ namespace caen {
             };
         };
     public:
+        virtual const std::string getClassName() const override { return "EasyFrontPanelTRGOUTEnableMaskHelper"; };
         /* Construct using default values from docs */
         EasyFrontPanelTRGOUTEnableMaskHelper(const uint8_t groupTriggerMask, const uint8_t tRGOUTGenerationLogic, const uint8_t majorityLevel, const uint8_t lVDSTriggerEnable, const uint8_t externalTrigger, const uint8_t softwareTrigger)
         {
@@ -1944,7 +1939,6 @@ namespace caen {
     class EasyDPPFrontPanelTRGOUTEnableMaskHelper : public EasyHelper
     {
     protected:
-        const std::string className = "EasyDPPFrontPanelTRGOUTEnableMaskHelper";
         /* Shared base since one constructor cannot reuse the other */
         /*
          * EasyDPPFrontPanelTRGOUTEnableMask fields:
@@ -1969,6 +1963,7 @@ namespace caen {
             };
         };
     public:
+        virtual const std::string getClassName() const override { return "EasyDPPFrontPanelTRGOUTEnableMaskHelper"; };
         /* Construct using default values from docs */
         EasyDPPFrontPanelTRGOUTEnableMaskHelper(const uint8_t lVDSTriggerEnable, const uint8_t externalTrigger, const uint8_t softwareTrigger)
         {
@@ -1985,7 +1980,6 @@ namespace caen {
     class EasyFrontPanelIOControlHelper : public EasyHelper
     {
     protected:
-        const std::string className = "EasyFrontPanelIOControlHelper";
         /* Shared base since one constructor cannot reuse the other */
         /*
          * EasyFrontPanelIOControl fields:
@@ -2047,6 +2041,7 @@ namespace caen {
             };
         };
     public:
+        virtual const std::string getClassName() const override { return "EasyFrontPanelIOControlHelper"; };
         /* Construct using default values from docs */
         EasyFrontPanelIOControlHelper(const uint8_t lEMOIOElectricalLevel, const uint8_t tRGOUTEnable, const uint8_t lVDSIODirectionFirst, const uint8_t lVDSIODirectionSecond, const uint8_t lVDSIODirectionThird, const uint8_t lVDSIODirectionFourth, const uint8_t lVDSIOSignalConfiguration, const uint8_t lVDSIONewFeaturesSelection, const uint8_t lVDSIOPatternLatchMode, const uint8_t tRGINControl, const uint8_t tRGINMezzanines, const uint8_t forceTRGOUT, const uint8_t tRGOUTMode, const uint8_t tRGOUTModeSelection, const uint8_t motherboardVirtualProbeSelection, const uint8_t motherboardVirtualProbePropagation, const uint8_t patternConfiguration)
         {
@@ -2062,10 +2057,9 @@ namespace caen {
 
     class EasyDPPFrontPanelIOControlHelper : public EasyFrontPanelIOControlHelper
     {
-    protected:
-        const std::string className = "EasyDPPFrontPanelIOControlHelper";
-        /* Just inherit everything else from parent class */
+    /* Just inherit everything else from parent class */
     public:
+        virtual const std::string getClassName() const override { return "EasyDPPFrontPanelIOControlHelper"; };
         EasyDPPFrontPanelIOControlHelper(const uint8_t lEMOIOElectricalLevel, const uint8_t tRGOUTEnable, const uint8_t lVDSIODirectionFirst, const uint8_t lVDSIODirectionSecond, const uint8_t lVDSIODirectionThird, const uint8_t lVDSIODirectionFourth, const uint8_t lVDSIOSignalConfiguration, const uint8_t lVDSIONewFeaturesSelection, const uint8_t lVDSIOPatternLatchMode, const uint8_t tRGINControl, const uint8_t tRGINMezzanines, const uint8_t forceTRGOUT, const uint8_t tRGOUTMode, const uint8_t tRGOUTModeSelection, const uint8_t motherboardVirtualProbeSelection, const uint8_t motherboardVirtualProbePropagation, const uint8_t patternConfiguration) : EasyFrontPanelIOControlHelper(lEMOIOElectricalLevel, tRGOUTEnable, lVDSIODirectionFirst, lVDSIODirectionSecond, lVDSIODirectionThird, lVDSIODirectionFourth, lVDSIOSignalConfiguration, lVDSIONewFeaturesSelection, lVDSIOPatternLatchMode, tRGINControl, tRGINMezzanines, forceTRGOUT, tRGOUTMode, tRGOUTModeSelection, motherboardVirtualProbeSelection, motherboardVirtualProbePropagation, patternConfiguration) {};
         EasyDPPFrontPanelIOControlHelper(uint32_t mask) : EasyFrontPanelIOControlHelper(mask) {};
     }; // class EasyDPPFrontPanelIOControlHelper
@@ -2074,7 +2068,6 @@ namespace caen {
     class EasyROCFPGAFirmwareRevisionHelper : public EasyHelper
     {
     protected:
-        const std::string className = "EasyROCFPGAFirmwareRevisionHelper";
         /* Shared base since one constructor cannot reuse the other */
         /*
          * EasyROCFPGAFirmwareRevision fields:
@@ -2108,6 +2101,7 @@ namespace caen {
             };
         }
     public:
+        virtual const std::string getClassName() const override { return "EasyROCFPGAFirmwareRevisionHelper"; };
         /* Construct using default values from docs */
         /* We allow both clamped and individual revision date format here */
         EasyROCFPGAFirmwareRevisionHelper(const uint8_t minorRevisionNumber, const uint8_t majorRevisionNumber, const uint16_t revisionDate)
@@ -2133,8 +2127,6 @@ namespace caen {
     class EasyDPPROCFPGAFirmwareRevisionHelper : public EasyHelper
     {
     protected:
-        const std::string className = "EasyDPPROCFPGAFirmwareRevisionHelper";
-
         /* Shared base since one constructor cannot reuse the other */
         /*
          * EasyDPPROCFPGAFirmwareRevision fields:
@@ -2167,6 +2159,7 @@ namespace caen {
             };
         }
     public:
+        virtual const std::string getClassName() const override { return "EasyDPPROCFPGAFirmwareRevisionHelper"; };
         /* Construct using default values from docs */
         /* We allow both clamped and individual revision date format here */
         EasyDPPROCFPGAFirmwareRevisionHelper(const uint8_t minorRevisionNumber, const uint8_t majorRevisionNumber, const uint16_t revisionDate)
@@ -2192,7 +2185,6 @@ namespace caen {
     class EasyFanSpeedControlHelper : public EasyHelper
     {
     protected:
-        const std::string className = "EasyFanSpeedControlHelper";
         /* Shared helpers since one constructor cannot reuse the other */
         /*
          * EasyFanSpeedControl fields:
@@ -2214,6 +2206,7 @@ namespace caen {
             };
         };
     public:
+        virtual const std::string getClassName() const override { return "EasyFanSpeedControlHelper"; };
         /* Construct using default values from docs */
         EasyFanSpeedControlHelper(const uint8_t fanSpeedMode=0)
         {
@@ -2229,11 +2222,9 @@ namespace caen {
 
     class EasyDPPFanSpeedControlHelper : public EasyFanSpeedControlHelper
     {
-    protected:
-        const std::string className = "EasyDPPFanSpeedControlHelper";
-
-        /* Just inherit everything else from parent class */
+    /* Just inherit everything else from parent class */
     public:
+        virtual const std::string getClassName() const override { return "EasyDPPFanSpeedControlHelper"; };
         EasyDPPFanSpeedControlHelper(uint8_t fanSpeedMode) : EasyFanSpeedControlHelper(fanSpeedMode) {};
         EasyDPPFanSpeedControlHelper(uint32_t mask) : EasyFanSpeedControlHelper(mask) {};
     }; // class EasyDPPFanSpeedControlHelper
@@ -2242,7 +2233,6 @@ namespace caen {
     class EasyReadoutControlHelper : public EasyHelper
     {
     protected:
-        const std::string className = "EasyReadoutControlHelper";
         /* Shared helpers since one constructor cannot reuse the other */
         /*
          * EasyReadoutControl fields:
@@ -2278,6 +2268,7 @@ namespace caen {
             };
         };
     public:
+        virtual const std::string getClassName() const override { return "EasyReadoutControlHelper"; };
         /* Construct using default values from docs */
         EasyReadoutControlHelper(const uint8_t vMEInterruptLevel, const uint8_t opticalLinkInterruptEnable, const uint8_t vMEBusErrorEventAlignedEnable, const uint8_t vMEAlign64Mode, const uint8_t vMEBaseAddressRelocation, const uint8_t interruptReleaseMode, const uint8_t extendedBlockTransferEnable)
         {
@@ -2293,11 +2284,9 @@ namespace caen {
 
     class EasyDPPReadoutControlHelper : public EasyReadoutControlHelper
     {
-    protected:
-        const std::string className = "EasyDPPReadoutControlHelper";
-
-        /* Just inherit everything else from parent class */
+    /* Just inherit everything else from parent class */
     public:
+        virtual const std::string getClassName() const override { return "EasyDPPReadoutControlHelper"; };
         EasyDPPReadoutControlHelper(const uint8_t vMEInterruptLevel, const uint8_t opticalLinkInterruptEnable, const uint8_t vMEBusErrorEventAlignedEnable, const uint8_t vMEAlign64Mode, const uint8_t vMEBaseAddressRelocation, const uint8_t interruptReleaseMode, const uint8_t extendedBlockTransferEnable) : EasyReadoutControlHelper(vMEInterruptLevel, opticalLinkInterruptEnable, vMEBusErrorEventAlignedEnable, vMEAlign64Mode, vMEBaseAddressRelocation, interruptReleaseMode, extendedBlockTransferEnable){};
         EasyDPPReadoutControlHelper(const uint32_t mask) : EasyReadoutControlHelper(mask) {};
     }; // class EasyDPPReadoutControlHelper
@@ -2306,7 +2295,6 @@ namespace caen {
     class EasyReadoutStatusHelper : public EasyHelper
     {
     protected:
-        const std::string className = "EasyReadoutStatusHelper";
         /* Shared helpers since one constructor cannot reuse the other */
         /*
          * EasyReadoutStatus fields:
@@ -2331,6 +2319,7 @@ namespace caen {
             };
         };
     public:
+        virtual const std::string getClassName() const override { return "EasyReadoutStatusHelper"; };
         /* Construct using default values from docs */
         EasyReadoutStatusHelper(const uint8_t eventReady, const uint8_t outputBufferStatus, const uint8_t busErrorSlaveTerminated)
         {
@@ -2343,13 +2332,11 @@ namespace caen {
         }
     }; // class EasyReadoutStatusHelper
 
-
-    /* NOTE: just inherit from identical genric version */
     class EasyDPPReadoutStatusHelper : public EasyReadoutStatusHelper
     {
-    protected:
-        const std::string className = "EasyDPPReadoutStatusHelper";
+    /* Just inherit everything else from parent class */
     public:
+        virtual const std::string getClassName() const override { return "EasyDPPReadoutStatusHelper"; };
         /* Construct using default values from docs */
         EasyDPPReadoutStatusHelper(const uint8_t eventReady, const uint8_t outputBufferStatus, const uint8_t busErrorSlaveTerminated) : EasyReadoutStatusHelper(eventReady, outputBufferStatus, busErrorSlaveTerminated) {};
         EasyDPPReadoutStatusHelper(const uint32_t mask) : EasyReadoutStatusHelper(mask) {};
@@ -2359,7 +2346,6 @@ namespace caen {
     class EasyAMCFirmwareRevisionHelper : public EasyHelper
     {
     protected:
-        const std::string className = "EasyAMCFirmwareRevisionHelper";
         /* Shared base since one constructor cannot reuse the other */
         /*
          * EasyAMCFirmwareRevision fields:
@@ -2393,6 +2379,7 @@ namespace caen {
             };
         }
     public:
+        virtual const std::string getClassName() const override { return "EasyAMCFirmwareRevisionHelper"; };
         /* Construct using default values from docs */
         /* We allow both clamped and individual revision date format here */
         EasyAMCFirmwareRevisionHelper(const uint8_t minorRevisionNumber, const uint8_t majorRevisionNumber, const uint16_t revisionDate)
@@ -2418,8 +2405,6 @@ namespace caen {
     class EasyDPPAMCFirmwareRevisionHelper : public EasyHelper
     {
     protected:
-        const std::string className = "EasyDPPAMCFirmwareRevisionHelper";
-
         /* Shared base since one constructor cannot reuse the other */
         /*
          * EasyDPPAMCFirmwareRevision fields:
@@ -2452,6 +2437,7 @@ namespace caen {
             };
         }
     public:
+        virtual const std::string getClassName() const override { return "EasyDPPAMCFirmwareRevisionHelper"; };
         EasyDPPAMCFirmwareRevisionHelper(const uint8_t firmwareRevisionNumber, const uint8_t firmwareDPPCode, const uint8_t buildDayLower, const uint8_t buildDayUpper, const uint8_t buildMonth, const uint8_t buildYear)
         {
             construct(firmwareRevisionNumber, firmwareDPPCode, buildDayLower, buildDayUpper, buildMonth, buildYear);
@@ -2467,8 +2453,6 @@ namespace caen {
     class EasyDPPAlgorithmControlHelper : public EasyHelper
     {
     protected:
-        const std::string className = "EasyDPPAlgorithmControlHelper";
-
         /* Shared base since one constructor cannot reuse the other */
         /*
          * EasyDPPAlgorithmControl fields:
@@ -2511,6 +2495,7 @@ namespace caen {
             };
         }
     public:
+        virtual const std::string getClassName() const override { return "EasyDPPAlgorithmControlHelper"; };
         EasyDPPAlgorithmControlHelper(const uint8_t chargeSensitivity, const uint8_t internalTestPulse, const uint8_t testPulseRate, const uint8_t chargePedestal, const uint8_t inputSmoothingFactor, const uint8_t pulsePolarity, const uint8_t triggerMode, const uint8_t baselineMean, const uint8_t disableSelfTrigger, const uint8_t triggerHysteresis)
         {
             construct(chargeSensitivity, internalTestPulse, testPulseRate, chargePedestal, inputSmoothingFactor, pulsePolarity, triggerMode, baselineMean, disableSelfTrigger, triggerHysteresis);
