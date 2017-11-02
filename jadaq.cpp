@@ -62,6 +62,7 @@ int main(int argc, char **argv) {
     /*  Read-in and write resulting digitizer configuration */
     std::string configFileName(argv[1]);
     std::ifstream configFile(configFileName);
+    std::vector<Digitizer> digitizers;
     if (!configFile.good())
     {
         std::cerr << "Could not open configuration file: " << configFileName << std::endl;
@@ -78,15 +79,26 @@ int main(int argc, char **argv) {
             configuration.write(outFile);
             outFile.close();
         }
+        /* Extract a vector of all configured digitizers for later */
+        digitizers = configuration.getDigitizers();
     }
     configFile.close();
 
     std::cout << "Starting acquisition - Ctrl-C to interrupt" << std::endl;
 
-    /* TODO: Start acquisition from digitizer */
+    /* Start acquisition for all digitizers */
+    std::cout << "Start acquisition from all " << digitizers.size() << " digitizers." << std::endl;
+    for (Digitizer& digitizer: digitizers)
+    {
+        std::cout << "Prepare ReadoutBuffer for digitizer " << digitizer.name() << std::endl;
+        digitizer.caenMallocReadoutBuffer();
+        std::cout << "Start acquisition on digitizer " << digitizer.name() << std::endl;
+        digitizer.caenStartAcquisition();
+    }
 
     /* Set up interrupt handler and start handling acquired data */
     setup_interrupt_handler();
+
     while(true) {
         try {
             /* TODO: Continuously handle acquired data:
@@ -96,6 +108,14 @@ int main(int argc, char **argv) {
              *       - send out on UDP
              */
 
+            std::cout << "Read out data from all " << digitizers.size() << " digitizers." << std::endl;
+            /* Read out acquired data for all digitizers */
+            for (Digitizer& digitizer: digitizers)
+            {
+                std::cout << "Read data from digitizer " << digitizer.name() << std::endl;
+                /* TODO: figure out which mode to use */
+                //digitizer.caenReadData(digitizer.caenGetReadoutBuffer()), readoutMode);
+            }
             // TMP: for testing without hogging CPU
             std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 
@@ -107,6 +127,15 @@ int main(int argc, char **argv) {
         }
         if (interrupted) {
             std::cout << "caught interrupt - stop acquisition." << std::endl;
+            /* Stop acquisition for all digitizers */
+            std::cout << "Stop acquisition from all " << digitizers.size() << " digitizers." << std::endl;
+            for (Digitizer& digitizer: digitizers)
+            {
+                std::cout << "Stop acquisition on digitizer " << digitizer.name() << std::endl;
+                digitizer.caenStopAcquisition();
+                std::cout << "Free readout buffer for " << digitizer.name() << std::endl;
+                digitizer.caenFreeReadoutBuffer();
+            }
             break;
         }
     }

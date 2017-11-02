@@ -38,8 +38,7 @@ Configuration::Configuration(std::ifstream& file)
 
 std::vector<Digitizer> Configuration::getDigitizers()
 {
-
-    return std::vector<Digitizer>();
+    return digitizers;
 }
 
 /*

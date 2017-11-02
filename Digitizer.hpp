@@ -36,6 +36,8 @@ class Digitizer
 {
 private:
     caen::Digitizer* digitizer;
+    /* We bind a ReadoutBuffer to each digitizer for ease of use */
+    caen::ReadoutBuffer readoutBuffer;
     int usb_;
     uint32_t vme_;
 public:
@@ -48,6 +50,12 @@ public:
     std::string get(FunctionID functionID);
     std::string get(FunctionID functionID, int index);
     caen::Digitizer* caen() { return digitizer; }
+    /* Wrap the main CAEN acquisiton functions here for convenience */
+    void caenMallocReadoutBuffer() { readoutBuffer = digitizer->mallocReadoutBuffer(); }
+    void caenFreeReadoutBuffer() { digitizer->freeReadoutBuffer(readoutBuffer); }
+    caen::ReadoutBuffer caenGetReadoutBuffer() { return readoutBuffer; }
+    void caenStartAcquisition() { digitizer->startAcquisition(); }
+    void caenStopAcquisition() { digitizer->stopAcquisition(); }
 };
 
 
