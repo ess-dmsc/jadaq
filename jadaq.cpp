@@ -63,6 +63,7 @@ int main(int argc, char **argv) {
     std::string configFileName(argv[1]);
     std::ifstream configFile(configFileName);
     std::vector<Digitizer> digitizers;
+    uint32_t numEvents = 0;
     if (!configFile.good())
     {
         std::cerr << "Could not open configuration file: " << configFileName << std::endl;
@@ -90,8 +91,17 @@ int main(int argc, char **argv) {
     std::cout << "Start acquisition from all " << digitizers.size() << " digitizers." << std::endl;
     for (Digitizer& digitizer: digitizers)
     {
-        std::cout << "Prepare ReadoutBuffer for digitizer " << digitizer.name() << std::endl;
-        digitizer.caenMallocReadoutBuffer();
+        std::cout << "Prepare readout buffer for digitizer " << digitizer.name() << std::endl;
+        digitizer.caenMallocPrivReadoutBuffer();
+        /* We need to allocate additional space for events - format
+         * depends on whether digitizer runs DPP or not */
+        if (digitizer.caenIsDPPFirmware()) {
+            std::cout << "Prepare DPP event buffer for digitizer " << digitizer.name() << std::endl;
+            digitizer.caenMallocPrivDPPEvents();
+        } else {
+            std::cout << "Prepare event buffer for digitizer " << digitizer.name() << std::endl;
+            digitizer.caenMallocPrivEvent();
+        }
         std::cout << "Start acquisition on digitizer " << digitizer.name() << std::endl;
         digitizer.caenStartAcquisition();
     }
@@ -100,23 +110,42 @@ int main(int argc, char **argv) {
     setup_interrupt_handler();
 
     while(true) {
+        /* Continuously acquire and process data:
+         *   - read out data
+         *   - decode data
+         *   - pack data
+         *   - send out on UDP
+         */
         try {
-            /* TODO: Continuously handle acquired data:
-             *       - read out data
-             *       - decode data
-             *       - pack data
-             *       - send out on UDP
-             */
-
             std::cout << "Read out data from all " << digitizers.size() << " digitizers." << std::endl;
             /* Read out acquired data for all digitizers */
             for (Digitizer& digitizer: digitizers)
             {
-                std::cout << "Read data from digitizer " << digitizer.name() << std::endl;
-                /* TODO: figure out which mode to use */
-                //digitizer.caenReadData(digitizer.caenGetReadoutBuffer()), readoutMode);
+                /* TODO: check and skip if there's no data to read? */
+                std::cout << "Read at most " << digitizer.caenGetPrivReadoutBuffer().size << "b data from digitizer " << digitizer.name() << std::endl;
+                digitizer.caenReadData(digitizer.caenGetPrivReadoutBuffer());
+                std::cout << "Read " << digitizer.caenGetPrivReadoutBuffer().dataSize << "b of acquired data" << std::endl;
+                if (digitizer.caenIsDPPFirmware()) {
+                    digitizer.caenGetDPPEvents(digitizer.caenGetPrivReadoutBuffer(), digitizer.caenGetPrivDPPEvents());
+                    std::cout << "Unpacked " << digitizer.caenGetPrivDPPEvents().nEvents << " DPP events." << std::endl;
+                    /* TODO: decode waveforms here */
+                    /* TODO: pack and send out UDP */
+                } else {
+                    numEvents = digitizer.caenGetNumEvents(digitizer.caenGetPrivReadoutBuffer());
+                    std::cout << "Acquired data contains  " << numEvents << " events." << std::endl;
+                    for (uint32_t eventNumber=0; eventNumber < numEvents; eventNumber++) {
+                        digitizer.caenGetEventInfo(digitizer.caenGetPrivReadoutBuffer(), eventNumber);
+                        std::cout << "Unpacked event " << digitizer.caenGetPrivEventInfo().EventCounter << "  of " << numEvents << " events." << std::endl;
+                        digitizer.caenDecodeEvent(digitizer.caenGetPrivEventInfo(), digitizer.caenGetPrivEvent());
+                        std::cout << "Decoded event " << digitizer.caenGetPrivEventInfo().EventCounter << "  of " << numEvents << " events." << std::endl;
+                    /* TODO: pack and send out UDP */
+                    }
+                    if (numEvents < 1) {
+                        std::cout << "No events found - no further handling." << std::endl;
+                    }
+                }
             }
-            // TMP: for testing without hogging CPU
+            /* NOTE: for testing without hogging CPU */
             std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 
         } catch(std::exception& e) {
@@ -133,8 +162,15 @@ int main(int argc, char **argv) {
             {
                 std::cout << "Stop acquisition on digitizer " << digitizer.name() << std::endl;
                 digitizer.caenStopAcquisition();
+                if (digitizer.caenIsDPPFirmware()) {
+                    std::cout << "Free DPP event buffer for " << digitizer.name() << std::endl;
+                    digitizer.caenFreePrivDPPEvents();
+                } else {
+                    std::cout << "Free event buffer for " << digitizer.name() << std::endl;
+                    digitizer.caenFreePrivEvent();
+                }
                 std::cout << "Free readout buffer for " << digitizer.name() << std::endl;
-                digitizer.caenFreeReadoutBuffer();
+                digitizer.caenFreePrivReadoutBuffer();
             }
             break;
         }

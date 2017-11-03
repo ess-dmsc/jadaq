@@ -19,7 +19,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  * @section DESCRIPTION
- * Get and set digitizer configuration values.
+ * Digitizer access, used to get/set configuration values and to
+ * do actual acquisition.
  *
  */
 
@@ -38,6 +39,11 @@ private:
     caen::Digitizer* digitizer;
     /* We bind a ReadoutBuffer to each digitizer for ease of use */
     caen::ReadoutBuffer readoutBuffer;
+    /* Standard firmware uses eventInfo and Event while DPP firmware
+     * keeps it all in a DPPEvents structure. */
+    caen::EventInfo eventInfo;
+    void *event;
+    caen::DPPEvents events;
     int usb_;
     uint32_t vme_;
 public:
@@ -50,10 +56,27 @@ public:
     std::string get(FunctionID functionID);
     std::string get(FunctionID functionID, int index);
     caen::Digitizer* caen() { return digitizer; }
+
     /* Wrap the main CAEN acquisiton functions here for convenience */
-    void caenMallocReadoutBuffer() { readoutBuffer = digitizer->mallocReadoutBuffer(); }
-    void caenFreeReadoutBuffer() { digitizer->freeReadoutBuffer(readoutBuffer); }
-    caen::ReadoutBuffer caenGetReadoutBuffer() { return readoutBuffer; }
+    bool caenIsDPPFirmware() { return digitizer->getDPPFirmwareType() == CAEN_DGTZ_DPPFirmware_QDC; }
+    void caenMallocPrivReadoutBuffer() { readoutBuffer = digitizer->mallocReadoutBuffer(); }
+    void caenFreePrivReadoutBuffer() { digitizer->freeReadoutBuffer(readoutBuffer); }
+    caen::ReadoutBuffer& caenGetPrivReadoutBuffer() { return readoutBuffer; }
+    /* Additional event buffers */
+    void caenMallocPrivEvent() { event = digitizer->mallocEvent(); }
+    void caenFreePrivEvent() { digitizer->freeEvent(event); }
+    void caenMallocPrivDPPEvents() { events = digitizer->mallocDPPEvents(); }
+    void caenFreePrivDPPEvents() { digitizer->freeDPPEvents(events); }
+    caen::EventInfo& caenGetPrivEventInfo() { return eventInfo; }
+    void * caenGetPrivEvent() { return event; }
+    caen::DPPEvents& caenGetPrivDPPEvents() { return events; }
+    /* We default to slave terminated mode like in the sample from CAEN
+     * Digitizer library docs. */
+    caen::ReadoutBuffer& caenReadData(caen::ReadoutBuffer& buffer, int mode=(int)CAEN_DGTZ_SLAVE_TERMINATED_READOUT_MBLT) { return digitizer->readData(buffer, (CAEN_DGTZ_ReadMode_t)mode); }
+    uint32_t caenGetNumEvents(caen::ReadoutBuffer& buffer) { return digitizer->getNumEvents(buffer); }
+    caen::EventInfo caenGetEventInfo(caen::ReadoutBuffer& buffer, int32_t n) { eventInfo = digitizer->getEventInfo(buffer, n); return eventInfo; }
+    void *caenDecodeEvent(caen::EventInfo& buffer, void *event) { event = digitizer->decodeEvent(buffer, event); return event; }
+    caen::DPPEvents& caenGetDPPEvents(caen::ReadoutBuffer& buffer, caen::DPPEvents& events) { return digitizer->getDPPEvents(buffer, events); }
     void caenStartAcquisition() { digitizer->startAcquisition(); }
     void caenStopAcquisition() { digitizer->stopAcquisition(); }
 };

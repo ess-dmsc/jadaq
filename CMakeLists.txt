@@ -18,6 +18,5 @@ target_link_libraries(debugCAENComm dl)
 add_library(caen SHARED caen.hpp caen.cpp _CAENDigitizer.c _CAENDigitizer.h)
 target_link_libraries(caen dl)
 
-add_executable(jadaq jadaq.cpp caen.hpp Configuration.cpp Configuration.hpp Digitizer.cpp Digitizer.hpp FunctionID.hpp
-        FunctionID.cpp ini_parser.hpp StringConversion.cpp StringConversion.hpp)
+add_executable(jadaq jadaq.cpp caen.hpp Configuration.cpp Configuration.hpp Digitizer.cpp Digitizer.hpp FunctionID.hpp FunctionID.cpp ini_parser.hpp StringConversion.cpp StringConversion.hpp)
 target_link_libraries(jadaq ${CAEN_LIB} caen)
