@@ -1,6 +1,7 @@
 /**
  * jadaq (Just Another DAQ)
  * Copyright (C) 2017  Troels Blum <troels@blum.dk>
+ * Contributions from  Jonas Bardino <bardino@nbi.ku.dk>
  *
  * @file
  * @author Troels Blum <troels@blum.dk>
