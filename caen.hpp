@@ -335,7 +335,7 @@ namespace caen {
      * Firmware Revision Date = Y/M/DD (16 higher bits)\n
      * EXAMPLE 1: revision 1.03, November 12th, 2007 is 0x7B120103.\n
      * EXAMPLE 2: revision 2.09, March 7th, 2016 is 0x03070209.\n
-     * NOTE: the nibble code for the year makes this informa on to roll
+     * NOTE: the nibble code for the year makes this information to roll
      * over each 16 years.
      *
      * @var EasyAMCFirmwareRevision::minorRevisionNumber
@@ -1295,7 +1295,7 @@ namespace caen {
      *
      * @var EasyFanSpeedControl::fanSpeedMode
      * Fan Speed Mode. Options are:\n
-     * 0 = slow speed or automa c speed tuning\n
+     * 0 = slow speed or automatic speed tuning\n
      * 1 = high speed.
      */
     struct EasyFanSpeedControl {
@@ -1305,6 +1305,17 @@ namespace caen {
     /* NOTE: 740 and 740DPP layout is identical */
     using EasyDPPFanSpeedControl = EasyFanSpeedControl;
 
+    /**
+     * @class EasyHelper
+     * @brief For user-friendly configuration of various bit masks.
+     *
+     * Base class to handle all the translation between named variables
+     * and bit masks. All actual such mask helpers should just inherit
+     * from it and implment the specific variable names and specifications.
+     *
+     * @param EasyHelper::mask
+     * Initialize from bit mask
+     */
     class EasyHelper
     {
     protected:
@@ -1495,6 +1506,37 @@ namespace caen {
     }; // class EasyHelper
 
 
+    /**
+     * @class EasyBoardConfigurationHelper
+     * @brief For user-friendly configuration of Board Configuration mask.
+     *
+     * This register contains general settings for the board
+     * configuration.
+     *
+     * @param EasyBoardConfigurationHelper::triggerOverlapSetting
+     * Trigger Overlap Setting (default value is 0).\n
+     * When two acquisition windows are overlapped, the second trigger
+     * can be either accepted or rejected. Options are:\n
+     * 0 = Trigger Overlapping Not Allowed (no trigger is accepted until
+     * the current acquisition window is finished);\n
+     * 1 = Trigger Overlapping Allowed (the current acquisition window
+     * is prematurely closed by the arrival of a new trigger).\n
+     * NOTE: it is suggested to keep this bit cleared in case of using a
+     * DPP firmware.
+     * @param EasyBoardConfigurationHelper::testPatternEnable
+     * Test Pattern Enable (default value is 0).\n
+     * This bit enables a triangular (0<-->3FFF) test wave to be
+     * provided at the ADCs input for debug purposes. Options are:\n
+     * 0 = disabled\n
+     * 1 = enabled.
+     * @param EasyBoardConfigurationHelper::selfTriggerPolarity
+     * Self-trigger Polarity (default value is 0).\n
+     * Options are:\n
+     * 0 = Positive (the self-trigger is generated upon the input pulse
+     * overthreshold)\n
+     * 1 = Negative (the self-trigger is generated upon the input pulse
+     * underthreshold).
+     */
     class EasyBoardConfigurationHelper : public EasyHelper
     {
     protected:
@@ -1538,6 +1580,47 @@ namespace caen {
     }; // class EasyBoardConfigurationHelper
 
 
+    /**
+     * @class EasyDPPBoardConfigurationHelper
+     * @brief For user-friendly configuration of DPP Board Configuration mask.
+     *
+     * This register contains general settings for the DPP board
+     * configuration.
+     *
+     * @param EasyDPPBoardConfigurationHelper::individualTrigger
+     * Individual trigger: must be 1
+     * @param EasyDPPBoardConfigurationHelper::analogProbe
+     * Analog Probe: Selects which signal is associated to the Analog
+     * trace in the readout data. Options are:\n
+     * 00: Input\n
+     * 01: Smoothed Input\n
+     * 10: Baseline\n
+     * 11: Reserved.
+     * @param EasyDPPBoardConfigurationHelper::waveformRecording
+     * Waveform Recording: enables the data recording of the
+     * waveform. The user must define the number of samples to be saved
+     * in the Record Length 0x1n24 register. Options are:\n
+     * 0: disabled\n
+     * 1: enabled.
+     * @param EasyDPPBoardConfigurationHelper::extrasRecording
+     * Extras Recording: when enabled the EXTRAS word is saved into the
+     * event data. Refer to the ”Channel Aggregate Data Format” chapter
+     * of the DPP User Manual for more details about the EXTRAS
+     * word. Options are:\n
+     * 0: disabled\n
+     * 1: enabled.
+     * @param EasyDPPBoardConfigurationHelper::timeStampRecording
+     * Time Stamp Recording: must be 1
+     * @param EasyDPPBoardConfigurationHelper::chargeRecording
+     * Charge Recording: must be 1
+     * @param EasyDPPBoardConfigurationHelper::externalTriggerMode
+     * External Trigger mode. The external trigger mode on TRG-IN
+     * connector can be used according to the following options:\n
+     * 00: Trigger\n
+     * 01: Veto\n
+     * 10: An -Veto\n
+     * 11: Reserved.
+     */
     class EasyDPPBoardConfigurationHelper : public EasyHelper
     {
     protected:
@@ -1591,6 +1674,83 @@ namespace caen {
     }; // class EasyDPPBoardConfigurationHelper
 
 
+    /**
+     * @class EasyAcquisitionControlHelper
+     * @brief For user-friendly configuration of Acquisition Control mask.
+     *
+     * This register manages the acquisition settings.
+     *
+     * @param EasyAcquisitionControlHelper::startStopMode
+     * Start/Stop Mode Selection (default value is 00). Options are:\n
+     * 00 = SW CONTROLLED. Start/stop of the run takes place on software
+     * command by setting/resetting bit[2] of this register\n
+     * 01 = S-IN/GPI CONTROLLED (S-IN for VME, GPI for Desktop/NIM). If
+     * the acquisition is armed (i.e. bit[2] = 1), then the acquisition
+     * starts when S-IN/GPI is asserted and stops when S-IN/GPI returns
+     * inactive. If bit[2] = 0, the acquisition is always off\n
+     * 10 = FIRST TRIGGER CONTROLLED. If the acquisition is armed
+     * (i.e. bit[2] = 1), then the run starts on the first trigger pulse
+     * (rising edge on TRG-IN); this pulse is not used as input trigger,
+     * while actual triggers start from the second pulse. The stop of
+     * Run must be SW controlled (i.e. bit[2] = 0)\n
+     * 11 = LVDS CONTROLLED (VME only). It is like option 01 but using
+     * LVDS (RUN) instead of S-IN.\n
+     * The LVDS can be set using registers 0x811C and 0x81A0.
+     * @param EasyAcquisitionControlHelper::acquisitionStartArm
+     * Acquisition Start/Arm (default value is 0).\n
+     * When bits[1:0] = 00, this bit acts as a Run Start/Stop. When
+     * bits[1:0] = 01, 10, 11, this bit arms the acquisition and the
+     * actual Start/Stop is controlled by an external signal. Options
+     * are:\n
+     * 0 = Acquisition STOP (if bits[1:0]=00); Acquisition DISARMED (others)\n
+     * 1 = Acquisition RUN (if bits[1:0]=00); Acquisition ARMED (others).
+     * @param EasyAcquisitionControlHelper::triggerCountingMode
+     * Trigger Counting Mode (default value is 0). Through this bit it
+     * is possible to count the reading requests from channels to mother
+     * board. The reading requests may come from the following options:\n
+     * 0 = accepted triggers from combination of channels\n
+     * 1 = triggers from combination of channels, in addition to TRG-IN
+     * and SW TRG.
+     * @param EasyAcquisitionControlHelper::memoryFullModeSelection
+     * Memory Full Mode Selection (default value is 0). Options are:\n
+     * 0 = NORMAL. The board is full whenever all buffers are full\n
+     * 1 = ONE BUFFER FREE. The board is full whenever Nb-1 buffers are
+     * full, where Nb is the overall number of buffers in which the
+     * channel memory is divided.
+     * @param EasyAcquisitionControlHelper::pLLRefererenceClockSource
+     * PLL Reference Clock Source (Desktop/NIM only). Default value is 0.\n
+     * Options are:\n
+     * 0 = internal oscillator (50 MHz)\n
+     * 1 = external clock from front panel CLK-IN connector.\n
+     * NOTE: this bit is reserved in case of VME boards.
+     * @param EasyAcquisitionControlHelper::lVDSIOBusyEnable
+     * LVDS I/O Busy Enable (VME only). Default value is 0.\n
+     * The LVDS I/Os can be programmed to accept a Busy signal as input,
+     * or to propagate it as output. Options are:\n
+     * 0 = disabled\n
+     * 1 = enabled.\n
+     * NOTE: this bit is supported only by VME boards and meaningful
+     * only if the LVDS new features are enabled (bit[8]=1 of register
+     * 0x811C). Register 0x81A0 should also be configured for nBusy/nVeto.
+     * @param EasyAcquisitionControlHelper::lVDSVetoEnable
+     * LVDS I/O Veto Enable (VME only). Default value is 0.\n
+     * The LVDS I/Os can be programmed to accept a Veto signal as input,
+     * or to transfer it as output. Options are:\n
+     * 0 = disabled (default)\n
+     * 1 = enabled.\n
+     * NOTE: this bit is supported only by VME boards and meaningful
+     * only if the LVDS new features are enabled (bit[8]=1 of register
+     * 0x811C). Register 0x81A0 should also be configured for nBusy/nVeto.
+     * @param EasyAcquisitionControlHelper::lVDSIORunInEnable
+     * LVDS I/O RunIn Enable Mode (VME only). Default value is 0.\n
+     * The LVDS I/Os can be programmed to accept a RunIn signal as
+     * input, or to transfer it as output. Options are:\n
+     * 0 = starts on RunIn level (default)\n
+     * 1 = starts on RunIn rising edge.\n
+     * NOTE: this bit is supported only by VME boards and meaningful
+     * only if the LVDS new features are enabled (bit[8]=1 of register
+     * 0x811C). Register 0x81A0 must also be configured for nBusy/nVeto.
+     */
     class EasyAcquisitionControlHelper : public EasyHelper
     {
     protected:
@@ -1643,6 +1803,77 @@ namespace caen {
     }; // class EasyAcquisitionControlHelper
 
 
+    /**
+     * @class EasyDPPAcquisitionControlHelper
+     * @brief For user-friendly configuration of Acquisition Control mask.
+     *
+     * This register manages the acquisition settings.
+     *
+     * @param EasyDPPAcquisitionControlHelper::startStopMode
+     * Start/Stop Mode Selection (default value is 00). Options are:\n
+     * 00 = SW CONTROLLED. Start/stop of the run takes place on software
+     * command by setting/resetting bit[2] of this register\n
+     * 01 = S-IN/GPI CONTROLLED (S-IN for VME, GPI for Desktop/NIM). If
+     * the acquisition is armed (i.e. bit[2] = 1), then the acquisition
+     * starts when S-IN/GPI is asserted and stops when S-IN/GPI returns
+     * inactive. If bit[2] = 0, the acquisition is always off\n
+     * 10 = FIRST TRIGGER CONTROLLED. If the acquisition is armed
+     * (i.e. bit[2] = 1), then the run starts on the first trigger pulse
+     * (rising edge on TRG-IN); this pulse is not used as input trigger,
+     * while actual triggers start from the second pulse. The stop of
+     * Run must be SW controlled (i.e. bit[2] = 0)\n
+     * 11 = LVDS CONTROLLED (VME only). It is like option 01 but using
+     * LVDS (RUN) instead of S-IN.\n
+     * The LVDS can be set using registers 0x811C and 0x81A0.
+     * @param EasyDPPAcquisitionControlHelper::acquisitionStartArm
+     * Acquisition Start/Arm (default value is 0).\n
+     * When bits[1:0] = 00, this bit acts as a Run Start/Stop. When
+     * bits[1:0] = 01, 10, 11, this bit arms the acquisition and the
+     * actual Start/Stop is controlled by an external signal. Options
+     * are:\n
+     * 0 = Acquisition STOP (if bits[1:0]=00); Acquisition DISARMED (others)\n
+     * 1 = Acquisition RUN (if bits[1:0]=00); Acquisition ARMED (others).
+     * @param EasyDPPAcquisitionControlHelper::triggerCountingMode
+     * Trigger Counting Mode (default value is 0). Through this bit it
+     * is possible to count the reading requests from channels to mother
+     * board. The reading requests may come from the following options:\n
+     * 0 = accepted triggers from combination of channels\n
+     * 1 = triggers from combination of channels, in addition to TRG-IN
+     * and SW TRG.
+     * @param EasyDPPAcquisitionControlHelper::pLLRefererenceClockSource
+     * PLL Reference Clock Source (Desktop/NIM only). Default value is 0.\n
+     * Options are:\n
+     * 0 = internal oscillator (50 MHz)\n
+     * 1 = external clock from front panel CLK-IN connector.\n
+     * NOTE: this bit is reserved in case of VME boards.
+     * @param EasyDPPAcquisitionControlHelper::lVDSIOBusyEnable
+     * LVDS I/O Busy Enable (VME only). Default value is 0.\n
+     * The LVDS I/Os can be programmed to accept a Busy signal as input,
+     * or to propagate it as output. Options are:\n
+     * 0 = disabled\n
+     * 1 = enabled.\n
+     * NOTE: this bit is supported only by VME boards and meaningful
+     * only if the LVDS new features are enabled (bit[8]=1 of register
+     * 0x811C). Register 0x81A0 should also be configured for nBusy/nVeto.
+     * @param EasyDPPAcquisitionControlHelper::lVDSVetoEnable
+     * LVDS I/O Veto Enable (VME only). Default value is 0.\n
+     * The LVDS I/Os can be programmed to accept a Veto signal as input,
+     * or to transfer it as output. Options are:\n
+     * 0 = disabled (default)\n
+     * 1 = enabled.\n
+     * NOTE: this bit is supported only by VME boards and meaningful
+     * only if the LVDS new features are enabled (bit[8]=1 of register
+     * 0x811C). Register 0x81A0 should also be configured for nBusy/nVeto.
+     * @param EasyDPPAcquisitionControlHelper::lVDSIORunInEnable
+     * LVDS I/O RunIn Enable Mode (VME only). Default value is 0.\n
+     * The LVDS I/Os can be programmed to accept a RunIn signal as
+     * input, or to transfer it as output. Options are:\n
+     * 0 = starts on RunIn level (default)\n
+     * 1 = starts on RunIn rising edge.\n
+     * NOTE: this bit is supported only by VME boards and meaningful
+     * only if the LVDS new features are enabled (bit[8]=1 of register
+     * 0x811C). Register 0x81A0 must also be configured for nBusy/nVeto.
+     */
     class EasyDPPAcquisitionControlHelper : public EasyHelper
     {
     protected:
@@ -1693,6 +1924,68 @@ namespace caen {
     }; // class EasyDPPAcquisitionControlHelper
 
 
+    /**
+     * @class EasyAcquisitionStatusHelper
+     * @brief For user-friendly configuration of Acquisition Status mask.
+     *
+     * This register monitors a set of conditions related to the
+     * acquisition status.
+     *
+     * @param EasyAcquisitionStatusHelper::acquisitionStatus
+     * Acquisition Status. It reflects the status of the acquisition and
+     * drivers the front panel ’RUN’ LED. Options are:\n
+     * 0 = acquisition is stopped (’RUN’ is off)\n
+     * 1 = acquisition is running (’RUN’ lits).
+     * @param EasyAcquisitionStatusHelper::eventReady
+     * Event Ready. Indicates if any events are available for
+     * readout. Options are:\n
+     * 0 = no event is available for readout\n
+     * 1 = at least one event is available for readout.\n
+     * NOTE: the status of this bit must be considered when managing the
+     * readout from the digitizer.
+     * @param EasyAcquisitionStatusHelper::eventFull
+     * Event Full. Indicates if at least one channel has reached the
+     * FULL condition. Options are:\n
+     * 0 = no channel has reached the FULL condition\n
+     * 1 = the maximum number of events to be read is reached.
+     * @param EasyAcquisitionStatusHelper::clockSource
+     * Clock Source. Indicates the clock source status. Options are:\n
+     * 0 = internal (PLL uses the internal 50 MHz oscillator as reference)\n
+     * 1 = external (PLL uses the external clock on CLK-IN connector as
+     * reference).
+     * @param EasyAcquisitionStatusHelper::pLLBypassMode
+     * PLL Bypass Mode. This bit drives the front panel 'PLL BYPS' LED.\n
+     * Options are:\n
+     * 0 = PLL bypass mode is not ac ve ('PLL BYPS' is off)\n
+     * 1 = PLL bypass mode is ac ve and the VCXO frequency directly
+     * drives the clock distribution chain ('PLL BYPS' lits).\n
+     * WARNING: before operating in PLL Bypass Mode, it is recommended
+     * to contact CAEN for feasibility.
+     * @param EasyAcquisitionStatusHelper::pLLUnlockDetect
+     * PLL Unlock Detect. This bit flags a PLL unlock condition. Options
+     * are:\n
+     * 0 = PLL has had an unlock condition since the last register read
+     * access\n
+     * 1 = PLL has not had any unlock condition since the last register
+     * read access.\n
+     * NOTE: flag can be restored to 1 via read access to register 0xEF04.
+     * @param EasyAcquisitionStatusHelper::boardReady
+     * Board Ready. This flag indicates if the board is ready for
+     * acquisition (PLL and ADCs are correctly synchronised). Options
+     * are:\n
+     * 0 = board is not ready to start the acquisition\n
+     * 1 = board is ready to start the acquisition.\n
+     * NOTE: this bit should be checked a er software reset to ensure
+     * that the board will enter immediately in run mode a er the RUN
+     * mode setting; otherwise, a latency between RUN mode setting and
+     * Acquisition start might occur.
+     * @param EasyAcquisitionStatusHelper::s_IN
+     * S-IN (VME boards) or GPI (DT/NIM boards) Status. Reads the
+     * current logical level on S-IN (GPI) front panel connector.
+     * @param EasyAcquisitionStatusHelper::tRG_IN
+     * TRG-IN Status. Reads the current logical level on TRG-IN front
+     * panel connector.
+     */
     class EasyAcquisitionStatusHelper : public EasyHelper
     {
     protected:
@@ -1748,6 +2041,60 @@ namespace caen {
     }; // class EasyAcquisitionStatusHelper
 
 
+    /**
+     * @class EasyDPPAcquisitionStatusHelper
+     * @brief For user-friendly configuration of Acquisition Status mask.
+     *
+     * This register monitors a set of conditions related to the
+     * acquisition status.
+     *
+     * @param EasyDPPAcquisitionStatusHelper::acquisitionStatus
+     * Acquisition Status. It reflects the status of the acquisition and
+     * drivers the front panel ’RUN’ LED. Options are:\n
+     * 0 = acquisition is stopped (’RUN’ is off)\n
+     * 1 = acquisition is running (’RUN’ lits).
+     * @param EasyDPPAcquisitionStatusHelper::eventReady
+     * Event Ready. Indicates if any events are available for
+     * readout. Options are:\n
+     * 0 = no event is available for readout\n
+     * 1 = at least one event is available for readout.\n
+     * NOTE: the status of this bit must be considered when managing the
+     * readout from the digitizer.
+     * @param EasyDPPAcquisitionStatusHelper::eventFull
+     * Event Full. Indicates if at least one channel has reached the
+     * FULL condition. Options are:\n
+     * 0 = no channel has reached the FULL condition\n
+     * 1 = the maximum number of events to be read is reached.
+     * @param EasyDPPAcquisitionStatusHelper::clockSource
+     * Clock Source. Indicates the clock source status. Options are:\n
+     * 0 = internal (PLL uses the internal 50 MHz oscillator as reference)\n
+     * 1 = external (PLL uses the external clock on CLK-IN connector as
+     * reference).
+     * @param EasyDPPAcquisitionStatusHelper::pLLUnlockDetect
+     * PLL Unlock Detect. This bit flags a PLL unlock condition. Options
+     * are:\n
+     * 0 = PLL has had an unlock condition since the last register read
+     * access\n
+     * 1 = PLL has not had any unlock condition since the last register
+     * read access.\n
+     * NOTE: flag can be restored to 1 via read access to register 0xEF04.
+     * @param EasyDPPAcquisitionStatusHelper::boardReady
+     * Board Ready. This flag indicates if the board is ready for
+     * acquisition (PLL and ADCs are correctly synchronised). Options
+     * are:\n
+     * 0 = board is not ready to start the acquisition\n
+     * 1 = board is ready to start the acquisition.\n
+     * NOTE: this bit should be checked a er software reset to ensure
+     * that the board will enter immediately in run mode a er the RUN
+     * mode setting; otherwise, a latency between RUN mode setting and
+     * Acquisition start might occur.
+     * @param EasyDPPAcquisitionStatusHelper::s_IN
+     * S-IN (VME boards) or GPI (DT/NIM boards) Status. Reads the
+     * current logical level on S-IN (GPI) front panel connector.
+     * @param EasyDPPAcquisitionStatusHelper::tRG_IN
+     * TRG-IN Status. Reads the current logical level on TRG-IN front
+     * panel connector.
+     */
     class EasyDPPAcquisitionStatusHelper : public EasyHelper
     {
     protected:
@@ -1800,6 +2147,52 @@ namespace caen {
     }; // class EasyDPPAcquisitionStatusHelper
 
 
+    /**
+     * @class EasyGlobalTriggerMaskHelper
+     * @brief For user-friendly configuration of Global Trigger Mask.
+     *
+     * This register sets which signal can contribute to the global
+     * trigger generation.
+     *
+     * @param EasyGlobalTriggerMaskHelper::groupTriggerMask
+     * Bit n corresponds to the trigger request from group n that
+     * participates to the global trigger generation (n = 0,...,3 for DT
+     * and NIM; n = 0,...,7 for VME boards). Options are:\n
+     * 0 = trigger request is not sensed for global trigger generation\n
+     * 1 = trigger request participates in the global trigger generation.\n
+     * NOTE: in case of DT and NIMboards, only bits[3:0] are meaningful,
+     * while bits[7:4] are reserved.
+     * @param EasyGlobalTriggerMaskHelper::majorityCoincidenceWindow
+     * Majority Coincidence Window. Sets the me window (in units of the
+     * trigger clock) for the majority coincidence. Majority level must
+     * be set different from 0 through bits[26:24].
+     * @param EasyGlobalTriggerMaskHelper::majorityLevel
+     * Majority Level. Sets the majority level for the global trigger
+     * generation. For a level m, the trigger fires when at least m+1 of
+     * the enabled trigger requests (bits[7:0] or [3:0]) are
+     * over-threshold inside the majority coincidence window
+     * (bits[23:20]).\n
+     * NOTE: the majority level must be smaller than the number of
+     * trigger requests enabled via bits[7:0] mask (or [3:0]).
+     * @param EasyGlobalTriggerMaskHelper::lVDSTrigger
+     * LVDS Trigger (VME boards only). When enabled, the trigger from
+     * LVDS I/O participates to the global trigger generation (in logic
+     * OR). Options are:\n
+     * 0 = disabled\n
+     * 1 = enabled.
+     * @param EasyGlobalTriggerMaskHelper::externalTrigger
+     * External Trigger (default value is 1). When enabled, the external
+     * trigger on TRG-IN participates to the global trigger generation
+     * in logic OR with the other enabled signals. Options are:\n
+     * 0 = disabled\n
+     * 1 = enabled.
+     * @param EasyGlobalTriggerMaskHelper::softwareTrigger
+     * Software Trigger (default value is 1). When enabled, the software
+     * trigger participates to the global trigger signal generation in
+     * logic OR with the other enabled signals. Options are:\n
+     * 0 = disabled\n
+     * 1 = enabled.
+     */
     class EasyGlobalTriggerMaskHelper : public EasyHelper
     {
     protected:
@@ -1848,6 +2241,32 @@ namespace caen {
     }; // class EasyGlobalTriggerMaskHelper
 
 
+    /**
+     * @class EasyDPPGlobalTriggerMaskHelper
+     * @brief For user-friendly configuration of Global Trigger Mask.
+     *
+     * This register sets which signal can contribute to the global
+     * trigger generation.
+     *
+     * @param EasyDPPGlobalTriggerMaskHelper::lVDSTrigger
+     * LVDS Trigger (VME boards only). When enabled, the trigger from
+     * LVDS I/O participates to the global trigger generation (in logic
+     * OR). Options are:\n
+     * 0 = disabled\n
+     * 1 = enabled.
+     * @param EasyDPPGlobalTriggerMaskHelper::externalTrigger
+     * External Trigger (default value is 1). When enabled, the external
+     * trigger on TRG-IN participates to the global trigger generation
+     * in logic OR with the other enabled signals. Options are:\n
+     * 0 = disabled\n
+     * 1 = enabled.
+     * @param EasyDPPGlobalTriggerMaskHelper::softwareTrigger
+     * Software Trigger (default value is 1). When enabled, the software
+     * trigger participates to the global trigger signal generation in
+     * logic OR with the other enabled signals. Options are:\n
+     * 0 = disabled\n
+     * 1 = enabled.
+     */
     class EasyDPPGlobalTriggerMaskHelper : public EasyHelper
     {
     protected:
@@ -1889,6 +2308,56 @@ namespace caen {
     }; // class EasyDPPGlobalTriggerMaskHelper
 
 
+    /**
+     * @class EasyFrontPanelTRGOUTEnableMaskHelper
+     * @brief For user-friendly configuration of Front Panel TRG-OUT Enable Mask.
+     *
+     * This register sets which signal can contribute to
+     * generate the signal on the front panel TRG-OUT LEMO connector
+     * (GPO in case of DT and NIM boards).
+     *
+     * @param EasyFrontPanelTRGOUTEnableMaskHelper::groupTriggerMask
+     * This mask sets the trigger requests participating in the TRG-OUT
+     * (GPO). Bit n corresponds to the trigger request from group n.\n
+     * Options are:\n
+     * 0 = Trigger request does not participate to the TRG-OUT (GPO) signal\n
+     * 1 = Trigger request participates to the TRG-OUT (GPO) signal.\n
+     * NOTE: in case of DT and NIM boards, only bits[3:0] are meaningful
+     * while bis[7:4] are reserved.
+     * @param EasyFrontPanelTRGOUTEnableMaskHelper::tRGOUTGenerationLogic
+     * TRG-OUT (GPO) Generation Logic. The enabled trigger requests
+     * (bits [7:0] or [3:0]) can be combined to generate the TRG-OUT
+     * (GPO) signal. Options are:\n
+     * 00 = OR\n
+     * 01 = AND\n
+     * 10 = Majority\n
+     * 11 = reserved.
+     * @param EasyFrontPanelTRGOUTEnableMaskHelper::majorityLevel
+     * Majority Level. Sets the majority level for the TRG-OUT (GPO)
+     * signal generation. Allowed level values are between 0 and 7 for
+     * VME boards, and between 0 and 3 for DT and NIM boards. For a
+     * level m, the trigger fires when at least m+1 of the trigger
+     * requests are generated by the enabled channels (bits [7:0] or [3:0]).
+     * @param EasyFrontPanelTRGOUTEnableMaskHelper::lVDSTriggerEnable
+     * LVDS Trigger Enable (VME boards only). If the LVDS I/Os are
+     * programmed as outputs, they can participate in the TRG-OUT (GPO)
+     * signal generation. They are in logic OR with the other enabled
+     * signals. Options are:\n
+     * 0 = disabled\n
+     * 1 = enabled.
+     * @param EasyFrontPanelTRGOUTEnableMaskHelper::externalTrigger
+     * External Trigger. When enabled, the external trigger on TRG-IN
+     * can participate in the TRG-OUT (GPO) signal generation in logic
+     * OR with the other enabled signals. Options are:\n
+     * 0 = disabled\n
+     * 1 = enabled.
+     * @param EasyFrontPanelTRGOUTEnableMaskHelper::softwareTrigger
+     * Software Trigger. When enabled, the software trigger can
+     * participate in the TRG-OUT (GPO) signal generation in logic OR
+     * with the other enabled signals. Options are:\n
+     * 0 = disabled\n
+     * 1 = enabled.
+     */
     class EasyFrontPanelTRGOUTEnableMaskHelper : public EasyHelper
     {
     protected:
@@ -1937,6 +2406,34 @@ namespace caen {
     }; // class EasyFrontPanelTRGOUTEnableMaskHelper
 
 
+    /**
+     * @class EasyDPPFrontPanelTRGOUTEnableMaskHelper
+     * @brief For user-friendly configuration of Front Panel TRG-OUT Enable Mask.
+     *
+     * This register sets which signal can contribute to
+     * generate the signal on the front panel TRG-OUT LEMO connector
+     * (GPO in case of DT and NIM boards).
+     *
+     * @param EasyDPPFrontPanelTRGOUTEnableMaskHelper::lVDSTriggerEnable
+     * LVDS Trigger Enable (VME boards only). If the LVDS I/Os are
+     * programmed as outputs, they can participate in the TRG-OUT (GPO)
+     * signal generation. They are in logic OR with the other enabled
+     * signals. Options are:\n
+     * 0 = disabled\n
+     * 1 = enabled.
+     * @param EasyDPPFrontPanelTRGOUTEnableMaskHelper::externalTrigger
+     * External Trigger. When enabled, the external trigger on TRG-IN
+     * can participate in the TRG-OUT (GPO) signal generation in logic
+     * OR with the other enabled signals. Options are:\n
+     * 0 = disabled\n
+     * 1 = enabled.
+     * @param EasyDPPFrontPanelTRGOUTEnableMaskHelper::softwareTrigger
+     * Software Trigger. When enabled, the software trigger can
+     * participate in the TRG-OUT (GPO) signal generation in logic OR
+     * with the other enabled signals. Options are:\n
+     * 0 = disabled\n
+     * 1 = enabled.
+     */
     class EasyDPPFrontPanelTRGOUTEnableMaskHelper : public EasyHelper
     {
     protected:
@@ -1978,6 +2475,155 @@ namespace caen {
     }; // class EasyDPPFrontPanelTRGOUTEnableMaskHelper
 
 
+    /**
+     * @class EasyFrontPanelIOControlHelper
+     * @brief For user-friendly configuration of Acquisition Control mask.
+     *
+     * This register manages the front panel I/O connectors. Default
+     * value is 0x000000.
+     *
+     * @param EasyFrontPanelIOControlHelper::lEMOIOElectricalLevel
+     * LEMO I/Os Electrical Level. This bit sets the electrical level of
+     * the front panel LEMO connectors: TRG-IN, TRG-OUT (GPO in case of
+     * DT and NIM boards), S-IN (GPI in case of DT and NIM
+     * boards). Options are:\n
+     * 0 = NIM I/O levels\n
+     * 1 = TTL I/O levels.
+     * @param EasyFrontPanelIOControlHelper::tRGOUTEnable
+     * TRG-OUT Enable (VME boards only). Enables the TRG-OUT LEMO front
+     * panel connector. Options are:\n
+     * 0 = enabled (default)\n
+     * 1 = high impedance.\n
+     * NOTE: this bit is reserved in case of DT and NIM boards.
+     * @param EasyFrontPanelIOControlHelper::lVDSIODirectionFirst
+     * LVDS I/O [3:0] Direction (VME boards only). Sets the direction of
+     * the signals on the first 4-pin group of the LVDS I/O
+     * connector. Options are:\n
+     * 0 = input\n
+     * 1 = output.\n
+     * NOTE: this bit is reserved in case of DT and NIM boards.
+     * @param EasyFrontPanelIOControlHelper::lVDSIODirectionSecond
+     * LVDS I/O [7:4] Direction (VME boards only). Sets the direction of
+     * the second 4-pin group of the LVDS I/O connector. Options are:\n
+     * 0 = input\n
+     * 1 = output.\n
+     * NOTE: this bit is reserved in case of DT and NIM boards.
+     * @param EasyFrontPanelIOControlHelper::lVDSIODirectionThird
+     * LVDS I/O [11:8] Direction (VME boards only). Sets the direction of
+     * the third 4-pin group of the LVDS I/O connector. Options are:\n
+     * 0 = input\n
+     * 1 = output.\n
+     * NOTE: this bit is reserved in case of DT and NIM boards.
+     * @param EasyFrontPanelIOControlHelper::lVDSIODirectionFourth
+     * LVDS I/O [15:12] Direction (VME boards only). Sets the direction of
+     * the fourth 4-pin group of the LVDS I/O connector. Options are:\n
+     * 0 = input\n
+     * 1 = output.\n
+     * NOTE: this bit is reserved in case of DT and NIM boards.
+     * @param EasyFrontPanelIOControlHelper::lVDSIOSignalConfiguration
+     * LVDS I/O Signal Configuration (VME boards and LVDS I/O old
+     * features only). This configuration must be enabled through bit[8]
+     * set to 0. Options are:\n
+     * 00 = general purpose I/O\n
+     * 01 = programmed I/O\n
+     * 10 = pattern mode: LVDS signals are input and their value is
+     * written into the header PATTERN field\n
+     * 11 = reserved.\n
+     * NOTE: these bits are reserved in case of DT and NIM boards.
+     * @param EasyFrontPanelIOControlHelper::lVDSIONewFeaturesSelection
+     * LVDS I/O New Features Selection (VME boards only). Options are:\n
+     * 0 = LVDS old features\n
+     * 1 = LVDS new features.\n
+     * The new features options can be configured through register
+     * 0x81A0. Please, refer to the User Manual for all details.\n
+     * NOTE: LVDS I/O New Features option is valid from motherboard
+     * firmware revision 3.8 on.\n
+     * NOTE: this bit is reserved in case of DT and NIM boards.
+     * @param EasyFrontPanelIOControlHelper::lVDSIOPatternLatchMode
+     * LVDS I/Os Pattern Latch Mode (VME boards only). Options are:\n
+     * 0 = Pattern (i.e. 16-pin LVDS status) is latched when the
+     * (internal) global trigger is sent to channels, in consequence of
+     * an external trigger. It accounts for post-trigger settings and
+     * input latching delays\n
+     * 1 = Pattern (i.e. 16-pin LVDS status) is latched when an external
+     * trigger arrives.\n
+     * NOTE: this bit is reserved in case of DT and NIM boards.
+     * @param EasyFrontPanelIOControlHelper::tRGINControl
+     * TRG-IN control. The board trigger logic can be synchronized
+     * either with the edge of the TRG-IN signal, or with its whole
+     * duration.\n
+     * Note: this bit must be used in conjunction with bit[11] =
+     * 0. Options are:\n
+     * 0 = trigger is synchronized with the edge of the TRG-IN signal\n
+     * 1 = trigger is synchronized with the whole duration of the TRG-IN
+     * signal.
+     * @param EasyFrontPanelIOControlHelper::tRGINMezzanines
+     * TRG-IN to Mezzanines (channels). Options are:\n
+     * 0 = TRG-IN signal is processed by the motherboard and sent to
+     * mezzanine (default). The trigger logic is then synchronized with
+     * TRG-IN\n
+     * 1 = TRG-IN is directly sent to the mezzanines with no mother
+     * board processing nor delay. This option can be useful when TRG-IN
+     * is used to veto the acquisition.\n
+     * NOTE: if this bit is set to 1, then bit[10] is ignored.
+     * @param EasyFrontPanelIOControlHelper::forceTRGOUT
+     * Force TRG-OUT (GPO). This bit can force TRG-OUT (GPO in case of
+     * DT and NIM boards) test logical level if bit[15] = 1. Options
+     * are:\n
+     * 0 = Force TRG-OUT (GPO) to 0\n
+     * 1 = Force TRG-OUT (GPO) to 1.
+     * @param EasyFrontPanelIOControlHelper::tRGOUTMode
+     * TRG-OUT (GPO) Mode. Options are:\n
+     * 0 = TRG-OUT (GPO) is an internal signal (according to bits[17:16])\n
+     * 1= TRG-OUT (GPO) is a test logic level set via bit[14].
+     * @param EasyFrontPanelIOControlHelper::tRGOUTModeSelection
+     * TRG-OUT (GPO) Mode Selection. Options are:\n
+     * 00 = Trigger: TRG-OUT/GPO propagates the internal trigger sources
+     * according to register 0x8110\n
+     * 01 = Motherboard Probes: TRG-OUT/GPO is used to propagate signals
+     * of the motherboards according to bits[19:18]\n
+     * 10 = Channel Probes: TRG-OUT/GPO is used to propagate signals of
+     * the mezzanines (Channel Signal Virtual Probe)\n
+     * 11 = S-IN (GPI) propagation.
+     * @param EasyFrontPanelIOControlHelper::motherboardVirtualProbeSelection
+     * Motherboard Virtual Probe Selection (to be propagated on TRG-
+     * OUT/GPO). Options are:\n
+     * 00 = RUN/delayedRUN: this is the RUN in case of ROC FPGA firmware
+     * rel. less than 4.12. This probe can be selected according to
+     * bit[20].\n
+     * 01 = CLKOUT: this clock is synchronous with the sampling clock of
+     * the ADC and this option can be used to align the phase of the
+     * clocks in different boards\n
+     * 10 = CLK Phase\n
+     * 11 = BUSY/UNLOCK: this is the board BUSY in case of ROC FPGA
+     * firmware rel. 4.5 or lower. This probe can be selected according
+     * to bit[20].
+     * @param EasyFrontPanelIOControlHelper::motherboardVirtualProbePropagation
+     * According to bits[19:18], this bit selects the probe to be
+     * propagated on TRG-OUT . If bits[19:18] = 00, then bit[20] options
+     * are:\n
+     * 0 = RUN, the signal is active when the acquisition is running and
+     * it is synchonized with the start run. This option must be used to
+     * synchronize the start/stop of the acquisition through the
+     * TRG-OUT->TR-IN or TRG-OUT->S-IN (GPI) daisy chain.\n
+     * 1 = delayedRUN. This option can be used to debug the
+     * synchronization when the start/stop is propagated through the
+     * LVDS I/O (VME boards). If bits[19:18] = 11, then bit[20] options
+     * are:\n
+     * 0 = Board BUSY\n
+     * 1 = PLL Lock Loss.\n
+     * NOTE: this bit is reserved in case of ROC FPGA firmware rel. 4.5
+     * or lower.\n
+     * NOTE: this bit corresponds to BUSY/UNLOCK for ROC FPGA firmware
+     * rel. less than 4.12.
+     * @param EasyFrontPanelIOControlHelper::patternConfiguration
+     * Pattern Configuration. Configures the information given by the
+     * 16-bit PATTERN field in the header of the event format (VME
+     * only). Option are:\n
+     * 00 = PATTERN: 16-bit pattern latched on the 16 LVDS signals as
+     * one trigger arrives (default)\n
+     * Other options are reserved.
+     */
     class EasyFrontPanelIOControlHelper : public EasyHelper
     {
     protected:
@@ -2056,6 +2702,12 @@ namespace caen {
     }; // class EasyFrontPanelIOControlHelper
 
 
+    /**
+     * @class EasyDPPFrontPanelIOControlHelper
+     * @brief For user-friendly configuration of Acquisition Control mask.
+     *
+     * NOTE: Identical to EasyFrontPanelIOControlHelper
+     */
     class EasyDPPFrontPanelIOControlHelper : public EasyFrontPanelIOControlHelper
     {
     /* Just inherit everything else from parent class */
@@ -2066,6 +2718,27 @@ namespace caen {
     }; // class EasyDPPFrontPanelIOControlHelper
 
 
+    /**
+     * @class EasyROCFPGAFirmwareRevisionHelper
+     * @brief For user-friendly configuration of ROC FPGA Firmware Revision.
+     *
+     * This register contains the motherboard FPGA (ROC) firmware
+     * revision information.\n
+     * The complete format is:\n
+     * Firmware Revision = X.Y (16 lower bits)\n
+     * Firmware Revision Date = Y/M/DD (16 higher bits)\n
+     * EXAMPLE 1: revision 3.08, November 12th, 2007 is 0x7B120308.\n
+     * EXAMPLE 2: revision 4.09, March 7th, 2016 is 0x03070409.\n
+     * NOTE: the nibble code for the year makes this information to roll
+     * over each 16 years.
+     *
+     * @param EasyROCFPGAFirmwareRevisionHelper::minorRevisionNumber
+     * ROC Firmware Minor Revision Number (Y).
+     * @param EasyROCFPGAFirmwareRevisionHelper::majorRevisionNumber
+     * ROC Firmware Major Revision Number (X).
+     * @param EasyROCFPGAFirmwareRevisionHelper::revisionDate
+     * ROC Firmware Revision Date (Y/M/DD).
+     */
     class EasyROCFPGAFirmwareRevisionHelper : public EasyHelper
     {
     protected:
@@ -2125,6 +2798,12 @@ namespace caen {
     }; // class EasyROCFPGAFirmwareRevisionHelper
 
 
+    /**
+     * @class EasyDPPROCFPGAFirmwareRevisionHelper
+     * @brief For user-friendly configuration of ROC FPGA Firmware Revision.
+     *
+     * NOTE: identical to EasyROCFPGAFirmwareRevisionHelper
+     */
     class EasyDPPROCFPGAFirmwareRevisionHelper : public EasyHelper
     {
     protected:
@@ -2183,6 +2862,28 @@ namespace caen {
     }; // class EasyDPPROCFPGAFirmwareRevisionHelper
 
 
+    /**
+     * @class EasyFanSpeedControlHelper
+     * @brief For user-friendly configuration of Fan Speed Control mask.
+     *
+     * This register manages the on-board fan speed in order to
+     * guarantee an appropriate cooling according to the internal
+     * temperature variations.\n
+     * NOTE: from revision 4 of the motherboard PCB (see register 0xF04C
+     * of the Configuration ROM), the automatic fan speed control has
+     * been implemented, and it is supported by ROC FPGA firmware
+     * revision greater than 4.4 (see register 0x8124).\n
+     * Independently of the revision, the user can set the fan speed
+     * high by setting bit[3] = 1. Setting bit[3] = 0 will restore the
+     * automatic control for revision 4 or higher, or the low fan speed
+     * in case of revisions lower than 4.\n
+     * NOTE: this register is supported by Desktop (DT) boards only.
+     *
+     * @param EasyFanSpeedControlHelper::fanSpeedMode
+     * Fan Speed Mode. Options are:\n
+     * 0 = slow speed or automatic speed tuning\n
+     * 1 = high speed.
+     */
     class EasyFanSpeedControlHelper : public EasyHelper
     {
     protected:
@@ -2221,6 +2922,12 @@ namespace caen {
     }; // class EasyFanSpeedControlHelper
 
 
+    /**
+     * @class EasyDPPFanSpeedControlHelper
+     * @brief For user-friendly configuration of Fan Speed Control mask.
+     *
+     * NOTE: identical to EasyFanSpeedControlHelper
+     */
     class EasyDPPFanSpeedControlHelper : public EasyFanSpeedControlHelper
     {
     /* Just inherit everything else from parent class */
@@ -2231,6 +2938,67 @@ namespace caen {
     }; // class EasyDPPFanSpeedControlHelper
 
 
+    /**
+     * @class EasyReadoutControlHelper
+     * @brief For user-friendly configuration of Readout Control mask.
+     *
+     * This register is mainly intended for VME boards, anyway some bits
+     * are applicable also for DT and NIM boards.
+     *
+     * @param EasyReadoutControlHelper::vMEInterruptLevel
+     * VME Interrupt Level (VME boards only). Options are:\n
+     * 0 = VME interrupts are disabled\n
+     * 1,..,7 = sets the VME interrupt level.\n
+     * NOTE: these bits are reserved in case of DT and NIM boards.
+     * @param EasyReadoutControlHelper::opticalLinkInterruptEnable
+     * Optical Link Interrupt Enable. Op ons are:\n
+     * 0 = Optical Link interrupts are disabled\n
+     * 1 = Optical Link interrupts are enabled.
+     * @param EasyReadoutControlHelper::vMEBusErrorEventAlignedEnable
+     * VME Bus Error / Event Aligned Readout Enable (VME boards
+     * only). Options are:\n
+     * 0 = VME Bus Error / Event Aligned Readout disabled (the module
+     * sends a DTACK signal until the CPU inquires the module)\n
+     * 1 = VME Bus Error / Event Aligned Readout enabled (the module is
+     * enabled either to generate a Bus Error to finish a block transfer
+     * or during the empty buffer readout in D32).\n
+     * NOTE: this bit is reserved (must be 1) in case of DT and NIM boards.
+     * @param EasyReadoutControlHelper::vMEAlign64Mode
+     * VME Align64 Mode (VME boards only). Options are:\n
+     * 0 = 64-bit aligned readout mode disabled\n
+     * 1 = 64-bit aligned readout mode enabled.\n
+     * NOTE: this bit is reserved (must be 0) in case of DT and NIM boards.
+     * @param EasyReadoutControlHelper::vMEBaseAddressRelocation
+     * VME Base Address Relocation (VME boards only). Options are:\n
+     * 0 = Address Relocation disabled (VME Base Address is set by the on-board
+     * rotary switches)\n
+     * 1 = Address Relocation enabled (VME Base Address is set by
+     * register 0xEF0C).\n
+     * NOTE: this bit is reserved (must be 0) in case of DT and NIM boards.
+     * @param EasyReadoutControlHelper::interruptReleaseMode
+     * Interrupt Release mode (VME boards only). Options are:\n
+     * 0 = Release On Register Access (RORA): this is the default mode,
+     * where interrupts are removed by disabling them either by setting
+     * VME Interrupt Level to 0 (VME Interrupts) or by setting Optical
+     * Link Interrupt Enable to 0\n
+     * 1 = Release On Acknowledge (ROAK). Interrupts are automatically
+     * disabled at the end of a VME interrupt acknowledge cycle (INTACK
+     * cycle).\n
+     * NOTE: ROAK mode is supported only for VME interrupts. ROAK mode
+     * is not supported on interrupts generated over Optical Link.
+     * NOTE: this bit is reserved (must be 0) in case of DT and NIM boards.
+     * @param EasyReadoutControlHelper::extendedBlockTransferEnable
+     * Extended Block Transfer Enable (VME boarsd only). Selects the
+     * memory interval allocated for block transfers. Options are:\n
+     * 0 = Extended Block Transfer Space is disabled, and the block
+     * transfer region is a 4kB in the 0x0000 - 0x0FFC interval\n
+     * 1 = Extended Block Transfer Space is enabled, and the block
+     * transfer is a 16 MB in the 0x00000000 - 0xFFFFFFFC interval.\n
+     * NOTE: in Extended mode, the board VME Base Address is only set
+     * via the on-board [31:28] rotary switches or bits[31:28] of
+     * register 0xEF10.\n
+     * NOTE: this register is reserved in case of DT and NIM boards.
+     */
     class EasyReadoutControlHelper : public EasyHelper
     {
     protected:
@@ -2283,6 +3051,12 @@ namespace caen {
     }; // class EasyReadoutControlHelper
 
 
+    /**
+     * @class EasyDPPReadoutControlHelper
+     * @brief For user-friendly configuration of Readout Control mask.
+     *
+     * NOTE: identical to EasyReadoutControlHelper
+     */
     class EasyDPPReadoutControlHelper : public EasyReadoutControlHelper
     {
     /* Just inherit everything else from parent class */
@@ -2293,6 +3067,33 @@ namespace caen {
     }; // class EasyDPPReadoutControlHelper
 
 
+    /**
+     * @class EasyReadoutStatusHelper
+     * @brief For user-friendly configuration of Readout Status mask.
+     *
+     * This register contains informa on related to the readout.
+     *
+     * @param EasyReadoutStatusHelper::eventReady
+     * Event Ready. Indicates if there are events stored ready for
+     * readout. Options are:\n
+     * 0 = no data ready\n
+     * 1 = event ready.
+     * @param EasyReadoutStatusHelper::outputBufferStatus
+     * Output Buffer Status. Indicates if the Output Buffer is in Full
+     * condition. Options are:\n
+     * 0 = the Output Buffer is not FULL\n
+     * 1 = the Output Buffer is FULL.
+     * @param EasyReadoutStatusHelper::busErrorSlaveTerminated
+     * Bus Error (VME boards) / Slave-Terminated (DT/NIM boards) Flag.
+     * Options are:\n
+     * 0 = no Bus Error occurred (VME boards) or no terminated transfer
+     * (DT/NIM boards)\n
+     * 1 = a Bus Error occurred (VME boards) or one transfer has been
+     * terminated by the digitizer in consequence of an unsupported
+     * register access or block transfer prematurely terminated in event
+     * aligned readout (DT/NIM).\n
+     * NOTE: this bit is reset a er register readout at 0xEF04.
+     */
     class EasyReadoutStatusHelper : public EasyHelper
     {
     protected:
@@ -2333,6 +3134,13 @@ namespace caen {
         }
     }; // class EasyReadoutStatusHelper
 
+
+    /**
+     * @class EasyDPPReadoutStatusHelper
+     * @brief For user-friendly configuration of Readout Status mask.
+     *
+     * NOTE: identical to EasyReadoutStatusHelper
+     */
     class EasyDPPReadoutStatusHelper : public EasyReadoutStatusHelper
     {
     /* Just inherit everything else from parent class */
@@ -2344,6 +3152,26 @@ namespace caen {
     }; // class EasyDPPReadoutStatusHelper
 
 
+    /**
+     * @class EasyAMCFirmwareRevisionHelper
+     * @brief For user-friendly configuration of AMC Firmware Revision.
+     *
+     * This register contains the channel FPGA (AMC) firmware revision
+     * information. The complete format is:\n
+     * Firmware Revision = X.Y (16 lower bits)\n
+     * Firmware Revision Date = Y/M/DD (16 higher bits)\n
+     * EXAMPLE 1: revision 1.03, November 12th, 2007 is 0x7B120103.\n
+     * EXAMPLE 2: revision 2.09, March 7th, 2016 is 0x03070209.\n
+     * NOTE: the nibble code for the year makes this information to roll
+     * over each 16 years.
+     *
+     * @param EasyAMCFirmwareRevisionHelper::minorRevisionNumber
+     * AMC Firmware Minor Revision Number (Y).
+     * @param EasyAMCFirmwareRevisionHelper::majorRevisionNumber
+     * AMC Firmware Major Revision Number (X).
+     * @param EasyAMCFirmwareRevisionHelper::revisionDate
+     * AMC Firmware Revision Date (Y/M/DD).
+     */
     class EasyAMCFirmwareRevisionHelper : public EasyHelper
     {
     protected:
@@ -2403,6 +3231,33 @@ namespace caen {
     }; // class EasyAMCFirmwareRevisionHelper
 
 
+    /**
+     * @class EasyDPPAMCFirmwareRevisionHelper
+     * @brief For user-friendly configuration of DPP AMC FPGA Firmware Revision.
+     *
+     * Returns the DPP firmware revision (mezzanine level).
+     * To control the mother board firmware revision see register 0x8124.\n
+     * For example: if the register value is 0xC3218303:\n
+     * - Firmware Code and Firmware Revision are 131.3\n
+     * - Build Day is 21\n
+     * - Build Month is March\n
+     * - Build Year is 2012.\n
+     * NOTE: since 2016 the build year started again from 0.
+     *
+     * @param EasyDPPAMCFirmwareRevisionHelper::firmwareRevisionNumber
+     * Firmware revision number
+     * @param EasyDPPAMCFirmwareRevisionHelper::firmwareDPPCode
+     * Firmware DPP code. Each DPP firmware has a unique code.
+     * @param EasyDPPAMCFirmwareRevisionHelper::buildDayLower
+     * Build Day (lower digit)
+     * @param EasyDPPAMCFirmwareRevisionHelper::buildDayUpper
+     * Build Day (upper digit)
+     * @param EasyDPPAMCFirmwareRevisionHelper::buildMonth
+     * Build Month. For example: 3 means March, 12 is December.
+     * @param EasyDPPAMCFirmwareRevisionHelper::buildYear
+     * Build Year. For example: 0 means 2000, 12 means 2012. NOTE: since
+     * 2016 the build year started again from 0.
+     */
     class EasyDPPAMCFirmwareRevisionHelper : public EasyHelper
     {
     protected:
@@ -2451,6 +3306,91 @@ namespace caen {
     }; // class EasyDPPAMCFirmwareRevisionHelper
 
 
+    /**
+     * @class EasyDPPAlgorithmControlHelper
+     * @brief For user-friendly configuration of DPP Algorithm Control mask.
+     *
+     * Management of the DPP algorithm features.
+     *
+     * @param EasyDPPAlgorithmControlHelper::chargeSensitivity
+     * Charge Sensitivity: defines how many pC of charge correspond to
+     * one channel of the energy spectrum. Options are:\n
+     * 000: 0.16 pC\n
+     * 001: 0.32 pC\n
+     * 010: 0.64 pC\n
+     * 011: 1.28 pC\n
+     * 100: 2.56 pC\n
+     * 101: 5.12 pC\n
+     * 110: 10.24 pC\n
+     * 111: 20.48 pC.
+     * @param EasyDPPAlgorithmControlHelper::internalTestPulse
+     * Internal Test Pulse. It is possible to enable an internal test
+     * pulse for debugging purposes. The ADC counts are replaced with
+     * the built-in pulse emulator. Options are:\n
+     * 0: disabled\n
+     * 1: enabled.
+     * @param EasyDPPAlgorithmControlHelper::testPulseRate
+     * Test Pulse Rate. Set the rate of the built-in test pulse
+     * emulator. Options are:\n
+     * 00: 1 kHz\n
+     * 01: 10 kHz\n
+     * 10: 100 kHz\n
+     * 11: 1 MHz.
+     * @param EasyDPPAlgorithmControlHelper::chargePedestal
+     * Charge Pedestal: when enabled a fixed value of 1024 is added to
+     * the charge. This feature is useful in case of energies close to
+     * zero.
+     * @param EasyDPPAlgorithmControlHelper::inputSmoothingFactor
+     * Input smoothing factor n. In case of noisy signal it is possible
+     * to apply a smoothing filter, where each sample is replaced with
+     * the mean value of n previous samples. When enabled, the trigger
+     * is evaluated on the smoothed samples, while the charge
+     * integration will be performed on the samples corresponding to the
+     * ”Analog Probe” selection (bits[13:12] of register 0x8000). In any
+     * case the output data contains the smoothed samples. Options are:\n
+     * 000: disabled\n
+     * 001: 2 samples\n
+     * 010: 4 samples\n
+     * 011: 8 samples\n
+     * 100: 16 samples\n
+     * 101: 32 samples\n
+     * 110: 64 samples\n
+     * 111: Reserved.
+     * @param EasyDPPAlgorithmControlHelper::pulsePolarity
+     * Pulse Polarity. Options are:\n
+     * 0: positive pulse\n
+     * 1: negative pulse.
+     * @param EasyDPPAlgorithmControlHelper::triggerMode
+     * Trigger Mode. Options are:\n
+     * 00: Normal mode. Each channel can self-trigger independently from
+     * the other channels.\n
+     * 01: Paired mode. Each channel of a couple ’n’ acquire the event
+     * in logic OR between its self-trigger and the self-trigger of the
+     * other channel of the couple. Couple n corresponds to channel n
+     * and channel n+2\n
+     * 10: Reserved\n
+     * 11: Reserved.
+     * @param EasyDPPAlgorithmControlHelper::baselineMean
+     * Baseline Mean. Sets the number of events for the baseline mean
+     * calculation. Options are:\n
+     * 000: Fixed: the baseline value is fixed to the value set in
+     * register 0x1n38\n
+     * 001: 4 samples\n
+     * 010: 16 samples\n
+     * 011: 64 samples.
+     * @param EasyDPPAlgorithmControlHelper::disableSelfTrigger
+     * Disable Self Trigger. If disabled, the self-trigger can be still
+     * propagated to the TRG-OUT front panel connector, though it is not
+     * used by the channel to acquire the event. Options are:\n
+     * 0: self-trigger enabled\n
+     * 1: self-trigger disabled.
+     * @param EasyDPPAlgorithmControlHelper::triggerHysteresis
+     * Trigger Hysteresis. The trigger can be inhibited during the
+     * trailing edge of a pulse, to avoid re-triggering on the pulse
+     * itself. Options are:\n
+     * 0 (default value): enabled\n
+     * 1: disabled.
+     */
     class EasyDPPAlgorithmControlHelper : public EasyHelper
     {
     protected:
@@ -4043,7 +4983,7 @@ namespace caen {
          * Firmware Revision Date = Y/M/DD (16 higher bits)\n
          * EXAMPLE 1: revision 1.03, November 12th, 2007 is 0x7B120103.\n
          * EXAMPLE 2: revision 2.09, March 7th, 2016 is 0x03070209.\n
-         * NOTE: the nibble code for the year makes this informa on to
+         * NOTE: the nibble code for the year makes this information to
          * roll over each 16 years.
          *
          * Get the low-level AMCFirmwareRevision mask in line with
@@ -4765,7 +5705,7 @@ namespace caen {
          * Firmware Revision Date = Y/M/DD (16 higher bits)\n
          * EXAMPLE 1: revision 3.08, November 12th, 2007 is 0x7B120308.\n
          * EXAMPLE 2: revision 4.09, March 7th, 2016 is 0x03070409.\n
-         * NOTE: the nibble code for the year makes this informa on to
+         * NOTE: the nibble code for the year makes this information to
          * roll over each 16 years.
          *
          * Get the low-level ROCFPGAFirmwareRevision mask in line with
