@@ -274,66 +274,7 @@ caen::SAMTriggerCountVetoParams s2samtcvp(const std::string& s)
     throw std::invalid_argument{"Invalid SAMTriggerCountVetoParams"};
 }
 
-std::string to_string(const caen::EasyAMCFirmwareRevision &eafr)
-{
-    std::stringstream ss;
-    /* Firmware Revision Date = Y/M/DD (16 higher bits)
-       EXAMPLE 1: revision 3.08, November 12th, 2007 is 0x7B120308. */
-    /* NOTE: We unwrap each of the revisionDate bytes in turn for proper
-       translation and printing */
-    ss << '{' << ui_to_string(eafr.minorRevisionNumber) << ',' << ui_to_string(eafr.majorRevisionNumber) << ',' << ui_to_string(eafr.revisionDate >> 12) << ui_to_string((eafr.revisionDate & 0x0F00) >> 8) << ui_to_string((eafr.revisionDate & 0xF0) >> 4) << ui_to_string(eafr.revisionDate & 0xF) << '}';
-    return ss.str();
-}
-
-caen::EasyAMCFirmwareRevision s2eafr(const std::string& s)
-{
-    std::regex rx("\\{(\\w+),(\\w+),(\\w+)\\}");
-    std::smatch match;
-    if (std::regex_search(s, match, rx))
-    {
-        /* NOTE: date is encoded as four individual byte integer values
-         * as described above. Thus, we unpack as int and force to uint16. */
-        return caen::EasyAMCFirmwareRevision{s2ui8(match[1]),s2ui8(match[2]),(uint16_t)s2ui(match[3])};
-    }
-    throw std::invalid_argument{"Invalid EasyAMCFirmwareRevision"};
-}
-
-std::string to_string(const caen::EasyDPPAMCFirmwareRevision &edafr)
-{
-    std::stringstream ss;
-    ss << '{' << ui_to_string(edafr.firmwareRevisionNumber) << ',' << ui_to_string(edafr.firmwareDPPCode) << ',' << ui_to_string(edafr.buildDayLower) << ',' << ui_to_string(edafr.buildDayUpper) << ',' << ui_to_string(edafr.buildMonth) << ',' << ui_to_string(edafr.buildYear) << '}';
-    return ss.str();
-}
-
-caen::EasyDPPAMCFirmwareRevision s2edafr(const std::string& s)
-{
-    std::regex rx("\\{(\\w+),(\\w+),(\\w+),(\\w+),(\\w+),(\\w+)\\}");
-    std::smatch match;
-    if (std::regex_search(s, match, rx))
-    {
-        return caen::EasyDPPAMCFirmwareRevision{s2ui8(match[1]),s2ui8(match[2]),s2ui8(match[3]),s2ui8(match[4]),s2ui8(match[5]),s2ui8(match[6])};
-    }
-    throw std::invalid_argument{"Invalid EasyDPPAMCFirmwareRevision"};
-}
-
-std::string to_string(const caen::EasyDPPAlgorithmControl &edppac)
-{
-    std::stringstream ss;
-    ss << '{' << ui_to_string(edppac.chargeSensitivity) << ',' << ui_to_string(edppac.internalTestPulse) << ',' << ui_to_string(edppac.testPulseRate) << ',' << ui_to_string(edppac.chargePedestal) << ',' << ui_to_string(edppac.inputSmoothingFactor) << ',' << ui_to_string(edppac.pulsePolarity) << ',' << ui_to_string(edppac.triggerMode) << ',' << ui_to_string(edppac.baselineMean) << ',' << ui_to_string(edppac.disableSelfTrigger) << ',' << ui_to_string(edppac.triggerHysteresis) << '}';
-    return ss.str();
-}
-
-caen::EasyDPPAlgorithmControl s2edppac(const std::string& s)
-{
-    std::regex rx("\\{(\\w+),(\\w+),(\\w+),(\\w+),(\\w+),(\\w+),(\\w+),(\\w+),(\\w+),(\\w+)\\}");
-    std::smatch match;
-    if (std::regex_search(s, match, rx))
-    {
-        return caen::EasyDPPAlgorithmControl{s2ui8(match[1]),s2ui8(match[2]),s2ui8(match[3]),s2ui8(match[4]),s2ui8(match[5]),s2ui8(match[6]),s2ui8(match[7]),s2ui8(match[8]),s2ui8(match[9]),s2ui8(match[10])};
-    }
-    throw std::invalid_argument{"Invalid EasyDPPAlgorithmControl"};
-}
-
+/* EasyXHelpers */
 std::string to_string(const caen::EasyDPPAlgorithmControlHelper &edppach)
 {
     return edppach.toConfString();
@@ -348,42 +289,6 @@ caen::EasyDPPAlgorithmControlHelper s2edppach(const std::string& s)
         return caen::EasyDPPAlgorithmControlHelper(s2ui8(match[1]),s2ui8(match[2]),s2ui8(match[3]),s2ui8(match[4]),s2ui8(match[5]),s2ui8(match[6]),s2ui8(match[7]),s2ui8(match[8]),s2ui8(match[9]),s2ui8(match[10]));
     }
     throw std::invalid_argument{"Invalid EasyDPPAlgorithmControlHelper"};
-}
-
-std::string to_string(const caen::EasyBoardConfiguration &ebc)
-{
-    std::stringstream ss;
-    ss << '{' << ui_to_string(ebc.triggerOverlapSetting) << ',' << ui_to_string(ebc.testPatternEnable) << ',' << ui_to_string(ebc.selfTriggerPolarity) << '}';
-    return ss.str();
-}
-
-caen::EasyBoardConfiguration s2ebc(const std::string& s)
-{
-    std::regex rx("\\{(\\w+),(\\w+),(\\w+)\\}");
-    std::smatch match;
-    if (std::regex_search(s, match, rx))
-    {
-        return caen::EasyBoardConfiguration{s2ui8(match[1]),s2ui8(match[2]),s2ui8(match[3])};
-    }
-    throw std::invalid_argument{"Invalid EasyBoardConfiguration"};
-}
-
-std::string to_string(const caen::EasyDPPBoardConfiguration &edbc)
-{
-    std::stringstream ss;
-    ss << '{' << ui_to_string(edbc.individualTrigger) << ',' << ui_to_string(edbc.analogProbe) << ',' << ui_to_string(edbc.waveformRecording) << ',' << ui_to_string(edbc.extrasRecording) << ',' << ui_to_string(edbc.timeStampRecording) << ',' << ui_to_string(edbc.chargeRecording) << ',' << ui_to_string(edbc.externalTriggerMode) << '}';
-    return ss.str();
-}
-
-caen::EasyDPPBoardConfiguration s2edbc(const std::string& s)
-{
-    std::regex rx("\\{(\\w+),(\\w+),(\\w+),(\\w+),(\\w+),(\\w+),(\\w+)\\}");
-    std::smatch match;
-    if (std::regex_search(s, match, rx))
-    {
-        return caen::EasyDPPBoardConfiguration{s2ui8(match[1]),s2ui8(match[2]),s2ui8(match[3]),s2ui8(match[4]),s2ui8(match[5]),s2ui8(match[6]),s2ui8(match[7])};
-    }
-    throw std::invalid_argument{"Invalid EasyDPPBoardConfiguration"};
 }
 
 std::string to_string(const caen::EasyBoardConfigurationHelper &ebch)
@@ -418,42 +323,6 @@ caen::EasyDPPBoardConfigurationHelper s2edbch(const std::string& s)
     throw std::invalid_argument{"Invalid EasyDPPBoardConfigurationHelper"};
 }
 
-std::string to_string(const caen::EasyAcquisitionControl &eac)
-{
-    std::stringstream ss;
-    ss << '{' << ui_to_string(eac.startStopMode) << ',' << ui_to_string(eac.acquisitionStartArm) << ',' << ui_to_string(eac.triggerCountingMode) << ',' << ui_to_string(eac.memoryFullModeSelection) << ',' << ui_to_string(eac.pLLRefererenceClockSource) << ',' << ui_to_string(eac.lVDSIOBusyEnable) << ',' << ui_to_string(eac.lVDSVetoEnable) << ',' << ui_to_string(eac.lVDSIORunInEnable) << '}';
-    return ss.str();
-}
-
-caen::EasyAcquisitionControl s2eac(const std::string& s)
-{
-    std::regex rx("\\{(\\w+),(\\w+),(\\w+),(\\w+),(\\w+),(\\w+),(\\w+),(\\w+)\\}");
-    std::smatch match;
-    if (std::regex_search(s, match, rx))
-    {
-        return caen::EasyAcquisitionControl{s2ui8(match[1]),s2ui8(match[2]),s2ui8(match[3]),s2ui8(match[4]),s2ui8(match[5]),s2ui8(match[6]),s2ui8(match[7]),s2ui8(match[8])};
-    }
-    throw std::invalid_argument{"Invalid EasyAcquisitionControl"};
-}
-
-std::string to_string(const caen::EasyDPPAcquisitionControl &edac)
-{
-    std::stringstream ss;
-    ss << '{' << ui_to_string(edac.startStopMode) << ',' << ui_to_string(edac.acquisitionStartArm) << ',' << ui_to_string(edac.triggerCountingMode) << ',' << ui_to_string(edac.pLLRefererenceClockSource) << ',' << ui_to_string(edac.lVDSIOBusyEnable) << ',' << ui_to_string(edac.lVDSVetoEnable) << ',' << ui_to_string(edac.lVDSIORunInEnable) << '}';
-    return ss.str();
-}
-
-caen::EasyDPPAcquisitionControl s2edac(const std::string& s)
-{
-    std::regex rx("\\{(\\w+),(\\w+),(\\w+),(\\w+),(\\w+),(\\w+),(\\w+)\\}");
-    std::smatch match;
-    if (std::regex_search(s, match, rx))
-    {
-        return caen::EasyDPPAcquisitionControl{s2ui8(match[1]),s2ui8(match[2]),s2ui8(match[3]),s2ui8(match[4]),s2ui8(match[5]),s2ui8(match[6]),s2ui8(match[7])};
-    }
-    throw std::invalid_argument{"Invalid EasyDPPAcquisitionControl"};
-}
-
 std::string to_string(const caen::EasyAcquisitionControlHelper &each)
 {
     return each.toConfString();
@@ -484,42 +353,6 @@ caen::EasyDPPAcquisitionControlHelper s2edach(const std::string& s)
         return caen::EasyDPPAcquisitionControlHelper(s2ui8(match[1]),s2ui8(match[2]),s2ui8(match[3]),s2ui8(match[4]),s2ui8(match[5]),s2ui8(match[6]),s2ui8(match[7]));
     }
     throw std::invalid_argument{"Invalid EasyDPPAcquisitionControlHelper"};
-}
-
-std::string to_string(const caen::EasyAcquisitionStatus &eas)
-{
-    std::stringstream ss;
-    ss << '{' << ui_to_string(eas.acquisitionStatus) << ',' << ui_to_string(eas.eventReady) << ',' << ui_to_string(eas.eventFull) << ',' << ui_to_string(eas.clockSource) << ',' << ui_to_string(eas.pLLBypassMode) << ',' << ui_to_string(eas.pLLUnlockDetect) << ',' << ui_to_string(eas.boardReady) << ',' << ui_to_string(eas.s_IN) << ',' << ui_to_string(eas.tRG_IN) << '}';
-    return ss.str();
-}
-
-caen::EasyAcquisitionStatus s2eas(const std::string& s)
-{
-    std::regex rx("\\{(\\w+),(\\w+),(\\w+),(\\w+),(\\w+),(\\w+),(\\w+),(\\w+),(\\w+)\\}");
-    std::smatch match;
-    if (std::regex_search(s, match, rx))
-    {
-        return caen::EasyAcquisitionStatus{s2ui8(match[1]),s2ui8(match[2]),s2ui8(match[3]),s2ui8(match[4]),s2ui8(match[5]),s2ui8(match[6]),s2ui8(match[7]),s2ui8(match[8]),s2ui8(match[9])};
-    }
-    throw std::invalid_argument{"Invalid EasyAcquisitionStatus"};
-}
-
-std::string to_string(const caen::EasyDPPAcquisitionStatus &edas)
-{
-    std::stringstream ss;
-    ss << '{' << ui_to_string(edas.acquisitionStatus) << ',' << ui_to_string(edas.eventReady) << ',' << ui_to_string(edas.eventFull) << ',' << ui_to_string(edas.clockSource) << ',' << ui_to_string(edas.pLLUnlockDetect) << ',' << ui_to_string(edas.boardReady) << ',' << ui_to_string(edas.s_IN) << ',' << ui_to_string(edas.tRG_IN) << '}';
-    return ss.str();
-}
-
-caen::EasyDPPAcquisitionStatus s2edas(const std::string& s)
-{
-    std::regex rx("\\{(\\w+),(\\w+),(\\w+),(\\w+),(\\w+),(\\w+),(\\w+),(\\w+)\\}");
-    std::smatch match;
-    if (std::regex_search(s, match, rx))
-    {
-        return caen::EasyDPPAcquisitionStatus{s2ui8(match[1]),s2ui8(match[2]),s2ui8(match[3]),s2ui8(match[4]),s2ui8(match[5]),s2ui8(match[6]),s2ui8(match[7]),s2ui8(match[8])};
-    }
-    throw std::invalid_argument{"Invalid EasyDPPAcquisitionStatus"};
 }
 
 std::string to_string(const caen::EasyAcquisitionStatusHelper &eash)
@@ -554,42 +387,6 @@ caen::EasyDPPAcquisitionStatusHelper s2edash(const std::string& s)
     throw std::invalid_argument{"Invalid EasyDPPAcquisitionStatusHelper"};
 }
 
-std::string to_string(const caen::EasyGlobalTriggerMask &egtm)
-{
-    std::stringstream ss;
-    ss << '{' << ui_to_string(egtm.groupTriggerMask) << ',' << ui_to_string(egtm.majorityCoincidenceWindow) << ',' << ui_to_string(egtm.majorityLevel) << ',' << ui_to_string(egtm.lVDSTrigger) << ',' << ui_to_string(egtm.externalTrigger) << ',' << ui_to_string(egtm.softwareTrigger) << '}';
-    return ss.str();
-}
-
-caen::EasyGlobalTriggerMask s2egtm(const std::string& s)
-{
-    std::regex rx("\\{(\\w+),(\\w+),(\\w+),(\\w+),(\\w+),(\\w+)\\}");
-    std::smatch match;
-    if (std::regex_search(s, match, rx))
-    {
-        return caen::EasyGlobalTriggerMask{s2ui8(match[1]),s2ui8(match[2]),s2ui8(match[3]),s2ui8(match[4]),s2ui8(match[5]),s2ui8(match[6])};
-    }
-    throw std::invalid_argument{"Invalid EasyGlobalTriggerMask"};
-}
-
-std::string to_string(const caen::EasyDPPGlobalTriggerMask &edgtm)
-{
-    std::stringstream ss;
-    ss << '{' << ui_to_string(edgtm.lVDSTrigger) << ',' << ui_to_string(edgtm.externalTrigger) << ',' << ui_to_string(edgtm.softwareTrigger) << '}';
-    return ss.str();
-}
-
-caen::EasyDPPGlobalTriggerMask s2edgtm(const std::string& s)
-{
-    std::regex rx("\\{(\\w+),(\\w+),(\\w+)\\}");
-    std::smatch match;
-    if (std::regex_search(s, match, rx))
-    {
-        return caen::EasyDPPGlobalTriggerMask{s2ui8(match[1]),s2ui8(match[2]),s2ui8(match[3])};
-    }
-    throw std::invalid_argument{"Invalid EasyDPPGlobalTriggerMask"};
-}
-
 std::string to_string(const caen::EasyGlobalTriggerMaskHelper &egtmh)
 {
     return egtmh.toConfString();
@@ -620,42 +417,6 @@ caen::EasyDPPGlobalTriggerMaskHelper s2edgtmh(const std::string& s)
         return caen::EasyDPPGlobalTriggerMaskHelper(s2ui8(match[1]),s2ui8(match[2]),s2ui8(match[3]));
     }
     throw std::invalid_argument{"Invalid EasyDPPGlobalTriggerMaskHelper"};
-}
-
-std::string to_string(const caen::EasyFrontPanelTRGOUTEnableMask &efptoem)
-{
-    std::stringstream ss;
-    ss << '{' << ui_to_string(efptoem.groupTriggerMask) << ',' << ui_to_string(efptoem.tRGOUTGenerationLogic) << ',' << ui_to_string(efptoem.majorityLevel) << ',' << ui_to_string(efptoem.lVDSTriggerEnable) << ',' << ui_to_string(efptoem.externalTrigger) << ',' << ui_to_string(efptoem.softwareTrigger) << '}';
-    return ss.str();
-}
-
-caen::EasyFrontPanelTRGOUTEnableMask s2efptoem(const std::string& s)
-{
-    std::regex rx("\\{(\\w+),(\\w+),(\\w+),(\\w+),(\\w+),(\\w+)\\}");
-    std::smatch match;
-    if (std::regex_search(s, match, rx))
-    {
-        return caen::EasyFrontPanelTRGOUTEnableMask{s2ui8(match[1]),s2ui8(match[2]),s2ui8(match[3]),s2ui8(match[4]),s2ui8(match[5]),s2ui8(match[6])};
-    }
-    throw std::invalid_argument{"Invalid EasyFrontPanelTRGOUTEnableMask"};
-}
-
-std::string to_string(const caen::EasyDPPFrontPanelTRGOUTEnableMask &edfptoem)
-{
-    std::stringstream ss;
-    ss << '{' << ui_to_string(edfptoem.lVDSTriggerEnable) << ',' << ui_to_string(edfptoem.externalTrigger) << ',' << ui_to_string(edfptoem.softwareTrigger) << '}';
-    return ss.str();
-}
-
-caen::EasyDPPFrontPanelTRGOUTEnableMask s2edfptoem(const std::string& s)
-{
-    std::regex rx("\\{(\\w+),(\\w+),(\\w+)\\}");
-    std::smatch match;
-    if (std::regex_search(s, match, rx))
-    {
-        return caen::EasyDPPFrontPanelTRGOUTEnableMask{s2ui8(match[1]),s2ui8(match[2]),s2ui8(match[3])};
-    }
-    throw std::invalid_argument{"Invalid EasyDPPFrontPanelTRGOUTEnableMask"};
 }
 
 std::string to_string(const caen::EasyFrontPanelTRGOUTEnableMaskHelper &efptoemh)
@@ -690,24 +451,6 @@ caen::EasyDPPFrontPanelTRGOUTEnableMaskHelper s2edfptoemh(const std::string& s)
     throw std::invalid_argument{"Invalid EasyDPPFrontPanelTRGOUTEnableMaskHelper"};
 }
 
-std::string to_string(const caen::EasyFrontPanelIOControl &efpioc)
-{
-    std::stringstream ss;
-    ss << '{' << ui_to_string(efpioc.lEMOIOElectricalLevel) << ',' << ui_to_string(efpioc.tRGOUTEnable) << ',' << ui_to_string(efpioc.lVDSIODirectionFirst) << ',' << ui_to_string(efpioc.lVDSIODirectionSecond) << ',' << ui_to_string(efpioc.lVDSIODirectionThird) << ',' << ui_to_string(efpioc.lVDSIODirectionFourth) << ',' << ui_to_string(efpioc.lVDSIOSignalConfiguration) << ',' << ui_to_string(efpioc.lVDSIONewFeaturesSelection) << ',' << ui_to_string(efpioc.lVDSIOPatternLatchMode) << ',' << ui_to_string(efpioc.tRGINControl) << ',' << ui_to_string(efpioc.tRGINMezzanines) << ',' << ui_to_string(efpioc.forceTRGOUT) << ',' << ui_to_string(efpioc.tRGOUTMode) << ',' << ui_to_string(efpioc.tRGOUTModeSelection) << ',' << ui_to_string(efpioc.motherboardVirtualProbeSelection) << ',' << ui_to_string(efpioc.motherboardVirtualProbePropagation) << ',' << ui_to_string(efpioc.patternConfiguration) << '}';
-    return ss.str();
-}
-
-caen::EasyFrontPanelIOControl s2efpioc(const std::string& s)
-{
-    std::regex rx("\\{(\\w+),(\\w+),(\\w+),(\\w+),(\\w+),(\\w+),(\\w+),(\\w+),(\\w+),(\\w+),(\\w+),(\\w+),(\\w+),(\\w+),(\\w+),(\\w+),(\\w+)\\}");
-    std::smatch match;
-    if (std::regex_search(s, match, rx))
-    {
-        return caen::EasyFrontPanelIOControl{s2ui8(match[1]),s2ui8(match[2]),s2ui8(match[3]),s2ui8(match[4]),s2ui8(match[5]),s2ui8(match[6]),s2ui8(match[7]),s2ui8(match[8]),s2ui8(match[9]),s2ui8(match[10]),s2ui8(match[11]),s2ui8(match[12]),s2ui8(match[13]),s2ui8(match[14]),s2ui8(match[15]),s2ui8(match[16]),s2ui8(match[17])};
-    }
-    throw std::invalid_argument{"Invalid EasyFrontPanelIOControl"};
-}
-
 std::string to_string(const caen::EasyFrontPanelIOControlHelper &efpioch)
 {
     return efpioch.toConfString();
@@ -740,30 +483,6 @@ caen::EasyDPPFrontPanelIOControlHelper s2edfpioch(const std::string& s)
     throw std::invalid_argument{"Invalid EasyDPPFrontPanelIOControlHelper"};
 }
 
-std::string to_string(const caen::EasyROCFPGAFirmwareRevision &erffr)
-{
-    std::stringstream ss;
-    /* Firmware Revision Date = Y/M/DD (16 higher bits)
-       EXAMPLE 1: revision 3.08, November 12th, 2007 is 0x7B120308. */
-    /* NOTE: We unwrap each of the revisionDate bytes in turn for proper
-       translation and printing */
-    ss << '{' << ui_to_string(erffr.minorRevisionNumber) << ',' << ui_to_string(erffr.majorRevisionNumber) << ',' << ui_to_string(erffr.revisionDate >> 12) << ui_to_string((erffr.revisionDate & 0x0F00) >> 8) << ui_to_string((erffr.revisionDate & 0xF0) >> 4) << ui_to_string(erffr.revisionDate & 0xF) << '}';
-    return ss.str();
-}
-
-caen::EasyROCFPGAFirmwareRevision s2erffr(const std::string& s)
-{
-    std::regex rx("\\{(\\w+),(\\w+),(\\w+)\\}");
-    std::smatch match;
-    if (std::regex_search(s, match, rx))
-    {
-        /* NOTE: date is encoded as four individual byte integer values
-         * as described above. Thus, we unpack as int and force to uint16. */
-        return caen::EasyROCFPGAFirmwareRevision{s2ui8(match[1]),s2ui8(match[2]),(uint16_t)s2ui(match[3])};
-    }
-    throw std::invalid_argument{"Invalid EasyROCFPGAFirmwareRevision"};
-}
-
 std::string to_string(const caen::EasyROCFPGAFirmwareRevisionHelper &erffrh)
 {
     /* NOTE: we use a simpler format for revisionDate internally so we
@@ -778,7 +497,7 @@ std::string to_string(const caen::EasyROCFPGAFirmwareRevisionHelper &erffrh)
         return ss.str();
     }
     std::cerr << "EasyROCFPGAFirmwareRevisionHelper failed conversion" << std::endl;
-    throw std::invalid_argument{"Invalid EasyDPPBoardConfiguration"};
+    throw std::invalid_argument{"Invalid EasyROCFPGAFirmwareRevisionHelper"};
 }
 
 caen::EasyROCFPGAFirmwareRevisionHelper s2erffrh(const std::string& s)
@@ -809,7 +528,7 @@ std::string to_string(const caen::EasyDPPROCFPGAFirmwareRevisionHelper &edrffrh)
         return ss.str();
     }
     std::cerr << "EasyDPPROCFPGAFirmwareRevisionHelper failed conversion" << std::endl;
-    throw std::invalid_argument{"Invalid EasyDPPBoardConfiguration"};
+    throw std::invalid_argument{"Invalid EasyDPPROCFPGAFirmwareRevisionHelper"};
 }
 
 caen::EasyDPPROCFPGAFirmwareRevisionHelper s2edrffrh(const std::string& s)
@@ -824,24 +543,6 @@ caen::EasyDPPROCFPGAFirmwareRevisionHelper s2edrffrh(const std::string& s)
         return caen::EasyDPPROCFPGAFirmwareRevisionHelper(s2ui8(match[1]),s2ui8(match[2]),s2ui16(match[3]));
     }
     throw std::invalid_argument{"Invalid EasyDPPROCFPGAFirmwareRevisionHelper"};
-}
-
-std::string to_string(const caen::EasyFanSpeedControl &efsc)
-{
-    std::stringstream ss;
-    ss << '{' << ui_to_string(efsc.fanSpeedMode) << '}';
-    return ss.str();
-}
-
-caen::EasyFanSpeedControl s2efsc(const std::string& s)
-{
-    std::regex rx("\\{(\\w+)\\}");
-    std::smatch match;
-    if (std::regex_search(s, match, rx))
-    {
-        return caen::EasyFanSpeedControl{s2ui8(match[1])};
-    }
-    throw std::invalid_argument{"Invalid EasyFanSpeedControl"};
 }
 
 std::string to_string(const caen::EasyFanSpeedControlHelper &efsch)
@@ -953,7 +654,7 @@ std::string to_string(const caen::EasyAMCFirmwareRevisionHelper &eafrh)
         ss << '{' << match[1] << "," << match[2] << "," << match[6] << match[5] << match[4] << match[3] << "} # {" << match[7] << "," << match[8] << "," << "revisionDate}";
         return ss.str();
     }
-    throw std::invalid_argument{"Invalid EasyDPPBoardConfiguration"};
+    throw std::invalid_argument{"Invalid EasyAMCFirmwareRevisionHelper"};
 }
 
 caen::EasyAMCFirmwareRevisionHelper s2eafrh(const std::string& s)
