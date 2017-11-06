@@ -327,17 +327,17 @@ namespace caen {
 
 
     /**
-     * @class EasyHelper
+     * @class EasyBase
      * @brief For user-friendly configuration of various bit masks.
      *
      * Base class to handle all the translation between named variables
      * and bit masks. All actual such mask helpers should just inherit
      * from it and implment the specific variable names and specifications.
      *
-     * @param EasyHelper::mask
+     * @param EasyBase::mask
      * Initialize from bit mask
      */
-    class EasyHelper
+    class EasyBase
     {
     protected:
         /* We save variables in a standard map using boost::any values
@@ -416,18 +416,18 @@ namespace caen {
             autoInit(mask);
         };
     public:
-        virtual const std::string getClassName() const { return "EasyHelper"; };
-        EasyHelper()
+        virtual const std::string getClassName() const { return "EasyBase"; };
+        EasyBase()
         {
             /* Default constructor - do nothing */
             construct();
         }
-        EasyHelper(const uint32_t mask)
+        EasyBase(const uint32_t mask)
         {
             /* Construct from bit mask - override in children if needed */
             constructFromMask(mask);
         }
-        ~EasyHelper()
+        ~EasyBase()
         {
             /* Do nothing */
         }
@@ -524,17 +524,17 @@ namespace caen {
             ss << toConfValueString() << " # " << toConfHelpString(getClassName());
             return ss.str();
         }
-    }; // class EasyHelper
+    }; // class EasyBase
 
 
     /**
-     * @class EasyBoardConfigurationHelper
+     * @class EasyBoardConfiguration
      * @brief For user-friendly configuration of Board Configuration mask.
      *
      * This register contains general settings for the board
      * configuration.
      *
-     * @param EasyBoardConfigurationHelper::triggerOverlapSetting
+     * @param EasyBoardConfiguration::triggerOverlapSetting
      * Trigger Overlap Setting (default value is 0).\n
      * When two acquisition windows are overlapped, the second trigger
      * can be either accepted or rejected. Options are:\n
@@ -544,13 +544,13 @@ namespace caen {
      * is prematurely closed by the arrival of a new trigger).\n
      * NOTE: it is suggested to keep this bit cleared in case of using a
      * DPP firmware.
-     * @param EasyBoardConfigurationHelper::testPatternEnable
+     * @param EasyBoardConfiguration::testPatternEnable
      * Test Pattern Enable (default value is 0).\n
      * This bit enables a triangular (0<-->3FFF) test wave to be
      * provided at the ADCs input for debug purposes. Options are:\n
      * 0 = disabled\n
      * 1 = enabled.
-     * @param EasyBoardConfigurationHelper::selfTriggerPolarity
+     * @param EasyBoardConfiguration::selfTriggerPolarity
      * Self-trigger Polarity (default value is 0).\n
      * Options are:\n
      * 0 = Positive (the self-trigger is generated upon the input pulse
@@ -558,7 +558,7 @@ namespace caen {
      * 1 = Negative (the self-trigger is generated upon the input pulse
      * underthreshold).
      */
-    class EasyBoardConfigurationHelper : public EasyHelper
+    class EasyBoardConfiguration : public EasyBase
     {
     protected:
         /* Shared base since one constructor cannot reuse the other */
@@ -587,54 +587,54 @@ namespace caen {
             };
         };
     public:
-        virtual const std::string getClassName() const override { return "EasyBoardConfigurationHelper"; };
+        virtual const std::string getClassName() const override { return "EasyBoardConfiguration"; };
         /* Construct using default values from docs */
-        EasyBoardConfigurationHelper(const uint8_t triggerOverlapSetting, const uint8_t testPatternEnable, const uint8_t selfTriggerPolarity)
+        EasyBoardConfiguration(const uint8_t triggerOverlapSetting, const uint8_t testPatternEnable, const uint8_t selfTriggerPolarity)
         {
             construct(triggerOverlapSetting, testPatternEnable, selfTriggerPolarity);
         }
         /* Construct from low-level bit mask in line with docs */
-        EasyBoardConfigurationHelper(const uint32_t mask)
+        EasyBoardConfiguration(const uint32_t mask)
         {
             constructFromMask(mask);
         }
-    }; // class EasyBoardConfigurationHelper
+    }; // class EasyBoardConfiguration
 
 
     /**
-     * @class EasyDPPBoardConfigurationHelper
+     * @class EasyDPPBoardConfiguration
      * @brief For user-friendly configuration of DPP Board Configuration mask.
      *
      * This register contains general settings for the DPP board
      * configuration.
      *
-     * @param EasyDPPBoardConfigurationHelper::individualTrigger
+     * @param EasyDPPBoardConfiguration::individualTrigger
      * Individual trigger: must be 1
-     * @param EasyDPPBoardConfigurationHelper::analogProbe
+     * @param EasyDPPBoardConfiguration::analogProbe
      * Analog Probe: Selects which signal is associated to the Analog
      * trace in the readout data. Options are:\n
      * 00: Input\n
      * 01: Smoothed Input\n
      * 10: Baseline\n
      * 11: Reserved.
-     * @param EasyDPPBoardConfigurationHelper::waveformRecording
+     * @param EasyDPPBoardConfiguration::waveformRecording
      * Waveform Recording: enables the data recording of the
      * waveform. The user must define the number of samples to be saved
      * in the Record Length 0x1n24 register. Options are:\n
      * 0: disabled\n
      * 1: enabled.
-     * @param EasyDPPBoardConfigurationHelper::extrasRecording
+     * @param EasyDPPBoardConfiguration::extrasRecording
      * Extras Recording: when enabled the EXTRAS word is saved into the
      * event data. Refer to the ”Channel Aggregate Data Format” chapter
      * of the DPP User Manual for more details about the EXTRAS
      * word. Options are:\n
      * 0: disabled\n
      * 1: enabled.
-     * @param EasyDPPBoardConfigurationHelper::timeStampRecording
+     * @param EasyDPPBoardConfiguration::timeStampRecording
      * Time Stamp Recording: must be 1
-     * @param EasyDPPBoardConfigurationHelper::chargeRecording
+     * @param EasyDPPBoardConfiguration::chargeRecording
      * Charge Recording: must be 1
-     * @param EasyDPPBoardConfigurationHelper::externalTriggerMode
+     * @param EasyDPPBoardConfiguration::externalTriggerMode
      * External Trigger mode. The external trigger mode on TRG-IN
      * connector can be used according to the following options:\n
      * 00: Trigger\n
@@ -642,7 +642,7 @@ namespace caen {
      * 10: An -Veto\n
      * 11: Reserved.
      */
-    class EasyDPPBoardConfigurationHelper : public EasyHelper
+    class EasyDPPBoardConfiguration : public EasyBase
     {
     protected:
         /* Shared base since one constructor cannot reuse the other */
@@ -681,27 +681,27 @@ namespace caen {
             };
         };
     public:
-        virtual const std::string getClassName() const override { return "EasyDPPBoardConfigurationHelper"; };
+        virtual const std::string getClassName() const override { return "EasyDPPBoardConfiguration"; };
         /* Construct using default values from docs */
-        EasyDPPBoardConfigurationHelper(const uint8_t individualTrigger, const uint8_t analogProbe, const uint8_t waveformRecording, const uint8_t extrasRecording, const uint8_t timeStampRecording, const uint8_t chargeRecording, const uint8_t externalTriggerMode)
+        EasyDPPBoardConfiguration(const uint8_t individualTrigger, const uint8_t analogProbe, const uint8_t waveformRecording, const uint8_t extrasRecording, const uint8_t timeStampRecording, const uint8_t chargeRecording, const uint8_t externalTriggerMode)
         {
             construct(individualTrigger, analogProbe, waveformRecording, extrasRecording, timeStampRecording, chargeRecording, externalTriggerMode);
         }
         /* Construct from low-level bit mask in line with docs */
-        EasyDPPBoardConfigurationHelper(const uint32_t mask)
+        EasyDPPBoardConfiguration(const uint32_t mask)
         {
             constructFromMask(mask);
         }
-    }; // class EasyDPPBoardConfigurationHelper
+    }; // class EasyDPPBoardConfiguration
 
 
     /**
-     * @class EasyAcquisitionControlHelper
+     * @class EasyAcquisitionControl
      * @brief For user-friendly configuration of Acquisition Control mask.
      *
      * This register manages the acquisition settings.
      *
-     * @param EasyAcquisitionControlHelper::startStopMode
+     * @param EasyAcquisitionControl::startStopMode
      * Start/Stop Mode Selection (default value is 00). Options are:\n
      * 00 = SW CONTROLLED. Start/stop of the run takes place on software
      * command by setting/resetting bit[2] of this register\n
@@ -717,7 +717,7 @@ namespace caen {
      * 11 = LVDS CONTROLLED (VME only). It is like option 01 but using
      * LVDS (RUN) instead of S-IN.\n
      * The LVDS can be set using registers 0x811C and 0x81A0.
-     * @param EasyAcquisitionControlHelper::acquisitionStartArm
+     * @param EasyAcquisitionControl::acquisitionStartArm
      * Acquisition Start/Arm (default value is 0).\n
      * When bits[1:0] = 00, this bit acts as a Run Start/Stop. When
      * bits[1:0] = 01, 10, 11, this bit arms the acquisition and the
@@ -725,26 +725,26 @@ namespace caen {
      * are:\n
      * 0 = Acquisition STOP (if bits[1:0]=00); Acquisition DISARMED (others)\n
      * 1 = Acquisition RUN (if bits[1:0]=00); Acquisition ARMED (others).
-     * @param EasyAcquisitionControlHelper::triggerCountingMode
+     * @param EasyAcquisitionControl::triggerCountingMode
      * Trigger Counting Mode (default value is 0). Through this bit it
      * is possible to count the reading requests from channels to mother
      * board. The reading requests may come from the following options:\n
      * 0 = accepted triggers from combination of channels\n
      * 1 = triggers from combination of channels, in addition to TRG-IN
      * and SW TRG.
-     * @param EasyAcquisitionControlHelper::memoryFullModeSelection
+     * @param EasyAcquisitionControl::memoryFullModeSelection
      * Memory Full Mode Selection (default value is 0). Options are:\n
      * 0 = NORMAL. The board is full whenever all buffers are full\n
      * 1 = ONE BUFFER FREE. The board is full whenever Nb-1 buffers are
      * full, where Nb is the overall number of buffers in which the
      * channel memory is divided.
-     * @param EasyAcquisitionControlHelper::pLLRefererenceClockSource
+     * @param EasyAcquisitionControl::pLLRefererenceClockSource
      * PLL Reference Clock Source (Desktop/NIM only). Default value is 0.\n
      * Options are:\n
      * 0 = internal oscillator (50 MHz)\n
      * 1 = external clock from front panel CLK-IN connector.\n
      * NOTE: this bit is reserved in case of VME boards.
-     * @param EasyAcquisitionControlHelper::lVDSIOBusyEnable
+     * @param EasyAcquisitionControl::lVDSIOBusyEnable
      * LVDS I/O Busy Enable (VME only). Default value is 0.\n
      * The LVDS I/Os can be programmed to accept a Busy signal as input,
      * or to propagate it as output. Options are:\n
@@ -753,7 +753,7 @@ namespace caen {
      * NOTE: this bit is supported only by VME boards and meaningful
      * only if the LVDS new features are enabled (bit[8]=1 of register
      * 0x811C). Register 0x81A0 should also be configured for nBusy/nVeto.
-     * @param EasyAcquisitionControlHelper::lVDSVetoEnable
+     * @param EasyAcquisitionControl::lVDSVetoEnable
      * LVDS I/O Veto Enable (VME only). Default value is 0.\n
      * The LVDS I/Os can be programmed to accept a Veto signal as input,
      * or to transfer it as output. Options are:\n
@@ -762,7 +762,7 @@ namespace caen {
      * NOTE: this bit is supported only by VME boards and meaningful
      * only if the LVDS new features are enabled (bit[8]=1 of register
      * 0x811C). Register 0x81A0 should also be configured for nBusy/nVeto.
-     * @param EasyAcquisitionControlHelper::lVDSIORunInEnable
+     * @param EasyAcquisitionControl::lVDSIORunInEnable
      * LVDS I/O RunIn Enable Mode (VME only). Default value is 0.\n
      * The LVDS I/Os can be programmed to accept a RunIn signal as
      * input, or to transfer it as output. Options are:\n
@@ -772,7 +772,7 @@ namespace caen {
      * only if the LVDS new features are enabled (bit[8]=1 of register
      * 0x811C). Register 0x81A0 must also be configured for nBusy/nVeto.
      */
-    class EasyAcquisitionControlHelper : public EasyHelper
+    class EasyAcquisitionControl : public EasyBase
     {
     protected:
         /* Shared base since one constructor cannot reuse the other */
@@ -810,27 +810,27 @@ namespace caen {
             };
         };
     public:
-        virtual const std::string getClassName() const override { return "EasyAcquisitionControlHelper"; };
+        virtual const std::string getClassName() const override { return "EasyAcquisitionControl"; };
         /* Construct using default values from docs */
-        EasyAcquisitionControlHelper(const uint8_t startStopMode, const uint8_t acquisitionStartArm, const uint8_t triggerCountingMode, const uint8_t memoryFullModeSelection, const uint8_t pLLRefererenceClockSource, const uint8_t lVDSIOBusyEnable, const uint8_t lVDSVetoEnable, const uint8_t lVDSIORunInEnable)
+        EasyAcquisitionControl(const uint8_t startStopMode, const uint8_t acquisitionStartArm, const uint8_t triggerCountingMode, const uint8_t memoryFullModeSelection, const uint8_t pLLRefererenceClockSource, const uint8_t lVDSIOBusyEnable, const uint8_t lVDSVetoEnable, const uint8_t lVDSIORunInEnable)
         {
             construct(startStopMode, acquisitionStartArm, triggerCountingMode, memoryFullModeSelection, pLLRefererenceClockSource, lVDSIOBusyEnable, lVDSVetoEnable, lVDSIORunInEnable);
         }
         /* Construct from low-level bit mask in line with docs */
-        EasyAcquisitionControlHelper(const uint32_t mask)
+        EasyAcquisitionControl(const uint32_t mask)
         {
             constructFromMask(mask);
         }
-    }; // class EasyAcquisitionControlHelper
+    }; // class EasyAcquisitionControl
 
 
     /**
-     * @class EasyDPPAcquisitionControlHelper
+     * @class EasyDPPAcquisitionControl
      * @brief For user-friendly configuration of Acquisition Control mask.
      *
      * This register manages the acquisition settings.
      *
-     * @param EasyDPPAcquisitionControlHelper::startStopMode
+     * @param EasyDPPAcquisitionControl::startStopMode
      * Start/Stop Mode Selection (default value is 00). Options are:\n
      * 00 = SW CONTROLLED. Start/stop of the run takes place on software
      * command by setting/resetting bit[2] of this register\n
@@ -846,7 +846,7 @@ namespace caen {
      * 11 = LVDS CONTROLLED (VME only). It is like option 01 but using
      * LVDS (RUN) instead of S-IN.\n
      * The LVDS can be set using registers 0x811C and 0x81A0.
-     * @param EasyDPPAcquisitionControlHelper::acquisitionStartArm
+     * @param EasyDPPAcquisitionControl::acquisitionStartArm
      * Acquisition Start/Arm (default value is 0).\n
      * When bits[1:0] = 00, this bit acts as a Run Start/Stop. When
      * bits[1:0] = 01, 10, 11, this bit arms the acquisition and the
@@ -854,20 +854,20 @@ namespace caen {
      * are:\n
      * 0 = Acquisition STOP (if bits[1:0]=00); Acquisition DISARMED (others)\n
      * 1 = Acquisition RUN (if bits[1:0]=00); Acquisition ARMED (others).
-     * @param EasyDPPAcquisitionControlHelper::triggerCountingMode
+     * @param EasyDPPAcquisitionControl::triggerCountingMode
      * Trigger Counting Mode (default value is 0). Through this bit it
      * is possible to count the reading requests from channels to mother
      * board. The reading requests may come from the following options:\n
      * 0 = accepted triggers from combination of channels\n
      * 1 = triggers from combination of channels, in addition to TRG-IN
      * and SW TRG.
-     * @param EasyDPPAcquisitionControlHelper::pLLRefererenceClockSource
+     * @param EasyDPPAcquisitionControl::pLLRefererenceClockSource
      * PLL Reference Clock Source (Desktop/NIM only). Default value is 0.\n
      * Options are:\n
      * 0 = internal oscillator (50 MHz)\n
      * 1 = external clock from front panel CLK-IN connector.\n
      * NOTE: this bit is reserved in case of VME boards.
-     * @param EasyDPPAcquisitionControlHelper::lVDSIOBusyEnable
+     * @param EasyDPPAcquisitionControl::lVDSIOBusyEnable
      * LVDS I/O Busy Enable (VME only). Default value is 0.\n
      * The LVDS I/Os can be programmed to accept a Busy signal as input,
      * or to propagate it as output. Options are:\n
@@ -876,7 +876,7 @@ namespace caen {
      * NOTE: this bit is supported only by VME boards and meaningful
      * only if the LVDS new features are enabled (bit[8]=1 of register
      * 0x811C). Register 0x81A0 should also be configured for nBusy/nVeto.
-     * @param EasyDPPAcquisitionControlHelper::lVDSVetoEnable
+     * @param EasyDPPAcquisitionControl::lVDSVetoEnable
      * LVDS I/O Veto Enable (VME only). Default value is 0.\n
      * The LVDS I/Os can be programmed to accept a Veto signal as input,
      * or to transfer it as output. Options are:\n
@@ -885,7 +885,7 @@ namespace caen {
      * NOTE: this bit is supported only by VME boards and meaningful
      * only if the LVDS new features are enabled (bit[8]=1 of register
      * 0x811C). Register 0x81A0 should also be configured for nBusy/nVeto.
-     * @param EasyDPPAcquisitionControlHelper::lVDSIORunInEnable
+     * @param EasyDPPAcquisitionControl::lVDSIORunInEnable
      * LVDS I/O RunIn Enable Mode (VME only). Default value is 0.\n
      * The LVDS I/Os can be programmed to accept a RunIn signal as
      * input, or to transfer it as output. Options are:\n
@@ -895,7 +895,7 @@ namespace caen {
      * only if the LVDS new features are enabled (bit[8]=1 of register
      * 0x811C). Register 0x81A0 must also be configured for nBusy/nVeto.
      */
-    class EasyDPPAcquisitionControlHelper : public EasyHelper
+    class EasyDPPAcquisitionControl : public EasyBase
     {
     protected:
         /* Shared base since one constructor cannot reuse the other */
@@ -931,50 +931,50 @@ namespace caen {
             };
         };
     public:
-        virtual const std::string getClassName() const override { return "EasyDPPAcquisitionControlHelper"; };
+        virtual const std::string getClassName() const override { return "EasyDPPAcquisitionControl"; };
         /* Construct using default values from docs */
-        EasyDPPAcquisitionControlHelper(const uint8_t startStopMode, const uint8_t acquisitionStartArm, const uint8_t triggerCountingMode, const uint8_t pLLRefererenceClockSource, const uint8_t lVDSIOBusyEnable, const uint8_t lVDSVetoEnable, const uint8_t lVDSIORunInEnable)
+        EasyDPPAcquisitionControl(const uint8_t startStopMode, const uint8_t acquisitionStartArm, const uint8_t triggerCountingMode, const uint8_t pLLRefererenceClockSource, const uint8_t lVDSIOBusyEnable, const uint8_t lVDSVetoEnable, const uint8_t lVDSIORunInEnable)
         {
             construct(startStopMode, acquisitionStartArm, triggerCountingMode, pLLRefererenceClockSource, lVDSIOBusyEnable, lVDSVetoEnable, lVDSIORunInEnable);
         }
         /* Construct from low-level bit mask in line with docs */
-        EasyDPPAcquisitionControlHelper(const uint32_t mask)
+        EasyDPPAcquisitionControl(const uint32_t mask)
         {
             constructFromMask(mask);
         }
-    }; // class EasyDPPAcquisitionControlHelper
+    }; // class EasyDPPAcquisitionControl
 
 
     /**
-     * @class EasyAcquisitionStatusHelper
+     * @class EasyAcquisitionStatus
      * @brief For user-friendly configuration of Acquisition Status mask.
      *
      * This register monitors a set of conditions related to the
      * acquisition status.
      *
-     * @param EasyAcquisitionStatusHelper::acquisitionStatus
+     * @param EasyAcquisitionStatus::acquisitionStatus
      * Acquisition Status. It reflects the status of the acquisition and
      * drivers the front panel ’RUN’ LED. Options are:\n
      * 0 = acquisition is stopped (’RUN’ is off)\n
      * 1 = acquisition is running (’RUN’ lits).
-     * @param EasyAcquisitionStatusHelper::eventReady
+     * @param EasyAcquisitionStatus::eventReady
      * Event Ready. Indicates if any events are available for
      * readout. Options are:\n
      * 0 = no event is available for readout\n
      * 1 = at least one event is available for readout.\n
      * NOTE: the status of this bit must be considered when managing the
      * readout from the digitizer.
-     * @param EasyAcquisitionStatusHelper::eventFull
+     * @param EasyAcquisitionStatus::eventFull
      * Event Full. Indicates if at least one channel has reached the
      * FULL condition. Options are:\n
      * 0 = no channel has reached the FULL condition\n
      * 1 = the maximum number of events to be read is reached.
-     * @param EasyAcquisitionStatusHelper::clockSource
+     * @param EasyAcquisitionStatus::clockSource
      * Clock Source. Indicates the clock source status. Options are:\n
      * 0 = internal (PLL uses the internal 50 MHz oscillator as reference)\n
      * 1 = external (PLL uses the external clock on CLK-IN connector as
      * reference).
-     * @param EasyAcquisitionStatusHelper::pLLBypassMode
+     * @param EasyAcquisitionStatus::pLLBypassMode
      * PLL Bypass Mode. This bit drives the front panel 'PLL BYPS' LED.\n
      * Options are:\n
      * 0 = PLL bypass mode is not ac ve ('PLL BYPS' is off)\n
@@ -982,7 +982,7 @@ namespace caen {
      * drives the clock distribution chain ('PLL BYPS' lits).\n
      * WARNING: before operating in PLL Bypass Mode, it is recommended
      * to contact CAEN for feasibility.
-     * @param EasyAcquisitionStatusHelper::pLLUnlockDetect
+     * @param EasyAcquisitionStatus::pLLUnlockDetect
      * PLL Unlock Detect. This bit flags a PLL unlock condition. Options
      * are:\n
      * 0 = PLL has had an unlock condition since the last register read
@@ -990,7 +990,7 @@ namespace caen {
      * 1 = PLL has not had any unlock condition since the last register
      * read access.\n
      * NOTE: flag can be restored to 1 via read access to register 0xEF04.
-     * @param EasyAcquisitionStatusHelper::boardReady
+     * @param EasyAcquisitionStatus::boardReady
      * Board Ready. This flag indicates if the board is ready for
      * acquisition (PLL and ADCs are correctly synchronised). Options
      * are:\n
@@ -1000,14 +1000,14 @@ namespace caen {
      * that the board will enter immediately in run mode a er the RUN
      * mode setting; otherwise, a latency between RUN mode setting and
      * Acquisition start might occur.
-     * @param EasyAcquisitionStatusHelper::s_IN
+     * @param EasyAcquisitionStatus::s_IN
      * S-IN (VME boards) or GPI (DT/NIM boards) Status. Reads the
      * current logical level on S-IN (GPI) front panel connector.
-     * @param EasyAcquisitionStatusHelper::tRG_IN
+     * @param EasyAcquisitionStatus::tRG_IN
      * TRG-IN Status. Reads the current logical level on TRG-IN front
      * panel connector.
      */
-    class EasyAcquisitionStatusHelper : public EasyHelper
+    class EasyAcquisitionStatus : public EasyBase
     {
     protected:
         /* Shared base since one constructor cannot reuse the other */
@@ -1048,50 +1048,50 @@ namespace caen {
             };
         };
     public:
-        virtual const std::string getClassName() const override { return "EasyAcquisitionStatusHelper"; };
+        virtual const std::string getClassName() const override { return "EasyAcquisitionStatus"; };
         /* Construct using default values from docs */
-        EasyAcquisitionStatusHelper(const uint8_t acquisitionStatus, const uint8_t eventReady, const uint8_t eventFull, const uint8_t clockSource, const uint8_t pLLBypassMode, const uint8_t pLLUnlockDetect, const uint8_t boardReady, const uint8_t s_IN, const uint8_t tRG_IN)
+        EasyAcquisitionStatus(const uint8_t acquisitionStatus, const uint8_t eventReady, const uint8_t eventFull, const uint8_t clockSource, const uint8_t pLLBypassMode, const uint8_t pLLUnlockDetect, const uint8_t boardReady, const uint8_t s_IN, const uint8_t tRG_IN)
         {
             construct(acquisitionStatus, eventReady, eventFull, clockSource, pLLBypassMode, pLLUnlockDetect, boardReady, s_IN, tRG_IN);
         }
         /* Construct from low-level bit mask in line with docs */
-        EasyAcquisitionStatusHelper(const uint32_t mask)
+        EasyAcquisitionStatus(const uint32_t mask)
         {
             constructFromMask(mask);
         }
-    }; // class EasyAcquisitionStatusHelper
+    }; // class EasyAcquisitionStatus
 
 
     /**
-     * @class EasyDPPAcquisitionStatusHelper
+     * @class EasyDPPAcquisitionStatus
      * @brief For user-friendly configuration of Acquisition Status mask.
      *
      * This register monitors a set of conditions related to the
      * acquisition status.
      *
-     * @param EasyDPPAcquisitionStatusHelper::acquisitionStatus
+     * @param EasyDPPAcquisitionStatus::acquisitionStatus
      * Acquisition Status. It reflects the status of the acquisition and
      * drivers the front panel ’RUN’ LED. Options are:\n
      * 0 = acquisition is stopped (’RUN’ is off)\n
      * 1 = acquisition is running (’RUN’ lits).
-     * @param EasyDPPAcquisitionStatusHelper::eventReady
+     * @param EasyDPPAcquisitionStatus::eventReady
      * Event Ready. Indicates if any events are available for
      * readout. Options are:\n
      * 0 = no event is available for readout\n
      * 1 = at least one event is available for readout.\n
      * NOTE: the status of this bit must be considered when managing the
      * readout from the digitizer.
-     * @param EasyDPPAcquisitionStatusHelper::eventFull
+     * @param EasyDPPAcquisitionStatus::eventFull
      * Event Full. Indicates if at least one channel has reached the
      * FULL condition. Options are:\n
      * 0 = no channel has reached the FULL condition\n
      * 1 = the maximum number of events to be read is reached.
-     * @param EasyDPPAcquisitionStatusHelper::clockSource
+     * @param EasyDPPAcquisitionStatus::clockSource
      * Clock Source. Indicates the clock source status. Options are:\n
      * 0 = internal (PLL uses the internal 50 MHz oscillator as reference)\n
      * 1 = external (PLL uses the external clock on CLK-IN connector as
      * reference).
-     * @param EasyDPPAcquisitionStatusHelper::pLLUnlockDetect
+     * @param EasyDPPAcquisitionStatus::pLLUnlockDetect
      * PLL Unlock Detect. This bit flags a PLL unlock condition. Options
      * are:\n
      * 0 = PLL has had an unlock condition since the last register read
@@ -1099,7 +1099,7 @@ namespace caen {
      * 1 = PLL has not had any unlock condition since the last register
      * read access.\n
      * NOTE: flag can be restored to 1 via read access to register 0xEF04.
-     * @param EasyDPPAcquisitionStatusHelper::boardReady
+     * @param EasyDPPAcquisitionStatus::boardReady
      * Board Ready. This flag indicates if the board is ready for
      * acquisition (PLL and ADCs are correctly synchronised). Options
      * are:\n
@@ -1109,14 +1109,14 @@ namespace caen {
      * that the board will enter immediately in run mode a er the RUN
      * mode setting; otherwise, a latency between RUN mode setting and
      * Acquisition start might occur.
-     * @param EasyDPPAcquisitionStatusHelper::s_IN
+     * @param EasyDPPAcquisitionStatus::s_IN
      * S-IN (VME boards) or GPI (DT/NIM boards) Status. Reads the
      * current logical level on S-IN (GPI) front panel connector.
-     * @param EasyDPPAcquisitionStatusHelper::tRG_IN
+     * @param EasyDPPAcquisitionStatus::tRG_IN
      * TRG-IN Status. Reads the current logical level on TRG-IN front
      * panel connector.
      */
-    class EasyDPPAcquisitionStatusHelper : public EasyHelper
+    class EasyDPPAcquisitionStatus : public EasyBase
     {
     protected:
         /* Shared base since one constructor cannot reuse the other */
@@ -1154,28 +1154,28 @@ namespace caen {
             };
         };
     public:
-        virtual const std::string getClassName() const override { return "EasyDPPAcquisitionStatusHelper"; };
+        virtual const std::string getClassName() const override { return "EasyDPPAcquisitionStatus"; };
         /* Construct using default values from docs */
-        EasyDPPAcquisitionStatusHelper(const uint8_t acquisitionStatus, const uint8_t eventReady, const uint8_t eventFull, const uint8_t clockSource, const uint8_t pLLUnlockDetect, const uint8_t boardReady, const uint8_t s_IN, const uint8_t tRG_IN)
+        EasyDPPAcquisitionStatus(const uint8_t acquisitionStatus, const uint8_t eventReady, const uint8_t eventFull, const uint8_t clockSource, const uint8_t pLLUnlockDetect, const uint8_t boardReady, const uint8_t s_IN, const uint8_t tRG_IN)
         {
             construct(acquisitionStatus, eventReady, eventFull, clockSource, pLLUnlockDetect, boardReady, s_IN, tRG_IN);
         }
         /* Construct from low-level bit mask in line with docs */
-        EasyDPPAcquisitionStatusHelper(const uint32_t mask)
+        EasyDPPAcquisitionStatus(const uint32_t mask)
         {
             constructFromMask(mask);
         }
-    }; // class EasyDPPAcquisitionStatusHelper
+    }; // class EasyDPPAcquisitionStatus
 
 
     /**
-     * @class EasyGlobalTriggerMaskHelper
+     * @class EasyGlobalTriggerMask
      * @brief For user-friendly configuration of Global Trigger Mask.
      *
      * This register sets which signal can contribute to the global
      * trigger generation.
      *
-     * @param EasyGlobalTriggerMaskHelper::groupTriggerMask
+     * @param EasyGlobalTriggerMask::groupTriggerMask
      * Bit n corresponds to the trigger request from group n that
      * participates to the global trigger generation (n = 0,...,3 for DT
      * and NIM; n = 0,...,7 for VME boards). Options are:\n
@@ -1183,11 +1183,11 @@ namespace caen {
      * 1 = trigger request participates in the global trigger generation.\n
      * NOTE: in case of DT and NIMboards, only bits[3:0] are meaningful,
      * while bits[7:4] are reserved.
-     * @param EasyGlobalTriggerMaskHelper::majorityCoincidenceWindow
+     * @param EasyGlobalTriggerMask::majorityCoincidenceWindow
      * Majority Coincidence Window. Sets the me window (in units of the
      * trigger clock) for the majority coincidence. Majority level must
      * be set different from 0 through bits[26:24].
-     * @param EasyGlobalTriggerMaskHelper::majorityLevel
+     * @param EasyGlobalTriggerMask::majorityLevel
      * Majority Level. Sets the majority level for the global trigger
      * generation. For a level m, the trigger fires when at least m+1 of
      * the enabled trigger requests (bits[7:0] or [3:0]) are
@@ -1195,26 +1195,26 @@ namespace caen {
      * (bits[23:20]).\n
      * NOTE: the majority level must be smaller than the number of
      * trigger requests enabled via bits[7:0] mask (or [3:0]).
-     * @param EasyGlobalTriggerMaskHelper::lVDSTrigger
+     * @param EasyGlobalTriggerMask::lVDSTrigger
      * LVDS Trigger (VME boards only). When enabled, the trigger from
      * LVDS I/O participates to the global trigger generation (in logic
      * OR). Options are:\n
      * 0 = disabled\n
      * 1 = enabled.
-     * @param EasyGlobalTriggerMaskHelper::externalTrigger
+     * @param EasyGlobalTriggerMask::externalTrigger
      * External Trigger (default value is 1). When enabled, the external
      * trigger on TRG-IN participates to the global trigger generation
      * in logic OR with the other enabled signals. Options are:\n
      * 0 = disabled\n
      * 1 = enabled.
-     * @param EasyGlobalTriggerMaskHelper::softwareTrigger
+     * @param EasyGlobalTriggerMask::softwareTrigger
      * Software Trigger (default value is 1). When enabled, the software
      * trigger participates to the global trigger signal generation in
      * logic OR with the other enabled signals. Options are:\n
      * 0 = disabled\n
      * 1 = enabled.
      */
-    class EasyGlobalTriggerMaskHelper : public EasyHelper
+    class EasyGlobalTriggerMask : public EasyBase
     {
     protected:
         /* Shared base since one constructor cannot reuse the other */
@@ -1248,47 +1248,47 @@ namespace caen {
             };
         };
     public:
-        virtual const std::string getClassName() const override { return "EasyGlobalTriggerMaskHelper"; };
+        virtual const std::string getClassName() const override { return "EasyGlobalTriggerMask"; };
         /* Construct using default values from docs */
-        EasyGlobalTriggerMaskHelper(const uint8_t groupTriggerMask, const uint8_t majorityCoincidenceWindow, const uint8_t majorityLevel, const uint8_t lVDSTrigger, const uint8_t externalTrigger, const uint8_t softwareTrigger)
+        EasyGlobalTriggerMask(const uint8_t groupTriggerMask, const uint8_t majorityCoincidenceWindow, const uint8_t majorityLevel, const uint8_t lVDSTrigger, const uint8_t externalTrigger, const uint8_t softwareTrigger)
         {
             construct(groupTriggerMask, majorityCoincidenceWindow, majorityLevel, lVDSTrigger, externalTrigger, softwareTrigger);
         }
         /* Construct from low-level bit mask in line with docs */
-        EasyGlobalTriggerMaskHelper(const uint32_t mask)
+        EasyGlobalTriggerMask(const uint32_t mask)
         {
             constructFromMask(mask);
         }
-    }; // class EasyGlobalTriggerMaskHelper
+    }; // class EasyGlobalTriggerMask
 
 
     /**
-     * @class EasyDPPGlobalTriggerMaskHelper
+     * @class EasyDPPGlobalTriggerMask
      * @brief For user-friendly configuration of Global Trigger Mask.
      *
      * This register sets which signal can contribute to the global
      * trigger generation.
      *
-     * @param EasyDPPGlobalTriggerMaskHelper::lVDSTrigger
+     * @param EasyDPPGlobalTriggerMask::lVDSTrigger
      * LVDS Trigger (VME boards only). When enabled, the trigger from
      * LVDS I/O participates to the global trigger generation (in logic
      * OR). Options are:\n
      * 0 = disabled\n
      * 1 = enabled.
-     * @param EasyDPPGlobalTriggerMaskHelper::externalTrigger
+     * @param EasyDPPGlobalTriggerMask::externalTrigger
      * External Trigger (default value is 1). When enabled, the external
      * trigger on TRG-IN participates to the global trigger generation
      * in logic OR with the other enabled signals. Options are:\n
      * 0 = disabled\n
      * 1 = enabled.
-     * @param EasyDPPGlobalTriggerMaskHelper::softwareTrigger
+     * @param EasyDPPGlobalTriggerMask::softwareTrigger
      * Software Trigger (default value is 1). When enabled, the software
      * trigger participates to the global trigger signal generation in
      * logic OR with the other enabled signals. Options are:\n
      * 0 = disabled\n
      * 1 = enabled.
      */
-    class EasyDPPGlobalTriggerMaskHelper : public EasyHelper
+    class EasyDPPGlobalTriggerMask : public EasyBase
     {
     protected:
         /* Shared base since one constructor cannot reuse the other */
@@ -1315,29 +1315,29 @@ namespace caen {
             };
         };
     public:
-        virtual const std::string getClassName() const override { return "EasyDPPGlobalTriggerMaskHelper"; };
+        virtual const std::string getClassName() const override { return "EasyDPPGlobalTriggerMask"; };
         /* Construct using default values from docs */
-        EasyDPPGlobalTriggerMaskHelper(const uint8_t lVDSTrigger, const uint8_t externalTrigger, const uint8_t softwareTrigger)
+        EasyDPPGlobalTriggerMask(const uint8_t lVDSTrigger, const uint8_t externalTrigger, const uint8_t softwareTrigger)
         {
             construct(lVDSTrigger, externalTrigger, softwareTrigger);
         }
         /* Construct from low-level bit mask in line with docs */
-        EasyDPPGlobalTriggerMaskHelper(const uint32_t mask)
+        EasyDPPGlobalTriggerMask(const uint32_t mask)
         {
             constructFromMask(mask);
         }
-    }; // class EasyDPPGlobalTriggerMaskHelper
+    }; // class EasyDPPGlobalTriggerMask
 
 
     /**
-     * @class EasyFrontPanelTRGOUTEnableMaskHelper
+     * @class EasyFrontPanelTRGOUTEnableMask
      * @brief For user-friendly configuration of Front Panel TRG-OUT Enable Mask.
      *
      * This register sets which signal can contribute to
      * generate the signal on the front panel TRG-OUT LEMO connector
      * (GPO in case of DT and NIM boards).
      *
-     * @param EasyFrontPanelTRGOUTEnableMaskHelper::groupTriggerMask
+     * @param EasyFrontPanelTRGOUTEnableMask::groupTriggerMask
      * This mask sets the trigger requests participating in the TRG-OUT
      * (GPO). Bit n corresponds to the trigger request from group n.\n
      * Options are:\n
@@ -1345,7 +1345,7 @@ namespace caen {
      * 1 = Trigger request participates to the TRG-OUT (GPO) signal.\n
      * NOTE: in case of DT and NIM boards, only bits[3:0] are meaningful
      * while bis[7:4] are reserved.
-     * @param EasyFrontPanelTRGOUTEnableMaskHelper::tRGOUTGenerationLogic
+     * @param EasyFrontPanelTRGOUTEnableMask::tRGOUTGenerationLogic
      * TRG-OUT (GPO) Generation Logic. The enabled trigger requests
      * (bits [7:0] or [3:0]) can be combined to generate the TRG-OUT
      * (GPO) signal. Options are:\n
@@ -1353,33 +1353,33 @@ namespace caen {
      * 01 = AND\n
      * 10 = Majority\n
      * 11 = reserved.
-     * @param EasyFrontPanelTRGOUTEnableMaskHelper::majorityLevel
+     * @param EasyFrontPanelTRGOUTEnableMask::majorityLevel
      * Majority Level. Sets the majority level for the TRG-OUT (GPO)
      * signal generation. Allowed level values are between 0 and 7 for
      * VME boards, and between 0 and 3 for DT and NIM boards. For a
      * level m, the trigger fires when at least m+1 of the trigger
      * requests are generated by the enabled channels (bits [7:0] or [3:0]).
-     * @param EasyFrontPanelTRGOUTEnableMaskHelper::lVDSTriggerEnable
+     * @param EasyFrontPanelTRGOUTEnableMask::lVDSTriggerEnable
      * LVDS Trigger Enable (VME boards only). If the LVDS I/Os are
      * programmed as outputs, they can participate in the TRG-OUT (GPO)
      * signal generation. They are in logic OR with the other enabled
      * signals. Options are:\n
      * 0 = disabled\n
      * 1 = enabled.
-     * @param EasyFrontPanelTRGOUTEnableMaskHelper::externalTrigger
+     * @param EasyFrontPanelTRGOUTEnableMask::externalTrigger
      * External Trigger. When enabled, the external trigger on TRG-IN
      * can participate in the TRG-OUT (GPO) signal generation in logic
      * OR with the other enabled signals. Options are:\n
      * 0 = disabled\n
      * 1 = enabled.
-     * @param EasyFrontPanelTRGOUTEnableMaskHelper::softwareTrigger
+     * @param EasyFrontPanelTRGOUTEnableMask::softwareTrigger
      * Software Trigger. When enabled, the software trigger can
      * participate in the TRG-OUT (GPO) signal generation in logic OR
      * with the other enabled signals. Options are:\n
      * 0 = disabled\n
      * 1 = enabled.
      */
-    class EasyFrontPanelTRGOUTEnableMaskHelper : public EasyHelper
+    class EasyFrontPanelTRGOUTEnableMask : public EasyBase
     {
     protected:
         /* Shared base since one constructor cannot reuse the other */
@@ -1413,49 +1413,49 @@ namespace caen {
             };
         };
     public:
-        virtual const std::string getClassName() const override { return "EasyFrontPanelTRGOUTEnableMaskHelper"; };
+        virtual const std::string getClassName() const override { return "EasyFrontPanelTRGOUTEnableMask"; };
         /* Construct using default values from docs */
-        EasyFrontPanelTRGOUTEnableMaskHelper(const uint8_t groupTriggerMask, const uint8_t tRGOUTGenerationLogic, const uint8_t majorityLevel, const uint8_t lVDSTriggerEnable, const uint8_t externalTrigger, const uint8_t softwareTrigger)
+        EasyFrontPanelTRGOUTEnableMask(const uint8_t groupTriggerMask, const uint8_t tRGOUTGenerationLogic, const uint8_t majorityLevel, const uint8_t lVDSTriggerEnable, const uint8_t externalTrigger, const uint8_t softwareTrigger)
         {
             construct(groupTriggerMask, tRGOUTGenerationLogic, majorityLevel, lVDSTriggerEnable, externalTrigger, softwareTrigger);
         }
         /* Construct from low-level bit mask in line with docs */
-        EasyFrontPanelTRGOUTEnableMaskHelper(const uint32_t mask)
+        EasyFrontPanelTRGOUTEnableMask(const uint32_t mask)
         {
             constructFromMask(mask);
         }
-    }; // class EasyFrontPanelTRGOUTEnableMaskHelper
+    }; // class EasyFrontPanelTRGOUTEnableMask
 
 
     /**
-     * @class EasyDPPFrontPanelTRGOUTEnableMaskHelper
+     * @class EasyDPPFrontPanelTRGOUTEnableMask
      * @brief For user-friendly configuration of Front Panel TRG-OUT Enable Mask.
      *
      * This register sets which signal can contribute to
      * generate the signal on the front panel TRG-OUT LEMO connector
      * (GPO in case of DT and NIM boards).
      *
-     * @param EasyDPPFrontPanelTRGOUTEnableMaskHelper::lVDSTriggerEnable
+     * @param EasyDPPFrontPanelTRGOUTEnableMask::lVDSTriggerEnable
      * LVDS Trigger Enable (VME boards only). If the LVDS I/Os are
      * programmed as outputs, they can participate in the TRG-OUT (GPO)
      * signal generation. They are in logic OR with the other enabled
      * signals. Options are:\n
      * 0 = disabled\n
      * 1 = enabled.
-     * @param EasyDPPFrontPanelTRGOUTEnableMaskHelper::externalTrigger
+     * @param EasyDPPFrontPanelTRGOUTEnableMask::externalTrigger
      * External Trigger. When enabled, the external trigger on TRG-IN
      * can participate in the TRG-OUT (GPO) signal generation in logic
      * OR with the other enabled signals. Options are:\n
      * 0 = disabled\n
      * 1 = enabled.
-     * @param EasyDPPFrontPanelTRGOUTEnableMaskHelper::softwareTrigger
+     * @param EasyDPPFrontPanelTRGOUTEnableMask::softwareTrigger
      * Software Trigger. When enabled, the software trigger can
      * participate in the TRG-OUT (GPO) signal generation in logic OR
      * with the other enabled signals. Options are:\n
      * 0 = disabled\n
      * 1 = enabled.
      */
-    class EasyDPPFrontPanelTRGOUTEnableMaskHelper : public EasyHelper
+    class EasyDPPFrontPanelTRGOUTEnableMask : public EasyBase
     {
     protected:
         /* Shared base since one constructor cannot reuse the other */
@@ -1482,66 +1482,66 @@ namespace caen {
             };
         };
     public:
-        virtual const std::string getClassName() const override { return "EasyDPPFrontPanelTRGOUTEnableMaskHelper"; };
+        virtual const std::string getClassName() const override { return "EasyDPPFrontPanelTRGOUTEnableMask"; };
         /* Construct using default values from docs */
-        EasyDPPFrontPanelTRGOUTEnableMaskHelper(const uint8_t lVDSTriggerEnable, const uint8_t externalTrigger, const uint8_t softwareTrigger)
+        EasyDPPFrontPanelTRGOUTEnableMask(const uint8_t lVDSTriggerEnable, const uint8_t externalTrigger, const uint8_t softwareTrigger)
         {
             construct(lVDSTriggerEnable, externalTrigger, softwareTrigger);
         }
         /* Construct from low-level bit mask in line with docs */
-        EasyDPPFrontPanelTRGOUTEnableMaskHelper(const uint32_t mask)
+        EasyDPPFrontPanelTRGOUTEnableMask(const uint32_t mask)
         {
             constructFromMask(mask);
         }
-    }; // class EasyDPPFrontPanelTRGOUTEnableMaskHelper
+    }; // class EasyDPPFrontPanelTRGOUTEnableMask
 
 
     /**
-     * @class EasyFrontPanelIOControlHelper
+     * @class EasyFrontPanelIOControl
      * @brief For user-friendly configuration of Acquisition Control mask.
      *
      * This register manages the front panel I/O connectors. Default
      * value is 0x000000.
      *
-     * @param EasyFrontPanelIOControlHelper::lEMOIOElectricalLevel
+     * @param EasyFrontPanelIOControl::lEMOIOElectricalLevel
      * LEMO I/Os Electrical Level. This bit sets the electrical level of
      * the front panel LEMO connectors: TRG-IN, TRG-OUT (GPO in case of
      * DT and NIM boards), S-IN (GPI in case of DT and NIM
      * boards). Options are:\n
      * 0 = NIM I/O levels\n
      * 1 = TTL I/O levels.
-     * @param EasyFrontPanelIOControlHelper::tRGOUTEnable
+     * @param EasyFrontPanelIOControl::tRGOUTEnable
      * TRG-OUT Enable (VME boards only). Enables the TRG-OUT LEMO front
      * panel connector. Options are:\n
      * 0 = enabled (default)\n
      * 1 = high impedance.\n
      * NOTE: this bit is reserved in case of DT and NIM boards.
-     * @param EasyFrontPanelIOControlHelper::lVDSIODirectionFirst
+     * @param EasyFrontPanelIOControl::lVDSIODirectionFirst
      * LVDS I/O [3:0] Direction (VME boards only). Sets the direction of
      * the signals on the first 4-pin group of the LVDS I/O
      * connector. Options are:\n
      * 0 = input\n
      * 1 = output.\n
      * NOTE: this bit is reserved in case of DT and NIM boards.
-     * @param EasyFrontPanelIOControlHelper::lVDSIODirectionSecond
+     * @param EasyFrontPanelIOControl::lVDSIODirectionSecond
      * LVDS I/O [7:4] Direction (VME boards only). Sets the direction of
      * the second 4-pin group of the LVDS I/O connector. Options are:\n
      * 0 = input\n
      * 1 = output.\n
      * NOTE: this bit is reserved in case of DT and NIM boards.
-     * @param EasyFrontPanelIOControlHelper::lVDSIODirectionThird
+     * @param EasyFrontPanelIOControl::lVDSIODirectionThird
      * LVDS I/O [11:8] Direction (VME boards only). Sets the direction of
      * the third 4-pin group of the LVDS I/O connector. Options are:\n
      * 0 = input\n
      * 1 = output.\n
      * NOTE: this bit is reserved in case of DT and NIM boards.
-     * @param EasyFrontPanelIOControlHelper::lVDSIODirectionFourth
+     * @param EasyFrontPanelIOControl::lVDSIODirectionFourth
      * LVDS I/O [15:12] Direction (VME boards only). Sets the direction of
      * the fourth 4-pin group of the LVDS I/O connector. Options are:\n
      * 0 = input\n
      * 1 = output.\n
      * NOTE: this bit is reserved in case of DT and NIM boards.
-     * @param EasyFrontPanelIOControlHelper::lVDSIOSignalConfiguration
+     * @param EasyFrontPanelIOControl::lVDSIOSignalConfiguration
      * LVDS I/O Signal Configuration (VME boards and LVDS I/O old
      * features only). This configuration must be enabled through bit[8]
      * set to 0. Options are:\n
@@ -1551,7 +1551,7 @@ namespace caen {
      * written into the header PATTERN field\n
      * 11 = reserved.\n
      * NOTE: these bits are reserved in case of DT and NIM boards.
-     * @param EasyFrontPanelIOControlHelper::lVDSIONewFeaturesSelection
+     * @param EasyFrontPanelIOControl::lVDSIONewFeaturesSelection
      * LVDS I/O New Features Selection (VME boards only). Options are:\n
      * 0 = LVDS old features\n
      * 1 = LVDS new features.\n
@@ -1560,7 +1560,7 @@ namespace caen {
      * NOTE: LVDS I/O New Features option is valid from motherboard
      * firmware revision 3.8 on.\n
      * NOTE: this bit is reserved in case of DT and NIM boards.
-     * @param EasyFrontPanelIOControlHelper::lVDSIOPatternLatchMode
+     * @param EasyFrontPanelIOControl::lVDSIOPatternLatchMode
      * LVDS I/Os Pattern Latch Mode (VME boards only). Options are:\n
      * 0 = Pattern (i.e. 16-pin LVDS status) is latched when the
      * (internal) global trigger is sent to channels, in consequence of
@@ -1569,7 +1569,7 @@ namespace caen {
      * 1 = Pattern (i.e. 16-pin LVDS status) is latched when an external
      * trigger arrives.\n
      * NOTE: this bit is reserved in case of DT and NIM boards.
-     * @param EasyFrontPanelIOControlHelper::tRGINControl
+     * @param EasyFrontPanelIOControl::tRGINControl
      * TRG-IN control. The board trigger logic can be synchronized
      * either with the edge of the TRG-IN signal, or with its whole
      * duration.\n
@@ -1578,7 +1578,7 @@ namespace caen {
      * 0 = trigger is synchronized with the edge of the TRG-IN signal\n
      * 1 = trigger is synchronized with the whole duration of the TRG-IN
      * signal.
-     * @param EasyFrontPanelIOControlHelper::tRGINMezzanines
+     * @param EasyFrontPanelIOControl::tRGINMezzanines
      * TRG-IN to Mezzanines (channels). Options are:\n
      * 0 = TRG-IN signal is processed by the motherboard and sent to
      * mezzanine (default). The trigger logic is then synchronized with
@@ -1587,17 +1587,17 @@ namespace caen {
      * board processing nor delay. This option can be useful when TRG-IN
      * is used to veto the acquisition.\n
      * NOTE: if this bit is set to 1, then bit[10] is ignored.
-     * @param EasyFrontPanelIOControlHelper::forceTRGOUT
+     * @param EasyFrontPanelIOControl::forceTRGOUT
      * Force TRG-OUT (GPO). This bit can force TRG-OUT (GPO in case of
      * DT and NIM boards) test logical level if bit[15] = 1. Options
      * are:\n
      * 0 = Force TRG-OUT (GPO) to 0\n
      * 1 = Force TRG-OUT (GPO) to 1.
-     * @param EasyFrontPanelIOControlHelper::tRGOUTMode
+     * @param EasyFrontPanelIOControl::tRGOUTMode
      * TRG-OUT (GPO) Mode. Options are:\n
      * 0 = TRG-OUT (GPO) is an internal signal (according to bits[17:16])\n
      * 1= TRG-OUT (GPO) is a test logic level set via bit[14].
-     * @param EasyFrontPanelIOControlHelper::tRGOUTModeSelection
+     * @param EasyFrontPanelIOControl::tRGOUTModeSelection
      * TRG-OUT (GPO) Mode Selection. Options are:\n
      * 00 = Trigger: TRG-OUT/GPO propagates the internal trigger sources
      * according to register 0x8110\n
@@ -1606,7 +1606,7 @@ namespace caen {
      * 10 = Channel Probes: TRG-OUT/GPO is used to propagate signals of
      * the mezzanines (Channel Signal Virtual Probe)\n
      * 11 = S-IN (GPI) propagation.
-     * @param EasyFrontPanelIOControlHelper::motherboardVirtualProbeSelection
+     * @param EasyFrontPanelIOControl::motherboardVirtualProbeSelection
      * Motherboard Virtual Probe Selection (to be propagated on TRG-
      * OUT/GPO). Options are:\n
      * 00 = RUN/delayedRUN: this is the RUN in case of ROC FPGA firmware
@@ -1619,7 +1619,7 @@ namespace caen {
      * 11 = BUSY/UNLOCK: this is the board BUSY in case of ROC FPGA
      * firmware rel. 4.5 or lower. This probe can be selected according
      * to bit[20].
-     * @param EasyFrontPanelIOControlHelper::motherboardVirtualProbePropagation
+     * @param EasyFrontPanelIOControl::motherboardVirtualProbePropagation
      * According to bits[19:18], this bit selects the probe to be
      * propagated on TRG-OUT . If bits[19:18] = 00, then bit[20] options
      * are:\n
@@ -1637,7 +1637,7 @@ namespace caen {
      * or lower.\n
      * NOTE: this bit corresponds to BUSY/UNLOCK for ROC FPGA firmware
      * rel. less than 4.12.
-     * @param EasyFrontPanelIOControlHelper::patternConfiguration
+     * @param EasyFrontPanelIOControl::patternConfiguration
      * Pattern Configuration. Configures the information given by the
      * 16-bit PATTERN field in the header of the event format (VME
      * only). Option are:\n
@@ -1645,7 +1645,7 @@ namespace caen {
      * one trigger arrives (default)\n
      * Other options are reserved.
      */
-    class EasyFrontPanelIOControlHelper : public EasyHelper
+    class EasyFrontPanelIOControl : public EasyBase
     {
     protected:
         /* Shared base since one constructor cannot reuse the other */
@@ -1709,38 +1709,38 @@ namespace caen {
             };
         };
     public:
-        virtual const std::string getClassName() const override { return "EasyFrontPanelIOControlHelper"; };
+        virtual const std::string getClassName() const override { return "EasyFrontPanelIOControl"; };
         /* Construct using default values from docs */
-        EasyFrontPanelIOControlHelper(const uint8_t lEMOIOElectricalLevel, const uint8_t tRGOUTEnable, const uint8_t lVDSIODirectionFirst, const uint8_t lVDSIODirectionSecond, const uint8_t lVDSIODirectionThird, const uint8_t lVDSIODirectionFourth, const uint8_t lVDSIOSignalConfiguration, const uint8_t lVDSIONewFeaturesSelection, const uint8_t lVDSIOPatternLatchMode, const uint8_t tRGINControl, const uint8_t tRGINMezzanines, const uint8_t forceTRGOUT, const uint8_t tRGOUTMode, const uint8_t tRGOUTModeSelection, const uint8_t motherboardVirtualProbeSelection, const uint8_t motherboardVirtualProbePropagation, const uint8_t patternConfiguration)
+        EasyFrontPanelIOControl(const uint8_t lEMOIOElectricalLevel, const uint8_t tRGOUTEnable, const uint8_t lVDSIODirectionFirst, const uint8_t lVDSIODirectionSecond, const uint8_t lVDSIODirectionThird, const uint8_t lVDSIODirectionFourth, const uint8_t lVDSIOSignalConfiguration, const uint8_t lVDSIONewFeaturesSelection, const uint8_t lVDSIOPatternLatchMode, const uint8_t tRGINControl, const uint8_t tRGINMezzanines, const uint8_t forceTRGOUT, const uint8_t tRGOUTMode, const uint8_t tRGOUTModeSelection, const uint8_t motherboardVirtualProbeSelection, const uint8_t motherboardVirtualProbePropagation, const uint8_t patternConfiguration)
         {
             construct(lEMOIOElectricalLevel, tRGOUTEnable, lVDSIODirectionFirst, lVDSIODirectionSecond, lVDSIODirectionThird, lVDSIODirectionFourth, lVDSIOSignalConfiguration, lVDSIONewFeaturesSelection, lVDSIOPatternLatchMode, tRGINControl, tRGINMezzanines, forceTRGOUT, tRGOUTMode, tRGOUTModeSelection, motherboardVirtualProbeSelection, motherboardVirtualProbePropagation, patternConfiguration);
         }
         /* Construct from low-level bit mask in line with docs */
-        EasyFrontPanelIOControlHelper(const uint32_t mask)
+        EasyFrontPanelIOControl(const uint32_t mask)
         {
             constructFromMask(mask);
         }
-    }; // class EasyFrontPanelIOControlHelper
+    }; // class EasyFrontPanelIOControl
 
 
     /**
-     * @class EasyDPPFrontPanelIOControlHelper
+     * @class EasyDPPFrontPanelIOControl
      * @brief For user-friendly configuration of Acquisition Control mask.
      *
-     * NOTE: Identical to EasyFrontPanelIOControlHelper
+     * NOTE: Identical to EasyFrontPanelIOControl
      */
-    class EasyDPPFrontPanelIOControlHelper : public EasyFrontPanelIOControlHelper
+    class EasyDPPFrontPanelIOControl : public EasyFrontPanelIOControl
     {
     /* Just inherit everything else from parent class */
     public:
-        virtual const std::string getClassName() const override { return "EasyDPPFrontPanelIOControlHelper"; };
-        EasyDPPFrontPanelIOControlHelper(const uint8_t lEMOIOElectricalLevel, const uint8_t tRGOUTEnable, const uint8_t lVDSIODirectionFirst, const uint8_t lVDSIODirectionSecond, const uint8_t lVDSIODirectionThird, const uint8_t lVDSIODirectionFourth, const uint8_t lVDSIOSignalConfiguration, const uint8_t lVDSIONewFeaturesSelection, const uint8_t lVDSIOPatternLatchMode, const uint8_t tRGINControl, const uint8_t tRGINMezzanines, const uint8_t forceTRGOUT, const uint8_t tRGOUTMode, const uint8_t tRGOUTModeSelection, const uint8_t motherboardVirtualProbeSelection, const uint8_t motherboardVirtualProbePropagation, const uint8_t patternConfiguration) : EasyFrontPanelIOControlHelper(lEMOIOElectricalLevel, tRGOUTEnable, lVDSIODirectionFirst, lVDSIODirectionSecond, lVDSIODirectionThird, lVDSIODirectionFourth, lVDSIOSignalConfiguration, lVDSIONewFeaturesSelection, lVDSIOPatternLatchMode, tRGINControl, tRGINMezzanines, forceTRGOUT, tRGOUTMode, tRGOUTModeSelection, motherboardVirtualProbeSelection, motherboardVirtualProbePropagation, patternConfiguration) {};
-        EasyDPPFrontPanelIOControlHelper(uint32_t mask) : EasyFrontPanelIOControlHelper(mask) {};
-    }; // class EasyDPPFrontPanelIOControlHelper
+        virtual const std::string getClassName() const override { return "EasyDPPFrontPanelIOControl"; };
+        EasyDPPFrontPanelIOControl(const uint8_t lEMOIOElectricalLevel, const uint8_t tRGOUTEnable, const uint8_t lVDSIODirectionFirst, const uint8_t lVDSIODirectionSecond, const uint8_t lVDSIODirectionThird, const uint8_t lVDSIODirectionFourth, const uint8_t lVDSIOSignalConfiguration, const uint8_t lVDSIONewFeaturesSelection, const uint8_t lVDSIOPatternLatchMode, const uint8_t tRGINControl, const uint8_t tRGINMezzanines, const uint8_t forceTRGOUT, const uint8_t tRGOUTMode, const uint8_t tRGOUTModeSelection, const uint8_t motherboardVirtualProbeSelection, const uint8_t motherboardVirtualProbePropagation, const uint8_t patternConfiguration) : EasyFrontPanelIOControl(lEMOIOElectricalLevel, tRGOUTEnable, lVDSIODirectionFirst, lVDSIODirectionSecond, lVDSIODirectionThird, lVDSIODirectionFourth, lVDSIOSignalConfiguration, lVDSIONewFeaturesSelection, lVDSIOPatternLatchMode, tRGINControl, tRGINMezzanines, forceTRGOUT, tRGOUTMode, tRGOUTModeSelection, motherboardVirtualProbeSelection, motherboardVirtualProbePropagation, patternConfiguration) {};
+        EasyDPPFrontPanelIOControl(uint32_t mask) : EasyFrontPanelIOControl(mask) {};
+    }; // class EasyDPPFrontPanelIOControl
 
 
     /**
-     * @class EasyROCFPGAFirmwareRevisionHelper
+     * @class EasyROCFPGAFirmwareRevision
      * @brief For user-friendly configuration of ROC FPGA Firmware Revision.
      *
      * This register contains the motherboard FPGA (ROC) firmware
@@ -1753,14 +1753,14 @@ namespace caen {
      * NOTE: the nibble code for the year makes this information to roll
      * over each 16 years.
      *
-     * @param EasyROCFPGAFirmwareRevisionHelper::minorRevisionNumber
+     * @param EasyROCFPGAFirmwareRevision::minorRevisionNumber
      * ROC Firmware Minor Revision Number (Y).
-     * @param EasyROCFPGAFirmwareRevisionHelper::majorRevisionNumber
+     * @param EasyROCFPGAFirmwareRevision::majorRevisionNumber
      * ROC Firmware Major Revision Number (X).
-     * @param EasyROCFPGAFirmwareRevisionHelper::revisionDate
+     * @param EasyROCFPGAFirmwareRevision::revisionDate
      * ROC Firmware Revision Date (Y/M/DD).
      */
-    class EasyROCFPGAFirmwareRevisionHelper : public EasyHelper
+    class EasyROCFPGAFirmwareRevision : public EasyBase
     {
     protected:
         /* Shared base since one constructor cannot reuse the other */
@@ -1796,10 +1796,10 @@ namespace caen {
             };
         }
     public:
-        virtual const std::string getClassName() const override { return "EasyROCFPGAFirmwareRevisionHelper"; };
+        virtual const std::string getClassName() const override { return "EasyROCFPGAFirmwareRevision"; };
         /* Construct using default values from docs */
         /* We allow both clamped and individual revision date format here */
-        EasyROCFPGAFirmwareRevisionHelper(const uint8_t minorRevisionNumber, const uint8_t majorRevisionNumber, const uint16_t revisionDate)
+        EasyROCFPGAFirmwareRevision(const uint8_t minorRevisionNumber, const uint8_t majorRevisionNumber, const uint16_t revisionDate)
         {
             const uint8_t revisionDayLower = (const uint8_t)(revisionDate & 0x7);
             const uint8_t revisionDayUpper = (const uint8_t)((revisionDate >> 4) & 0x7);
@@ -1807,25 +1807,25 @@ namespace caen {
             const uint8_t revisionYear = (const uint8_t)((revisionDate >> 12) & 0x7);
             construct(minorRevisionNumber, majorRevisionNumber, revisionDayLower, revisionDayUpper, revisionMonth, revisionYear);
         }
-        EasyROCFPGAFirmwareRevisionHelper(const uint8_t minorRevisionNumber, const uint8_t majorRevisionNumber, const uint8_t revisionDayLower, const uint8_t revisionDayUpper, const uint8_t revisionMonth, const uint8_t revisionYear)
+        EasyROCFPGAFirmwareRevision(const uint8_t minorRevisionNumber, const uint8_t majorRevisionNumber, const uint8_t revisionDayLower, const uint8_t revisionDayUpper, const uint8_t revisionMonth, const uint8_t revisionYear)
         {
             construct(minorRevisionNumber, majorRevisionNumber, revisionDayLower, revisionDayUpper, revisionMonth, revisionYear);
         }
         /* Construct from low-level bit mask in line with docs */
-        EasyROCFPGAFirmwareRevisionHelper(const uint32_t mask)
+        EasyROCFPGAFirmwareRevision(const uint32_t mask)
         {
             constructFromMask(mask);
         }
-    }; // class EasyROCFPGAFirmwareRevisionHelper
+    }; // class EasyROCFPGAFirmwareRevision
 
 
     /**
-     * @class EasyDPPROCFPGAFirmwareRevisionHelper
+     * @class EasyDPPROCFPGAFirmwareRevision
      * @brief For user-friendly configuration of ROC FPGA Firmware Revision.
      *
-     * NOTE: identical to EasyROCFPGAFirmwareRevisionHelper
+     * NOTE: identical to EasyROCFPGAFirmwareRevision
      */
-    class EasyDPPROCFPGAFirmwareRevisionHelper : public EasyHelper
+    class EasyDPPROCFPGAFirmwareRevision : public EasyBase
     {
     protected:
         /* Shared base since one constructor cannot reuse the other */
@@ -1860,10 +1860,10 @@ namespace caen {
             };
         }
     public:
-        virtual const std::string getClassName() const override { return "EasyDPPROCFPGAFirmwareRevisionHelper"; };
+        virtual const std::string getClassName() const override { return "EasyDPPROCFPGAFirmwareRevision"; };
         /* Construct using default values from docs */
         /* We allow both clamped and individual revision date format here */
-        EasyDPPROCFPGAFirmwareRevisionHelper(const uint8_t minorRevisionNumber, const uint8_t majorRevisionNumber, const uint16_t revisionDate)
+        EasyDPPROCFPGAFirmwareRevision(const uint8_t minorRevisionNumber, const uint8_t majorRevisionNumber, const uint16_t revisionDate)
         {
             const uint8_t revisionDayLower = (const uint8_t)(revisionDate & 0x7);
             const uint8_t revisionDayUpper = (const uint8_t)((revisionDate >> 4) & 0x7);
@@ -1871,20 +1871,20 @@ namespace caen {
             const uint8_t revisionYear = (const uint8_t)((revisionDate >> 12) & 0x7);
             construct(minorRevisionNumber, majorRevisionNumber, revisionDayLower, revisionDayUpper, revisionMonth, revisionYear);
         }
-        EasyDPPROCFPGAFirmwareRevisionHelper(const uint8_t firmwareRevisionNumber, const uint8_t firmwareDPPCode, const uint8_t buildDayLower, const uint8_t buildDayUpper, const uint8_t buildMonth, const uint8_t buildYear)
+        EasyDPPROCFPGAFirmwareRevision(const uint8_t firmwareRevisionNumber, const uint8_t firmwareDPPCode, const uint8_t buildDayLower, const uint8_t buildDayUpper, const uint8_t buildMonth, const uint8_t buildYear)
         {
             construct(firmwareRevisionNumber, firmwareDPPCode, buildDayLower, buildDayUpper, buildMonth, buildYear);
         }
         /* Construct from low-level bit mask in line with docs */
-        EasyDPPROCFPGAFirmwareRevisionHelper(const uint32_t mask)
+        EasyDPPROCFPGAFirmwareRevision(const uint32_t mask)
         {
             constructFromMask(mask);
         }
-    }; // class EasyDPPROCFPGAFirmwareRevisionHelper
+    }; // class EasyDPPROCFPGAFirmwareRevision
 
 
     /**
-     * @class EasyFanSpeedControlHelper
+     * @class EasyFanSpeedControl
      * @brief For user-friendly configuration of Fan Speed Control mask.
      *
      * This register manages the on-board fan speed in order to
@@ -1900,12 +1900,12 @@ namespace caen {
      * in case of revisions lower than 4.\n
      * NOTE: this register is supported by Desktop (DT) boards only.
      *
-     * @param EasyFanSpeedControlHelper::fanSpeedMode
+     * @param EasyFanSpeedControl::fanSpeedMode
      * Fan Speed Mode. Options are:\n
      * 0 = slow speed or automatic speed tuning\n
      * 1 = high speed.
      */
-    class EasyFanSpeedControlHelper : public EasyHelper
+    class EasyFanSpeedControl : public EasyBase
     {
     protected:
         /* Shared helpers since one constructor cannot reuse the other */
@@ -1929,53 +1929,53 @@ namespace caen {
             };
         };
     public:
-        virtual const std::string getClassName() const override { return "EasyFanSpeedControlHelper"; };
+        virtual const std::string getClassName() const override { return "EasyFanSpeedControl"; };
         /* Construct using default values from docs */
-        EasyFanSpeedControlHelper(const uint8_t fanSpeedMode=0)
+        EasyFanSpeedControl(const uint8_t fanSpeedMode=0)
         {
             construct(fanSpeedMode);
         }
         /* Construct from low-level bit mask in line with docs */
-        EasyFanSpeedControlHelper(const uint32_t mask)
+        EasyFanSpeedControl(const uint32_t mask)
         {
             constructFromMask(mask);
         }
-    }; // class EasyFanSpeedControlHelper
+    }; // class EasyFanSpeedControl
 
 
     /**
-     * @class EasyDPPFanSpeedControlHelper
+     * @class EasyDPPFanSpeedControl
      * @brief For user-friendly configuration of Fan Speed Control mask.
      *
-     * NOTE: identical to EasyFanSpeedControlHelper
+     * NOTE: identical to EasyFanSpeedControl
      */
-    class EasyDPPFanSpeedControlHelper : public EasyFanSpeedControlHelper
+    class EasyDPPFanSpeedControl : public EasyFanSpeedControl
     {
     /* Just inherit everything else from parent class */
     public:
-        virtual const std::string getClassName() const override { return "EasyDPPFanSpeedControlHelper"; };
-        EasyDPPFanSpeedControlHelper(uint8_t fanSpeedMode) : EasyFanSpeedControlHelper(fanSpeedMode) {};
-        EasyDPPFanSpeedControlHelper(uint32_t mask) : EasyFanSpeedControlHelper(mask) {};
-    }; // class EasyDPPFanSpeedControlHelper
+        virtual const std::string getClassName() const override { return "EasyDPPFanSpeedControl"; };
+        EasyDPPFanSpeedControl(uint8_t fanSpeedMode) : EasyFanSpeedControl(fanSpeedMode) {};
+        EasyDPPFanSpeedControl(uint32_t mask) : EasyFanSpeedControl(mask) {};
+    }; // class EasyDPPFanSpeedControl
 
 
     /**
-     * @class EasyReadoutControlHelper
+     * @class EasyReadoutControl
      * @brief For user-friendly configuration of Readout Control mask.
      *
      * This register is mainly intended for VME boards, anyway some bits
      * are applicable also for DT and NIM boards.
      *
-     * @param EasyReadoutControlHelper::vMEInterruptLevel
+     * @param EasyReadoutControl::vMEInterruptLevel
      * VME Interrupt Level (VME boards only). Options are:\n
      * 0 = VME interrupts are disabled\n
      * 1,..,7 = sets the VME interrupt level.\n
      * NOTE: these bits are reserved in case of DT and NIM boards.
-     * @param EasyReadoutControlHelper::opticalLinkInterruptEnable
+     * @param EasyReadoutControl::opticalLinkInterruptEnable
      * Optical Link Interrupt Enable. Op ons are:\n
      * 0 = Optical Link interrupts are disabled\n
      * 1 = Optical Link interrupts are enabled.
-     * @param EasyReadoutControlHelper::vMEBusErrorEventAlignedEnable
+     * @param EasyReadoutControl::vMEBusErrorEventAlignedEnable
      * VME Bus Error / Event Aligned Readout Enable (VME boards
      * only). Options are:\n
      * 0 = VME Bus Error / Event Aligned Readout disabled (the module
@@ -1984,19 +1984,19 @@ namespace caen {
      * enabled either to generate a Bus Error to finish a block transfer
      * or during the empty buffer readout in D32).\n
      * NOTE: this bit is reserved (must be 1) in case of DT and NIM boards.
-     * @param EasyReadoutControlHelper::vMEAlign64Mode
+     * @param EasyReadoutControl::vMEAlign64Mode
      * VME Align64 Mode (VME boards only). Options are:\n
      * 0 = 64-bit aligned readout mode disabled\n
      * 1 = 64-bit aligned readout mode enabled.\n
      * NOTE: this bit is reserved (must be 0) in case of DT and NIM boards.
-     * @param EasyReadoutControlHelper::vMEBaseAddressRelocation
+     * @param EasyReadoutControl::vMEBaseAddressRelocation
      * VME Base Address Relocation (VME boards only). Options are:\n
      * 0 = Address Relocation disabled (VME Base Address is set by the on-board
      * rotary switches)\n
      * 1 = Address Relocation enabled (VME Base Address is set by
      * register 0xEF0C).\n
      * NOTE: this bit is reserved (must be 0) in case of DT and NIM boards.
-     * @param EasyReadoutControlHelper::interruptReleaseMode
+     * @param EasyReadoutControl::interruptReleaseMode
      * Interrupt Release mode (VME boards only). Options are:\n
      * 0 = Release On Register Access (RORA): this is the default mode,
      * where interrupts are removed by disabling them either by setting
@@ -2008,7 +2008,7 @@ namespace caen {
      * NOTE: ROAK mode is supported only for VME interrupts. ROAK mode
      * is not supported on interrupts generated over Optical Link.
      * NOTE: this bit is reserved (must be 0) in case of DT and NIM boards.
-     * @param EasyReadoutControlHelper::extendedBlockTransferEnable
+     * @param EasyReadoutControl::extendedBlockTransferEnable
      * Extended Block Transfer Enable (VME boarsd only). Selects the
      * memory interval allocated for block transfers. Options are:\n
      * 0 = Extended Block Transfer Space is disabled, and the block
@@ -2020,7 +2020,7 @@ namespace caen {
      * register 0xEF10.\n
      * NOTE: this register is reserved in case of DT and NIM boards.
      */
-    class EasyReadoutControlHelper : public EasyHelper
+    class EasyReadoutControl : public EasyBase
     {
     protected:
         /* Shared helpers since one constructor cannot reuse the other */
@@ -2058,53 +2058,53 @@ namespace caen {
             };
         };
     public:
-        virtual const std::string getClassName() const override { return "EasyReadoutControlHelper"; };
+        virtual const std::string getClassName() const override { return "EasyReadoutControl"; };
         /* Construct using default values from docs */
-        EasyReadoutControlHelper(const uint8_t vMEInterruptLevel, const uint8_t opticalLinkInterruptEnable, const uint8_t vMEBusErrorEventAlignedEnable, const uint8_t vMEAlign64Mode, const uint8_t vMEBaseAddressRelocation, const uint8_t interruptReleaseMode, const uint8_t extendedBlockTransferEnable)
+        EasyReadoutControl(const uint8_t vMEInterruptLevel, const uint8_t opticalLinkInterruptEnable, const uint8_t vMEBusErrorEventAlignedEnable, const uint8_t vMEAlign64Mode, const uint8_t vMEBaseAddressRelocation, const uint8_t interruptReleaseMode, const uint8_t extendedBlockTransferEnable)
         {
             construct(vMEInterruptLevel, opticalLinkInterruptEnable, vMEBusErrorEventAlignedEnable, vMEAlign64Mode, vMEBaseAddressRelocation, interruptReleaseMode, extendedBlockTransferEnable);
         }
         /* Construct from low-level bit mask in line with docs */
-        EasyReadoutControlHelper(const uint32_t mask)
+        EasyReadoutControl(const uint32_t mask)
         {
             constructFromMask(mask);
         }
-    }; // class EasyReadoutControlHelper
+    }; // class EasyReadoutControl
 
 
     /**
-     * @class EasyDPPReadoutControlHelper
+     * @class EasyDPPReadoutControl
      * @brief For user-friendly configuration of Readout Control mask.
      *
-     * NOTE: identical to EasyReadoutControlHelper
+     * NOTE: identical to EasyReadoutControl
      */
-    class EasyDPPReadoutControlHelper : public EasyReadoutControlHelper
+    class EasyDPPReadoutControl : public EasyReadoutControl
     {
     /* Just inherit everything else from parent class */
     public:
-        virtual const std::string getClassName() const override { return "EasyDPPReadoutControlHelper"; };
-        EasyDPPReadoutControlHelper(const uint8_t vMEInterruptLevel, const uint8_t opticalLinkInterruptEnable, const uint8_t vMEBusErrorEventAlignedEnable, const uint8_t vMEAlign64Mode, const uint8_t vMEBaseAddressRelocation, const uint8_t interruptReleaseMode, const uint8_t extendedBlockTransferEnable) : EasyReadoutControlHelper(vMEInterruptLevel, opticalLinkInterruptEnable, vMEBusErrorEventAlignedEnable, vMEAlign64Mode, vMEBaseAddressRelocation, interruptReleaseMode, extendedBlockTransferEnable){};
-        EasyDPPReadoutControlHelper(const uint32_t mask) : EasyReadoutControlHelper(mask) {};
-    }; // class EasyDPPReadoutControlHelper
+        virtual const std::string getClassName() const override { return "EasyDPPReadoutControl"; };
+        EasyDPPReadoutControl(const uint8_t vMEInterruptLevel, const uint8_t opticalLinkInterruptEnable, const uint8_t vMEBusErrorEventAlignedEnable, const uint8_t vMEAlign64Mode, const uint8_t vMEBaseAddressRelocation, const uint8_t interruptReleaseMode, const uint8_t extendedBlockTransferEnable) : EasyReadoutControl(vMEInterruptLevel, opticalLinkInterruptEnable, vMEBusErrorEventAlignedEnable, vMEAlign64Mode, vMEBaseAddressRelocation, interruptReleaseMode, extendedBlockTransferEnable){};
+        EasyDPPReadoutControl(const uint32_t mask) : EasyReadoutControl(mask) {};
+    }; // class EasyDPPReadoutControl
 
 
     /**
-     * @class EasyReadoutStatusHelper
+     * @class EasyReadoutStatus
      * @brief For user-friendly configuration of Readout Status mask.
      *
      * This register contains informa on related to the readout.
      *
-     * @param EasyReadoutStatusHelper::eventReady
+     * @param EasyReadoutStatus::eventReady
      * Event Ready. Indicates if there are events stored ready for
      * readout. Options are:\n
      * 0 = no data ready\n
      * 1 = event ready.
-     * @param EasyReadoutStatusHelper::outputBufferStatus
+     * @param EasyReadoutStatus::outputBufferStatus
      * Output Buffer Status. Indicates if the Output Buffer is in Full
      * condition. Options are:\n
      * 0 = the Output Buffer is not FULL\n
      * 1 = the Output Buffer is FULL.
-     * @param EasyReadoutStatusHelper::busErrorSlaveTerminated
+     * @param EasyReadoutStatus::busErrorSlaveTerminated
      * Bus Error (VME boards) / Slave-Terminated (DT/NIM boards) Flag.
      * Options are:\n
      * 0 = no Bus Error occurred (VME boards) or no terminated transfer
@@ -2115,7 +2115,7 @@ namespace caen {
      * aligned readout (DT/NIM).\n
      * NOTE: this bit is reset a er register readout at 0xEF04.
      */
-    class EasyReadoutStatusHelper : public EasyHelper
+    class EasyReadoutStatus : public EasyBase
     {
     protected:
         /* Shared helpers since one constructor cannot reuse the other */
@@ -2142,39 +2142,39 @@ namespace caen {
             };
         };
     public:
-        virtual const std::string getClassName() const override { return "EasyReadoutStatusHelper"; };
+        virtual const std::string getClassName() const override { return "EasyReadoutStatus"; };
         /* Construct using default values from docs */
-        EasyReadoutStatusHelper(const uint8_t eventReady, const uint8_t outputBufferStatus, const uint8_t busErrorSlaveTerminated)
+        EasyReadoutStatus(const uint8_t eventReady, const uint8_t outputBufferStatus, const uint8_t busErrorSlaveTerminated)
         {
             construct(eventReady, outputBufferStatus, busErrorSlaveTerminated);
         }
         /* Construct from low-level bit mask in line with docs */
-        EasyReadoutStatusHelper(const uint32_t mask)
+        EasyReadoutStatus(const uint32_t mask)
         {
             constructFromMask(mask);
         }
-    }; // class EasyReadoutStatusHelper
+    }; // class EasyReadoutStatus
 
 
     /**
-     * @class EasyDPPReadoutStatusHelper
+     * @class EasyDPPReadoutStatus
      * @brief For user-friendly configuration of Readout Status mask.
      *
-     * NOTE: identical to EasyReadoutStatusHelper
+     * NOTE: identical to EasyReadoutStatus
      */
-    class EasyDPPReadoutStatusHelper : public EasyReadoutStatusHelper
+    class EasyDPPReadoutStatus : public EasyReadoutStatus
     {
     /* Just inherit everything else from parent class */
     public:
-        virtual const std::string getClassName() const override { return "EasyDPPReadoutStatusHelper"; };
+        virtual const std::string getClassName() const override { return "EasyDPPReadoutStatus"; };
         /* Construct using default values from docs */
-        EasyDPPReadoutStatusHelper(const uint8_t eventReady, const uint8_t outputBufferStatus, const uint8_t busErrorSlaveTerminated) : EasyReadoutStatusHelper(eventReady, outputBufferStatus, busErrorSlaveTerminated) {};
-        EasyDPPReadoutStatusHelper(const uint32_t mask) : EasyReadoutStatusHelper(mask) {};
-    }; // class EasyDPPReadoutStatusHelper
+        EasyDPPReadoutStatus(const uint8_t eventReady, const uint8_t outputBufferStatus, const uint8_t busErrorSlaveTerminated) : EasyReadoutStatus(eventReady, outputBufferStatus, busErrorSlaveTerminated) {};
+        EasyDPPReadoutStatus(const uint32_t mask) : EasyReadoutStatus(mask) {};
+    }; // class EasyDPPReadoutStatus
 
 
     /**
-     * @class EasyAMCFirmwareRevisionHelper
+     * @class EasyAMCFirmwareRevision
      * @brief For user-friendly configuration of AMC Firmware Revision.
      *
      * This register contains the channel FPGA (AMC) firmware revision
@@ -2186,14 +2186,14 @@ namespace caen {
      * NOTE: the nibble code for the year makes this information to roll
      * over each 16 years.
      *
-     * @param EasyAMCFirmwareRevisionHelper::minorRevisionNumber
+     * @param EasyAMCFirmwareRevision::minorRevisionNumber
      * AMC Firmware Minor Revision Number (Y).
-     * @param EasyAMCFirmwareRevisionHelper::majorRevisionNumber
+     * @param EasyAMCFirmwareRevision::majorRevisionNumber
      * AMC Firmware Major Revision Number (X).
-     * @param EasyAMCFirmwareRevisionHelper::revisionDate
+     * @param EasyAMCFirmwareRevision::revisionDate
      * AMC Firmware Revision Date (Y/M/DD).
      */
-    class EasyAMCFirmwareRevisionHelper : public EasyHelper
+    class EasyAMCFirmwareRevision : public EasyBase
     {
     protected:
         /* Shared base since one constructor cannot reuse the other */
@@ -2229,10 +2229,10 @@ namespace caen {
             };
         }
     public:
-        virtual const std::string getClassName() const override { return "EasyAMCFirmwareRevisionHelper"; };
+        virtual const std::string getClassName() const override { return "EasyAMCFirmwareRevision"; };
         /* Construct using default values from docs */
         /* We allow both clamped and individual revision date format here */
-        EasyAMCFirmwareRevisionHelper(const uint8_t minorRevisionNumber, const uint8_t majorRevisionNumber, const uint16_t revisionDate)
+        EasyAMCFirmwareRevision(const uint8_t minorRevisionNumber, const uint8_t majorRevisionNumber, const uint16_t revisionDate)
         {
             const uint8_t revisionDayLower = (const uint8_t)(revisionDate & 0x7);
             const uint8_t revisionDayUpper = (const uint8_t)((revisionDate >> 4) & 0x7);
@@ -2240,20 +2240,20 @@ namespace caen {
             const uint8_t revisionYear = (const uint8_t)((revisionDate >> 12) & 0x7);
             construct(minorRevisionNumber, majorRevisionNumber, revisionDayLower, revisionDayUpper, revisionMonth, revisionYear);
         }
-        EasyAMCFirmwareRevisionHelper(const uint8_t minorRevisionNumber, const uint8_t majorRevisionNumber, const uint8_t revisionDayLower, const uint8_t revisionDayUpper, const uint8_t revisionMonth, const uint8_t revisionYear)
+        EasyAMCFirmwareRevision(const uint8_t minorRevisionNumber, const uint8_t majorRevisionNumber, const uint8_t revisionDayLower, const uint8_t revisionDayUpper, const uint8_t revisionMonth, const uint8_t revisionYear)
         {
             construct(minorRevisionNumber, majorRevisionNumber, revisionDayLower, revisionDayUpper, revisionMonth, revisionYear);
         }
         /* Construct from low-level bit mask in line with docs */
-        EasyAMCFirmwareRevisionHelper(const uint32_t mask)
+        EasyAMCFirmwareRevision(const uint32_t mask)
         {
             constructFromMask(mask);
         }
-    }; // class EasyAMCFirmwareRevisionHelper
+    }; // class EasyAMCFirmwareRevision
 
 
     /**
-     * @class EasyDPPAMCFirmwareRevisionHelper
+     * @class EasyDPPAMCFirmwareRevision
      * @brief For user-friendly configuration of DPP AMC FPGA Firmware Revision.
      *
      * Returns the DPP firmware revision (mezzanine level).
@@ -2265,21 +2265,21 @@ namespace caen {
      * - Build Year is 2012.\n
      * NOTE: since 2016 the build year started again from 0.
      *
-     * @param EasyDPPAMCFirmwareRevisionHelper::firmwareRevisionNumber
+     * @param EasyDPPAMCFirmwareRevision::firmwareRevisionNumber
      * Firmware revision number
-     * @param EasyDPPAMCFirmwareRevisionHelper::firmwareDPPCode
+     * @param EasyDPPAMCFirmwareRevision::firmwareDPPCode
      * Firmware DPP code. Each DPP firmware has a unique code.
-     * @param EasyDPPAMCFirmwareRevisionHelper::buildDayLower
+     * @param EasyDPPAMCFirmwareRevision::buildDayLower
      * Build Day (lower digit)
-     * @param EasyDPPAMCFirmwareRevisionHelper::buildDayUpper
+     * @param EasyDPPAMCFirmwareRevision::buildDayUpper
      * Build Day (upper digit)
-     * @param EasyDPPAMCFirmwareRevisionHelper::buildMonth
+     * @param EasyDPPAMCFirmwareRevision::buildMonth
      * Build Month. For example: 3 means March, 12 is December.
-     * @param EasyDPPAMCFirmwareRevisionHelper::buildYear
+     * @param EasyDPPAMCFirmwareRevision::buildYear
      * Build Year. For example: 0 means 2000, 12 means 2012. NOTE: since
      * 2016 the build year started again from 0.
      */
-    class EasyDPPAMCFirmwareRevisionHelper : public EasyHelper
+    class EasyDPPAMCFirmwareRevision : public EasyBase
     {
     protected:
         /* Shared base since one constructor cannot reuse the other */
@@ -2314,26 +2314,26 @@ namespace caen {
             };
         }
     public:
-        virtual const std::string getClassName() const override { return "EasyDPPAMCFirmwareRevisionHelper"; };
-        EasyDPPAMCFirmwareRevisionHelper(const uint8_t firmwareRevisionNumber, const uint8_t firmwareDPPCode, const uint8_t buildDayLower, const uint8_t buildDayUpper, const uint8_t buildMonth, const uint8_t buildYear)
+        virtual const std::string getClassName() const override { return "EasyDPPAMCFirmwareRevision"; };
+        EasyDPPAMCFirmwareRevision(const uint8_t firmwareRevisionNumber, const uint8_t firmwareDPPCode, const uint8_t buildDayLower, const uint8_t buildDayUpper, const uint8_t buildMonth, const uint8_t buildYear)
         {
             construct(firmwareRevisionNumber, firmwareDPPCode, buildDayLower, buildDayUpper, buildMonth, buildYear);
         }
         /* Construct from low-level bit mask in line with docs */
-        EasyDPPAMCFirmwareRevisionHelper(const uint32_t mask)
+        EasyDPPAMCFirmwareRevision(const uint32_t mask)
         {
             constructFromMask(mask);
         }
-    }; // class EasyDPPAMCFirmwareRevisionHelper
+    }; // class EasyDPPAMCFirmwareRevision
 
 
     /**
-     * @class EasyDPPAlgorithmControlHelper
+     * @class EasyDPPAlgorithmControl
      * @brief For user-friendly configuration of DPP Algorithm Control mask.
      *
      * Management of the DPP algorithm features.
      *
-     * @param EasyDPPAlgorithmControlHelper::chargeSensitivity
+     * @param EasyDPPAlgorithmControl::chargeSensitivity
      * Charge Sensitivity: defines how many pC of charge correspond to
      * one channel of the energy spectrum. Options are:\n
      * 000: 0.16 pC\n
@@ -2344,24 +2344,24 @@ namespace caen {
      * 101: 5.12 pC\n
      * 110: 10.24 pC\n
      * 111: 20.48 pC.
-     * @param EasyDPPAlgorithmControlHelper::internalTestPulse
+     * @param EasyDPPAlgorithmControl::internalTestPulse
      * Internal Test Pulse. It is possible to enable an internal test
      * pulse for debugging purposes. The ADC counts are replaced with
      * the built-in pulse emulator. Options are:\n
      * 0: disabled\n
      * 1: enabled.
-     * @param EasyDPPAlgorithmControlHelper::testPulseRate
+     * @param EasyDPPAlgorithmControl::testPulseRate
      * Test Pulse Rate. Set the rate of the built-in test pulse
      * emulator. Options are:\n
      * 00: 1 kHz\n
      * 01: 10 kHz\n
      * 10: 100 kHz\n
      * 11: 1 MHz.
-     * @param EasyDPPAlgorithmControlHelper::chargePedestal
+     * @param EasyDPPAlgorithmControl::chargePedestal
      * Charge Pedestal: when enabled a fixed value of 1024 is added to
      * the charge. This feature is useful in case of energies close to
      * zero.
-     * @param EasyDPPAlgorithmControlHelper::inputSmoothingFactor
+     * @param EasyDPPAlgorithmControl::inputSmoothingFactor
      * Input smoothing factor n. In case of noisy signal it is possible
      * to apply a smoothing filter, where each sample is replaced with
      * the mean value of n previous samples. When enabled, the trigger
@@ -2377,11 +2377,11 @@ namespace caen {
      * 101: 32 samples\n
      * 110: 64 samples\n
      * 111: Reserved.
-     * @param EasyDPPAlgorithmControlHelper::pulsePolarity
+     * @param EasyDPPAlgorithmControl::pulsePolarity
      * Pulse Polarity. Options are:\n
      * 0: positive pulse\n
      * 1: negative pulse.
-     * @param EasyDPPAlgorithmControlHelper::triggerMode
+     * @param EasyDPPAlgorithmControl::triggerMode
      * Trigger Mode. Options are:\n
      * 00: Normal mode. Each channel can self-trigger independently from
      * the other channels.\n
@@ -2391,7 +2391,7 @@ namespace caen {
      * and channel n+2\n
      * 10: Reserved\n
      * 11: Reserved.
-     * @param EasyDPPAlgorithmControlHelper::baselineMean
+     * @param EasyDPPAlgorithmControl::baselineMean
      * Baseline Mean. Sets the number of events for the baseline mean
      * calculation. Options are:\n
      * 000: Fixed: the baseline value is fixed to the value set in
@@ -2399,20 +2399,20 @@ namespace caen {
      * 001: 4 samples\n
      * 010: 16 samples\n
      * 011: 64 samples.
-     * @param EasyDPPAlgorithmControlHelper::disableSelfTrigger
+     * @param EasyDPPAlgorithmControl::disableSelfTrigger
      * Disable Self Trigger. If disabled, the self-trigger can be still
      * propagated to the TRG-OUT front panel connector, though it is not
      * used by the channel to acquire the event. Options are:\n
      * 0: self-trigger enabled\n
      * 1: self-trigger disabled.
-     * @param EasyDPPAlgorithmControlHelper::triggerHysteresis
+     * @param EasyDPPAlgorithmControl::triggerHysteresis
      * Trigger Hysteresis. The trigger can be inhibited during the
      * trailing edge of a pulse, to avoid re-triggering on the pulse
      * itself. Options are:\n
      * 0 (default value): enabled\n
      * 1: disabled.
      */
-    class EasyDPPAlgorithmControlHelper : public EasyHelper
+    class EasyDPPAlgorithmControl : public EasyBase
     {
     protected:
         /* Shared base since one constructor cannot reuse the other */
@@ -2457,17 +2457,17 @@ namespace caen {
             };
         }
     public:
-        virtual const std::string getClassName() const override { return "EasyDPPAlgorithmControlHelper"; };
-        EasyDPPAlgorithmControlHelper(const uint8_t chargeSensitivity, const uint8_t internalTestPulse, const uint8_t testPulseRate, const uint8_t chargePedestal, const uint8_t inputSmoothingFactor, const uint8_t pulsePolarity, const uint8_t triggerMode, const uint8_t baselineMean, const uint8_t disableSelfTrigger, const uint8_t triggerHysteresis)
+        virtual const std::string getClassName() const override { return "EasyDPPAlgorithmControl"; };
+        EasyDPPAlgorithmControl(const uint8_t chargeSensitivity, const uint8_t internalTestPulse, const uint8_t testPulseRate, const uint8_t chargePedestal, const uint8_t inputSmoothingFactor, const uint8_t pulsePolarity, const uint8_t triggerMode, const uint8_t baselineMean, const uint8_t disableSelfTrigger, const uint8_t triggerHysteresis)
         {
             construct(chargeSensitivity, internalTestPulse, testPulseRate, chargePedestal, inputSmoothingFactor, pulsePolarity, triggerMode, baselineMean, disableSelfTrigger, triggerHysteresis);
         }
         /* Construct from low-level bit mask in line with docs */
-        EasyDPPAlgorithmControlHelper(const uint32_t mask)
+        EasyDPPAlgorithmControl(const uint32_t mask)
         {
             constructFromMask(mask);
         }
-    }; // class EasyDPPAlgorithmControlHelper
+    }; // class EasyDPPAlgorithmControl
 
 
     /* Some low-level digitizer helpers */
@@ -3128,8 +3128,8 @@ namespace caen {
         { errorHandler(CAEN_DGTZ_SetDPPParameters(handle_, channelmask, params)); }
 
         virtual uint32_t getAMCFirmwareRevision(uint32_t group) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
-        virtual EasyAMCFirmwareRevisionHelper getEasyAMCFirmwareRevisionHelper(uint32_t group) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
-        virtual EasyDPPAMCFirmwareRevisionHelper getEasyDPPAMCFirmwareRevisionHelper(uint32_t group) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual EasyAMCFirmwareRevision getEasyAMCFirmwareRevision(uint32_t group) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual EasyDPPAMCFirmwareRevision getEasyDPPAMCFirmwareRevision(uint32_t group) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
 
         virtual uint32_t getRunDelay() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         virtual void setRunDelay(uint32_t delay) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
@@ -3153,9 +3153,9 @@ namespace caen {
         virtual uint32_t getDPPAlgorithmControl(uint32_t group) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         virtual void setDPPAlgorithmControl(uint32_t group, uint32_t value) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         virtual void setDPPAlgorithmControl(uint32_t value) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
-        virtual EasyDPPAlgorithmControlHelper getEasyDPPAlgorithmControlHelper(uint32_t group) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
-        virtual void setEasyDPPAlgorithmControlHelper(uint32_t group, EasyDPPAlgorithmControlHelper settings) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
-        virtual void setEasyDPPAlgorithmControlHelper(EasyDPPAlgorithmControlHelper settings) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual EasyDPPAlgorithmControl getEasyDPPAlgorithmControl(uint32_t group) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual void setEasyDPPAlgorithmControl(uint32_t group, EasyDPPAlgorithmControl settings) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual void setEasyDPPAlgorithmControl(EasyDPPAlgorithmControl settings) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
 
         virtual uint32_t getDPPShapedTriggerWidth(uint32_t group) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         virtual void setDPPShapedTriggerWidth(uint32_t group, uint32_t value) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
@@ -3164,61 +3164,61 @@ namespace caen {
         virtual uint32_t getBoardConfiguration() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         virtual void setBoardConfiguration(uint32_t value) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         virtual void unsetBoardConfiguration(uint32_t value) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
-        virtual EasyBoardConfigurationHelper getEasyBoardConfigurationHelper() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
-        virtual void setEasyBoardConfigurationHelper(EasyBoardConfigurationHelper settings) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
-        virtual void unsetEasyBoardConfigurationHelper(EasyBoardConfigurationHelper settings) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
-        virtual EasyDPPBoardConfigurationHelper getEasyDPPBoardConfigurationHelper() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
-        virtual void setEasyDPPBoardConfigurationHelper(EasyDPPBoardConfigurationHelper settings) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
-        virtual void unsetEasyDPPBoardConfigurationHelper(EasyDPPBoardConfigurationHelper settings) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual EasyBoardConfiguration getEasyBoardConfiguration() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual void setEasyBoardConfiguration(EasyBoardConfiguration settings) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual void unsetEasyBoardConfiguration(EasyBoardConfiguration settings) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual EasyDPPBoardConfiguration getEasyDPPBoardConfiguration() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual void setEasyDPPBoardConfiguration(EasyDPPBoardConfiguration settings) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual void unsetEasyDPPBoardConfiguration(EasyDPPBoardConfiguration settings) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
 
         virtual uint32_t getDPPAggregateOrganization() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         virtual void setDPPAggregateOrganization(uint32_t value) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
 
         virtual uint32_t getAcquisitionControl() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         virtual void setAcquisitionControl(uint32_t value) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
-        virtual EasyAcquisitionControlHelper getEasyAcquisitionControlHelper() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
-        virtual void setEasyAcquisitionControlHelper(EasyAcquisitionControlHelper settings) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
-        virtual EasyDPPAcquisitionControlHelper getEasyDPPAcquisitionControlHelper() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
-        virtual void setEasyDPPAcquisitionControlHelper(EasyDPPAcquisitionControlHelper settings) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual EasyAcquisitionControl getEasyAcquisitionControl() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual void setEasyAcquisitionControl(EasyAcquisitionControl settings) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual EasyDPPAcquisitionControl getEasyDPPAcquisitionControl() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual void setEasyDPPAcquisitionControl(EasyDPPAcquisitionControl settings) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
 
         virtual uint32_t getAcquisitionStatus() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         virtual uint32_t getDPPAcquisitionStatus() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
-        virtual EasyAcquisitionStatusHelper getEasyAcquisitionStatusHelper() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
-        virtual EasyDPPAcquisitionStatusHelper getEasyDPPAcquisitionStatusHelper() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual EasyAcquisitionStatus getEasyAcquisitionStatus() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual EasyDPPAcquisitionStatus getEasyDPPAcquisitionStatus() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
 
         virtual uint32_t getGlobalTriggerMask() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         virtual void setGlobalTriggerMask(uint32_t value) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
-        virtual EasyGlobalTriggerMaskHelper getEasyGlobalTriggerMaskHelper() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
-        virtual void setEasyGlobalTriggerMaskHelper(EasyGlobalTriggerMaskHelper settings) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
-        virtual EasyDPPGlobalTriggerMaskHelper getEasyDPPGlobalTriggerMaskHelper() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
-        virtual void setEasyDPPGlobalTriggerMaskHelper(EasyDPPGlobalTriggerMaskHelper settings) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual EasyGlobalTriggerMask getEasyGlobalTriggerMask() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual void setEasyGlobalTriggerMask(EasyGlobalTriggerMask settings) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual EasyDPPGlobalTriggerMask getEasyDPPGlobalTriggerMask() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual void setEasyDPPGlobalTriggerMask(EasyDPPGlobalTriggerMask settings) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
 
         virtual uint32_t getFrontPanelTRGOUTEnableMask() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         virtual void setFrontPanelTRGOUTEnableMask(uint32_t value) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
-        virtual EasyFrontPanelTRGOUTEnableMaskHelper getEasyFrontPanelTRGOUTEnableMaskHelper() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
-        virtual void setEasyFrontPanelTRGOUTEnableMaskHelper(EasyFrontPanelTRGOUTEnableMaskHelper settings) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
-        virtual EasyDPPFrontPanelTRGOUTEnableMaskHelper getEasyDPPFrontPanelTRGOUTEnableMaskHelper() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
-        virtual void setEasyDPPFrontPanelTRGOUTEnableMaskHelper(EasyDPPFrontPanelTRGOUTEnableMaskHelper settings) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual EasyFrontPanelTRGOUTEnableMask getEasyFrontPanelTRGOUTEnableMask() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual void setEasyFrontPanelTRGOUTEnableMask(EasyFrontPanelTRGOUTEnableMask settings) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual EasyDPPFrontPanelTRGOUTEnableMask getEasyDPPFrontPanelTRGOUTEnableMask() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual void setEasyDPPFrontPanelTRGOUTEnableMask(EasyDPPFrontPanelTRGOUTEnableMask settings) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
 
         virtual uint32_t getFrontPanelIOControl() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         virtual void setFrontPanelIOControl(uint32_t value) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
-        virtual EasyFrontPanelIOControlHelper getEasyFrontPanelIOControlHelper() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
-        virtual void setEasyFrontPanelIOControlHelper(EasyFrontPanelIOControlHelper settings) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
-        virtual EasyDPPFrontPanelIOControlHelper getEasyDPPFrontPanelIOControlHelper() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
-        virtual void setEasyDPPFrontPanelIOControlHelper(EasyDPPFrontPanelIOControlHelper settings) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual EasyFrontPanelIOControl getEasyFrontPanelIOControl() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual void setEasyFrontPanelIOControl(EasyFrontPanelIOControl settings) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual EasyDPPFrontPanelIOControl getEasyDPPFrontPanelIOControl() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual void setEasyDPPFrontPanelIOControl(EasyDPPFrontPanelIOControl settings) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
 
         virtual uint32_t getROCFPGAFirmwareRevision() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
-        virtual EasyROCFPGAFirmwareRevisionHelper getEasyROCFPGAFirmwareRevisionHelper() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
-        virtual EasyDPPROCFPGAFirmwareRevisionHelper getEasyDPPROCFPGAFirmwareRevisionHelper() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual EasyROCFPGAFirmwareRevision getEasyROCFPGAFirmwareRevision() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual EasyDPPROCFPGAFirmwareRevision getEasyDPPROCFPGAFirmwareRevision() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
 
         virtual uint32_t getEventSize() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
 
         virtual uint32_t getFanSpeedControl() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         virtual void setFanSpeedControl(uint32_t value) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
-        virtual EasyFanSpeedControlHelper getEasyFanSpeedControlHelper() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
-        virtual void setEasyFanSpeedControlHelper(EasyFanSpeedControlHelper settings) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
-        virtual EasyDPPFanSpeedControlHelper getEasyDPPFanSpeedControlHelper() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
-        virtual void setEasyDPPFanSpeedControlHelper(EasyDPPFanSpeedControlHelper settings) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual EasyFanSpeedControl getEasyFanSpeedControl() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual void setEasyFanSpeedControl(EasyFanSpeedControl settings) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual EasyDPPFanSpeedControl getEasyDPPFanSpeedControl() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual void setEasyDPPFanSpeedControl(EasyDPPFanSpeedControl settings) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
 
         virtual uint32_t getDPPDisableExternalTrigger() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         virtual void setDPPDisableExternalTrigger(uint32_t value) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
@@ -3228,14 +3228,14 @@ namespace caen {
 
         virtual uint32_t getReadoutControl() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         virtual void setReadoutControl(uint32_t value) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
-        virtual EasyReadoutControlHelper getEasyReadoutControlHelper() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
-        virtual void setEasyReadoutControlHelper(EasyReadoutControlHelper settings) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
-        virtual EasyDPPReadoutControlHelper getEasyDPPReadoutControlHelper() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
-        virtual void setEasyDPPReadoutControlHelper(EasyDPPReadoutControlHelper settings) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual EasyReadoutControl getEasyReadoutControl() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual void setEasyReadoutControl(EasyReadoutControl settings) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual EasyDPPReadoutControl getEasyDPPReadoutControl() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual void setEasyDPPReadoutControl(EasyDPPReadoutControl settings) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
 
         virtual uint32_t getReadoutStatus() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
-        virtual EasyReadoutStatusHelper getEasyReadoutStatusHelper() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
-        virtual EasyDPPReadoutStatusHelper getEasyDPPReadoutStatusHelper() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual EasyReadoutStatus getEasyReadoutStatus() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual EasyDPPReadoutStatus getEasyDPPReadoutStatus() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
 
         virtual uint32_t getDPPAggregateNumberPerBLT() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         virtual void setDPPAggregateNumberPerBLT(uint32_t value) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
@@ -3305,7 +3305,7 @@ namespace caen {
             return mask;
         }
         /**
-         * @brief Easy Get AMCFirmwareRevisionHelper
+         * @brief Easy Get AMCFirmwareRevision
          *
          * A convenience wrapper for the low-level function of the same
          * name. Works on a struct with named variables rather than
@@ -3316,13 +3316,13 @@ namespace caen {
          * @param group:
          * group index
          * @returns
-         * EasyAMCFirmwareRevisionHelper object
+         * EasyAMCFirmwareRevision object
          */
-        EasyAMCFirmwareRevisionHelper getEasyAMCFirmwareRevisionHelper(uint32_t group) override
+        EasyAMCFirmwareRevision getEasyAMCFirmwareRevision(uint32_t group) override
         {
             uint32_t mask;
             mask = getAMCFirmwareRevision(group);
-            return EasyAMCFirmwareRevisionHelper(mask);
+            return EasyAMCFirmwareRevision(mask);
         }
 
         /* NOTE: Get / Set DC Offset is handled in GroupDCOffset */
@@ -3389,7 +3389,7 @@ namespace caen {
         { errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x8008, filterBoardConfigurationUnsetMask(mask))); }
 
         /**
-         * @brief Easy Get BoardConfigurationHelper
+         * @brief Easy Get BoardConfiguration
          *
          * A convenience wrapper for the low-level function of the same
          * name. Works on a struct with named variables rather than
@@ -3400,14 +3400,14 @@ namespace caen {
          * @returns
          * EasyBoardConfiguration object
          */
-        EasyBoardConfigurationHelper getEasyBoardConfigurationHelper() override
+        EasyBoardConfiguration getEasyBoardConfiguration() override
         {
             uint32_t mask;
             mask = getBoardConfiguration();
-            return EasyBoardConfigurationHelper(mask);
+            return EasyBoardConfiguration(mask);
         }
         /**
-         * @brief Easy Set BoardConfigurationHelper
+         * @brief Easy Set BoardConfiguration
          *
          * A convenience wrapper for the low-level function of the same
          * name. Works on a struct with named variables rather than
@@ -3418,13 +3418,13 @@ namespace caen {
          * @param settings:
          * EasyBoardConfiguration object
          */
-        void setEasyBoardConfigurationHelper(EasyBoardConfigurationHelper settings) override
+        void setEasyBoardConfiguration(EasyBoardConfiguration settings) override
         {
             uint32_t mask = settings.toBits();
             setBoardConfiguration(mask);
         }
         /**
-         * @brief Easy Unset BoardConfigurationHelper
+         * @brief Easy Unset BoardConfiguration
          *
          * A convenience wrapper for the low-level function of the same
          * name. Works on a struct with named variables rather than
@@ -3435,7 +3435,7 @@ namespace caen {
          * @param settings:
          * EasyBoardConfiguration object
          */
-        void unsetEasyBoardConfigurationHelper(EasyBoardConfigurationHelper settings) override
+        void unsetEasyBoardConfiguration(EasyBoardConfiguration settings) override
         {
             uint32_t mask = settings.toBits();
             unsetBoardConfiguration(mask);
@@ -3474,7 +3474,7 @@ namespace caen {
         void setAcquisitionControl(uint32_t mask) override
         { errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x8100, mask & 0x0FFF)); }
         /**
-         * @brief Easy Get AcquisitionControlHelper
+         * @brief Easy Get AcquisitionControl
          *
          * A convenience wrapper for the low-level function of the same
          * name. Works on a struct with named variables rather than
@@ -3485,14 +3485,14 @@ namespace caen {
          * @returns
          * EasyAcquisitionControl object
          */
-        EasyAcquisitionControlHelper getEasyAcquisitionControlHelper() override
+        EasyAcquisitionControl getEasyAcquisitionControl() override
         {
             uint32_t mask;
             mask = getAcquisitionControl();
-            return EasyAcquisitionControlHelper(mask);
+            return EasyAcquisitionControl(mask);
         }
         /**
-         * @brief Easy Set AcquisitionControlHelper
+         * @brief Easy Set AcquisitionControl
          *
          * A convenience wrapper for the low-level function of the same
          * name. Works on a struct with named variables rather than
@@ -3503,7 +3503,7 @@ namespace caen {
          * @param settings:
          * EasyAcquisitionControl object
          */
-        void setEasyAcquisitionControlHelper(EasyAcquisitionControlHelper settings) override
+        void setEasyAcquisitionControl(EasyAcquisitionControl settings) override
         {
             uint32_t mask = settings.toBits();
             setAcquisitionControl(mask);
@@ -3529,7 +3529,7 @@ namespace caen {
             return mask;
         }
         /**
-         * @brief Easy Get AcquisitionStatusHelper
+         * @brief Easy Get AcquisitionStatus
          *
          * A convenience wrapper for the low-level function of the same
          * name. Works on a struct with named variables rather than
@@ -3540,11 +3540,11 @@ namespace caen {
          * @returns
          * EasyAcquisitionStatus object
          */
-        EasyAcquisitionStatusHelper getEasyAcquisitionStatusHelper() override
+        EasyAcquisitionStatus getEasyAcquisitionStatus() override
         {
             uint32_t mask;
             mask = getAcquisitionStatus();
-            return EasyAcquisitionStatusHelper(mask);
+            return EasyAcquisitionStatus(mask);
         }
 
         /* TODO: is Software Trigger from register docs already covered
@@ -3585,7 +3585,7 @@ namespace caen {
         void setGlobalTriggerMask(uint32_t mask) override
         { errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x810C, mask)); }
         /**
-         * @brief Easy Get GlobalTriggerMaskHelper
+         * @brief Easy Get GlobalTriggerMask
          *
          * A convenience wrapper for the low-level function of the same
          * name. Works on a struct with named variables rather than
@@ -3596,14 +3596,14 @@ namespace caen {
          * @returns
          * EasyGlobalTriggerMask object
          */
-        EasyGlobalTriggerMaskHelper getEasyGlobalTriggerMaskHelper() override
+        EasyGlobalTriggerMask getEasyGlobalTriggerMask() override
         {
             uint32_t mask;
             mask = getGlobalTriggerMask();
-            return EasyGlobalTriggerMaskHelper(mask);
+            return EasyGlobalTriggerMask(mask);
         }
         /**
-         * @brief Easy Set GlobalTriggerMaskHelper
+         * @brief Easy Set GlobalTriggerMask
          *
          * A convenience wrapper for the low-level function of the same
          * name. Works on a struct with named variables rather than
@@ -3614,7 +3614,7 @@ namespace caen {
          * @param settings:
          * EasyGlobalTriggerMask object
          */
-        void setEasyGlobalTriggerMaskHelper(EasyGlobalTriggerMaskHelper settings) override
+        void setEasyGlobalTriggerMask(EasyGlobalTriggerMask settings) override
         {
             uint32_t mask = settings.toBits();
             setGlobalTriggerMask(mask);
@@ -3657,7 +3657,7 @@ namespace caen {
         void setFrontPanelTRGOUTEnableMask(uint32_t mask) override
         { errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x8110, mask)); }
         /**
-         * @brief Easy Get FrontPanelTRGOUTEnableMaskHelper
+         * @brief Easy Get FrontPanelTRGOUTEnableMask
          *
          * A convenience wrapper for the low-level function of the same
          * name. Works on a struct with named variables rather than
@@ -3668,14 +3668,14 @@ namespace caen {
          * @returns
          * EasyFrontPanelTRGOUTEnableMask object
          */
-        EasyFrontPanelTRGOUTEnableMaskHelper getEasyFrontPanelTRGOUTEnableMaskHelper() override
+        EasyFrontPanelTRGOUTEnableMask getEasyFrontPanelTRGOUTEnableMask() override
         {
             uint32_t mask;
             mask = getFrontPanelTRGOUTEnableMask();
-            return EasyFrontPanelTRGOUTEnableMaskHelper(mask);
+            return EasyFrontPanelTRGOUTEnableMask(mask);
         }
         /**
-         * @brief Easy Set FrontPanelTRGOUTEnableMaskHelper
+         * @brief Easy Set FrontPanelTRGOUTEnableMask
          *
          * A convenience wrapper for the low-level function of the same
          * name. Works on a struct with named variables rather than
@@ -3686,7 +3686,7 @@ namespace caen {
          * @param settings:
          * EasyFrontPanelTRGOUTEnableMask object
          */
-        void setEasyFrontPanelTRGOUTEnableMaskHelper(EasyFrontPanelTRGOUTEnableMaskHelper settings) override
+        void setEasyFrontPanelTRGOUTEnableMask(EasyFrontPanelTRGOUTEnableMask settings) override
         {
             uint32_t mask = settings.toBits();
             setFrontPanelTRGOUTEnableMask(mask);
@@ -3729,7 +3729,7 @@ namespace caen {
         void setFrontPanelIOControl(uint32_t mask) override
         { errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x811C, mask)); }
         /**
-         * @brief Easy Get FrontPanelIOControlHelper
+         * @brief Easy Get FrontPanelIOControl
          *
          * A convenience wrapper for the low-level function of the same
          * name. Works on a struct with named variables rather than
@@ -3740,14 +3740,14 @@ namespace caen {
          * @returns
          * EasyFrontPanelIOControl object
          */
-        EasyFrontPanelIOControlHelper getEasyFrontPanelIOControlHelper() override
+        EasyFrontPanelIOControl getEasyFrontPanelIOControl() override
         {
             uint32_t mask;
             mask = getFrontPanelIOControl();
-            return EasyFrontPanelIOControlHelper(mask);
+            return EasyFrontPanelIOControl(mask);
         }
         /**
-         * @brief Easy Set FrontPanelIOControlHelper
+         * @brief Easy Set FrontPanelIOControl
          *
          * A convenience wrapper for the low-level function of the same
          * name. Works on a struct with named variables rather than
@@ -3758,7 +3758,7 @@ namespace caen {
          * @param settings:
          * EasyFrontPanelIOControl object
          */
-        void setEasyFrontPanelIOControlHelper(EasyFrontPanelIOControlHelper settings) override
+        void setEasyFrontPanelIOControl(EasyFrontPanelIOControl settings) override
         {
             uint32_t mask = settings.toBits();
             setFrontPanelIOControl(mask);
@@ -3793,7 +3793,7 @@ namespace caen {
             return mask;
         }
         /**
-         * @brief Easy Get ROCFPGAFirmwareRevisionHelper
+         * @brief Easy Get ROCFPGAFirmwareRevision
          *
          * A convenience wrapper for the low-level function of the same
          * name. Works on a struct with named variables rather than
@@ -3804,11 +3804,11 @@ namespace caen {
          * @returns
          * EasyROCFPGAFirmwareRevision structure
          */
-        EasyROCFPGAFirmwareRevisionHelper getEasyROCFPGAFirmwareRevisionHelper() override
+        EasyROCFPGAFirmwareRevision getEasyROCFPGAFirmwareRevision() override
         {
             uint32_t mask;
             mask = getROCFPGAFirmwareRevision();
-            return EasyROCFPGAFirmwareRevisionHelper(mask);
+            return EasyROCFPGAFirmwareRevision(mask);
         }
 
         /* TODO: wrap Software Clock Sync from register docs? */
@@ -3892,7 +3892,7 @@ namespace caen {
         void setFanSpeedControl(uint32_t mask) override
         { errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x8168, mask)); }
         /**
-         * @brief Easy Get FanSpeedControlHelper
+         * @brief Easy Get FanSpeedControl
          *
          * A convenience wrapper for the low-level function of the same
          * name. Works on a struct with named variables rather than
@@ -3901,16 +3901,16 @@ namespace caen {
          * the underlying low-level get funtion.
          *
          * @returns
-         * EasyFanSpeedControlHelper object
+         * EasyFanSpeedControl object
          */
-        EasyFanSpeedControlHelper getEasyFanSpeedControlHelper() override
+        EasyFanSpeedControl getEasyFanSpeedControl() override
         {
             uint32_t mask;
             mask = getFanSpeedControl();
-            return EasyFanSpeedControlHelper(mask);
+            return EasyFanSpeedControl(mask);
         }
         /**
-         * @brief Easy Set FanSpeedControlHelper
+         * @brief Easy Set FanSpeedControl
          *
          * A convenience wrapper for the low-level function of the same
          * name. Works on a struct with named variables rather than
@@ -3921,7 +3921,7 @@ namespace caen {
          * @param settings:
          * EasyFanSpeedControl object
          */
-        void setEasyFanSpeedControlHelper(EasyFanSpeedControlHelper settings) override
+        void setEasyFanSpeedControl(EasyFanSpeedControl settings) override
         {
             uint32_t mask = settings.toBits();
             setFanSpeedControl(mask);
@@ -4018,7 +4018,7 @@ namespace caen {
         void setReadoutControl(uint32_t mask) override
         { errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0xEF00, mask)); }
         /**
-         * @brief Easy Get ReadoutControlHelper
+         * @brief Easy Get ReadoutControl
          *
          * A convenience wrapper for the low-level function of the same
          * name. Works on a struct with named variables rather than
@@ -4027,16 +4027,16 @@ namespace caen {
          * the underlying low-level get funtion.
          *
          * @returns
-         * EasyReadoutControlHelper object
+         * EasyReadoutControl object
          */
-        EasyReadoutControlHelper getEasyReadoutControlHelper() override
+        EasyReadoutControl getEasyReadoutControl() override
         {
             uint32_t mask;
             mask = getReadoutControl();
-            return EasyReadoutControlHelper(mask);
+            return EasyReadoutControl(mask);
         }
         /**
-         * @brief Easy Set ReadoutControlHelper
+         * @brief Easy Set ReadoutControl
          *
          * A convenience wrapper for the low-level function of the same
          * name. Works on a struct with named variables rather than
@@ -4047,7 +4047,7 @@ namespace caen {
          * @param settings:
          * EasyReadoutControl object
          */
-        void setEasyReadoutControlHelper(EasyReadoutControlHelper settings) override
+        void setEasyReadoutControl(EasyReadoutControl settings) override
         {
             uint32_t mask = settings.toBits();
             setReadoutControl(mask);
@@ -4073,7 +4073,7 @@ namespace caen {
             return mask;
         }
         /**
-         * @brief Easy Get ReadoutStatusHelper
+         * @brief Easy Get ReadoutStatus
          *
          * A convenience wrapper for the low-level function of the same
          * name. Works on a struct with named variables rather than
@@ -4082,13 +4082,13 @@ namespace caen {
          * the underlying low-level get funtion.
          *
          * @returns
-         * EasyReadoutStatusHelper object
+         * EasyReadoutStatus object
          */
-        virtual EasyReadoutStatusHelper getEasyReadoutStatusHelper() override
+        virtual EasyReadoutStatus getEasyReadoutStatus() override
         {
             uint32_t mask;
             mask = getReadoutStatus();
-            return EasyReadoutStatusHelper(mask);
+            return EasyReadoutStatus(mask);
         }
 
         /* TODO: wrap Board ID from register docs? */
@@ -4388,7 +4388,7 @@ namespace caen {
         void setDPPAlgorithmControl(uint32_t mask) override
         { errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x8040, mask)); }
         /**
-         * @brief Easy Get DPPAlgorithmControlHelper
+         * @brief Easy Get DPPAlgorithmControl
          *
          * A convenience wrapper for the low-level function of the same
          * name. Works on a struct with named variables rather than
@@ -4399,13 +4399,13 @@ namespace caen {
          * @returns
          * EasyDPPAlgorithmControl object
          */
-        EasyDPPAlgorithmControlHelper getEasyDPPAlgorithmControlHelper(uint32_t group) override
+        EasyDPPAlgorithmControl getEasyDPPAlgorithmControl(uint32_t group) override
         {
             uint32_t mask = getDPPAlgorithmControl(group);
-            return EasyDPPAlgorithmControlHelper(mask);
+            return EasyDPPAlgorithmControl(mask);
         }
         /**
-         * @brief Easy Set DPPAlgorithmControlHelper
+         * @brief Easy Set DPPAlgorithmControl
          *
          * A convenience wrapper for the low-level function of the same
          * name. Works on a struct with named variables rather than
@@ -4416,7 +4416,7 @@ namespace caen {
          * @param settings:
          * EasyDPPAlgorithmControl object
          */
-        void setEasyDPPAlgorithmControlHelper(uint32_t group, EasyDPPAlgorithmControlHelper settings) override
+        void setEasyDPPAlgorithmControl(uint32_t group, EasyDPPAlgorithmControl settings) override
         {
             uint32_t mask = settings.toBits();
             setDPPAlgorithmControl(group, mask);
@@ -4425,7 +4425,7 @@ namespace caen {
          * @brief Broadcast version: please refer to details in
          * single-group version.
          */
-        void setEasyDPPAlgorithmControlHelper(EasyDPPAlgorithmControlHelper settings) override
+        void setEasyDPPAlgorithmControl(EasyDPPAlgorithmControl settings) override
         {
             uint32_t mask = settings.toBits();
             setDPPAlgorithmControl(mask);
@@ -4539,9 +4539,9 @@ namespace caen {
         /**
          * @brief use getEasyDPPX version instead
          */
-        virtual EasyAMCFirmwareRevisionHelper getEasyAMCFirmwareRevisionHelper(uint32_t group) override { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual EasyAMCFirmwareRevision getEasyAMCFirmwareRevision(uint32_t group) override { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         /**
-         * @brief Easy Get DPP AMCFirmwareRevisionHelper
+         * @brief Easy Get DPP AMCFirmwareRevision
          *
          * A convenience wrapper for the low-level function of the same
          * name. Works on a struct with named variables rather than
@@ -4552,13 +4552,13 @@ namespace caen {
          * @param group:
          * group index
          * @returns
-         * EasyAMCFirmwareRevisionHelper object
+         * EasyAMCFirmwareRevision object
          */
-        EasyDPPAMCFirmwareRevisionHelper getEasyDPPAMCFirmwareRevisionHelper(uint32_t group) override
+        EasyDPPAMCFirmwareRevision getEasyDPPAMCFirmwareRevision(uint32_t group) override
         {
             uint32_t mask;
             mask = getAMCFirmwareRevision(group);
-            return EasyDPPAMCFirmwareRevisionHelper(mask);
+            return EasyDPPAMCFirmwareRevision(mask);
         }
 
         /* TODO: Switch to bitmasks read-in and write-out in struct confs?
@@ -4577,17 +4577,17 @@ namespace caen {
         /**
          * @brief use getEasyDPPX version instead
          */
-        virtual EasyBoardConfigurationHelper getEasyBoardConfigurationHelper() override { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual EasyBoardConfiguration getEasyBoardConfiguration() override { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         /**
          * @brief use setEasyDPPX version instead
          */
-        virtual void setEasyBoardConfigurationHelper(EasyBoardConfigurationHelper settings) override { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual void setEasyBoardConfiguration(EasyBoardConfiguration settings) override { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         /**
          * @brief use unsetEasyDPPX version instead
          */
-        virtual void unsetEasyBoardConfigurationHelper(EasyBoardConfigurationHelper settings) override { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual void unsetEasyBoardConfiguration(EasyBoardConfiguration settings) override { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         /**
-         * @brief Easy Get DPP BoardConfigurationHelper
+         * @brief Easy Get DPP BoardConfiguration
          *
          * A convenience wrapper for the low-level function of the same
          * name. Works on a struct with named variables rather than
@@ -4598,14 +4598,14 @@ namespace caen {
          * @returns
          * EasyDPPBoardConfiguration object
          */
-        EasyDPPBoardConfigurationHelper getEasyDPPBoardConfigurationHelper() override
+        EasyDPPBoardConfiguration getEasyDPPBoardConfiguration() override
         {
             uint32_t mask;
             mask = getBoardConfiguration();
-            return EasyDPPBoardConfigurationHelper(mask);
+            return EasyDPPBoardConfiguration(mask);
         }
         /**
-         * @brief Easy Set DPP BoardConfigurationHelper
+         * @brief Easy Set DPP BoardConfiguration
          *
          * A convenience wrapper for the low-level function of the same
          * name. Works on a struct with named variables rather than
@@ -4616,14 +4616,14 @@ namespace caen {
          * @param settings:
          * EasyDPPBoardConfiguration object
          */
-        void setEasyDPPBoardConfigurationHelper(EasyDPPBoardConfigurationHelper settings) override
+        void setEasyDPPBoardConfiguration(EasyDPPBoardConfiguration settings) override
         {
-            /* TODO: add check for forced ones here or in EasyHelper? */
+            /* TODO: add check for forced ones here or in EasyBase? */
             uint32_t mask = settings.toBits();
             setBoardConfiguration(mask);
         }
         /**
-         * @brief Easy Unset DPP BoardConfigurationHelper
+         * @brief Easy Unset DPP BoardConfiguration
          *
          * A convenience wrapper for the low-level function of the same
          * name. Works on a struct with named variables rather than
@@ -4634,9 +4634,9 @@ namespace caen {
          * @param settings:
          * EasyDPPBoardConfiguration object
          */
-        void unsetEasyDPPBoardConfigurationHelper(EasyDPPBoardConfigurationHelper settings) override
+        void unsetEasyDPPBoardConfiguration(EasyDPPBoardConfiguration settings) override
         {
-            /* TODO: add check for forced ones here or in EasyHelper? */
+            /* TODO: add check for forced ones here or in EasyBase? */
             uint32_t mask = settings.toBits();
             unsetBoardConfiguration(mask);
         }
@@ -4760,13 +4760,13 @@ namespace caen {
         /**
          * @brief use getEasyDPPX version instead
          */
-        virtual EasyAcquisitionControlHelper getEasyAcquisitionControlHelper() override { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual EasyAcquisitionControl getEasyAcquisitionControl() override { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         /**
          * @brief use setEasyDPPX version instead
          */
-        virtual void setEasyAcquisitionControlHelper(EasyAcquisitionControlHelper settings) override { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual void setEasyAcquisitionControl(EasyAcquisitionControl settings) override { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         /**
-         * @brief Easy Get DPP AcquisitionControlHelper
+         * @brief Easy Get DPP AcquisitionControl
          *
          * A convenience wrapper for the low-level function of the same
          * name. Works on a struct with named variables rather than
@@ -4777,14 +4777,14 @@ namespace caen {
          * @returns
          * EasyDPPAcquisitionControl object
          */
-        EasyDPPAcquisitionControlHelper getEasyDPPAcquisitionControlHelper() override
+        EasyDPPAcquisitionControl getEasyDPPAcquisitionControl() override
         {
             uint32_t mask;
             mask = getAcquisitionControl();
-            return EasyDPPAcquisitionControlHelper(mask);
+            return EasyDPPAcquisitionControl(mask);
         }
         /**
-         * @brief Easy Set DPP AcquisitionControlHelper
+         * @brief Easy Set DPP AcquisitionControl
          *
          * A convenience wrapper for the low-level function of the same
          * name. Works on a struct with named variables rather than
@@ -4795,7 +4795,7 @@ namespace caen {
          * @param settings:
          * EasyDPPAcquisitionControl object
          */
-        void setEasyDPPAcquisitionControlHelper(EasyDPPAcquisitionControlHelper settings) override
+        void setEasyDPPAcquisitionControl(EasyDPPAcquisitionControl settings) override
         {
             uint32_t mask = settings.toBits();
             setAcquisitionControl(mask);
@@ -4807,9 +4807,9 @@ namespace caen {
         /**
          * @brief use getEasyDPPX version instead
          */
-        virtual EasyAcquisitionStatusHelper getEasyAcquisitionStatusHelper() override { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual EasyAcquisitionStatus getEasyAcquisitionStatus() override { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         /**
-         * @brief Easy Get DPP AcquisitionStatusHelper
+         * @brief Easy Get DPP AcquisitionStatus
          *
          * A convenience wrapper for the low-level function of the same
          * name. Works on a struct with named variables rather than
@@ -4820,11 +4820,11 @@ namespace caen {
          * @returns
          * EasyDPPAcquisitionStatus object
          */
-        EasyDPPAcquisitionStatusHelper getEasyDPPAcquisitionStatusHelper() override
+        EasyDPPAcquisitionStatus getEasyDPPAcquisitionStatus() override
         {
             uint32_t mask;
             mask = getAcquisitionStatus();
-            return EasyDPPAcquisitionStatusHelper(mask);
+            return EasyDPPAcquisitionStatus(mask);
         }
 
         /* NOTE: Reuse get / set SoftwareTrigger from parent? */
@@ -4835,13 +4835,13 @@ namespace caen {
         /**
          * @brief use getEasyDPPX version instead
          */
-        virtual EasyGlobalTriggerMaskHelper getEasyGlobalTriggerMaskHelper() override { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual EasyGlobalTriggerMask getEasyGlobalTriggerMask() override { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         /**
          * @brief use setEasyDPPX version instead
          */
-        virtual void setEasyGlobalTriggerMaskHelper(EasyGlobalTriggerMaskHelper settings) override { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual void setEasyGlobalTriggerMask(EasyGlobalTriggerMask settings) override { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         /**
-         * @brief Easy Get DPP GlobalTriggerMaskHelper
+         * @brief Easy Get DPP GlobalTriggerMask
          *
          * A convenience wrapper for the low-level function of the same
          * name. Works on a struct with named variables rather than
@@ -4852,14 +4852,14 @@ namespace caen {
          * @returns
          * EasyDPPGlobalTriggerMask object
          */
-        EasyDPPGlobalTriggerMaskHelper getEasyDPPGlobalTriggerMaskHelper() override
+        EasyDPPGlobalTriggerMask getEasyDPPGlobalTriggerMask() override
         {
             uint32_t mask;
             mask = getGlobalTriggerMask();
-            return EasyDPPGlobalTriggerMaskHelper(mask);
+            return EasyDPPGlobalTriggerMask(mask);
         }
         /**
-         * @brief Easy Set DPP GlobalTriggerMaskHelper
+         * @brief Easy Set DPP GlobalTriggerMask
          *
          * A convenience wrapper for the low-level function of the same
          * name. Works on a struct with named variables rather than
@@ -4870,7 +4870,7 @@ namespace caen {
          * @param settings:
          * EasyDPPGlobalTriggerMask object
          */
-        void setEasyDPPGlobalTriggerMaskHelper(EasyDPPGlobalTriggerMaskHelper settings) override
+        void setEasyDPPGlobalTriggerMask(EasyDPPGlobalTriggerMask settings) override
         {
             uint32_t mask = settings.toBits();
             setGlobalTriggerMask(mask);
@@ -4882,13 +4882,13 @@ namespace caen {
         /**
          * @brief use getEasyDPPX version instead
          */
-        virtual EasyFrontPanelTRGOUTEnableMaskHelper getEasyFrontPanelTRGOUTEnableMaskHelper() override { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual EasyFrontPanelTRGOUTEnableMask getEasyFrontPanelTRGOUTEnableMask() override { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         /**
          * @brief use setEasyDPPX version instead
          */
-        virtual void setEasyFrontPanelTRGOUTEnableMaskHelper(EasyFrontPanelTRGOUTEnableMaskHelper settings) override { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual void setEasyFrontPanelTRGOUTEnableMask(EasyFrontPanelTRGOUTEnableMask settings) override { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         /**
-         * @brief Easy Get DPP FrontPanelTRGOUTEnableMaskHelper
+         * @brief Easy Get DPP FrontPanelTRGOUTEnableMask
          *
          * A convenience wrapper for the low-level function of the same
          * name. Works on a struct with named variables rather than
@@ -4899,14 +4899,14 @@ namespace caen {
          * @returns
          * EasyDPPFrontPanelTRGOUTEnableMask object
          */
-        EasyDPPFrontPanelTRGOUTEnableMaskHelper getEasyDPPFrontPanelTRGOUTEnableMaskHelper() override
+        EasyDPPFrontPanelTRGOUTEnableMask getEasyDPPFrontPanelTRGOUTEnableMask() override
         {
             uint32_t mask;
             mask = getFrontPanelTRGOUTEnableMask();
-            return EasyDPPFrontPanelTRGOUTEnableMaskHelper(mask);
+            return EasyDPPFrontPanelTRGOUTEnableMask(mask);
         }
         /**
-         * @brief Easy Set DPP FrontPanelTRGOUTEnableMaskHelper
+         * @brief Easy Set DPP FrontPanelTRGOUTEnableMask
          *
          * A convenience wrapper for the low-level function of the same
          * name. Works on a struct with named variables rather than
@@ -4917,7 +4917,7 @@ namespace caen {
          * @param settings:
          * EasyDPPFrontPanelTRGOUTEnableMask object
          */
-        void setEasyDPPFrontPanelTRGOUTEnableMaskHelper(EasyDPPFrontPanelTRGOUTEnableMaskHelper settings) override
+        void setEasyDPPFrontPanelTRGOUTEnableMask(EasyDPPFrontPanelTRGOUTEnableMask settings) override
         {
             uint32_t mask = settings.toBits();
             setFrontPanelTRGOUTEnableMask(mask);
@@ -4934,13 +4934,13 @@ namespace caen {
         /**
          * @brief use getEasyDPPX version instead
          */
-        virtual EasyFrontPanelIOControlHelper getEasyFrontPanelIOControlHelper() override { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual EasyFrontPanelIOControl getEasyFrontPanelIOControl() override { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         /**
          * @brief use setEasyDPPX version instead
          */
-        virtual void setEasyFrontPanelIOControlHelper(EasyFrontPanelIOControlHelper settings) override { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual void setEasyFrontPanelIOControl(EasyFrontPanelIOControl settings) override { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         /**
-         * @brief Easy Get DPP FrontPanelIOControlHelper
+         * @brief Easy Get DPP FrontPanelIOControl
          *
          * A convenience wrapper for the low-level function of the same
          * name. Works on a struct with named variables rather than
@@ -4951,14 +4951,14 @@ namespace caen {
          * @returns
          * EasyDPPFrontPanelIOControl object
          */
-        EasyDPPFrontPanelIOControlHelper getEasyDPPFrontPanelIOControlHelper() override
+        EasyDPPFrontPanelIOControl getEasyDPPFrontPanelIOControl() override
         {
             uint32_t mask;
             mask = getFrontPanelIOControl();
-            return EasyDPPFrontPanelIOControlHelper(mask);
+            return EasyDPPFrontPanelIOControl(mask);
         }
         /**
-         * @brief Easy Set DPP FrontPanelIOControlHelper
+         * @brief Easy Set DPP FrontPanelIOControl
          *
          * A convenience wrapper for the low-level function of the same
          * name. Works on a struct with named variables rather than
@@ -4969,7 +4969,7 @@ namespace caen {
          * @param settings:
          * EasyDPPFrontPanelIOControl object
          */
-        void setEasyDPPFrontPanelIOControlHelper(EasyDPPFrontPanelIOControlHelper settings) override
+        void setEasyDPPFrontPanelIOControl(EasyDPPFrontPanelIOControl settings) override
         {
             uint32_t mask = settings.toBits();
             setFrontPanelIOControl(mask);
@@ -4981,9 +4981,9 @@ namespace caen {
         /**
          * @brief use getEasyDPPX version instead
          */
-        virtual EasyROCFPGAFirmwareRevisionHelper getEasyROCFPGAFirmwareRevisionHelper() override { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual EasyROCFPGAFirmwareRevision getEasyROCFPGAFirmwareRevision() override { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         /**
-         * @brief Easy Get DPP ROCFPGAFirmwareRevisionHelper
+         * @brief Easy Get DPP ROCFPGAFirmwareRevision
          *
          * A convenience wrapper for the low-level function of the same
          * name. Works on a struct with named variables rather than
@@ -4994,11 +4994,11 @@ namespace caen {
          * @returns
          * EasyDPPROCFPGAFirmwareRevision object
          */
-        EasyDPPROCFPGAFirmwareRevisionHelper getEasyDPPROCFPGAFirmwareRevisionHelper() override
+        EasyDPPROCFPGAFirmwareRevision getEasyDPPROCFPGAFirmwareRevision() override
         {
             uint32_t mask;
             mask = getROCFPGAFirmwareRevision();
-            return EasyDPPROCFPGAFirmwareRevisionHelper(mask);
+            return EasyDPPROCFPGAFirmwareRevision(mask);
         }
         
         /* TODO: wrap Voltage Level Mode Configuration from register docs? */
@@ -5014,13 +5014,13 @@ namespace caen {
         /**
          * @brief use getEasyDPPX version instead
          */
-        virtual EasyFanSpeedControlHelper getEasyFanSpeedControlHelper() override { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual EasyFanSpeedControl getEasyFanSpeedControl() override { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         /**
          * @brief use setEasyDPPX version instead
          */
-        virtual void setEasyFanSpeedControlHelper(EasyFanSpeedControlHelper settings) override { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual void setEasyFanSpeedControl(EasyFanSpeedControl settings) override { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         /**
-         * @brief Easy Get FanSpeedControlHelper
+         * @brief Easy Get FanSpeedControl
          *
          * A convenience wrapper for the low-level function of the same
          * name. Works on a struct with named variables rather than
@@ -5029,16 +5029,16 @@ namespace caen {
          * the underlying low-level get funtion.
          *
          * @returns
-         * EasyFanSpeedControlHelper object
+         * EasyFanSpeedControl object
          */
-        EasyDPPFanSpeedControlHelper getEasyDPPFanSpeedControlHelper() override
+        EasyDPPFanSpeedControl getEasyDPPFanSpeedControl() override
         {
             uint32_t mask;
             mask = getFanSpeedControl();
-            return EasyDPPFanSpeedControlHelper(mask);
+            return EasyDPPFanSpeedControl(mask);
         }
         /**
-         * @brief Easy Set FanSpeedControlHelper
+         * @brief Easy Set FanSpeedControl
          *
          * A convenience wrapper for the low-level function of the same
          * name. Works on a struct with named variables rather than
@@ -5049,7 +5049,7 @@ namespace caen {
          * @param settings:
          * EasyFanSpeedControl object
          */
-        void setEasyDPPFanSpeedControlHelper(EasyDPPFanSpeedControlHelper settings) override
+        void setEasyDPPFanSpeedControl(EasyDPPFanSpeedControl settings) override
         {
             uint32_t mask = settings.toBits();
             setFanSpeedControl(mask);
@@ -5061,13 +5061,13 @@ namespace caen {
         /**
          * @brief use getEasyDPPX version instead
          */
-        virtual EasyReadoutControlHelper getEasyReadoutControlHelper() override { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual EasyReadoutControl getEasyReadoutControl() override { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         /**
          * @brief use setEasyDPPX version instead
          */
-        virtual void setEasyReadoutControlHelper(EasyReadoutControlHelper settings) override { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual void setEasyReadoutControl(EasyReadoutControl settings) override { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         /**
-         * @brief Easy Get DPP ReadoutControlHelper
+         * @brief Easy Get DPP ReadoutControl
          *
          * A convenience wrapper for the low-level function of the same
          * name. Works on a struct with named variables rather than
@@ -5076,16 +5076,16 @@ namespace caen {
          * the underlying low-level get funtion.
          *
          * @returns
-         * EasyDPPReadoutControlHelper object
+         * EasyDPPReadoutControl object
          */
-        EasyDPPReadoutControlHelper getEasyDPPReadoutControlHelper() override
+        EasyDPPReadoutControl getEasyDPPReadoutControl() override
         {
             uint32_t mask;
             mask = getReadoutControl();
-            return EasyDPPReadoutControlHelper(mask);
+            return EasyDPPReadoutControl(mask);
         }
         /**
-         * @brief Easy Set DPP ReadoutControlHelper
+         * @brief Easy Set DPP ReadoutControl
          *
          * A convenience wrapper for the low-level function of the same
          * name. Works on a struct with named variables rather than
@@ -5096,7 +5096,7 @@ namespace caen {
          * @param settings:
          * EasyDPPReadoutControl object
          */
-        void setEasyDPPReadoutControlHelper(EasyDPPReadoutControlHelper settings) override
+        void setEasyDPPReadoutControl(EasyDPPReadoutControl settings) override
         {
             uint32_t mask = settings.toBits();
             setReadoutControl(mask);
@@ -5108,9 +5108,9 @@ namespace caen {
         /**
          * @brief use getEasyDPPX version instead
          */
-        virtual EasyReadoutStatusHelper getEasyReadoutStatusHelper() override { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual EasyReadoutStatus getEasyReadoutStatus() override { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         /**
-         * @brief Easy Get DPP ReadoutStatusHelper
+         * @brief Easy Get DPP ReadoutStatus
          *
          * A convenience wrapper for the low-level function of the same
          * name. Works on a struct with named variables rather than
@@ -5119,13 +5119,13 @@ namespace caen {
          * the underlying low-level get funtion.
          *
          * @returns
-         * EasyDPPReadoutStatusHelper object
+         * EasyDPPReadoutStatus object
          */
-        virtual EasyDPPReadoutStatusHelper getEasyDPPReadoutStatusHelper() override
+        virtual EasyDPPReadoutStatus getEasyDPPReadoutStatus() override
         {
             uint32_t mask;
             mask = getReadoutStatus();
-            return EasyDPPReadoutStatusHelper(mask);
+            return EasyDPPReadoutStatus(mask);
         }
 
         /* NOTE: Get / Set Run/Start/Stop Delay from register docs is
