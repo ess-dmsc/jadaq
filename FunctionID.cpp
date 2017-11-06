@@ -90,6 +90,9 @@ static std::unordered_map<std::string,FunctionID > functionMap =
                 MAP_ENTRY(ReadoutStatus),
                 MAP_ENTRY(EasyReadoutStatus),
                 MAP_ENTRY(EasyDPPReadoutStatus),
+                MAP_ENTRY(Scratch),
+                MAP_ENTRY(EasyScratch),
+                MAP_ENTRY(EasyDPPScratch),
                 MAP_ENTRY(DPPAggregateNumberPerBLT),
                 MAP_ENTRY(ChannelDCOffset),
                 MAP_ENTRY(GroupDCOffset),
@@ -185,6 +188,9 @@ const std::string to_string(FunctionID id) {
         CASE_TO_STR(ReadoutStatus)
         CASE_TO_STR(EasyReadoutStatus)
         CASE_TO_STR(EasyDPPReadoutStatus)
+        CASE_TO_STR(Scratch)
+        CASE_TO_STR(EasyScratch)
+        CASE_TO_STR(EasyDPPScratch)
         CASE_TO_STR(DPPAggregateNumberPerBLT)
         CASE_TO_STR(ChannelDCOffset)
         CASE_TO_STR(GroupDCOffset)

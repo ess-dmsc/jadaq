@@ -91,6 +91,9 @@ enum FunctionID {
     ReadoutStatus,
     EasyReadoutStatus,
     EasyDPPReadoutStatus,
+    Scratch,
+    EasyScratch,
+    EasyDPPScratch,
     DPPAggregateNumberPerBLT,
     // Channel/group setting
     ChannelDCOffset,

@@ -2174,6 +2174,94 @@ namespace caen {
 
 
     /**
+     * @class EasyScratch
+     * @brief For user-friendly configuration of Scratch mask.
+     *
+     * This register is used for dummy read and write testing, fields
+     * are arbitrarily chosen.
+     *
+     * @param EasyScratch::dummy1
+     * A 1-bit test.
+     * @param EasyScratch::dummy2
+     * A 2-bit test.
+     * @param EasyScratch::dummy3
+     * A 3-bit test.
+     * @param EasyScratch::dummy4
+     * A 4-bit test.
+     * @param EasyScratch::dummy5
+     * A 5-bit test.
+     * @param EasyScratch::dummy6
+     * A 6-bit test.
+     * @param EasyScratch::dummy8
+     * A 8-bit test.
+     */
+    class EasyScratch : public EasyBase
+    {
+    protected:
+        /* Shared helpers since one constructor cannot reuse the other */
+        /*
+         * EasyScratch fields:
+         * dummy1 in [0], dummy2 in [1:2], dummy3 in [3:5], dummy4 in [6:9],
+         * dummy5 in [10:14], dummy6 in [15:20], dummy8 in [21:28].
+         */
+        void initLayout() override
+        {
+            layout = {
+                {"dummy1", {(const uint8_t)1, (const uint8_t)0}},
+                {"dummy2", {(const uint8_t)2, (const uint8_t)1}},
+                {"dummy3", {(const uint8_t)3, (const uint8_t)3}},
+                {"dummy4", {(const uint8_t)4, (const uint8_t)6}},
+                {"dummy5", {(const uint8_t)5, (const uint8_t)10}},
+                {"dummy6", {(const uint8_t)6, (const uint8_t)15}},
+                {"dummy8", {(const uint8_t)8, (const uint8_t)21}}
+            };
+        }
+        /* NOTE: use inherited generic constructFromMask(mask) */
+        void construct(const uint8_t dummy1, const uint8_t dummy2, const uint8_t dummy3, const uint8_t dummy4, const uint8_t dummy5, const uint8_t dummy6, const uint8_t dummy8) {
+            initLayout();
+            variables = {
+                {"dummy1", (const uint8_t)(dummy1 & 0x1)},
+                {"dummy2", (const uint8_t)(dummy2 & 0x3)},
+                {"dummy3", (const uint8_t)(dummy3 & 0x7)},
+                {"dummy4", (const uint8_t)(dummy4 & 0xF)},
+                {"dummy5", (const uint8_t)(dummy5 & 0x1F)},
+                {"dummy6", (const uint8_t)(dummy6 & 0x3F)},
+                {"dummy8", (const uint8_t)(dummy8 & 0xFF)},
+            };
+        };
+    public:
+        virtual const std::string getClassName() const override { return "EasyScratch"; };
+        /* Construct using default values from docs */
+        EasyScratch(const uint8_t dummy1, const uint8_t dummy2, const uint8_t dummy3, const uint8_t dummy4, const uint8_t dummy5, const uint8_t dummy6, const uint8_t dummy8)
+        {
+            construct(dummy1, dummy2, dummy3, dummy4, dummy5, dummy6, dummy8);
+        }
+        /* Construct from low-level bit mask in line with docs */
+        EasyScratch(const uint32_t mask)
+        {
+            constructFromMask(mask);
+        }
+    }; // class EasyScratch
+
+
+    /**
+     * @class EasyDPPScratch
+     * @brief For user-friendly configuration of Readout Status mask.
+     *
+     * NOTE: identical to EasyScratch
+     */
+    class EasyDPPScratch : public EasyScratch
+    {
+    /* Just inherit everything else from parent class */
+    public:
+        virtual const std::string getClassName() const override { return "EasyDPPScratch"; };
+        /* Construct using default values from docs */
+        EasyDPPScratch(const uint8_t dummy1, const uint8_t dummy2, const uint8_t dummy3, const uint8_t dummy4, const uint8_t dummy5, const uint8_t dummy6, const uint8_t dummy8) : EasyScratch(dummy1, dummy2, dummy3, dummy4, dummy5, dummy6, dummy8) {};
+        EasyDPPScratch(const uint32_t mask) : EasyScratch(mask) {};
+    }; // class EasyDPPScratch
+
+
+    /**
      * @class EasyAMCFirmwareRevision
      * @brief For user-friendly configuration of AMC Firmware Revision.
      *
@@ -3237,6 +3325,13 @@ namespace caen {
         virtual EasyReadoutStatus getEasyReadoutStatus() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         virtual EasyDPPReadoutStatus getEasyDPPReadoutStatus() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
 
+        virtual uint32_t getScratch() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual void setScratch(uint32_t value) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual EasyScratch getEasyScratch() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual void setEasyScratch(EasyScratch settings) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual EasyDPPScratch getEasyDPPScratch() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual void setEasyDPPScratch(EasyDPPScratch settings) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+
         virtual uint32_t getDPPAggregateNumberPerBLT() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         virtual void setDPPAggregateNumberPerBLT(uint32_t value) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
 
@@ -4097,7 +4192,76 @@ namespace caen {
         /* TODO: wrap Interrupt Status/ID from register docs? */
         /* TODO: wrap Interrupt Event Number from register docs? */
 
-        /* TODO: wrap Scratch from register docs? */
+        /**
+         * @brief Get Scratch mask
+         *
+         * This register is mainly intended for VME boards, anyway some
+         * bits are applicable also for DT and NIM boards.
+         *
+         * Get the low-level Scratch mask in line with
+         * register docs. It is recommended to use the EasyX wrapper
+         * version instead.
+         *
+         * @returns
+         * 32-bit mask with layout described in register docs
+         */
+        uint32_t getScratch() override
+        {
+            uint32_t mask;
+            errorHandler(CAEN_DGTZ_ReadRegister(handle_, 0xEF20, &mask));
+            return mask;
+        }
+        /**
+         * @brief Set Scratch mask
+         *
+         * This register is mainly intended for VME boards, anyway some
+         * bits are applicable also for DT and NIM boards.
+         *
+         * Set the low-level Scratch mask in line with
+         * register docs. It is recommended to use the EasyX wrapper
+         * version instead.
+         *
+         * @param mask:
+         * 32-bit mask with layout described in register docs
+         */
+        void setScratch(uint32_t mask) override
+        { errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0xEF20, mask)); }
+        /**
+         * @brief Easy Get Scratch
+         *
+         * A convenience wrapper for the low-level function of the same
+         * name. Works on a struct with named variables rather than
+         * directly manipulating obscure bit patterns. Automatically
+         * takes care of translating from the bit mask returned by the
+         * the underlying low-level get funtion.
+         *
+         * @returns
+         * EasyScratch object
+         */
+        EasyScratch getEasyScratch() override
+        {
+            uint32_t mask;
+            mask = getScratch();
+            return EasyScratch(mask);
+        }
+        /**
+         * @brief Easy Set Scratch
+         *
+         * A convenience wrapper for the low-level function of the same
+         * name. Works on a struct with named variables rather than
+         * directly manipulating obscure bit patterns. Automatically
+         * takes care of translating to the bit mask needed by the
+         * the underlying low-level set funtion.
+         *
+         * @param settings:
+         * EasyScratch object
+         */
+        void setEasyScratch(EasyScratch settings) override
+        {
+            uint32_t mask = settings.toBits();
+            setScratch(mask);
+        }
+
         /* TODO: wrap Software Reset from register docs? */
         /* TODO: wrap Software Clear from register docs? */
         /* TODO: wrap Configuration Reload from register docs? */
@@ -5126,6 +5290,53 @@ namespace caen {
             uint32_t mask;
             mask = getReadoutStatus();
             return EasyDPPReadoutStatus(mask);
+        }
+
+        /* NOTE: reuse get Scratch from parent */
+        /* NOTE: disable inherited 740 EasyScratch since we only
+         * support EasyDPPScratch here. */
+        /**
+         * @brief use getEasyDPPX version instead
+         */
+        virtual EasyScratch getEasyScratch() override { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        /**
+         * @brief use setEasyDPPX version instead
+         */
+        virtual void setEasyScratch(EasyScratch settings) override { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        /**
+         * @brief Easy Get DPP Scratch
+         *
+         * A convenience wrapper for the low-level function of the same
+         * name. Works on a struct with named variables rather than
+         * directly manipulating obscure bit patterns. Automatically
+         * takes care of translating from the bit mask returned by the
+         * the underlying low-level get funtion.
+         *
+         * @returns
+         * EasyDPPScratch object
+         */
+        EasyDPPScratch getEasyDPPScratch() override
+        {
+            uint32_t mask;
+            mask = getScratch();
+            return EasyDPPScratch(mask);
+        }
+        /**
+         * @brief Easy Set DPP Scratch
+         *
+         * A convenience wrapper for the low-level function of the same
+         * name. Works on a struct with named variables rather than
+         * directly manipulating obscure bit patterns. Automatically
+         * takes care of translating to the bit mask needed by the
+         * the underlying low-level set funtion.
+         *
+         * @param settings:
+         * EasyDPPScratch object
+         */
+        void setEasyDPPScratch(EasyDPPScratch settings) override
+        {
+            uint32_t mask = settings.toBits();
+            setScratch(mask);
         }
 
         /* NOTE: Get / Set Run/Start/Stop Delay from register docs is

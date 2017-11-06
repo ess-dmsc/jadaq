@@ -641,6 +641,38 @@ caen::EasyDPPReadoutStatus s2edrs(const std::string& s)
     throw std::invalid_argument{"Invalid EasyDPPReadoutStatus"};
 }
 
+std::string to_string(const caen::EasyScratch &es)
+{
+    return es.toConfString();
+}
+
+caen::EasyScratch s2es(const std::string& s)
+{
+    std::regex rx("\\{(\\w+),(\\w+),(\\w+),(\\w+),(\\w+),(\\w+),(\\w+)\\}");
+    std::smatch match;
+    if (std::regex_search(s, match, rx))
+    {
+        return caen::EasyScratch(s2ui8(match[1]),s2ui8(match[2]),s2ui8(match[3]),s2ui8(match[4]),s2ui8(match[5]),s2ui8(match[6]),s2ui8(match[7]));
+    }
+    throw std::invalid_argument{"Invalid EasyScratch"};
+}
+
+std::string to_string(const caen::EasyDPPScratch &eds)
+{
+    return eds.toConfString();
+}
+
+caen::EasyDPPScratch s2eds(const std::string& s)
+{
+    std::regex rx("\\{(\\w+),(\\w+),(\\w+),(\\w+),(\\w+),(\\w+),(\\w+)\\}");
+    std::smatch match;
+    if (std::regex_search(s, match, rx))
+    {
+        return caen::EasyDPPScratch(s2ui8(match[1]),s2ui8(match[2]),s2ui8(match[3]),s2ui8(match[4]),s2ui8(match[5]),s2ui8(match[6]),s2ui8(match[7]));
+    }
+    throw std::invalid_argument{"Invalid EasyDPPScratch"};
+}
+
 std::string to_string(const caen::EasyAMCFirmwareRevision &eafr)
 {
     /* NOTE: we use a simpler format for revisionDate internally so we
