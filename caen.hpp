@@ -2183,15 +2183,17 @@ namespace caen {
      * @param EasyScratch::dummy1
      * A 1-bit test.
      * @param EasyScratch::dummy2
-     * A 2-bit test.
+     * A 1-bit test.
      * @param EasyScratch::dummy3
-     * A 3-bit test.
+     * A 1-bit test.
      * @param EasyScratch::dummy4
-     * A 4-bit test.
+     * A 3-bit test.
      * @param EasyScratch::dummy5
      * A 5-bit test.
      * @param EasyScratch::dummy6
      * A 6-bit test.
+     * @param EasyScratch::dummy7
+     * A 7-bit test.
      * @param EasyScratch::dummy8
      * A 8-bit test.
      */
@@ -2201,40 +2203,43 @@ namespace caen {
         /* Shared helpers since one constructor cannot reuse the other */
         /*
          * EasyScratch fields:
-         * dummy1 in [0], dummy2 in [1:2], dummy3 in [3:5], dummy4 in [6:9],
-         * dummy5 in [10:14], dummy6 in [15:20], dummy8 in [21:28].
+         * dummy1 in [0], dummy2 in [1], dummy3 in [2], dummy4 in [3:5],
+         * dummy5 in [6:10], dummy6 in [11:16], dummy8 in [17:23],
+         * dummy8 in [24:31].
          */
         void initLayout() override
         {
             layout = {
                 {"dummy1", {(const uint8_t)1, (const uint8_t)0}},
-                {"dummy2", {(const uint8_t)2, (const uint8_t)1}},
-                {"dummy3", {(const uint8_t)3, (const uint8_t)3}},
-                {"dummy4", {(const uint8_t)4, (const uint8_t)6}},
-                {"dummy5", {(const uint8_t)5, (const uint8_t)10}},
-                {"dummy6", {(const uint8_t)6, (const uint8_t)15}},
-                {"dummy8", {(const uint8_t)8, (const uint8_t)21}}
+                {"dummy2", {(const uint8_t)1, (const uint8_t)1}},
+                {"dummy3", {(const uint8_t)1, (const uint8_t)2}},
+                {"dummy4", {(const uint8_t)3, (const uint8_t)3}},
+                {"dummy5", {(const uint8_t)5, (const uint8_t)6}},
+                {"dummy6", {(const uint8_t)6, (const uint8_t)11}},
+                {"dummy7", {(const uint8_t)7, (const uint8_t)17}},
+                {"dummy8", {(const uint8_t)8, (const uint8_t)24}}
             };
         }
         /* NOTE: use inherited generic constructFromMask(mask) */
-        void construct(const uint8_t dummy1, const uint8_t dummy2, const uint8_t dummy3, const uint8_t dummy4, const uint8_t dummy5, const uint8_t dummy6, const uint8_t dummy8) {
+        void construct(const uint8_t dummy1, const uint8_t dummy2, const uint8_t dummy3, const uint8_t dummy4, const uint8_t dummy5, const uint8_t dummy6, const uint8_t dummy7, const uint8_t dummy8) {
             initLayout();
             variables = {
                 {"dummy1", (const uint8_t)(dummy1 & 0x1)},
-                {"dummy2", (const uint8_t)(dummy2 & 0x3)},
-                {"dummy3", (const uint8_t)(dummy3 & 0x7)},
-                {"dummy4", (const uint8_t)(dummy4 & 0xF)},
-                {"dummy5", (const uint8_t)(dummy5 & 0x1F)},
-                {"dummy6", (const uint8_t)(dummy6 & 0x3F)},
+                {"dummy2", (const uint8_t)(dummy2 & 0x1)},
+                {"dummy3", (const uint8_t)(dummy3 & 0x1)},
+                {"dummy4", (const uint8_t)(dummy4 & 0x7)},
+                {"dummy5", (const uint8_t)(dummy5 & 0xF)},
+                {"dummy6", (const uint8_t)(dummy6 & 0x1F)},
+                {"dummy7", (const uint8_t)(dummy7 & 0x3F)},
                 {"dummy8", (const uint8_t)(dummy8 & 0xFF)},
             };
         };
     public:
         virtual const std::string getClassName() const override { return "EasyScratch"; };
         /* Construct using default values from docs */
-        EasyScratch(const uint8_t dummy1, const uint8_t dummy2, const uint8_t dummy3, const uint8_t dummy4, const uint8_t dummy5, const uint8_t dummy6, const uint8_t dummy8)
+        EasyScratch(const uint8_t dummy1, const uint8_t dummy2, const uint8_t dummy3, const uint8_t dummy4, const uint8_t dummy5, const uint8_t dummy6, const uint8_t dummy7, const uint8_t dummy8)
         {
-            construct(dummy1, dummy2, dummy3, dummy4, dummy5, dummy6, dummy8);
+            construct(dummy1, dummy2, dummy3, dummy4, dummy5, dummy6, dummy7, dummy8);
         }
         /* Construct from low-level bit mask in line with docs */
         EasyScratch(const uint32_t mask)
@@ -2256,7 +2261,7 @@ namespace caen {
     public:
         virtual const std::string getClassName() const override { return "EasyDPPScratch"; };
         /* Construct using default values from docs */
-        EasyDPPScratch(const uint8_t dummy1, const uint8_t dummy2, const uint8_t dummy3, const uint8_t dummy4, const uint8_t dummy5, const uint8_t dummy6, const uint8_t dummy8) : EasyScratch(dummy1, dummy2, dummy3, dummy4, dummy5, dummy6, dummy8) {};
+        EasyDPPScratch(const uint8_t dummy1, const uint8_t dummy2, const uint8_t dummy3, const uint8_t dummy4, const uint8_t dummy5, const uint8_t dummy6, const uint8_t dummy7, const uint8_t dummy8) : EasyScratch(dummy1, dummy2, dummy3, dummy4, dummy5, dummy6, dummy7, dummy8) {};
         EasyDPPScratch(const uint32_t mask) : EasyScratch(mask) {};
     }; // class EasyDPPScratch
 

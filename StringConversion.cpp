@@ -648,11 +648,11 @@ std::string to_string(const caen::EasyScratch &es)
 
 caen::EasyScratch s2es(const std::string& s)
 {
-    std::regex rx("\\{(\\w+),(\\w+),(\\w+),(\\w+),(\\w+),(\\w+),(\\w+)\\}");
+    std::regex rx("\\{(\\w+),(\\w+),(\\w+),(\\w+),(\\w+),(\\w+),(\\w+),(\\w+)\\}");
     std::smatch match;
     if (std::regex_search(s, match, rx))
     {
-        return caen::EasyScratch(s2ui8(match[1]),s2ui8(match[2]),s2ui8(match[3]),s2ui8(match[4]),s2ui8(match[5]),s2ui8(match[6]),s2ui8(match[7]));
+        return caen::EasyScratch(s2ui8(match[1]),s2ui8(match[2]),s2ui8(match[3]),s2ui8(match[4]),s2ui8(match[5]),s2ui8(match[6]),s2ui8(match[7]),s2ui8(match[8]));
     }
     throw std::invalid_argument{"Invalid EasyScratch"};
 }
@@ -664,11 +664,11 @@ std::string to_string(const caen::EasyDPPScratch &eds)
 
 caen::EasyDPPScratch s2eds(const std::string& s)
 {
-    std::regex rx("\\{(\\w+),(\\w+),(\\w+),(\\w+),(\\w+),(\\w+),(\\w+)\\}");
+    std::regex rx("\\{(\\w+),(\\w+),(\\w+),(\\w+),(\\w+),(\\w+),(\\w+),(\\w+)\\}");
     std::smatch match;
     if (std::regex_search(s, match, rx))
     {
-        return caen::EasyDPPScratch(s2ui8(match[1]),s2ui8(match[2]),s2ui8(match[3]),s2ui8(match[4]),s2ui8(match[5]),s2ui8(match[6]),s2ui8(match[7]));
+        return caen::EasyDPPScratch(s2ui8(match[1]),s2ui8(match[2]),s2ui8(match[3]),s2ui8(match[4]),s2ui8(match[5]),s2ui8(match[6]),s2ui8(match[7]),s2ui8(match[8]));
     }
     throw std::invalid_argument{"Invalid EasyDPPScratch"};
 }
