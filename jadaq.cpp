@@ -127,10 +127,14 @@ int main(int argc, char **argv) {
                 digitizer.caenReadData(digitizer.caenGetPrivReadoutBuffer());
                 std::cout << "Read " << digitizer.caenGetPrivReadoutBuffer().dataSize << "b of acquired data" << std::endl;
                 if (digitizer.caenIsDPPFirmware()) {
-                    digitizer.caenGetDPPEvents(digitizer.caenGetPrivReadoutBuffer(), digitizer.caenGetPrivDPPEvents());
-                    std::cout << "Unpacked " << digitizer.caenGetPrivDPPEvents().nEvents << " DPP events." << std::endl;
+                    if (digitizer.caenGetPrivReadoutBuffer().dataSize > 0) {
+                        digitizer.caenGetDPPEvents(digitizer.caenGetPrivReadoutBuffer(), digitizer.caenGetPrivDPPEvents());
+                        std::cout << "Unpacked " << digitizer.caenGetPrivDPPEvents().nEvents[0] << " DPP events from channel 0." << std::endl;
                     /* TODO: decode waveforms here */
                     /* TODO: pack and send out UDP */
+                    } else {
+                        std::cout << "No events found - no further handling." << std::endl;
+                    }
                 } else {
                     numEvents = digitizer.caenGetNumEvents(digitizer.caenGetPrivReadoutBuffer());
                     std::cout << "Acquired data contains  " << numEvents << " events." << std::endl;
@@ -139,11 +143,11 @@ int main(int argc, char **argv) {
                         std::cout << "Unpacked event " << digitizer.caenGetPrivEventInfo().EventCounter << "  of " << numEvents << " events." << std::endl;
                         digitizer.caenDecodeEvent(digitizer.caenGetPrivEventInfo(), digitizer.caenGetPrivEvent());
                         std::cout << "Decoded event " << digitizer.caenGetPrivEventInfo().EventCounter << "  of " << numEvents << " events." << std::endl;
-                    /* TODO: pack and send out UDP */
                     }
                     if (numEvents < 1) {
                         std::cout << "No events found - no further handling." << std::endl;
                     }
+                    /* TODO: pack and send out UDP */
                 }
             }
             /* NOTE: for testing without hogging CPU */

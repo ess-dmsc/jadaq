@@ -252,12 +252,15 @@ namespace caen {
      * Number of events in the events list
      * @var DPPEvents::allocatedSize
      * The size in bytes of the events list
+     * @var DPPEvents::elemSize
+     * The size in bytes of each element in the events list
      */
     struct DPPEvents
     {
         void** ptr;             // CAEN_DGTZ_DPP_XXX_Event_t* ptr[MAX_DPP_XXX_CHANNEL_SIZE]
         uint32_t* nEvents;      // Number of events pr channel
         uint32_t allocatedSize;
+        uint32_t elemSize;
     };
 
     /**
@@ -2791,18 +2794,22 @@ namespace caen {
                 case CAEN_DGTZ_DPPFirmware_PHA:
                     events.ptr = new void*[MAX_DPP_PHA_CHANNEL_SIZE];
                     events.nEvents = new uint32_t[MAX_DPP_PHA_CHANNEL_SIZE];
+                    events.elemSize = sizeof(CAEN_DGTZ_DPP_PHA_Event_t);
                     break;
                 case CAEN_DGTZ_DPPFirmware_PSD:
                     events.ptr = new void*[MAX_DPP_PSD_CHANNEL_SIZE];
                     events.nEvents = new uint32_t[MAX_DPP_PSD_CHANNEL_SIZE];
+                    events.elemSize = sizeof(CAEN_DGTZ_DPP_PSD_Event_t);
                     break;
                 case CAEN_DGTZ_DPPFirmware_CI:
                     events.ptr = new void*[MAX_DPP_CI_CHANNEL_SIZE];
                     events.nEvents = new uint32_t[MAX_DPP_CI_CHANNEL_SIZE];
+                    events.elemSize = sizeof(CAEN_DGTZ_DPP_CI_Event_t);
                     break;
                 case CAEN_DGTZ_DPPFirmware_QDC:
                     events.ptr = new void*[MAX_DPP_QDC_CHANNEL_SIZE];
                     events.nEvents = new uint32_t[MAX_DPP_QDC_CHANNEL_SIZE];
+                    events.elemSize = sizeof(CAEN_DGTZ_DPP_QDC_Event_t);
                     break;
                 default:
                     errorHandler(CAEN_DGTZ_FunctionNotAllowed);
@@ -2815,10 +2822,6 @@ namespace caen {
 
         DPPWaveforms mallocDPPWaveforms()
         { DPPWaveforms waveforms; errorHandler(_CAEN_DGTZ_MallocDPPWaveforms(handle_, &waveforms.ptr, &waveforms.allocatedSize)); return waveforms; }
-        /* TODO: is this actually supposed to be a (void **) to FreeDPPWaveforms? 
-         *       From docs it looks more like a (void *) but explicitly
-         *       uses (void **) in _CAENDigitizer.c for some reason.
-         */
         void freeDPPWaveforms(DPPWaveforms waveforms)
         { errorHandler(_CAEN_DGTZ_FreeDPPWaveforms(handle_, &waveforms.ptr)); }
 
@@ -2840,13 +2843,24 @@ namespace caen {
         { errorHandler(CAEN_DGTZ_DecodeEvent(handle_, info.data, &event)); return event; }
 
         DPPEvents& getDPPEvents(ReadoutBuffer buffer, DPPEvents& events)
-        { errorHandler(CAEN_DGTZ_GetDPPEvents(handle_, buffer.data, buffer.dataSize, events.ptr, events.nEvents)); return events; }
+        { errorHandler(_CAEN_DGTZ_GetDPPEvents(handle_, buffer.data, buffer.dataSize, events.ptr, events.nEvents)); return events; }
 
-        /* TODO: is this actually supposed to be a (void **) to DecodeDPPWaveforms? 
-         *       From docs it looks more like a (void *) but see above.
-         */
+        /* NOTE: the backend function takes a single event from the
+         * acquired event matrix and decodes it to waveforms. We expose
+         * the direct call as well as the helper to extract the
+         * waveforms for a given channel and event number element in the
+         * events matrix. */
         DPPWaveforms& decodeDPPWaveforms(void *event, DPPWaveforms& waveforms)
-        { errorHandler(CAEN_DGTZ_DecodeDPPWaveforms(handle_, event, waveforms.ptr)); return waveforms; }
+        { errorHandler(_CAEN_DGTZ_DecodeDPPWaveforms(handle_, event, waveforms.ptr)); return waveforms; }
+        DPPWaveforms& decodeDPPWaveforms(DPPEvents& events, uint32_t channel, uint32_t eventNo, DPPWaveforms& waveforms)
+        { 
+            uint32_t i, offset = 0;
+            for (i=0; i < channel; i++) {
+                offset += events.nEvents[i] * events.elemSize;
+            }
+            offset +=  eventNo * events.elemSize;
+            return decodeDPPWaveforms((void *)(events.ptr + offset), waveforms); 
+        }
 
         /* Device configuration - i.e. getter and setters */
         uint32_t getRecordLength(int channel=-1) // Default channel -1 == all

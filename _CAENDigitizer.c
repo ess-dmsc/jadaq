@@ -25,6 +25,8 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
+#include <CAENDigitizer.h>
 #include "_CAENDigitizer.h"
 
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
@@ -82,19 +84,24 @@ CAEN_DGTZ_ErrorCode CAENDGTZ_API _CAEN_DGTZ_GetDPPFirmwareType(int handle, CAEN_
 
 static CAEN_DGTZ_ErrorCode V1740DPP_QDC_MallocDPPEvents(int handle, void **events, uint32_t *allocatedSize)
 {
+    /* Allocate the entire chunk in one go and assign slices to event array */
     uint32_t size = MAX_V1740_DPP_GROUP_SIZE*V1740_MAX_CHANNELS*V1740_QDC_MAX_EVENT_QUEUE_DEPTH*sizeof(CAEN_DGTZ_DPP_QDC_Event_t);
     CAEN_DGTZ_DPP_QDC_Event_t* ptr = malloc(size);
     if (ptr == NULL)
         return CAEN_DGTZ_OutOfMemory;
-    for(int i=0; i<MAX_V1740_DPP_GROUP_SIZE ; i++)
-        events[i] = ptr+V1740_MAX_CHANNELS*V1740_QDC_MAX_EVENT_QUEUE_DEPTH;
+    for(int i=0; i<MAX_V1740_DPP_GROUP_SIZE ; i++) {
+        /* NOTE: changed to ptr+i instead of the following original constant assignment!?! */
+        //events[i] = ptr+V1740_MAX_CHANNELS*V1740_QDC_MAX_EVENT_QUEUE_DEPTH;
+        events[i] = ptr+i;
+    }
     *allocatedSize = size;
     return CAEN_DGTZ_Success;
 }
 
 static CAEN_DGTZ_ErrorCode V1740DPP_QDC_FreeDPPEvents(int handle, void **events)
 {
-    free(events[0]);
+    /* Free the entire chunk in one go by freeing element 0 */
+    free(events[0]);    
     return CAEN_DGTZ_Success;
 }
 
@@ -167,9 +174,9 @@ static CAEN_DGTZ_ErrorCode V1740DPP_QDC_MallocDPPWaveforms(int handle, void** wa
     return CAEN_DGTZ_Success;
 }
 
-static CAEN_DGTZ_ErrorCode V1740DPP_QDC_FreeDPPWaveforms(int handle, void** waveforms)
+static CAEN_DGTZ_ErrorCode V1740DPP_QDC_FreeDPPWaveforms(int handle, void* waveforms)
 {
-    free(*waveforms);
+    free(waveforms);
     return CAEN_DGTZ_Success;
 }
 
@@ -263,6 +270,155 @@ static CAEN_DGTZ_ErrorCode V1740DPP_QDC_SetNumEventsPerAggregate(int handle, uin
     return err;
 }
 
+/* BEGIN inlined patch from CAEN */
+/* NOTE: changed to define these two externals directly here in jadaq */
+/* NOTE: changed hard-coded group size of 8 to MAX_GROUPS */
+/* extern */unsigned int gEquippedGroups;
+/* extern */CAEN_DGTZ_DPP_QDC_Event_t *gEventsGrp[MAX_GROUPS];
+
+static CAEN_DGTZ_ErrorCode V1740DPP_QDC_DecodeDPPAggregate(int handle, uint32_t *data, CAEN_DGTZ_DPP_QDC_Event_t *Events, int *NumEvents) 
+{
+    uint32_t i,size, evsize, nev, et, eq, ew, ee, pnt;
+    
+    if (!(data[0] & 0x80000000))
+        return CAEN_DGTZ_InvalidEvent;
+	
+    size   = data[0] & 0x3FFFF;                       
+    ew     = (data[1]>>27) & 1;                       
+    ee     = (data[1]>>28) & 1;                       
+    et     = (data[1]>>29) & 1;                       
+    eq     = (data[1]>>30) & 1;                       
+    evsize = ((data[1] & 0xFFF) << 2) + et + ee + eq; 
+
+
+    if(evsize==0) 
+        return CAEN_DGTZ_InvalidEvent;
+    if ((size - 2) % evsize)
+        return CAEN_DGTZ_InvalidEvent;
+    nev = (size - 2) / evsize;
+    pnt = 2;
+    for (i=0; i<nev; i++) {
+        
+        Events[i].isExtendedTimeStamp = (ee) ? 1 : 0;
+
+        Events[i].Format = data[1];
+        if (et)
+            Events[i].TimeTag = data[pnt++] & 0xFFFFFFFF;
+        else
+            Events[i].TimeTag = 0;
+        
+        if (ew) 
+        {
+            Events[i].gWaveforms = data + pnt;
+            pnt += ((data[1] << 2) & 0xFFF); 
+        } 
+        else
+        {
+            Events[i].gWaveforms = NULL;
+        }
+        
+        if (ee) {
+            Events[i].Extras = ((uint32_t)(data[pnt++] & 0xFFFFFFFF)); 
+            Events[i].TimeTag |= ( (uint64_t)(Events[i].Extras & 0xFFFF) << 32) & 0xFFFFFFFF00000000; /* 48 bit timestamp */
+            Events[i].Baseline = (uint16_t)((Events[i].Extras & 0xFFFF0000) >> 16);
+        }
+
+        
+
+        if (eq) {
+            Events[i].Charge       = (uint16_t)(data[pnt] & 0x0000FFFF);
+            Events[i].Pur          = (uint16_t)((data[pnt] & 0x08000000) >> 27);
+            Events[i].Overrange    = (uint16_t)((data[pnt] & 0x04000000) >> 26);
+            Events[i].SubChannel   = (uint16_t)((data[pnt] >> 28) & 0xF); 
+            pnt++;
+        }
+        else{
+            Events[i].Charge = 0;
+        }
+        Events[i].Extras = 0;
+    }
+    *NumEvents = nev;
+    return CAEN_DGTZ_Success;
+}
+
+static CAEN_DGTZ_ErrorCode V1740DPP_QDC_GetDPPEvents(int handle, char *buffer, uint32_t BufferSize, void **events, uint32_t *NumEvents)
+{
+    CAEN_DGTZ_DPP_QDC_Event_t **Events = (CAEN_DGTZ_DPP_QDC_Event_t **)events;
+    unsigned int pnt = 0;
+    int index[MAX_GROUPS];
+    uint32_t endaggr;
+    unsigned int grpmax = MAX_GROUPS;
+    char grpmask;
+    unsigned int grp;
+    int nevgrp;
+    
+        
+    uint32_t *buffer32 = (uint32_t *)buffer;
+
+    memset(index, 0, MAX_GROUPS*sizeof(index[0]));
+
+    while(pnt < (uint32_t)(BufferSize/4) - 1) { 
+        endaggr = pnt + (buffer32[pnt] & 0x0FFFFFFF);
+        grpmask = (char)(buffer32[pnt+1] & 0xFF);
+        pnt += 4;
+        if (grpmask == 0)
+            continue;
+        for(grp=0; grp<grpmax; grp++) {
+            if (!(grpmask & (1<<grp)))
+                continue;
+            if (V1740DPP_QDC_DecodeDPPAggregate(handle, buffer32+pnt, Events[grp]+index[grp], &nevgrp))
+                return CAEN_DGTZ_InvalidEvent;
+            index[grp] += nevgrp;
+            pnt += (buffer32[pnt] & 0x7FFFFFFF);
+        }    
+        if (pnt != endaggr)
+            return CAEN_DGTZ_InvalidEvent;
+    }
+    for(grp=0; grp<grpmax; grp++)
+        NumEvents[grp] = index[grp];
+    return CAEN_DGTZ_Success;
+
+}
+
+static CAEN_DGTZ_ErrorCode V1740DPP_QDC_DecodeDPPWaveforms(int handle, CAEN_DGTZ_DPP_QDC_Event_t* event, CAEN_DGTZ_DPP_QDC_Waveforms_t *gWaveforms) {
+
+    int i;
+    uint32_t format = event->Format;
+    uint32_t* WaveIn = event->gWaveforms;
+    gWaveforms->Ns = (format & 0xFFF)<<3;
+    gWaveforms->anlgProbe = (uint8_t)((format>>22) & 0x3);
+    gWaveforms->dgtProbe1 = (uint8_t)((format>>16) & 0x7);
+    gWaveforms->dgtProbe2 = (uint8_t)((format>>19) & 0x7);
+    gWaveforms->dualTrace = (uint8_t)((format>>31) & 0x1);
+    
+    for(i=0; i<(int)(gWaveforms->Ns/2); i++) {
+        gWaveforms->Trace1[i*2+1] = (uint16_t)((WaveIn[i]>>16) & 0xFFF);
+        if (gWaveforms->dualTrace){
+            gWaveforms->Trace1[i*2] = gWaveforms->Trace1[i*2+1];
+            gWaveforms->Trace2[i*2] = (uint16_t) WaveIn[i] & 0xFFF;
+            gWaveforms->Trace2[i*2+1] = gWaveforms->Trace2[i*2];
+        }
+        else{    
+            gWaveforms->Trace1[i*2] = (uint16_t)(WaveIn[i] & 0xFFF);
+            gWaveforms->Trace2[i*2] = 0;
+            gWaveforms->Trace2[i*2+1] = 0;
+        }
+        
+        gWaveforms->DTrace1[i*2] = (uint8_t)((WaveIn[i]>>12) & 1);
+        gWaveforms->DTrace1[i*2+1] = (uint8_t)((WaveIn[i]>>28) & 1);
+        gWaveforms->DTrace2[i*2] = (uint8_t)((WaveIn[i]>>13) & 1);
+        gWaveforms->DTrace2[i*2+1] = (uint8_t)((WaveIn[i]>>29) & 1);
+        gWaveforms->DTrace3[i*2] = (uint8_t)((WaveIn[i]>>14) & 1);
+        gWaveforms->DTrace3[i*2+1] = (uint8_t)((WaveIn[i]>>30) & 1);
+        gWaveforms->DTrace4[i*2] = (uint8_t)((WaveIn[i]>>15) & 1);
+        gWaveforms->DTrace4[i*2+1] = (uint8_t)((WaveIn[i]>>31) & 1);
+        
+    }    
+    return CAEN_DGTZ_Success;
+
+}
+/* END inlined patch from CAEN */
+
 CAEN_DGTZ_ErrorCode CAENDGTZ_API _CAEN_DGTZ_MallocDPPEvents(int handle, void **events, uint32_t *allocatedSize)
 {
     QDC_FUNCTION(MallocDPPEvents,handle,events,allocatedSize)
@@ -293,16 +449,21 @@ CAEN_DGTZ_ErrorCode CAENDGTZ_API _CAEN_DGTZ_MallocDPPWaveforms(int handle, void 
     QDC_FUNCTION(MallocDPPWaveforms,handle,waveforms,allocatedSize)
 }
 
-CAEN_DGTZ_ErrorCode CAENDGTZ_API _CAEN_DGTZ_FreeDPPWaveforms(int handle, void **waveforms)
+CAEN_DGTZ_ErrorCode CAENDGTZ_API _CAEN_DGTZ_FreeDPPWaveforms(int handle, void *waveforms)
 {
     QDC_FUNCTION(FreeDPPWaveforms,handle,waveforms)
 }
-/*
+
 CAEN_DGTZ_ErrorCode CAENDGTZ_API _CAEN_DGTZ_GetDPPEvents(int handle, char *buffer, uint32_t buffsize, void** events, uint32_t numEvents[])
 {
     QDC_FUNCTION(GetDPPEvents,handle,buffer,buffsize,events,numEvents)
 }
-*/
+
+CAEN_DGTZ_ErrorCode CAENDGTZ_API _CAEN_DGTZ_DecodeDPPWaveforms(int handle, void *event, void *waveforms)
+{
+    QDC_FUNCTION(DecodeDPPWaveforms,handle,event,waveforms)
+}
+
 CAEN_DGTZ_ErrorCode CAENDGTZ_API _CAEN_DGTZ_SetChannelGroupMask(int handle, uint32_t group, uint32_t channelmask)
 {
     QDC_FUNCTION(SetChannelGroupMask,handle,group,channelmask)
