@@ -45,6 +45,7 @@ private:
     caen::EventInfo eventInfo;
     void *event;
     caen::DPPEvents events;
+    caen::DPPWaveforms waveforms;
     int usb_;
     uint32_t vme_;
 public:
@@ -68,9 +69,13 @@ public:
     void caenFreePrivEvent() { digitizer->freeEvent(event); }
     void caenMallocPrivDPPEvents() { events = digitizer->mallocDPPEvents(); }
     void caenFreePrivDPPEvents() { digitizer->freeDPPEvents(events); }
+    void caenMallocPrivDPPWaveforms() { waveforms = digitizer->mallocDPPWaveforms(); }
+    void caenFreePrivDPPWaveforms() { digitizer->freeDPPWaveforms(waveforms); }
     caen::EventInfo& caenGetPrivEventInfo() { return eventInfo; }
-    void * caenGetPrivEvent() { return event; }
+    void *caenGetPrivEvent() { return event; }
     caen::DPPEvents& caenGetPrivDPPEvents() { return events; }
+    caen::DPPWaveforms& caenGetPrivDPPWaveforms() { return waveforms; }
+    std::string caenDumpPrivDPPWaveforms() { return digitizer->dumpDPPWaveforms(waveforms); }
     /* We default to slave terminated mode like in the sample from CAEN
      * Digitizer library docs. */
     caen::ReadoutBuffer& caenReadData(caen::ReadoutBuffer& buffer, int mode=(int)CAEN_DGTZ_SLAVE_TERMINATED_READOUT_MBLT) { return digitizer->readData(buffer, (CAEN_DGTZ_ReadMode_t)mode); }
@@ -78,6 +83,7 @@ public:
     caen::EventInfo caenGetEventInfo(caen::ReadoutBuffer& buffer, int32_t n) { eventInfo = digitizer->getEventInfo(buffer, n); return eventInfo; }
     void *caenDecodeEvent(caen::EventInfo& buffer, void *event) { event = digitizer->decodeEvent(buffer, event); return event; }
     caen::DPPEvents& caenGetDPPEvents(caen::ReadoutBuffer& buffer, caen::DPPEvents& events) { return digitizer->getDPPEvents(buffer, events); }
+    caen::DPPWaveforms& caenDecodeDPPWaveforms(caen::DPPEvents& events, uint32_t channel, uint32_t eventNo, caen::DPPWaveforms& waveforms) { return digitizer->decodeDPPWaveforms(events, channel, eventNo, waveforms); }
     void caenStartAcquisition() { digitizer->startAcquisition(); }
     void caenStopAcquisition() { digitizer->stopAcquisition(); }
 };

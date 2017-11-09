@@ -118,8 +118,8 @@ static void set_(caen::Digitizer* digitizer, FunctionID functionID, const std::s
         SET_CASE(digitizer,DPPTriggerHoldOffWidth,s2ui(value))
         SET_CASE(digitizer,DPPShapedTriggerWidth,s2ui(value))
         default:
+            std::cerr << "set_ found unknown functionid: " << functionID << " (" << value << ")" << std::endl;
             throw std::invalid_argument{"Unknown Function"};
-
     }
 }
 
@@ -150,6 +150,7 @@ static void set_(caen::Digitizer* digitizer, FunctionID functionID, int index, c
         SET_ICASE(digitizer,DPPTriggerHoldOffWidth,index,s2ui(value))
         SET_ICASE(digitizer,DPPShapedTriggerWidth,index,s2ui(value))
         default:
+            std::cerr << "indexed set_ found unknown functionid: " << functionID << std::endl;
             throw std::invalid_argument{"Unknown Function"};
     }
 }
@@ -225,6 +226,7 @@ static std::string get_(caen::Digitizer* digitizer, FunctionID functionID)
         GET_CASE(digitizer,RecordLength,to_string)
         GET_CASE(digitizer,NumEventsPerAggregate,to_string)
         default:
+            std::cerr << "get_ found unknown functionid: " << functionID << std::endl;
             throw std::invalid_argument{"Unknown Function"};
 
     }
@@ -262,6 +264,7 @@ static std::string get_(caen::Digitizer* digitizer, FunctionID functionID, int i
         GET_ICASE(digitizer,DPPTriggerHoldOffWidth,index,to_string)
         GET_ICASE(digitizer,DPPShapedTriggerWidth,index,to_string)
         default:
+            std::cerr << "get_ indexed found unknown functionid: " << functionID << std::endl;
             throw std::invalid_argument{"Unknown Function"};
     }
 }

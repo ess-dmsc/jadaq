@@ -32,16 +32,34 @@
 
 int s2i(const std::string& s)
 {
-    return std::stoi(s,nullptr);
+    try {
+        return std::stoi(s,nullptr);
+    }
+    catch (std::exception& e) {
+        std::cerr << "ERROR: s2i got invalid input: " << s << "(" << e.what() << ")" << std::endl;
+        throw;
+    }
 }
 
 unsigned int s2ui(const std::string& s)
 {
-    return std::stoi(s,nullptr,0);
+    try {
+        return std::stoi(s,nullptr,0);
+    }
+    catch (std::exception& e) {
+        std::cerr << "ERROR: s2ui got invalid input: " << s << "(" << e.what() << ")" << std::endl;
+        throw;
+    }
 }
 uint16_t s2ui16(const std::string& s)
 {
-    return (uint16_t)s2ui(s);
+    try {
+        return (uint16_t)s2ui(s);
+    }
+    catch (std::exception& e) {
+        std::cerr << "ERROR: s2ui16 got invalid input: " << s << "(" << e.what() << ")" << std::endl;
+        throw;
+    }
 }
 uint8_t s2ui8(const std::string& s)
 {
@@ -51,63 +69,69 @@ uint8_t s2ui8(const std::string& s)
 // binary string
 unsigned int bs2ui(const std::string& s)
 {
-    return std::stoi(s,nullptr,2);
+    try {
+        return std::stoi(s,nullptr,2);
+    }
+    catch (std::exception& e) {
+        std::cerr << "ERROR: bs2ui got invalid input: " << s << "(" << e.what() << ")" << std::endl;
+        throw;
+    }
 }
 
 CAEN_DGTZ_IOLevel_t s2iol(const std::string& s)
 {
-    return (CAEN_DGTZ_IOLevel_t)std::stoi(s,nullptr,0);
+    return (CAEN_DGTZ_IOLevel_t)s2ui(s);
 }
 CAEN_DGTZ_AcqMode_t s2am(const std::string& s)
 {
-    return (CAEN_DGTZ_AcqMode_t)std::stoi(s,nullptr,0);
+    return (CAEN_DGTZ_AcqMode_t)s2ui(s);
 }
 CAEN_DGTZ_TriggerMode_t s2tm(const std::string& s)
 {
-    return (CAEN_DGTZ_TriggerMode_t)std::stoi(s,nullptr,0);
+    return (CAEN_DGTZ_TriggerMode_t)s2ui(s);
 }
 CAEN_DGTZ_DPP_TriggerMode_t s2dtm(const std::string& s)
 {
-    return (CAEN_DGTZ_DPP_TriggerMode_t)std::stoi(s,nullptr,0);
+    return (CAEN_DGTZ_DPP_TriggerMode_t)s2ui(s);
 }
 CAEN_DGTZ_DRS4Frequency_t s2drsff(const std::string& s)
 {
-    return (CAEN_DGTZ_DRS4Frequency_t)std::stoi(s,nullptr,0);
+    return (CAEN_DGTZ_DRS4Frequency_t)s2ui(s);
 }
 CAEN_DGTZ_RunSyncMode_t s2rsm(const std::string& s)
 {
-    return (CAEN_DGTZ_RunSyncMode_t)std::stoi(s,nullptr,0);
+    return (CAEN_DGTZ_RunSyncMode_t)s2ui(s);
 }
 CAEN_DGTZ_OutputSignalMode_t s2osm(const std::string& s)
 {
-    return (CAEN_DGTZ_OutputSignalMode_t)std::stoi(s,nullptr,0);
+    return (CAEN_DGTZ_OutputSignalMode_t)s2ui(s);
 }
 CAEN_DGTZ_EnaDis_t s2ed(const std::string& s)
 {
-    return (CAEN_DGTZ_EnaDis_t)std::stoi(s,nullptr,0);
+    return (CAEN_DGTZ_EnaDis_t)s2ui(s);
 }
 CAEN_DGTZ_ZS_Mode_t s2zsm(const std::string& s)
 {
-    return (CAEN_DGTZ_ZS_Mode_t)std::stoi(s,nullptr,0);
+    return (CAEN_DGTZ_ZS_Mode_t)s2ui(s);
 }
 CAEN_DGTZ_AnalogMonitorOutputMode_t s2amom(const std::string& s)
 {
-    return (CAEN_DGTZ_AnalogMonitorOutputMode_t)std::stoi(s,nullptr,0);
+    return (CAEN_DGTZ_AnalogMonitorOutputMode_t)s2ui(s);
 }
 CAEN_DGTZ_TriggerPolarity_t s2tp(const std::string& s)
 {
-    return (CAEN_DGTZ_TriggerPolarity_t)std::stoi(s,nullptr,0);
+    return (CAEN_DGTZ_TriggerPolarity_t)s2ui(s);
 }
 CAEN_DGTZ_PulsePolarity_t s2pp(const std::string& s)
 {
-    return (CAEN_DGTZ_PulsePolarity_t)std::stoi(s,nullptr,0);
+    return (CAEN_DGTZ_PulsePolarity_t)s2ui(s);
 }
 
 CAEN_DGTZ_ThresholdWeight_t s2tw(const std::string& s)
 {
     STR_MATCH(s,Fine,CAEN_DGTZ_ZS_FINE);
     STR_MATCH(s,Coarse,CAEN_DGTZ_ZS_COARSE);
-    return (CAEN_DGTZ_ThresholdWeight_t)std::stoi(s,nullptr,0);
+    return (CAEN_DGTZ_ThresholdWeight_t)s2ui(s);
 }
 std::string to_string(CAEN_DGTZ_ThresholdWeight_t tw)
 {
@@ -137,6 +161,7 @@ caen::ZSParams s2zsp(const std::string& s)
     {
         return caen::ZSParams{s2tw(match[1]),s2i(match[2]),s2i(match[3])};
     }
+    std::cerr << "s2zsp got invalid input: " << s << std::endl;
     throw std::invalid_argument{"Invalid ZSParams"};
 }
 
@@ -162,7 +187,7 @@ CAEN_DGTZ_AnalogMonitorMagnify_t s2mf(const std::string& s)
     STR_MATCH(s,2X,CAEN_DGTZ_AM_MAGNIFY_2X);
     STR_MATCH(s,4X,CAEN_DGTZ_AM_MAGNIFY_4X);
     STR_MATCH(s,8X,CAEN_DGTZ_AM_MAGNIFY_8X);
-    return (CAEN_DGTZ_AnalogMonitorMagnify_t)std::stoi(s,nullptr,0);
+    return (CAEN_DGTZ_AnalogMonitorMagnify_t)s2ui(s);
 }
 
 std::string to_string(CAEN_DGTZ_AnalogMonitorInspectorInverter_t ami)
@@ -181,7 +206,7 @@ CAEN_DGTZ_AnalogMonitorInspectorInverter_t s2ami(const std::string& s)
 {
     STR_MATCH(s,P_1X,CAEN_DGTZ_AM_INSPECTORINVERTER_P_1X);
     STR_MATCH(s,N_1X,CAEN_DGTZ_AM_INSPECTORINVERTER_N_1X);
-    return (CAEN_DGTZ_AnalogMonitorInspectorInverter_t)std::stoi(s,nullptr,0);
+    return (CAEN_DGTZ_AnalogMonitorInspectorInverter_t)s2ui(s);
 }
 
 std::string to_string(const caen::AIMParams &aimp)
@@ -198,6 +223,7 @@ caen::AIMParams s2aimp(const std::string& s)
     {
         return caen::AIMParams{s2ui(match[1]),s2ui(match[2]),s2mf(match[3]),s2ami(match[4])};
     }
+    std::cerr << "s2aimp got invalid input: " << s << std::endl;
     throw std::invalid_argument{"Invalid AIMParams"};
 }
 
@@ -205,7 +231,7 @@ CAEN_DGTZ_TrigerLogic_t s2tl(const std::string& s)
 {
     STR_MATCH(s,OR,CAEN_DGTZ_LOGIC_OR);
     STR_MATCH(s,AND,CAEN_DGTZ_LOGIC_AND);
-    return (CAEN_DGTZ_TrigerLogic_t)std::stoi(s,nullptr,0);
+    return (CAEN_DGTZ_TrigerLogic_t)s2ui(s);
 }
 std::string to_string(CAEN_DGTZ_TrigerLogic_t tl)
 {
@@ -235,6 +261,7 @@ caen::ChannelPairTriggerLogicParams s2cptlp(const std::string& s)
     {
         return caen::ChannelPairTriggerLogicParams{s2tl(match[1]),s2ui16(match[2])};
     }
+    std::cerr << "s2cptlp got invalid input: " << s << std::endl;
     throw std::invalid_argument{"Invalid ChannelPairTriggerLogicParams"};
 }
 
@@ -253,6 +280,7 @@ caen::TriggerLogicParams s2tlp(const std::string& s)
     {
         return caen::TriggerLogicParams{s2tl(match[1]),s2ui(match[2])};
     }
+    std::cerr << "s2tlp got invalid input: " << s << std::endl;
     throw std::invalid_argument{"Invalid TriggerLogicParams"};
 }
 
@@ -271,6 +299,7 @@ caen::SAMTriggerCountVetoParams s2samtcvp(const std::string& s)
     {
         return caen::SAMTriggerCountVetoParams{s2ed(match[1]),s2ui(match[2])};
     }
+    std::cerr << "s2samtcvp got invalid input: " << s << std::endl;
     throw std::invalid_argument{"Invalid SAMTriggerCountVetoParams"};
 }
 
@@ -288,6 +317,7 @@ caen::EasyDPPAlgorithmControl s2edppac(const std::string& s)
     {
         return caen::EasyDPPAlgorithmControl(s2ui8(match[1]),s2ui8(match[2]),s2ui8(match[3]),s2ui8(match[4]),s2ui8(match[5]),s2ui8(match[6]),s2ui8(match[7]),s2ui8(match[8]),s2ui8(match[9]),s2ui8(match[10]));
     }
+    std::cerr << "s2edppac got invalid input: " << s << std::endl;
     throw std::invalid_argument{"Invalid EasyDPPAlgorithmControl"};
 }
 
@@ -304,6 +334,7 @@ caen::EasyBoardConfiguration s2ebc(const std::string& s)
     {
         return caen::EasyBoardConfiguration(s2ui8(match[1]),s2ui8(match[2]),s2ui8(match[3]));
     }
+    std::cerr << "s2ebc got invalid input: " << s << std::endl;
     throw std::invalid_argument{"Invalid EasyBoardConfiguration"};
 }
 
@@ -320,6 +351,7 @@ caen::EasyDPPBoardConfiguration s2edbc(const std::string& s)
     {
         return caen::EasyDPPBoardConfiguration(s2ui8(match[1]),s2ui8(match[2]),s2ui8(match[3]),s2ui8(match[4]),s2ui8(match[5]),s2ui8(match[6]),s2ui8(match[7]));
     }
+    std::cerr << "s2edbc got invalid input: " << s << std::endl;
     throw std::invalid_argument{"Invalid EasyDPPBoardConfiguration"};
 }
 
@@ -336,6 +368,7 @@ caen::EasyAcquisitionControl s2eac(const std::string& s)
     {
         return caen::EasyAcquisitionControl(s2ui8(match[1]),s2ui8(match[2]),s2ui8(match[3]),s2ui8(match[4]),s2ui8(match[5]),s2ui8(match[6]),s2ui8(match[7]),s2ui8(match[8]));
     }
+    std::cerr << "s2eac got invalid input: " << s << std::endl;
     throw std::invalid_argument{"Invalid EasyAcquisitionControl"};
 }
 
@@ -352,6 +385,7 @@ caen::EasyDPPAcquisitionControl s2edac(const std::string& s)
     {
         return caen::EasyDPPAcquisitionControl(s2ui8(match[1]),s2ui8(match[2]),s2ui8(match[3]),s2ui8(match[4]),s2ui8(match[5]),s2ui8(match[6]),s2ui8(match[7]));
     }
+    std::cerr << "s2edac got invalid input: " << s << std::endl;
     throw std::invalid_argument{"Invalid EasyDPPAcquisitionControl"};
 }
 
@@ -368,6 +402,7 @@ caen::EasyAcquisitionStatus s2eas(const std::string& s)
     {
         return caen::EasyAcquisitionStatus(s2ui8(match[1]),s2ui8(match[2]),s2ui8(match[3]),s2ui8(match[4]),s2ui8(match[5]),s2ui8(match[6]),s2ui8(match[7]),s2ui8(match[8]),s2ui8(match[9]));
     }
+    std::cerr << "s2eas got invalid input: " << s << std::endl;
     throw std::invalid_argument{"Invalid EasyAcquisitionStatus"};
 }
 
@@ -384,6 +419,7 @@ caen::EasyDPPAcquisitionStatus s2edas(const std::string& s)
     {
         return caen::EasyDPPAcquisitionStatus(s2ui8(match[1]),s2ui8(match[2]),s2ui8(match[3]),s2ui8(match[4]),s2ui8(match[5]),s2ui8(match[6]),s2ui8(match[7]),s2ui8(match[8]));
     }
+    std::cerr << "s2edas got invalid input: " << s << std::endl;
     throw std::invalid_argument{"Invalid EasyDPPAcquisitionStatus"};
 }
 
@@ -400,6 +436,7 @@ caen::EasyGlobalTriggerMask s2egtm(const std::string& s)
     {
         return caen::EasyGlobalTriggerMask(s2ui8(match[1]),s2ui8(match[2]),s2ui8(match[3]),s2ui8(match[4]),s2ui8(match[5]),s2ui8(match[6]));
     }
+    std::cerr << "s2egtm got invalid input: " << s << std::endl;
     throw std::invalid_argument{"Invalid EasyGlobalTriggerMask"};
 }
 
@@ -416,6 +453,7 @@ caen::EasyDPPGlobalTriggerMask s2edgtm(const std::string& s)
     {
         return caen::EasyDPPGlobalTriggerMask(s2ui8(match[1]),s2ui8(match[2]),s2ui8(match[3]));
     }
+    std::cerr << "s2edgtm got invalid input: " << s << std::endl;
     throw std::invalid_argument{"Invalid EasyDPPGlobalTriggerMask"};
 }
 
@@ -432,6 +470,7 @@ caen::EasyFrontPanelTRGOUTEnableMask s2efptoem(const std::string& s)
     {
         return caen::EasyFrontPanelTRGOUTEnableMask(s2ui8(match[1]),s2ui8(match[2]),s2ui8(match[3]),s2ui8(match[4]),s2ui8(match[5]),s2ui8(match[6]));
     }
+    std::cerr << "s2efptoem got invalid input: " << s << std::endl;
     throw std::invalid_argument{"Invalid EasyFrontPanelTRGOUTEnableMask"};
 }
 
@@ -448,6 +487,7 @@ caen::EasyDPPFrontPanelTRGOUTEnableMask s2edfptoem(const std::string& s)
     {
         return caen::EasyDPPFrontPanelTRGOUTEnableMask(s2ui8(match[1]),s2ui8(match[2]),s2ui8(match[3]));
     }
+    std::cerr << "s2edfptoem got invalid input: " << s << std::endl;
     throw std::invalid_argument{"Invalid EasyDPPFrontPanelTRGOUTEnableMask"};
 }
 
@@ -464,6 +504,7 @@ caen::EasyFrontPanelIOControl s2efpioc(const std::string& s)
     {
         return caen::EasyFrontPanelIOControl(s2ui8(match[1]),s2ui8(match[2]),s2ui8(match[3]),s2ui8(match[4]),s2ui8(match[5]),s2ui8(match[6]),s2ui8(match[7]),s2ui8(match[8]),s2ui8(match[9]),s2ui8(match[10]),s2ui8(match[11]),s2ui8(match[12]),s2ui8(match[13]),s2ui8(match[14]),s2ui8(match[15]),s2ui8(match[16]),s2ui8(match[17]));
     }
+    std::cerr << "s2efpioc got invalid input: " << s << std::endl;
     throw std::invalid_argument{"Invalid EasyFrontPanelIOControl"};
 }
 
@@ -480,6 +521,7 @@ caen::EasyDPPFrontPanelIOControl s2edfpioc(const std::string& s)
     {
         return caen::EasyDPPFrontPanelIOControl(s2ui8(match[1]),s2ui8(match[2]),s2ui8(match[3]),s2ui8(match[4]),s2ui8(match[5]),s2ui8(match[6]),s2ui8(match[7]),s2ui8(match[8]),s2ui8(match[9]),s2ui8(match[10]),s2ui8(match[11]),s2ui8(match[12]),s2ui8(match[13]),s2ui8(match[14]),s2ui8(match[15]),s2ui8(match[16]),s2ui8(match[17]));
     }
+    std::cerr << "s2edfpioc got invalid input: " << s << std::endl;
     throw std::invalid_argument{"Invalid EasyDPPFrontPanelIOControl"};
 }
 
@@ -511,6 +553,7 @@ caen::EasyROCFPGAFirmwareRevision s2erffr(const std::string& s)
          * to uint16 to fit the corresponding constructor. */
         return caen::EasyROCFPGAFirmwareRevision(s2ui8(match[1]),s2ui8(match[2]),s2ui16(match[3]));
     }
+    std::cerr << "s2erffr got invalid input: " << s << std::endl;
     throw std::invalid_argument{"Invalid EasyROCFPGAFirmwareRevision"};
 }
 
@@ -542,6 +585,7 @@ caen::EasyDPPROCFPGAFirmwareRevision s2edrffr(const std::string& s)
          * to uint16 to fit the corresponding constructor. */
         return caen::EasyDPPROCFPGAFirmwareRevision(s2ui8(match[1]),s2ui8(match[2]),s2ui16(match[3]));
     }
+    std::cerr << "s2edrffr got invalid input: " << s << std::endl;
     throw std::invalid_argument{"Invalid EasyDPPROCFPGAFirmwareRevision"};
 }
 
@@ -558,6 +602,7 @@ caen::EasyFanSpeedControl s2efsc(const std::string& s)
     {
         return caen::EasyFanSpeedControl(s2ui8(match[1]));
     }
+    std::cerr << "s2efsc got invalid input: " << s << std::endl;
     throw std::invalid_argument{"Invalid EasyFanSpeedControl"};
 }
 
@@ -574,6 +619,7 @@ caen::EasyDPPFanSpeedControl s2edfsc(const std::string& s)
     {
         return caen::EasyDPPFanSpeedControl(s2ui8(match[1]));
     }
+    std::cerr << "s2edfsc got invalid input: " << s << std::endl;
     throw std::invalid_argument{"Invalid EasyDPPFanSpeedControl"};
 }
 
@@ -590,6 +636,7 @@ caen::EasyReadoutControl s2erc(const std::string& s)
     {
         return caen::EasyReadoutControl(s2ui8(match[1]),s2ui8(match[2]),s2ui8(match[3]),s2ui8(match[4]),s2ui8(match[5]),s2ui8(match[6]),s2ui8(match[7]));
     }
+    std::cerr << "s2erc got invalid input: " << s << std::endl;
     throw std::invalid_argument{"Invalid EasyReadoutControl"};
 }
 
@@ -606,6 +653,7 @@ caen::EasyDPPReadoutControl s2edrc(const std::string& s)
     {
         return caen::EasyDPPReadoutControl(s2ui8(match[1]),s2ui8(match[2]),s2ui8(match[3]),s2ui8(match[4]),s2ui8(match[5]),s2ui8(match[6]),s2ui8(match[7]));
     }
+    std::cerr << "s2edrc got invalid input: " << s << std::endl;
     throw std::invalid_argument{"Invalid EasyDPPReadoutControl"};
 }
 
@@ -622,6 +670,7 @@ caen::EasyReadoutStatus s2ers(const std::string& s)
     {
         return caen::EasyReadoutStatus(s2ui8(match[1]),s2ui8(match[2]),s2ui8(match[3]));
     }
+    std::cerr << "s2ers got invalid input: " << s << std::endl;
     throw std::invalid_argument{"Invalid EasyReadoutStatus"};
 }
 
@@ -638,6 +687,7 @@ caen::EasyDPPReadoutStatus s2edrs(const std::string& s)
     {
         return caen::EasyDPPReadoutStatus(s2ui8(match[1]),s2ui8(match[2]),s2ui8(match[3]));
     }
+    std::cerr << "s2edrs got invalid input: " << s << std::endl;
     throw std::invalid_argument{"Invalid EasyDPPReadoutStatus"};
 }
 
@@ -654,6 +704,7 @@ caen::EasyScratch s2es(const std::string& s)
     {
         return caen::EasyScratch(s2ui8(match[1]),s2ui8(match[2]),s2ui8(match[3]),s2ui8(match[4]),s2ui8(match[5]),s2ui8(match[6]),s2ui8(match[7]),s2ui8(match[8]));
     }
+    std::cerr << "s2es got invalid input: " << s << std::endl;
     throw std::invalid_argument{"Invalid EasyScratch"};
 }
 
@@ -670,6 +721,7 @@ caen::EasyDPPScratch s2eds(const std::string& s)
     {
         return caen::EasyDPPScratch(s2ui8(match[1]),s2ui8(match[2]),s2ui8(match[3]),s2ui8(match[4]),s2ui8(match[5]),s2ui8(match[6]),s2ui8(match[7]),s2ui8(match[8]));
     }
+    std::cerr << "s2eds got invalid input: " << s << std::endl;
     throw std::invalid_argument{"Invalid EasyDPPScratch"};
 }
 
@@ -686,6 +738,7 @@ std::string to_string(const caen::EasyAMCFirmwareRevision &eafr)
         ss << '{' << match[1] << "," << match[2] << "," << match[6] << match[5] << match[4] << match[3] << "} # {" << match[7] << "," << match[8] << "," << "revisionDate}";
         return ss.str();
     }
+    std::cerr << "AMCFirmwareRevision parsing failed: " << raw << std::endl;
     throw std::invalid_argument{"Invalid EasyAMCFirmwareRevision"};
 }
 
@@ -700,6 +753,7 @@ caen::EasyAMCFirmwareRevision s2eafr(const std::string& s)
          * to uint16 to fit the corresponding constructor. */
         return caen::EasyAMCFirmwareRevision(s2ui8(match[1]),s2ui8(match[2]),s2ui16(match[3]));
     }
+    std::cerr << "s2eafr got invalid input: " << s << std::endl;
     throw std::invalid_argument{"Invalid EasyAMCFirmwareRevision"};
 }
 
@@ -716,6 +770,7 @@ caen::EasyDPPAMCFirmwareRevision s2edafr(const std::string& s)
     {
         return caen::EasyDPPAMCFirmwareRevision(s2ui8(match[1]),s2ui8(match[2]),s2ui8(match[3]),s2ui8(match[4]),s2ui8(match[5]),s2ui8(match[6]));
     }
+    std::cerr << "s2edafr got invalid input: " << s << std::endl;
     throw std::invalid_argument{"Invalid EasyDPPAMCFirmwareRevision"};
 }
 
@@ -738,7 +793,7 @@ CAEN_DGTZ_DPP_AcqMode_t s2dam(const std::string& s)
     STR_MATCH(s,Oscilloscope,CAEN_DGTZ_DPP_ACQ_MODE_Oscilloscope);
     STR_MATCH(s,List,CAEN_DGTZ_DPP_ACQ_MODE_List);
     STR_MATCH(s,Mixed,CAEN_DGTZ_DPP_ACQ_MODE_Mixed);
-    return (CAEN_DGTZ_DPP_AcqMode_t)std::stoi(s,nullptr,0);
+    return (CAEN_DGTZ_DPP_AcqMode_t)s2ui(s);
 }
 
 std::string to_string(CAEN_DGTZ_DPP_SaveParam_t sp)
@@ -763,7 +818,7 @@ CAEN_DGTZ_DPP_SaveParam_t s2sp(const std::string& s)
     STR_MATCH(s,TimeOnly,CAEN_DGTZ_DPP_SAVE_PARAM_TimeOnly);
     STR_MATCH(s,EnergyAndTime,CAEN_DGTZ_DPP_SAVE_PARAM_EnergyAndTime);
     STR_MATCH(s,None,CAEN_DGTZ_DPP_SAVE_PARAM_None);
-    return (CAEN_DGTZ_DPP_SaveParam_t)std::stoi(s,nullptr,0);
+    return (CAEN_DGTZ_DPP_SaveParam_t)s2ui(s);
 }
 
 std::string to_string(const caen::DPPAcquisitionMode &dam)
@@ -781,6 +836,7 @@ caen::DPPAcquisitionMode s2cdam(const std::string& s)
     {
         return caen::DPPAcquisitionMode{s2dam(match[1]),s2sp(match[2])};
     }
+    std::cerr << "s2cdam got invalid input: " << s << std::endl;
     throw std::invalid_argument{"Invalid DPPAcquisitionMode"};
 }
 
@@ -806,7 +862,7 @@ CAEN_DGTZ_SAM_CORRECTION_LEVEL_t s2samcl(const std::string& s)
     STR_MATCH(s,PEDESTAL_ONLY,CAEN_DGTZ_SAM_CORRECTION_PEDESTAL_ONLY);
     STR_MATCH(s,INL,CAEN_DGTZ_SAM_CORRECTION_INL);
     STR_MATCH(s,ALL,CAEN_DGTZ_SAM_CORRECTION_ALL);
-    return (CAEN_DGTZ_SAM_CORRECTION_LEVEL_t)std::stoi(s,nullptr,0);
+    return (CAEN_DGTZ_SAM_CORRECTION_LEVEL_t)s2ui(s);
 }
 
 std::string to_string(CAEN_DGTZ_SAMFrequency_t samf)
@@ -831,7 +887,7 @@ CAEN_DGTZ_SAMFrequency_t s2samf(const std::string& s)
     STR_MATCH(s,1_6GHz,CAEN_DGTZ_SAM_1_6GHz);
     STR_MATCH(s,800MHz,CAEN_DGTZ_SAM_800MHz);
     STR_MATCH(s,400MHz,CAEN_DGTZ_SAM_400MHz);
-    return (CAEN_DGTZ_SAMFrequency_t)std::stoi(s,nullptr,0);
+    return (CAEN_DGTZ_SAMFrequency_t)s2ui(s);
 }
 
 std::string to_string(CAEN_DGTZ_AcquisitionMode_t mode)
@@ -850,6 +906,6 @@ CAEN_DGTZ_AcquisitionMode_t s2samam(const std::string& s)
 {
     STR_MATCH(s,STANDARD,CAEN_DGTZ_AcquisitionMode_STANDARD);
     STR_MATCH(s,DPP_CI,CAEN_DGTZ_AcquisitionMode_DPP_CI);
-    return (CAEN_DGTZ_AcquisitionMode_t)std::stoi(s,nullptr,0);
+    return (CAEN_DGTZ_AcquisitionMode_t)s2ui(s);
 }
 

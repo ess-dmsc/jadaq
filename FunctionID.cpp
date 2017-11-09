@@ -82,6 +82,7 @@ static std::unordered_map<std::string,FunctionID > functionMap =
                 MAP_ENTRY(EventSize),
                 MAP_ENTRY(FanSpeedControl),
                 MAP_ENTRY(EasyFanSpeedControl),
+                MAP_ENTRY(EasyDPPFanSpeedControl),
                 MAP_ENTRY(DPPDisableExternalTrigger),
                 MAP_ENTRY(RunStartStopDelay),
                 MAP_ENTRY(ReadoutControl),
@@ -220,6 +221,7 @@ const std::string to_string(FunctionID id) {
         CASE_TO_STR(DPPTriggerHoldOffWidth)
         CASE_TO_STR(DPPShapedTriggerWidth)
         default :
+            std::cerr << "to_string did not  find function id: " << id << std::endl;
             throw std::invalid_argument{"Unknown function ID"};
     }
 }
@@ -234,7 +236,7 @@ FunctionID functionID(std::string s)
     auto fid = functionMap.find(s);
     if (fid == functionMap.end())
     {
-        std::cerr << "Did not find function: " << s << std::endl;
+        std::cerr << "functionID did not find function: " << s << std::endl;
         throw std::invalid_argument{"No function by that name"};
     }
     else

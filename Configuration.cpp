@@ -229,6 +229,7 @@ Configuration::Range::Range(std::string s) {
         first = std::stoi(match[1]);
         last = std::stoi(match[2]);
     } else {
+        std::cerr << "Range helper found invalid range: " << s << std::endl;
         throw std::invalid_argument{"Not a valid range"};
     }
 }

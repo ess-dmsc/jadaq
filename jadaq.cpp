@@ -99,6 +99,9 @@ int main(int argc, char **argv) {
         if (digitizer.caenIsDPPFirmware()) {
             std::cout << "Prepare DPP event buffer for digitizer " << digitizer.name() << std::endl;
             digitizer.caenMallocPrivDPPEvents();
+            std::cout << "Prepare DPP waveforms buffer for digitizer " << digitizer.name() << std::endl;
+            digitizer.caenMallocPrivDPPWaveforms();
+            std::cout << "Allocated DPP waveforms buffer: " << digitizer.caenDumpPrivDPPWaveforms() << std::endl;
         } else {
             std::cout << "Prepare event buffer for digitizer " << digitizer.name() << std::endl;
             digitizer.caenMallocPrivEvent();
@@ -110,6 +113,7 @@ int main(int argc, char **argv) {
     /* Set up interrupt handler and start handling acquired data */
     setup_interrupt_handler();
 
+    uint32_t throttleDown = 100;
     while(true) {
         /* Continuously acquire and process data:
          *   - read out data
@@ -117,6 +121,11 @@ int main(int argc, char **argv) {
          *   - pack data
          *   - send out on UDP
          */
+        if (throttleDown) {
+            /* NOTE: for running without hogging CPU if nothing to do */
+            std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+            throttleDown = 100;
+        }
         try {
             std::cout << "Read out data from all " << digitizers.size() << " digitizers." << std::endl;
             /* Read out acquired data for all digitizers */
@@ -130,7 +139,9 @@ int main(int argc, char **argv) {
                     if (digitizer.caenGetPrivReadoutBuffer().dataSize > 0) {
                         digitizer.caenGetDPPEvents(digitizer.caenGetPrivReadoutBuffer(), digitizer.caenGetPrivDPPEvents());
                         std::cout << "Unpacked " << digitizer.caenGetPrivDPPEvents().nEvents[0] << " DPP events from channel 0." << std::endl;
-                    /* TODO: decode waveforms here */
+                        digitizer.caenDecodeDPPWaveforms(digitizer.caenGetPrivDPPEvents(), 0, 0, digitizer.caenGetPrivDPPWaveforms());
+                        std::cout << "Decoded DPP waveforms" << std::endl;
+                        std::cout << "Decoded " << digitizer.caenDumpPrivDPPWaveforms() << " DPP event waveforms from first event on channel 0." << std::endl;
                     /* TODO: pack and send out UDP */
                     } else {
                         std::cout << "No events found - no further handling." << std::endl;
@@ -146,18 +157,18 @@ int main(int argc, char **argv) {
                     }
                     if (numEvents < 1) {
                         std::cout << "No events found - no further handling." << std::endl;
+                        throttleDown = 1000;
+                        continue;
                     }
+                    
                     /* TODO: pack and send out UDP */
                 }
+                throttleDown = 100;
             }
-            /* NOTE: for testing without hogging CPU */
-            std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-
         } catch(std::exception& e) {
             std::cerr << "unexpected exception during acquisition: " << e.what() << std::endl;
             /* NOTE: throttle down on errors */
-            std::this_thread::sleep_for(std::chrono::milliseconds(100));
-            continue;
+            throttleDown = 2000;
         }
         if (interrupted) {
             std::cout << "caught interrupt - stop acquisition." << std::endl;
@@ -170,6 +181,8 @@ int main(int argc, char **argv) {
                 if (digitizer.caenIsDPPFirmware()) {
                     std::cout << "Free DPP event buffer for " << digitizer.name() << std::endl;
                     digitizer.caenFreePrivDPPEvents();
+                    std::cout << "Free DPP waveforms buffer for " << digitizer.name() << std::endl;
+                    digitizer.caenFreePrivDPPWaveforms();
                 } else {
                     std::cout << "Free event buffer for " << digitizer.name() << std::endl;
                     digitizer.caenFreePrivEvent();

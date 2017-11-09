@@ -89,7 +89,9 @@ namespace caen {
                 CASE_TO_STR(CAEN_DGTZ_UnsupportedTrace)
                 CASE_TO_STR(CAEN_DGTZ_InvalidProbe)
                 CASE_TO_STR(CAEN_DGTZ_NotYetImplemented)
-                default : return "Unknown Error";
+                default:
+                    std::cerr << "Unknown CAEN error code: " << code << std::endl;
+                   return "Unknown Error";
             }
         }
         Error(CAEN_DGTZ_ErrorCode code) : code_(code) {}
@@ -2125,7 +2127,8 @@ namespace caen {
         /*
          * EasyReadoutStatus fields:
          * event ready [0], output buffer status in [1],
-         * bus error / slave terminated in [2].
+         * bus error / slave terminated in [2], (undocumented!) reserved
+         * forced-ones in [8:15].
          */
         void initLayout() override
         {
@@ -2133,6 +2136,7 @@ namespace caen {
                 {"eventReady", {(const uint8_t)1, (const uint8_t)0}},
                 {"outputBufferStatus", {(const uint8_t)1, (const uint8_t)1}},
                 {"busErrorSlaveTerminated", {(const uint8_t)1, (const uint8_t)2}},
+                {"__reserved__0_", {(const uint8_t)8, (const uint8_t)8}}
             };
         }
         /* NOTE: use inherited generic constructFromMask(mask) */
@@ -2141,7 +2145,8 @@ namespace caen {
             variables = {
                 {"eventReady", (const uint8_t)(eventReady & 0x1)},
                 {"outputBufferStatus", (const uint8_t)(outputBufferStatus & 0x1)},
-                {"busErrorSlaveTerminated", (const uint8_t)(busErrorSlaveTerminated & 0x1)}
+                {"busErrorSlaveTerminated", (const uint8_t)(busErrorSlaveTerminated & 0x1)},
+                {"__reserved__0_", (const uint8_t)(0xFF)},
             };
         };
     public:
@@ -2859,7 +2864,47 @@ namespace caen {
                 offset += events.nEvents[i] * events.elemSize;
             }
             offset +=  eventNo * events.elemSize;
-            return decodeDPPWaveforms((void *)(events.ptr + offset), waveforms); 
+            std::cout << "reading channel " << channel << " event " << eventNo << " from events with offset " << offset << std::endl;
+            return decodeDPPWaveforms((void *)((char *)events.ptr + offset), waveforms); 
+        }
+
+        std::string dumpDPPWaveforms(DPPWaveforms& waveforms)
+        { 
+            std::stringstream ss;
+            std::cout << "in dumpDPPWaveforms" << std::endl;
+            ss << unsigned(waveforms.allocatedSize) << " ";
+            /*
+            switch(getDPPFirmwareType())
+            {
+                case CAEN_DGTZ_DPPFirmware_PHA:
+                    {
+                        CAEN_DGTZ_DPP_PHA_Waveforms_t *waves = (CAEN_DGTZ_DPP_PHA_Waveforms_t *)(waveforms.ptr);
+                        ss << "PHA:Ns=" << unsigned(waves->Ns);
+                        break;
+                    }
+                case CAEN_DGTZ_DPPFirmware_PSD:
+                    {
+                        CAEN_DGTZ_DPP_PSD_Waveforms_t *waves = (CAEN_DGTZ_DPP_PSD_Waveforms_t *)waveforms.ptr;
+                        ss << "PSD:Ns=" << unsigned(waves->Ns);
+                        break;
+                    }                    
+                case CAEN_DGTZ_DPPFirmware_CI:
+                        {
+                            CAEN_DGTZ_DPP_CI_Waveforms_t *waves = (CAEN_DGTZ_DPP_CI_Waveforms_t *)waveforms.ptr;
+                            ss << "CI:Ns=" << unsigned(waves->Ns);
+                            break;
+                        }
+                case CAEN_DGTZ_DPPFirmware_QDC:
+                    {
+                        CAEN_DGTZ_DPP_QDC_Waveforms_t *waves = (CAEN_DGTZ_DPP_QDC_Waveforms_t *)(waveforms.ptr);
+                        ss << "QDC:Ns=" << unsigned(waves->Ns);
+                        break;
+                    }
+            default:
+                ss << "UNKNOWN";
+            }
+            */
+            return ss.str();
         }
 
         /* Device configuration - i.e. getter and setters */
@@ -2956,6 +3001,8 @@ namespace caen {
             if (group >= groups())  // Needed because of bug in CAEN_DGTZ_GetGroupSelfTrigger - patch sent
                 errorHandler(CAEN_DGTZ_InvalidChannelNumber);
             CAEN_DGTZ_TriggerMode_t mode;
+            /* TODO: report typo in digitizer function docs to upstream:
+             * CAEN_DGTZ_SetGroupSelfTrigger twice instead of Get and Set */
             errorHandler(CAEN_DGTZ_GetGroupSelfTrigger(handle_, group, &mode));
             return mode; }
         void setGroupSelfTrigger(uint32_t group, CAEN_DGTZ_TriggerMode_t mode)
