@@ -2941,6 +2941,9 @@ namespace caen {
         void setGroupEnableMask(uint32_t mask)
         { errorHandler(CAEN_DGTZ_SetGroupEnableMask(handle_, mask)); }
 
+        /* TODO: mark get/setDecimationFactor as not allowed on DPP?
+         *       Not clear from docs but one should supposedly use the
+         *       corresponding SetDPPParameters function there instead. */
         /**
          * @bug
          * CAEN_DGTZ_GetDecimationFactor fails with GenericError
@@ -2949,7 +2952,7 @@ namespace caen {
          * V1740 specific case. 
          */
         uint16_t getDecimationFactor()
-        { uint16_t factor;  errorHandler(CAEN_DGTZ_GetDecimationFactor(handle_, &factor)); return factor; }
+        { uint16_t factor; errorHandler(CAEN_DGTZ_GetDecimationFactor(handle_, &factor)); return factor; }
         void setDecimationFactor(uint16_t factor)
         { errorHandler(CAEN_DGTZ_SetDecimationFactor(handle_, factor)); }
 
@@ -3172,11 +3175,14 @@ namespace caen {
         virtual void setDPPPreTriggerSize(uint32_t samples) // Default channel -1 == all
         { errorHandler(CAEN_DGTZ_SetDPPPreTriggerSize(handle_, -1, samples)); }
 
+        /* TODO: mark get/setChannelPulsePolarity as not allowed on DPP?
+         *       Not clear from docs but one should supposedly use the
+         *       corresponding DPPAlgorithmControl bit there instead. */
         /**
          * @bug
          * CAEN_DGTZ_GetChannelPulsePolarity fails with InvalidParam om
          * DT5740_171 and V1740D_137. Seems to fail deep in readout when
-         * the digtizer library calls ReadRegister 0x1n80 
+         * the digitizer library calls ReadRegister 0x1n80.
          */
         CAEN_DGTZ_PulsePolarity_t getChannelPulsePolarity(uint32_t channel)
         { CAEN_DGTZ_PulsePolarity_t polarity; errorHandler(CAEN_DGTZ_GetChannelPulsePolarity(handle_, channel, &polarity)); return polarity; }
@@ -3275,14 +3281,15 @@ namespace caen {
         void setDPPEventAggregation(int threshold, int maxsize)
         { errorHandler(CAEN_DGTZ_SetDPPEventAggregation(handle_, threshold, maxsize)); }
 
+        /* NOTE: Default to channel -1, meaning all channels */ 
         uint32_t getNumEventsPerAggregate()
-        { uint32_t numEvents; errorHandler(CAEN_DGTZ_GetNumEventsPerAggregate(handle_, &numEvents)); return numEvents; }
+        { return getNumEventsPerAggregate(-1); }
         uint32_t getNumEventsPerAggregate(uint32_t channel)
-        { uint32_t numEvents; errorHandler(CAEN_DGTZ_GetNumEventsPerAggregate(handle_, &numEvents, channel)); return numEvents; }
+        { uint32_t numEvents; errorHandler(_CAEN_DGTZ_GetNumEventsPerAggregate(handle_, &numEvents, channel)); return numEvents; }
         void setNumEventsPerAggregate(uint32_t numEvents)
-        { errorHandler(CAEN_DGTZ_SetNumEventsPerAggregate(handle_, numEvents)); }
-        void setNumEventsPerAggregate(uint32_t channel, uint32_t numEvents)
-        { errorHandler(CAEN_DGTZ_SetNumEventsPerAggregate(handle_, numEvents, channel)); }
+        { return setNumEventsPerAggregate(-1, numEvents); }
+        void setNumEventsPerAggregate(uint32_t channel ,uint32_t numEvents)
+        { errorHandler(_CAEN_DGTZ_SetNumEventsPerAggregate(handle_, numEvents, channel)); }
 
         uint32_t getMaxNumAggregatesBLT()
         { uint32_t numAggr; errorHandler(CAEN_DGTZ_GetMaxNumAggregatesBLT(handle_, &numAggr)); return numAggr; }
@@ -3312,6 +3319,7 @@ namespace caen {
         virtual void setDPPFixedBaseline(uint32_t value) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
 
         virtual uint32_t getDPPTriggerHoldOffWidth(uint32_t group) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual uint32_t getDPPTriggerHoldOffWidth() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         virtual void setDPPTriggerHoldOffWidth(uint32_t group, uint32_t value) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         virtual void setDPPTriggerHoldOffWidth(uint32_t value) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
 
@@ -3323,6 +3331,7 @@ namespace caen {
         virtual void setEasyDPPAlgorithmControl(EasyDPPAlgorithmControl settings) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
 
         virtual uint32_t getDPPShapedTriggerWidth(uint32_t group) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual uint32_t getDPPShapedTriggerWidth() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         virtual void setDPPShapedTriggerWidth(uint32_t group, uint32_t value) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         virtual void setDPPShapedTriggerWidth(uint32_t value) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
 
@@ -4694,6 +4703,16 @@ namespace caen {
             return value;
         }
         /**
+         * @brief Broadcast version: please refer to details in
+         * single-group version.
+         */
+        uint32_t getDPPTriggerHoldOffWidth() override
+        {
+            uint32_t value;
+            errorHandler(CAEN_DGTZ_ReadRegister(handle_, 0x8074, &value));
+            return value;
+        }
+        /**
          * @brief Set DPP TriggerHoldOffWidth
          *
          * The Trigger Hold-Off is a logic signal of programmable width
@@ -4738,6 +4757,9 @@ namespace caen {
          * CAEN_DGTZ_ReadRegister 0x1078 for ShapedTriggerWidth on V1740D
          * causes CommError 
          */
+        /* TODO: figure out why ShapedTriggerWidth from 740 DPP register
+           docs fails with commerr. Disabled for now to avoid problems. */
+        /*
         uint32_t getDPPShapedTriggerWidth(uint32_t group) override
         {
             if (group >= groups())
@@ -4746,6 +4768,19 @@ namespace caen {
             errorHandler(CAEN_DGTZ_ReadRegister(handle_, 0x1078 | group<<8 , &value));
             return value;
         }
+        */
+        /**
+         * @brief Broadcast version: please refer to details in
+         * single-group version.
+         */
+        /*
+        uint32_t getDPPShapedTriggerWidth() override
+        {
+            uint32_t value;
+            errorHandler(CAEN_DGTZ_ReadRegister(handle_, 0x8078, &value));
+            return value;
+        }
+        */
         /**
          * @brief Set DPP ShapedTriggerWidth
          *
@@ -4761,18 +4796,22 @@ namespace caen {
          * Set the number of samples for the Shaped Trigger width in
          * trigger clock cycles (16 ns step) - 16 bits
          */
+        /*
         void setDPPShapedTriggerWidth(uint32_t group, uint32_t value) override
         {
             if (group >= groups())
                 errorHandler(CAEN_DGTZ_InvalidChannelNumber);
             errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x1078 | group<<8, value & 0xFFFF));
         }
+        */
         /**
          * @brief Broadcast version: please refer to details in
          * single-group version.
          */
+        /*
         void setDPPShapedTriggerWidth(uint32_t value) override
         { errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x8078, value & 0xFFFF)); }
+        */
 
         /* NOTE: reuse get AMCFirmwareRevision from parent */
         /* NOTE: disable inherited 740 EasyAMCFirmwareRevision since we only
@@ -4882,6 +4921,10 @@ namespace caen {
             unsetBoardConfiguration(mask);
         }
 
+        /* TODO: delete AggregateOrganization wrappers? */
+        /* NOTE: Event Aggregation is already covered by 
+         *       get/setNumEventsPerAggregate
+         */
         /**
          * @brief Get DPP AggregateOrganization
          *
@@ -4897,12 +4940,14 @@ namespace caen {
          * to N_aggr = 2^Nb . Please refer to register doc for values -
          * 4 bits
          */
+        /*
         uint32_t getDPPAggregateOrganization() override
         {
             uint32_t value;
             errorHandler(CAEN_DGTZ_ReadRegister(handle_, 0x800C, &value));
             return value;
         }
+        */
         /**
          * @brief Set DPP AggregateOrganization
          *
@@ -4918,11 +4963,11 @@ namespace caen {
          * to N_aggr = 2^Nb . Please refer to register doc for values -
          * 4 bits
          */
+        /*
         void setDPPAggregateOrganization(uint32_t value) override
         { errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x800C, value & 0x0F)); }
-
-        /* TODO: check that this is already covered by NumEventsPerAggregate
-
+        */
+        /* 
         uint32_t getEventsPerAggregate() override
         {
             uint32_t value;
@@ -4932,8 +4977,6 @@ namespace caen {
         void setEventsPerAggregate(uint32_t value) override
         { errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x8020, value & 0x07FF)); }
         */
-
-        /* TODO: make sure Record Length is already covered by RecordLength */
 
         /* TODO: what to do about these custom functions - now that they
          * are exposed through BoardConfiguration helpers? */

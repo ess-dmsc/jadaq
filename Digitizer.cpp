@@ -225,6 +225,8 @@ static std::string get_(caen::Digitizer* digitizer, FunctionID functionID)
         GET_CASE(digitizer,DPPAggregateNumberPerBLT,to_string)
         GET_CASE(digitizer,RecordLength,to_string)
         GET_CASE(digitizer,NumEventsPerAggregate,to_string)
+        GET_CASE(digitizer,DPPTriggerHoldOffWidth,to_string)
+        GET_CASE(digitizer,DPPShapedTriggerWidth,to_string)
         default:
             std::cerr << "get_ found unknown functionid: " << functionID << std::endl;
             throw std::invalid_argument{"Unknown Function"};
