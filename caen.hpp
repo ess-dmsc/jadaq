@@ -354,6 +354,12 @@ namespace caen {
         typedef std::pair<std::string, std::pair<uint8_t, uint8_t>> layout_entry;
         typedef std::vector<layout_entry> var_layout;
         var_layout layout;
+        /* We save original mask if constructed from one, so that we can
+         * use it to only change the relevant mask bit defined and not
+         * touch any reserved bits that may or may not need to remain
+         * untouched.
+         */
+        uint32_t origMask = 0x0;
         /**
          * @brief unpack at most 8 bits from 32 bit mask
          * @param mask:
@@ -417,6 +423,13 @@ namespace caen {
         virtual void constructFromMask(const uint32_t mask) {
             /* Generic construct helper - using possibly overriden
              * layout helper to unpack mask. */
+            /* NOTE: a number of masks carry values in the reserved parts.
+             *       It's not clear if we break things if we blindly truncate
+             *       those during set. So we save the original mask when
+             *       constructed from mask and only pack our defined
+             *       valid bits into that saved mask during toBits().
+             */
+            origMask = mask;
             initLayout();
             autoInit(mask);
         };
@@ -457,7 +470,8 @@ namespace caen {
         /* Convert to low-level bit mask in line with docs */
         virtual const uint32_t toBits() const
         {
-            uint32_t mask = 0;
+            /* Use saved mask from init if available - it's 0 otherwise */
+            uint32_t mask = origMask;
             /* NOTE: we must use variables.at() rather than variables[] here
              * to avoid 'argument discards qualifiers' error during compile */
             for (const auto &keyVal : layout) {
@@ -2127,8 +2141,7 @@ namespace caen {
         /*
          * EasyReadoutStatus fields:
          * event ready [0], output buffer status in [1],
-         * bus error / slave terminated in [2], (undocumented!) reserved
-         * forced-ones in [8:15].
+         * bus error / slave terminated in [2].
          */
         void initLayout() override
         {
@@ -2136,7 +2149,6 @@ namespace caen {
                 {"eventReady", {(const uint8_t)1, (const uint8_t)0}},
                 {"outputBufferStatus", {(const uint8_t)1, (const uint8_t)1}},
                 {"busErrorSlaveTerminated", {(const uint8_t)1, (const uint8_t)2}},
-                {"__reserved__0_", {(const uint8_t)8, (const uint8_t)8}}
             };
         }
         /* NOTE: use inherited generic constructFromMask(mask) */
@@ -2146,7 +2158,6 @@ namespace caen {
                 {"eventReady", (const uint8_t)(eventReady & 0x1)},
                 {"outputBufferStatus", (const uint8_t)(outputBufferStatus & 0x1)},
                 {"busErrorSlaveTerminated", (const uint8_t)(busErrorSlaveTerminated & 0x1)},
-                {"__reserved__0_", (const uint8_t)(0xFF)},
             };
         };
     public:
