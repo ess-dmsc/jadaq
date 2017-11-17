@@ -66,7 +66,7 @@ public:
     caen::ReadoutBuffer& caenGetPrivReadoutBuffer() { return readoutBuffer; }
     /* Additional event buffers */
     void caenMallocPrivEvent() { event = digitizer->mallocEvent(); }
-    void caenFreePrivEvent() { digitizer->freeEvent(event); }
+    void caenFreePrivEvent() { digitizer->freeEvent(event); event = NULL; }
     void caenMallocPrivDPPEvents() { events = digitizer->mallocDPPEvents(); }
     void caenFreePrivDPPEvents() { digitizer->freeDPPEvents(events); }
     void caenMallocPrivDPPWaveforms() { waveforms = digitizer->mallocDPPWaveforms(); }
@@ -80,12 +80,14 @@ public:
      * Digitizer library docs. */
     caen::ReadoutBuffer& caenReadData(caen::ReadoutBuffer& buffer, int mode=(int)CAEN_DGTZ_SLAVE_TERMINATED_READOUT_MBLT) { return digitizer->readData(buffer, (CAEN_DGTZ_ReadMode_t)mode); }
     uint32_t caenGetNumEvents(caen::ReadoutBuffer& buffer) { return digitizer->getNumEvents(buffer); }
+    uint32_t caenGetNumEventsPerAggregate() { return digitizer->getNumEventsPerAggregate(); }
     caen::EventInfo caenGetEventInfo(caen::ReadoutBuffer& buffer, int32_t n) { eventInfo = digitizer->getEventInfo(buffer, n); return eventInfo; }
     void *caenDecodeEvent(caen::EventInfo& buffer, void *event) { event = digitizer->decodeEvent(buffer, event); return event; }
     caen::DPPEvents& caenGetDPPEvents(caen::ReadoutBuffer& buffer, caen::DPPEvents& events) { return digitizer->getDPPEvents(buffer, events); }
     caen::DPPWaveforms& caenDecodeDPPWaveforms(caen::DPPEvents& events, uint32_t channel, uint32_t eventNo, caen::DPPWaveforms& waveforms) { return digitizer->decodeDPPWaveforms(events, channel, eventNo, waveforms); }
     void caenStartAcquisition() { digitizer->startAcquisition(); }
     void caenStopAcquisition() { digitizer->stopAcquisition(); }
+    void caenReset() { digitizer->reset(); }
 };
 
 

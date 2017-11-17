@@ -2704,7 +2704,7 @@ namespace caen {
         int handle() { return handle_; }
 
         CAEN_DGTZ_DPPFirmware_t getDPPFirmwareType()
-        { CAEN_DGTZ_DPPFirmware_t firmware; errorHandler(_CAEN_DGTZ_GetDPPFirmwareType(handle_, &firmware)); return firmware; }
+        { CAEN_DGTZ_DPPFirmware_t firmware = CAEN_DGTZ_NotDPPFirmware; errorHandler(_CAEN_DGTZ_GetDPPFirmwareType(handle_, &firmware)); return firmware; }
 
         /* Raw register read/write functions */
         void writeRegister(uint32_t address, uint32_t value)
@@ -2759,7 +2759,7 @@ namespace caen {
         { errorHandler(CAEN_DGTZ_SWStopAcquisition(handle_)); }
 
         ReadoutBuffer& readData(ReadoutBuffer& buffer,CAEN_DGTZ_ReadMode_t mode)
-        { errorHandler(CAEN_DGTZ_ReadData(handle_, mode, buffer.data, &buffer.dataSize)); return buffer; }
+        { memset(buffer.data, 0, buffer.size); errorHandler(CAEN_DGTZ_ReadData(handle_, mode, buffer.data, &buffer.dataSize)); return buffer; }
 
         /* Interrupt control */
 
@@ -2792,7 +2792,7 @@ namespace caen {
 
         /* Memory management */
         ReadoutBuffer mallocReadoutBuffer()
-        { ReadoutBuffer b; errorHandler(_CAEN_DGTZ_MallocReadoutBuffer(handle_, &b.data, &b.size)); return b; }
+        { ReadoutBuffer b; b.data = NULL; b.size = 0; b.dataSize = 0; errorHandler(_CAEN_DGTZ_MallocReadoutBuffer(handle_, &b.data, &b.size)); return b; }
         void freeReadoutBuffer(ReadoutBuffer b)
         { errorHandler(CAEN_DGTZ_FreeReadoutBuffer(&b.data)); }
 
@@ -2805,27 +2805,28 @@ namespace caen {
         DPPEvents mallocDPPEvents()
         {
             DPPEvents events;
+            /* MallocDPPEvents docs specify that event matrix always
+             *  must have MAX_CHANNELS entries. We use nEvents for
+             *  internal accounting so it must be same length. */
+            events.ptr = new void*[MAX_CHANNELS];
+            events.nEvents = new uint32_t[MAX_CHANNELS];
+            for (int i = 0; i < MAX_CHANNELS; i++) {
+                events.ptr[i] = NULL;
+                events.nEvents[i] = 0;
+            }
             switch(getDPPFirmwareType())
             {
                 case CAEN_DGTZ_DPPFirmware_PHA:
-                    events.ptr = new void*[MAX_DPP_PHA_CHANNEL_SIZE];
-                    events.nEvents = new uint32_t[MAX_DPP_PHA_CHANNEL_SIZE];
                     events.elemSize = sizeof(CAEN_DGTZ_DPP_PHA_Event_t);
                     break;
                 case CAEN_DGTZ_DPPFirmware_PSD:
-                    events.ptr = new void*[MAX_DPP_PSD_CHANNEL_SIZE];
-                    events.nEvents = new uint32_t[MAX_DPP_PSD_CHANNEL_SIZE];
                     events.elemSize = sizeof(CAEN_DGTZ_DPP_PSD_Event_t);
                     break;
                 case CAEN_DGTZ_DPPFirmware_CI:
-                    events.ptr = new void*[MAX_DPP_CI_CHANNEL_SIZE];
-                    events.nEvents = new uint32_t[MAX_DPP_CI_CHANNEL_SIZE];
                     events.elemSize = sizeof(CAEN_DGTZ_DPP_CI_Event_t);
                     break;
                 case CAEN_DGTZ_DPPFirmware_QDC:
-                    events.ptr = new void*[MAX_DPP_QDC_CHANNEL_SIZE];
-                    events.nEvents = new uint32_t[MAX_DPP_QDC_CHANNEL_SIZE];
-                    events.elemSize = sizeof(CAEN_DGTZ_DPP_QDC_Event_t);
+                    events.elemSize = sizeof(_CAEN_DGTZ_DPP_QDC_Event_t);
                     break;
                 default:
                     errorHandler(CAEN_DGTZ_FunctionNotAllowed);
@@ -2834,12 +2835,12 @@ namespace caen {
             return events;
         }
         void freeDPPEvents(DPPEvents events)
-        { errorHandler(_CAEN_DGTZ_FreeDPPEvents(handle_, events.ptr)); delete[](events.ptr); delete[](events.nEvents); }
+        { errorHandler(_CAEN_DGTZ_FreeDPPEvents(handle_, events.ptr)); delete[](events.ptr); delete[](events.nEvents); events.ptr = NULL; events.nEvents = NULL; }
 
         DPPWaveforms mallocDPPWaveforms()
-        { DPPWaveforms waveforms; errorHandler(_CAEN_DGTZ_MallocDPPWaveforms(handle_, &waveforms.ptr, &waveforms.allocatedSize)); return waveforms; }
+        { DPPWaveforms waveforms; waveforms.ptr = NULL; waveforms.allocatedSize = 0; errorHandler(_CAEN_DGTZ_MallocDPPWaveforms(handle_, &waveforms.ptr, &waveforms.allocatedSize)); return waveforms; }
         void freeDPPWaveforms(DPPWaveforms waveforms)
-        { errorHandler(_CAEN_DGTZ_FreeDPPWaveforms(handle_, &waveforms.ptr)); }
+        { errorHandler(_CAEN_DGTZ_FreeDPPWaveforms(handle_, waveforms.ptr)); waveforms.ptr = NULL; waveforms.allocatedSize = 0; }
 
         /* Detector data information and manipulation*/
         uint32_t getNumEvents(ReadoutBuffer buffer)
@@ -2867,54 +2868,65 @@ namespace caen {
          * waveforms for a given channel and event number element in the
          * events matrix. */
         DPPWaveforms& decodeDPPWaveforms(void *event, DPPWaveforms& waveforms)
-        { errorHandler(_CAEN_DGTZ_DecodeDPPWaveforms(handle_, event, waveforms.ptr)); return waveforms; }
-        DPPWaveforms& decodeDPPWaveforms(DPPEvents& events, uint32_t channel, uint32_t eventNo, DPPWaveforms& waveforms)
         { 
+            errorHandler(_CAEN_DGTZ_DecodeDPPWaveforms(handle_, event, waveforms.ptr)); 
+            return waveforms; }
+        DPPWaveforms& decodeDPPWaveforms(DPPEvents& events, uint32_t channel, uint32_t eventNo, DPPWaveforms& waveforms)
+        {
+            /* TODO: is this event lookup correct??        
+             *       the memory corruption from decodeDPPWaveforms
+             *       indicates it might not be.
+             */
             uint32_t i, offset = 0;
             for (i=0; i < channel; i++) {
                 offset += events.nEvents[i] * events.elemSize;
             }
             offset +=  eventNo * events.elemSize;
             std::cout << "reading channel " << channel << " event " << eventNo << " from events with offset " << offset << std::endl;
-            return decodeDPPWaveforms((void *)((char *)events.ptr + offset), waveforms); 
+            return decodeDPPWaveforms((void *)(((char *)events.ptr) + offset), waveforms); 
         }
 
         std::string dumpDPPWaveforms(DPPWaveforms& waveforms)
         { 
             std::stringstream ss;
-            std::cout << "in dumpDPPWaveforms" << std::endl;
-            ss << unsigned(waveforms.allocatedSize) << " ";
-            /*
+            uint32_t allocatedSize = 0;
+            uint32_t wavesNs = 0;
+            allocatedSize = unsigned(waveforms.allocatedSize);
+            std::cout << "dumpDPPWaveforms: allocated size is " << allocatedSize << std::endl;
+            ss << "allocatedSize="  << allocatedSize << " ";
             switch(getDPPFirmwareType())
             {
                 case CAEN_DGTZ_DPPFirmware_PHA:
                     {
                         CAEN_DGTZ_DPP_PHA_Waveforms_t *waves = (CAEN_DGTZ_DPP_PHA_Waveforms_t *)(waveforms.ptr);
-                        ss << "PHA:Ns=" << unsigned(waves->Ns);
+                        wavesNs = unsigned(waves->Ns);
+                        ss << "PHA:Ns=" << wavesNs;
                         break;
                     }
                 case CAEN_DGTZ_DPPFirmware_PSD:
                     {
                         CAEN_DGTZ_DPP_PSD_Waveforms_t *waves = (CAEN_DGTZ_DPP_PSD_Waveforms_t *)waveforms.ptr;
-                        ss << "PSD:Ns=" << unsigned(waves->Ns);
+                        wavesNs = unsigned(waves->Ns);
+                        ss << "PSD:Ns=" << wavesNs;
                         break;
                     }                    
                 case CAEN_DGTZ_DPPFirmware_CI:
-                        {
-                            CAEN_DGTZ_DPP_CI_Waveforms_t *waves = (CAEN_DGTZ_DPP_CI_Waveforms_t *)waveforms.ptr;
-                            ss << "CI:Ns=" << unsigned(waves->Ns);
-                            break;
+                    {
+                        CAEN_DGTZ_DPP_CI_Waveforms_t *waves = (CAEN_DGTZ_DPP_CI_Waveforms_t *)waveforms.ptr;
+                        wavesNs = unsigned(waves->Ns);
+                        ss << "CI:Ns=" << wavesNs;
+                        break;
                         }
                 case CAEN_DGTZ_DPPFirmware_QDC:
                     {
-                        CAEN_DGTZ_DPP_QDC_Waveforms_t *waves = (CAEN_DGTZ_DPP_QDC_Waveforms_t *)(waveforms.ptr);
-                        ss << "QDC:Ns=" << unsigned(waves->Ns);
+                        _CAEN_DGTZ_DPP_QDC_Waveforms_t *waves = (_CAEN_DGTZ_DPP_QDC_Waveforms_t *)(waveforms.ptr);
+                        wavesNs = unsigned(waves->Ns);
+                        ss << "QDC:Ns=" << wavesNs;
                         break;
                     }
             default:
                 ss << "UNKNOWN";
             }
-            */
             return ss.str();
         }
 
@@ -2976,27 +2988,57 @@ namespace caen {
         void setExternalTriggerMode(CAEN_DGTZ_TriggerMode_t mode)
         { errorHandler(CAEN_DGTZ_SetExtTriggerInputMode(handle_, mode)); }
 
-        uint32_t getChannelDCOffset(uint32_t channel)
+        virtual uint32_t getChannelDCOffset(uint32_t channel)
         { uint32_t offset; errorHandler(CAEN_DGTZ_GetChannelDCOffset(handle_, channel, &offset)); return offset; }
-        void setChannelDCOffset(uint32_t channel, uint32_t offset)
+        virtual void setChannelDCOffset(uint32_t channel, uint32_t offset)
         { errorHandler(CAEN_DGTZ_SetChannelDCOffset(handle_, channel, offset)); }
 
         /**
          * @bug
-         * CAEN_DGTZ_GetGroupDCOffset fails with GenericError on
-         * V1740D_137, something fails in the V1740 specific case. 
+         * Get/Set GroupDCOffset often fails with GenericError on V1740D_137
+         * if used with specific group - something fails in the V1740
+         * specific case. But for whatever reason it works fine in QDC
+         * sample app unless a get is inserted before the set!?!
          */
-        uint32_t getGroupDCOffset(uint32_t group)
+        uint32_t getGroupDCOffset() 
+        { 
+            std::cout << "in getGroupDCOffset broadcast" << std::endl;
+            uint32_t offset; errorHandler(CAEN_DGTZ_ReadRegister(handle_, 0x8098, &offset)); return offset; 
+        }
+        virtual uint32_t getGroupDCOffset(uint32_t group)
         {
+            std::cout << "in getGroupDCOffset " << group << std::endl;
             uint32_t offset;
             if (group >= groups())  // Needed because of bug in CAEN_DGTZ_GetGroupDCOffset - patch sent
                 errorHandler(CAEN_DGTZ_InvalidChannelNumber);
+            uint32_t mask = readRegister(0x1088|group<<8); 
+            if (mask & 0x4) {
+                std::cerr << "precondition for getting Group DC Offset is NOT satisfied: mask is " << mask << std::endl;
+                errorHandler(CAEN_DGTZ_CommError);
+            }
             errorHandler(CAEN_DGTZ_GetGroupDCOffset(handle_, group, &offset)); return offset;
         }
-        void setGroupDCOffset(uint32_t group, uint32_t offset)
+        void setGroupDCOffset(uint32_t offset)
         {
+            std::cout << "in setGroupDCOffset broadcast" << std::endl;
+            errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x8098, offset));
+        }
+        virtual void setGroupDCOffset(uint32_t group, uint32_t offset)
+        {
+            std::cout << "in setGroupDCOffset " << group << ", " << offset << std::endl;
             if (group >= groups())  // Needed because of bug in CAEN_DGTZ_SetGroupDCOffset - patch sent
                 errorHandler(CAEN_DGTZ_InvalidChannelNumber);
+            /* NOTE: the 740 register docs emphasize that one MUST check
+             * that the mask in reg 1n88  has mask[2]==0 before writing
+             * to the DC Offset register, 1n98 - but the backend function
+             * does not seem to do so!
+             * We manually check here for now.
+             */
+            uint32_t mask = readRegister(0x1088|group<<8); 
+            if (mask & 0x4) {
+                std::cerr << "precondition for setting Group DC Offset is NOT satisfied: mask is " << mask << std::endl;
+                errorHandler(CAEN_DGTZ_CommError);
+            }            
             errorHandler(CAEN_DGTZ_SetGroupDCOffset(handle_, group, offset));
         }
 
@@ -3282,12 +3324,10 @@ namespace caen {
         { errorHandler(CAEN_DGTZ_SetDPPEventAggregation(handle_, threshold, maxsize)); }
 
         /* NOTE: Default to channel -1, meaning all channels */ 
-        uint32_t getNumEventsPerAggregate()
-        { return getNumEventsPerAggregate(-1); }
-        uint32_t getNumEventsPerAggregate(uint32_t channel)
+        uint32_t getNumEventsPerAggregate(uint32_t channel=-1)
         { uint32_t numEvents; errorHandler(_CAEN_DGTZ_GetNumEventsPerAggregate(handle_, &numEvents, channel)); return numEvents; }
         void setNumEventsPerAggregate(uint32_t numEvents)
-        { return setNumEventsPerAggregate(-1, numEvents); }
+        { uint32_t channel=-1; errorHandler(_CAEN_DGTZ_SetNumEventsPerAggregate(handle_, numEvents, channel)); }
         void setNumEventsPerAggregate(uint32_t channel ,uint32_t numEvents)
         { errorHandler(_CAEN_DGTZ_SetNumEventsPerAggregate(handle_, numEvents, channel)); }
 
@@ -3340,10 +3380,8 @@ namespace caen {
         virtual void unsetBoardConfiguration(uint32_t value) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         virtual EasyBoardConfiguration getEasyBoardConfiguration() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         virtual void setEasyBoardConfiguration(EasyBoardConfiguration settings) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
-        virtual void unsetEasyBoardConfiguration(EasyBoardConfiguration settings) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         virtual EasyDPPBoardConfiguration getEasyDPPBoardConfiguration() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         virtual void setEasyDPPBoardConfiguration(EasyDPPBoardConfiguration settings) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
-        virtual void unsetEasyDPPBoardConfiguration(EasyDPPBoardConfiguration settings) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
 
         virtual uint32_t getDPPAggregateOrganization() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         virtual void setDPPAggregateOrganization(uint32_t value) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
@@ -3438,6 +3476,18 @@ namespace caen {
         virtual uint32_t channels() const override { return groups()*channelsPerGroup(); }
         virtual uint32_t groups() const override { return boardInfo_.Channels; } // for x740: boardInfo.Channels stores number of groups
         virtual uint32_t channelsPerGroup() const override { return 8; } // 8 channels per group for x740
+
+        /* NOTE: disable inherited 740 ChannelDCOffset since we can only
+         *       allow group version here.
+         */
+        virtual uint32_t getChannelDCOffset(uint32_t channel) override { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual void setChannelDCOffset(uint32_t channel, uint32_t offset) override { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+
+        /* NOTE: disable inherited 740 GroupDCOffset for specific group
+         *       since it randomly fails.
+         */
+        virtual uint32_t getGroupDCOffset(uint32_t group) override { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual void setGroupDCOffset(uint32_t group, uint32_t offset) override { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
 
         /* NOTE: BoardConfiguration differs in forced ones and zeros
          * between generic and DPP version. Use a class-specific mask.
@@ -3551,7 +3601,10 @@ namespace caen {
          * 32-bit mask with layout described in register docs
          */
         void setBoardConfiguration(uint32_t mask) override
-        { errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x8004, filterBoardConfigurationSetMask(mask))); }
+        { 
+            //errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x8004, filterBoardConfigurationSetMask(mask)));
+            errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x8004, mask));
+ }
         /**
          * @brief Unset BoardConfiguration mask
          *
@@ -3567,7 +3620,10 @@ namespace caen {
          * 32-bit mask with layout described in register docs
          */
         void unsetBoardConfiguration(uint32_t mask) override
-        { errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x8008, filterBoardConfigurationUnsetMask(mask))); }
+        { 
+            //errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x8008, filterBoardConfigurationUnsetMask(mask)));
+            errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x8008, mask));
+ }
 
         /**
          * @brief Easy Get BoardConfiguration
@@ -3595,6 +3651,9 @@ namespace caen {
          * directly manipulating obscure bit patterns. Automatically
          * takes care of translating to the bit mask needed by the
          * the underlying low-level set funtion.
+         * 
+         * IMPORTANT: this version takes care of both setting and unsetting
+         * bits, unlike the low-level set and unset versions.
          *
          * @param settings:
          * EasyBoardConfiguration object
@@ -3602,24 +3661,10 @@ namespace caen {
         void setEasyBoardConfiguration(EasyBoardConfiguration settings) override
         {
             uint32_t mask = settings.toBits();
+            /* NOTE: we explicitly unset all bits first since set
+             * only enables bits */
+            unsetBoardConfiguration(0xFFFFFFFF);
             setBoardConfiguration(mask);
-        }
-        /**
-         * @brief Easy Unset BoardConfiguration
-         *
-         * A convenience wrapper for the low-level function of the same
-         * name. Works on a struct with named variables rather than
-         * directly manipulating obscure bit patterns. Automatically
-         * takes care of translating to the bit mask needed by the
-         * the underlying low-level unset funtion.
-         *
-         * @param settings:
-         * EasyBoardConfiguration object
-         */
-        void unsetEasyBoardConfiguration(EasyBoardConfiguration settings) override
-        {
-            uint32_t mask = settings.toBits();
-            unsetBoardConfiguration(mask);
         }
 
         /**
@@ -4863,10 +4908,6 @@ namespace caen {
          */
         virtual void setEasyBoardConfiguration(EasyBoardConfiguration settings) override { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
         /**
-         * @brief use unsetEasyDPPX version instead
-         */
-        virtual void unsetEasyBoardConfiguration(EasyBoardConfiguration settings) override { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
-        /**
          * @brief Easy Get DPP BoardConfiguration
          *
          * A convenience wrapper for the low-level function of the same
@@ -4893,32 +4934,19 @@ namespace caen {
          * takes care of translating to the bit mask needed by the
          * the underlying low-level set funtion.
          *
+         * IMPORTANT: this version takes care of both setting and unsetting
+         * bits, unlike the low-level set and unset versions.
+         *
          * @param settings:
          * EasyDPPBoardConfiguration object
          */
         void setEasyDPPBoardConfiguration(EasyDPPBoardConfiguration settings) override
         {
-            /* TODO: add check for forced ones here or in EasyBase? */
+            /* NOTE: we explicitly unset all bits first since set
+             * only enables bits */
             uint32_t mask = settings.toBits();
+            unsetBoardConfiguration(0xFFFFFFFF);
             setBoardConfiguration(mask);
-        }
-        /**
-         * @brief Easy Unset DPP BoardConfiguration
-         *
-         * A convenience wrapper for the low-level function of the same
-         * name. Works on a struct with named variables rather than
-         * directly manipulating obscure bit patterns. Automatically
-         * takes care of translating to the bit mask needed by the
-         * the underlying low-level unset funtion.
-         *
-         * @param settings:
-         * EasyDPPBoardConfiguration object
-         */
-        void unsetEasyDPPBoardConfiguration(EasyDPPBoardConfiguration settings) override
-        {
-            /* TODO: add check for forced ones here or in EasyBase? */
-            uint32_t mask = settings.toBits();
-            unsetBoardConfiguration(mask);
         }
 
         /* TODO: delete AggregateOrganization wrappers? */

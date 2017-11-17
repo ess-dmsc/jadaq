@@ -151,6 +151,15 @@ pt::ptree Configuration::readBack()
 
 static void configure(Digitizer& digitizer, pt::ptree& conf)
 {
+    /* NOTE: it seems we need to force stop and reset for all
+     * configuration settings to work. Most notably setDCOffset will
+     * consitently fail with GenericError if we don't. */
+    /* Stop any acquisition first */
+    digitizer.caenStopAcquisition();
+    
+    /* Reset Digitizer */
+    digitizer.caenReset();        
+
     for (auto& setting : conf)
     {
         FunctionID fid = functionID(setting.first);

@@ -32,13 +32,15 @@
 #define MAX_CHANNELS 64
 #define MAX_GROUPS    8
 
+#define MAX_AGGR_NUM_PER_BLOCK_TRANSFER   1023
+
 #define V1740_DPP_QDC_CODE    (0x87)
 #define CAEN_DGTZ_DPPFirmware_QDC (CAEN_DGTZ_DPPFirmware_ZLE+1)
 #define MAX_V1740_DPP_GROUP_SIZE   (8)                         // Number of groups - poorly named
 #define MAX_DPP_QDC_CHANNEL_SIZE (MAX_V1740_DPP_GROUP_SIZE)
 #define V1740_MAX_CHANNELS                        64
-#define V1740_QDC_MAX_EVENT_QUEUE_DEPTH                   512
-#define V1740_QDC_MAX_ALLOCATED_MEM_PER_GROUP    (18*1024*1024)
+#define MAX_EVENT_QUEUE_DEPTH                   512
+#define MAX_ALLOCATED_MEM_PER_GROUP    (18*1024*1024)
 
 #ifdef __cplusplus
 extern "C" {
@@ -56,7 +58,7 @@ typedef struct {
     uint8_t *DTrace2;
     uint8_t *DTrace3;
     uint8_t *DTrace4;
-} CAEN_DGTZ_DPP_QDC_Waveforms_t;
+} _CAEN_DGTZ_DPP_QDC_Waveforms_t;
 
 typedef struct {
     uint8_t isExtendedTimeStamp;
@@ -69,7 +71,7 @@ typedef struct {
     uint32_t Extras;
     uint32_t *gWaveforms;
     uint16_t SubChannel;
-} CAEN_DGTZ_DPP_QDC_Event_t;
+} _CAEN_DGTZ_DPP_QDC_Event_t;
 
 
 CAEN_DGTZ_ErrorCode CAENDGTZ_API _CAEN_DGTZ_GetDPPFirmwareType(int handle, CAEN_DGTZ_DPPFirmware_t *firmware);
@@ -80,7 +82,7 @@ CAEN_DGTZ_ErrorCode CAENDGTZ_API _CAEN_DGTZ_MallocDPPWaveforms(int handle, void 
 CAEN_DGTZ_ErrorCode CAENDGTZ_API _CAEN_DGTZ_FreeDPPWaveforms(int handle, void *waveforms);
 CAEN_DGTZ_ErrorCode CAENDGTZ_API _CAEN_DGTZ_SetRecordLength(int handle, uint32_t size, int channel);
 CAEN_DGTZ_ErrorCode CAENDGTZ_API _CAEN_DGTZ_GetRecordLength(int handle, uint32_t *size, int channel);
-CAEN_DGTZ_ErrorCode CAENDGTZ_API _CAEN_DGTZ_GetDPPEvents(int handle, char *buffer, uint32_t buffsize, void** events, uint32_t* numEvents);
+CAEN_DGTZ_ErrorCode CAENDGTZ_API _CAEN_DGTZ_GetDPPEvents(int handle, char *buffer, uint32_t buffsize, void** Events, uint32_t* NumEvents);
 CAEN_DGTZ_ErrorCode CAENDGTZ_API _CAEN_DGTZ_DecodeDPPWaveforms(int handle, void *event, void *waveforms);
 CAEN_DGTZ_ErrorCode CAENDGTZ_API _CAEN_DGTZ_SetChannelGroupMask(int handle, uint32_t group, uint32_t channelmask);
 CAEN_DGTZ_ErrorCode CAENDGTZ_API _CAEN_DGTZ_GetChannelGroupMask(int handle, uint32_t group, uint32_t *channelmask);
