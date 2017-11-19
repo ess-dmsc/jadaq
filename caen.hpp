@@ -2868,22 +2868,37 @@ namespace caen {
          * waveforms for a given channel and event number element in the
          * events matrix. */
         DPPWaveforms& decodeDPPWaveforms(void *event, DPPWaveforms& waveforms)
-        { 
+        {
             errorHandler(_CAEN_DGTZ_DecodeDPPWaveforms(handle_, event, waveforms.ptr)); 
             return waveforms; }
         DPPWaveforms& decodeDPPWaveforms(DPPEvents& events, uint32_t channel, uint32_t eventNo, DPPWaveforms& waveforms)
         {
-            /* TODO: is this event lookup correct??        
-             *       the memory corruption from decodeDPPWaveforms
-             *       indicates it might not be.
-             */
-            uint32_t i, offset = 0;
-            for (i=0; i < channel; i++) {
-                offset += events.nEvents[i] * events.elemSize;
+            /* MallocDPPEvents allocates a fixed number of events per
+             * channel. Offset must skip that size for each channel
+             * before the requested channel and then index with eventNo
+             * into the array for that channel. */
+            /* TODO: this does not point to same event as explicit indexing */
+            //void *event = (char *)((void **)(events.ptr[channel])) + eventNo * events.elemSize;
+
+            void *event = NULL;
+            switch(getDPPFirmwareType())
+            {
+                case CAEN_DGTZ_DPPFirmware_PHA:
+                    event = &(((CAEN_DGTZ_DPP_PHA_Event_t **)events.ptr)[channel][eventNo]);
+                    break;
+                case CAEN_DGTZ_DPPFirmware_PSD:
+                    event = &(((CAEN_DGTZ_DPP_PSD_Event_t **)events.ptr)[channel][eventNo]);
+                    break;
+                case CAEN_DGTZ_DPPFirmware_CI:
+                    event = &(((CAEN_DGTZ_DPP_CI_Event_t **)events.ptr)[channel][eventNo]);
+                    break;
+                case CAEN_DGTZ_DPPFirmware_QDC:
+                    event = (void *)&(((_CAEN_DGTZ_DPP_QDC_Event_t **)events.ptr)[channel][eventNo]);
+                    break;
+                default:
+                    errorHandler(CAEN_DGTZ_FunctionNotAllowed);
             }
-            offset +=  eventNo * events.elemSize;
-            std::cout << "reading channel " << channel << " event " << eventNo << " from events with offset " << offset << std::endl;
-            return decodeDPPWaveforms((void *)(((char *)events.ptr) + offset), waveforms); 
+            return decodeDPPWaveforms(event, waveforms); 
         }
 
         std::string dumpDPPWaveforms(DPPWaveforms& waveforms)
@@ -2892,7 +2907,7 @@ namespace caen {
             uint32_t allocatedSize = 0;
             uint32_t wavesNs = 0;
             allocatedSize = unsigned(waveforms.allocatedSize);
-            std::cout << "dumpDPPWaveforms: allocated size is " << allocatedSize << std::endl;
+            //std::cout << "dumpDPPWaveforms: allocated size is " << allocatedSize << std::endl;
             ss << "allocatedSize="  << allocatedSize << " ";
             switch(getDPPFirmwareType())
             {

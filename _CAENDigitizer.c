@@ -90,12 +90,11 @@ CAEN_DGTZ_ErrorCode CAENDGTZ_API _CAEN_DGTZ_GetDPPFirmwareType(int handle, CAEN_
 static CAEN_DGTZ_ErrorCode V1740DPP_QDC_MallocDPPEvents(int handle, void **events, uint32_t *allocatedSize)
 {
     /* Allocate the entire chunk in one go and assign slices to event array */
-    /* TODO: is this right? the QDC sample application loops through
-       enabled channels and for each allocates:
+    /* NOTE: the QDC sample application loops through enabled channels
+       and for each allocates:
        MAX_AGGR_NUM_PER_BLOCK_TRANSFER * MAX_EVENT_QUEUE_DEPTH *
        sizeof(_CAEN_DGTZ_DPP_QDC_Event_t)  
     */
-    //uint32_t size = MAX_V1740_DPP_GROUP_SIZE*V1740_MAX_CHANNELS*MAX_EVENT_QUEUE_DEPTH*sizeof(_CAEN_DGTZ_DPP_QDC_Event_t);
     uint32_t i = 0;
     uint32_t elems = MAX_AGGR_NUM_PER_BLOCK_TRANSFER * MAX_EVENT_QUEUE_DEPTH;
     uint32_t size = elems*MAX_CHANNELS*sizeof(_CAEN_DGTZ_DPP_QDC_Event_t);
@@ -107,7 +106,6 @@ static CAEN_DGTZ_ErrorCode V1740DPP_QDC_MallocDPPEvents(int handle, void **event
 
     //for(int i=0; i<MAX_V1740_DPP_GROUP_SIZE ; i++) {
     for(i=0; i<MAX_CHANNELS ; i++) {
-        /* TODO: verify coorectness of this layout assignment */
         /* NOTE: changed to ptr+i*elems instead of the following original constant assignment!?! */
         //events[i] = ptr+V1740_MAX_CHANNELS*MAX_EVENT_QUEUE_DEPTH;
         events[i] = ptr+i*elems;
@@ -381,7 +379,7 @@ int _CAEN_DGTZ_DPP_QDC_DecodeDPPAggregate(int handle, uint32_t *data, _CAEN_DGTZ
         if (ew) 
         {
             Events[i].gWaveforms = data + pnt;
-            pnt += ((data[1] << 2) & 0xFFF); 
+            pnt += ((data[1] << 2) & 0xFFF);
         } 
         else
         {
@@ -485,11 +483,17 @@ static CAEN_DGTZ_ErrorCode V1740DPP_QDC_DecodeDPPWaveforms(int handle, _CAEN_DGT
     uint32_t format = event->Format;
     uint32_t* WaveIn = event->gWaveforms;
     uint32_t Ns = (format & 0xFFF)<<3;
-    int maxIndex = Ns/2 - 1;
+    int maxIndex = (int)Ns/2 - 1;
+    if (maxIndex < 0)
+        maxIndex = 0;
     /* Sanity check: prevent truncating memory outside waveforms! */
     uint32_t samples = gWaveforms->DTrace4 - gWaveforms->DTrace3;
     if (samples < 0 || samples <= maxIndex*2+1) {
         printf("WARNING: decode loop to %d would go out of bounds (%d) in V1740DPP_QDC_DecodeDPPWaveforms: Skipping!\n", maxIndex, samples);
+        return CAEN_DGTZ_EventNotFound;
+    }
+    if (WaveIn == NULL) {
+        printf("WARNING: decode loop found invalid pointer %x as wave input in V1740DPP_QDC_DecodeDPPWaveforms: Skipping!\n", WaveIn);
         return CAEN_DGTZ_EventNotFound;
     }
 

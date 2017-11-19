@@ -73,8 +73,9 @@ int main(int argc, char **argv) {
     uint32_t totalEventsFound = 0, totalBytesRead = 0, totalEventsUnpacked = 0;
     uint32_t totalEventsDecoded = 0;
     
-    uint32_t eventIndex = 0, i, j;
+    uint32_t eventIndex = 0, decodeChannels = 0, i = 0, j = 0;
     uint32_t charge, timestamp;
+    int Ns;
     _CAEN_DGTZ_DPP_QDC_Event_t evt;
 
     std::vector<Digitizer> digitizers;
@@ -144,11 +145,11 @@ int main(int argc, char **argv) {
             std::cout << "Prepare DPP event buffer for digitizer " << digitizer.name() << std::endl;
             digitizer.caenMallocPrivDPPEvents();
 
-            std::cout << "Prepare DPP waveforms buffer for digitizer " << digitizer.name() << std::endl;
-            digitizer.caenMallocPrivDPPWaveforms();
-            std::cout << "Allocated DPP waveforms buffer: " <<
-            digitizer.caenDumpPrivDPPWaveforms() << std::endl;
-
+            if (digitizer.caenHasDPPWaveformsEnabled()) {
+                std::cout << "Prepare DPP waveforms buffer for digitizer " << digitizer.name() << std::endl;
+                digitizer.caenMallocPrivDPPWaveforms();
+                std::cout << "Allocated DPP waveforms buffer: " << digitizer.caenDumpPrivDPPWaveforms() << std::endl;
+            }
         } else {
             std::cout << "Prepare event buffer for digitizer " << digitizer.name() << std::endl;
             digitizer.caenMallocPrivEvent();
@@ -206,22 +207,38 @@ int main(int argc, char **argv) {
                         continue;
                     totalEventsUnpacked += eventsUnpacked;
                     std::cout << "Unpacked " << eventsUnpacked << " DPP events from all channels." << std::endl;
+
                     eventsDecoded = 0;
-                    for (i = 0; i < MAX_CHANNELS; i++) {
+                    /* Only try to decode waveforms if digitizer is
+                     * actually configured to record them. */
+                    if (digitizer.caenHasDPPWaveformsEnabled()) {
+                        decodeChannels = MAX_CHANNELS;
+                    } else {
+                        decodeChannels = 0;
+                    }
+                    for (i = 0; i < decodeChannels; i++) {
                         for (j = 0; j < digitizer.caenGetPrivDPPEvents().nEvents[i]; j++) {
+                            /* TODO: we should avoid hard-coding type here */
                             evt = ((_CAEN_DGTZ_DPP_QDC_Event_t **)digitizer.caenGetPrivDPPEvents().ptr)[i][j];
                             charge = evt.Charge & 0xFFFF;
                             timestamp = evt.TimeTag;
-                            std::cout << "Channel " << i << " event " << j << " charge " << charge << " at time " << timestamp << std::endl;
+                            Ns = (evt.Format & 0xFFF) << 3;
+                            std::cout << "Channel " << i << " event " << j << " charge " << charge << " at time " << timestamp  << " , event at " << &evt << " format is " << evt.Format << " , Ns is " << Ns << std::endl;
                           
                             try {
+                                digitizer.caenDecodeDPPWaveforms((void *)(&evt), digitizer.caenGetPrivDPPWaveforms());
+
+                                /* TODO: fix and switch to this implicit version! */
+                                /*
                                 digitizer.caenDecodeDPPWaveforms(digitizer.caenGetPrivDPPEvents(), i, j, digitizer.caenGetPrivDPPWaveforms());
+                                */
+
                                 std::cout << "Decoded " << digitizer.caenDumpPrivDPPWaveforms() << " DPP event waveforms from event " << j << " on channel " << i << std::endl;
                                 eventsDecoded += 1;
                             } catch(std::exception& e) {
                                 std::cerr << "failed to decode waveforms for event " << j << " on channel " << i << " : " << e.what() << std::endl;
                             }
-                            
+
                             /* TODO: pack and send out UDP */
 
                         }
@@ -274,20 +291,17 @@ int main(int argc, char **argv) {
         std::cout << "Stop acquisition on digitizer " << digitizer.name() << std::endl;
         digitizer.caenStopAcquisition();
     }
-    /* TODO: do we need to wait for CAEN thread to let go of buffers? */
-    /*
-    std::cout << "Waiting for digitizers to finish acquisition." << std::endl;
-    std::this_thread::sleep_for(std::chrono::milliseconds(3000));
-    */
     /* Clean up after all digitizers: buffers, etc. */
     for (Digitizer& digitizer: digitizers)
     {
         
         if (digitizer.caenIsDPPFirmware()) {
+            if (digitizer.caenHasDPPWaveformsEnabled()) {
+                std::cout << "Free DPP waveforms buffer for " << digitizer.name() << std::endl;
+                digitizer.caenFreePrivDPPWaveforms();
+            }
             std::cout << "Free DPP event buffer for " << digitizer.name() << std::endl;
-            digitizer.caenFreePrivDPPEvents();
-            std::cout << "Free DPP waveforms buffer for " << digitizer.name() << std::endl;
-            digitizer.caenFreePrivDPPWaveforms();
+            digitizer.caenFreePrivDPPEvents();            
         } else {
             std::cout << "Free event buffer for " << digitizer.name() << std::endl;
             digitizer.caenFreePrivEvent();

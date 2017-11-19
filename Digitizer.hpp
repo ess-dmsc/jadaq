@@ -39,12 +39,12 @@ class Digitizer
 private:
     caen::Digitizer* digitizer;
     /* We bind a ReadoutBuffer to each digitizer for ease of use */
-    caen::ReadoutBuffer readoutBuffer;
+    caen::ReadoutBuffer readoutBuffer_;
     /* Standard firmware uses eventInfo and Event while DPP firmware
      * keeps it all in a DPPEvents structure. */
-    caen::EventInfo eventInfo;
-    void *event;
-    caen::DPPEvents events;
+    caen::EventInfo eventInfo_;
+    void *event_;
+    caen::DPPEvents events_;
     caen::DPPWaveforms waveforms;
     int usb_;
     uint32_t vme_;
@@ -61,19 +61,19 @@ public:
 
     /* Wrap the main CAEN acquisiton functions here for convenience */
     bool caenIsDPPFirmware() { return digitizer->getDPPFirmwareType() == CAEN_DGTZ_DPPFirmware_QDC; }
-    void caenMallocPrivReadoutBuffer() { readoutBuffer = digitizer->mallocReadoutBuffer(); }
-    void caenFreePrivReadoutBuffer() { digitizer->freeReadoutBuffer(readoutBuffer); }
-    caen::ReadoutBuffer& caenGetPrivReadoutBuffer() { return readoutBuffer; }
+    void caenMallocPrivReadoutBuffer() { readoutBuffer_ = digitizer->mallocReadoutBuffer(); }
+    void caenFreePrivReadoutBuffer() { digitizer->freeReadoutBuffer(readoutBuffer_); }
+    caen::ReadoutBuffer& caenGetPrivReadoutBuffer() { return readoutBuffer_; }
     /* Additional event buffers */
-    void caenMallocPrivEvent() { event = digitizer->mallocEvent(); }
-    void caenFreePrivEvent() { digitizer->freeEvent(event); event = NULL; }
-    void caenMallocPrivDPPEvents() { events = digitizer->mallocDPPEvents(); }
-    void caenFreePrivDPPEvents() { digitizer->freeDPPEvents(events); }
+    void caenMallocPrivEvent() { event_ = digitizer->mallocEvent(); }
+    void caenFreePrivEvent() { digitizer->freeEvent(event_); event_ = NULL; }
+    void caenMallocPrivDPPEvents() { events_ = digitizer->mallocDPPEvents(); }
+    void caenFreePrivDPPEvents() { digitizer->freeDPPEvents(events_); }
     void caenMallocPrivDPPWaveforms() { waveforms = digitizer->mallocDPPWaveforms(); }
     void caenFreePrivDPPWaveforms() { digitizer->freeDPPWaveforms(waveforms); }
-    caen::EventInfo& caenGetPrivEventInfo() { return eventInfo; }
-    void *caenGetPrivEvent() { return event; }
-    caen::DPPEvents& caenGetPrivDPPEvents() { return events; }
+    caen::EventInfo& caenGetPrivEventInfo() { return eventInfo_; }
+    void *caenGetPrivEvent() { return event_; }
+    caen::DPPEvents& caenGetPrivDPPEvents() { return events_; }
     caen::DPPWaveforms& caenGetPrivDPPWaveforms() { return waveforms; }
     std::string caenDumpPrivDPPWaveforms() { return digitizer->dumpDPPWaveforms(waveforms); }
     /* We default to slave terminated mode like in the sample from CAEN
@@ -81,10 +81,18 @@ public:
     caen::ReadoutBuffer& caenReadData(caen::ReadoutBuffer& buffer, int mode=(int)CAEN_DGTZ_SLAVE_TERMINATED_READOUT_MBLT) { return digitizer->readData(buffer, (CAEN_DGTZ_ReadMode_t)mode); }
     uint32_t caenGetNumEvents(caen::ReadoutBuffer& buffer) { return digitizer->getNumEvents(buffer); }
     uint32_t caenGetNumEventsPerAggregate() { return digitizer->getNumEventsPerAggregate(); }
-    caen::EventInfo caenGetEventInfo(caen::ReadoutBuffer& buffer, int32_t n) { eventInfo = digitizer->getEventInfo(buffer, n); return eventInfo; }
+    caen::EventInfo caenGetEventInfo(caen::ReadoutBuffer& buffer, int32_t n) { eventInfo_ = digitizer->getEventInfo(buffer, n); return eventInfo_; }
     void *caenDecodeEvent(caen::EventInfo& buffer, void *event) { event = digitizer->decodeEvent(buffer, event); return event; }
     caen::DPPEvents& caenGetDPPEvents(caen::ReadoutBuffer& buffer, caen::DPPEvents& events) { return digitizer->getDPPEvents(buffer, events); }
+    caen::DPPWaveforms& caenDecodeDPPWaveforms(void *event, caen::DPPWaveforms& waveforms) { 
+        return digitizer->decodeDPPWaveforms(event, waveforms); }
     caen::DPPWaveforms& caenDecodeDPPWaveforms(caen::DPPEvents& events, uint32_t channel, uint32_t eventNo, caen::DPPWaveforms& waveforms) { return digitizer->decodeDPPWaveforms(events, channel, eventNo, waveforms); }
+    bool caenHasDPPWaveformsEnabled() 
+    { 
+        caen::EasyDPPBoardConfiguration boardConf = digitizer->getEasyDPPBoardConfiguration();
+        uint8_t waveformRecording = boardConf.getValue("waveformRecording");
+        return (waveformRecording == 1);
+    }
     void caenStartAcquisition() { digitizer->startAcquisition(); }
     void caenStopAcquisition() { digitizer->stopAcquisition(); }
     void caenReset() { digitizer->reset(); }
