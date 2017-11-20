@@ -68,6 +68,7 @@ int main(int argc, char **argv) {
     }
 
     /* Helpers */
+    uint64_t fullTimeTags[MAX_CHANNELS];
     uint32_t eventsFound = 0, bytesRead = 0, eventsUnpacked = 0;
     uint32_t eventsDecoded = 0;
     uint32_t totalEventsFound = 0, totalBytesRead = 0, totalEventsUnpacked = 0;
@@ -133,6 +134,11 @@ int main(int argc, char **argv) {
                 std::cerr << "Error in dumping digitizer registers in " << registerDumpFileName << std::endl;
                 exit(1); 
             }
+        }
+
+        /* Init helpers */
+        for (i = 0; i < MAX_CHANNELS; i++) {
+            fullTimeTags[i] = 0;
         }
 
         /* Prepare buffers - must happen AFTER digitizer has been configured! */
@@ -220,10 +226,20 @@ int main(int argc, char **argv) {
                         for (j = 0; j < digitizer.caenGetPrivDPPEvents().nEvents[i]; j++) {
                             /* TODO: we should avoid hard-coding type here */
                             evt = ((_CAEN_DGTZ_DPP_QDC_Event_t **)digitizer.caenGetPrivDPPEvents().ptr)[i][j];
+                            /* we use the same 4 byte range for charge as CAEN sample */
                             charge = evt.Charge & 0xFFFF;
                             timestamp = evt.TimeTag;
+                            /* On rollover we increment the high 32 bits*/
+                            if (timestamp < (uint32_t)(fullTimeTags[i])) {
+                                fullTimeTags[i] &= 0xFFFFFFFF00000000;
+                                fullTimeTags[i] += 0x100000000;
+                            }
+                            /* Always insert current timestamp in the low 32 bits */
+                            fullTimeTags[i] = fullTimeTags[i] & 0xFFFFFFFF00000000 | timestamp & 0x00000000FFFFFFFF;
+                            
                             Ns = (evt.Format & 0xFFF) << 3;
-                            std::cout << "Channel " << i << " event " << j << " charge " << charge << " at time " << timestamp  << " , event at " << &evt << " format is " << evt.Format << " , Ns is " << Ns << std::endl;
+                            std::cout << "Channel " << i << " event " << j << " charge " << charge << " at time " << fullTimeTags[i] << " (" << timestamp << ")"<< std::endl;
+                            //std::cout << "DEBUG: event at " << &evt << " format is " << evt.Format << " , Ns is " << Ns << std::endl;
                           
                             try {
                                 digitizer.caenDecodeDPPWaveforms((void *)(&evt), digitizer.caenGetPrivDPPWaveforms());
