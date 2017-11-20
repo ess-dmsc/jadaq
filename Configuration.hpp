@@ -41,11 +41,14 @@ private:
     std::vector<Digitizer> digitizers;
     pt::ptree readBack();
     void apply();
+    bool verbose_;
 public:
-    explicit Configuration(std::ifstream& file);
+    explicit Configuration(std::ifstream& file, bool verbose);
     std::vector<Digitizer> getDigitizers();
     void write(std::ofstream& file);
     void writeInput(std::ofstream& file);
+    void setVerbose(bool verbose) { verbose_ = verbose; }
+    bool getVerbose() { return verbose_; }
     class Range
     {
     private:

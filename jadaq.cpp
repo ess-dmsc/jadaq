@@ -33,6 +33,7 @@
 #include "Configuration.hpp"
 #include "CAENConf.hpp"
 
+
 /* Keep running marker and interrupt signal handler */
 static int interrupted = 0;
 static void interrupt_handler(int s)
@@ -50,15 +51,20 @@ static void setup_interrupt_handler()
 }
 
 int main(int argc, char **argv) {
-    if (argc < 2 or argc > 4)
+    if (argc < 2 or argc > 5)
     {
-        std::cout << "Usage: " << argv[0] << " <jadaq_config_file> [<override_config_file>] [<register_dump_file>]" << std::endl;
+        std::cout << "Usage: " << argv[0] << " <jadaq_config_file> [<override_config_file>] [simple_output_file_pattern] [<register_dump_file>]" << std::endl;
         std::cout << "Reads in a partial/full configuration in <jadaq_config_file> " << std::endl;
         std::cout << "and configures the digitizer(s) accordingly." << std::endl;
         std::cout << "The current/resulting digitizer settings automatically " << std::endl;
         std::cout << "gets written out to <config_file>.out ." << std::endl;
         std::cout << "If the optional <override_config_file> on the CAEN sample " << std::endl;
         std::cout << "format is provided, any options there will be overriden." << std::endl;
+        std::cout << "If the optional <channel_dump_pattern> is provided the " << std::endl;
+        std::cout << "individual timestamps and charges are sequentially recorded " << std::endl;
+        std::cout << "to a corresponding per-channel file with any percent codes " << std::endl;
+        std::cout << "expanded to the channel number (i.e. use ch%02d.txt for " << std::endl;
+        std::cout << "ch00.txt to ch63.txt)." << std::endl;
         std::cout << "If the optional <register_dump_file> is provided a read " << std::endl;
         std::cout << "out of the important digitizer registers is dumped there." << std::endl;
         std::cout << "After configuration the acquisition is started from all " << std::endl;
@@ -73,6 +79,11 @@ int main(int argc, char **argv) {
     uint32_t eventsDecoded = 0;
     uint32_t totalEventsFound = 0, totalBytesRead = 0, totalEventsUnpacked = 0;
     uint32_t totalEventsDecoded = 0;
+
+    /* Helpers for output - eventually move to asio receiver */
+    std::ofstream channelWriters[MAX_CHANNELS];
+    std::stringstream path;
+    bool channelDumpEnabled = false;
     
     uint32_t eventIndex = 0, decodeChannels = 0, i = 0, j = 0;
     uint32_t charge, timestamp;
@@ -91,7 +102,7 @@ int main(int argc, char **argv) {
         digitizers.push_back(Digitizer(0,0x11130000));
     } else {
         std::cout << "Reading digitizer configuration from" << configFileName << std::endl;
-        Configuration configuration(configFile);
+        Configuration configuration(configFile, false);
         std::string outFileName = configFileName+".out";
         std::ofstream outFile(outFileName);
         if (!outFile.good())
@@ -115,7 +126,7 @@ int main(int argc, char **argv) {
         /* NOTE: apply overrides from provided CAEN config. 
          *       this can be used to mimic CAEN QDC sample.
          */
-        if (argc > 2) {
+        if (argc > 2 && strlen(argv[2]) > 0) {
             std::string overrideFileName(argv[2]);
             std::cout << "Override with configuration " << overrideFileName << std::endl;
             BoardParameters params;
@@ -126,9 +137,23 @@ int main(int argc, char **argv) {
             }
         }
 
+        /* Record timestamps and charges in per-channel files on request */
+        if (argc > 3 && strlen(argv[3])) {
+            channelDumpEnabled = true;
+            std::string channelDumpFilePattern(argv[3]);
+            std::cout << "Dumping recorded channel output in " << channelDumpFilePattern << std::endl;
+            for (int i=0; i<MAX_CHANNELS; i++) { 
+                /* TODO: actually use pattern - hard coded for now */
+                path.str("");
+                path.clear();
+                path << digitizer.name() << "_" << i << ".txt";
+                channelWriters[i].open(path.str(), std::ofstream::out);
+            }
+        }
+
         /* Dump actual digitizer registers for debugging on request */
-        if (argc > 3) {
-            std::string registerDumpFileName(argv[3]);
+        if (argc > 4 && strlen(argv[4])) {
+            std::string registerDumpFileName(argv[4]);
             std::cout << "Dumping digitizer registers in " << registerDumpFileName << std::endl;
             if (dump_configuration(digitizer.caen()->handle(), (char *)registerDumpFileName.c_str()) < 0) {
                 std::cerr << "Error in dumping digitizer registers in " << registerDumpFileName << std::endl;
@@ -186,9 +211,10 @@ int main(int argc, char **argv) {
         try {
             std::cout << "Read out data from " << digitizers.size() << " digitizer(s)." << std::endl;
             /* Read out acquired data for all digitizers */
+            /* TODO: split digitizer handling into threads */
             for (Digitizer& digitizer: digitizers)
             {
-                /* TODO: check and skip if there's no data to read? */
+                /* NOTE: check and skip if there's no events to read */
                 std::cout << "Read at most " << digitizer.caenGetPrivReadoutBuffer().size << "b data from digitizer " << digitizer.name() << std::endl;
                 digitizer.caenReadData(digitizer.caenGetPrivReadoutBuffer());
                 bytesRead = digitizer.caenGetPrivReadoutBuffer().dataSize;
@@ -215,8 +241,8 @@ int main(int argc, char **argv) {
                     std::cout << "Unpacked " << eventsUnpacked << " DPP events from all channels." << std::endl;
 
                     eventsDecoded = 0;
-                    /* Only try to decode waveforms if digitizer is
-                     * actually configured to record them. */
+                    /* Only try to decode waveforms if digitizer is actually
+                     * configured to record them in the first place. */
                     if (digitizer.caenHasDPPWaveformsEnabled()) {
                         decodeChannels = MAX_CHANNELS;
                     } else {
@@ -240,7 +266,12 @@ int main(int argc, char **argv) {
                             Ns = (evt.Format & 0xFFF) << 3;
                             std::cout << "Channel " << i << " event " << j << " charge " << charge << " at time " << fullTimeTags[i] << " (" << timestamp << ")"<< std::endl;
                             //std::cout << "DEBUG: event at " << &evt << " format is " << evt.Format << " , Ns is " << Ns << std::endl;
-                          
+
+                            if (channelDumpEnabled) {
+                                /* TODO: write in same "%16lu %8d" format as CAEN sample */
+                                channelWriters[i] << fullTimeTags[i] <<" " << charge << std::endl;
+                            }
+                            
                             try {
                                 digitizer.caenDecodeDPPWaveforms((void *)(&evt), digitizer.caenGetPrivDPPWaveforms());
 
@@ -310,7 +341,12 @@ int main(int argc, char **argv) {
     /* Clean up after all digitizers: buffers, etc. */
     for (Digitizer& digitizer: digitizers)
     {
-        
+        if (channelDumpEnabled) {
+            for (int i=0; i<MAX_CHANNELS; i++) { 
+                channelWriters[i].close();
+            }
+        }
+
         if (digitizer.caenIsDPPFirmware()) {
             if (digitizer.caenHasDPPWaveformsEnabled()) {
                 std::cout << "Free DPP waveforms buffer for " << digitizer.name() << std::endl;

@@ -3035,12 +3035,12 @@ namespace caen {
         }
         void setGroupDCOffset(uint32_t offset)
         {
-            std::cout << "in setGroupDCOffset broadcast" << std::endl;
+            //std::cout << "in setGroupDCOffset broadcast" << std::endl;
             errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x8098, offset));
         }
         virtual void setGroupDCOffset(uint32_t group, uint32_t offset)
         {
-            std::cout << "in setGroupDCOffset " << group << ", " << offset << std::endl;
+            //std::cout << "in setGroupDCOffset " << group << ", " << offset << std::endl;
             if (group >= groups())  // Needed because of bug in CAEN_DGTZ_SetGroupDCOffset - patch sent
                 errorHandler(CAEN_DGTZ_InvalidChannelNumber);
             /* NOTE: the 740 register docs emphasize that one MUST check

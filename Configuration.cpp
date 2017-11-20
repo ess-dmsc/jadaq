@@ -31,8 +31,9 @@
 #include <iostream>
 #include <cstdint>
 
-Configuration::Configuration(std::ifstream& file)
+Configuration::Configuration(std::ifstream& file, bool verbose)
 {
+    setVerbose(verbose);
     pt::ini_parser::read_ini(file, in);
     apply();
 }
@@ -66,7 +67,7 @@ std::string to_string(const Configuration::Range& range)
 }
 
 
-static pt::ptree rangeNode(Digitizer& digitizer, FunctionID id, int begin, int end)
+static pt::ptree rangeNode(Digitizer& digitizer, FunctionID id, int begin, int end, bool verbose)
 {
     pt::ptree ptree;
     std::string prev;
@@ -74,8 +75,9 @@ static pt::ptree rangeNode(Digitizer& digitizer, FunctionID id, int begin, int e
         prev = digitizer.get(id,begin);
     } catch (caen::Error& e)
     {
-        std::cerr << "WARNING: " << digitizer.name() << " could not read configuration value [" << begin << "] for " <<
-                  to_string(id) << ": " << e.what() << std::endl;
+        if (verbose) {
+            std::cerr << "WARNING: " << digitizer.name() << " could not read configuration value [" << begin << "] for " << to_string(id) << ": " << e.what() << std::endl;
+        }
         return ptree;
     }
     for (int i = begin+1; i < end; ++i)
@@ -93,7 +95,10 @@ static pt::ptree rangeNode(Digitizer& digitizer, FunctionID id, int begin, int e
             }
         } catch (caen::Error& e)
         {
-            std::cerr << "WARNING: " << digitizer.name() << " could not read configuration range [" << i << ":" << end << "] for " << to_string(id) << ": " << e.what() << std::endl;
+            if (verbose) {
+                std::cerr << "WARNING: " << digitizer.name() << " could not read configuration range [" << i << ":" << end << "] for " << to_string(id) << ": " << e.what() << std::endl;
+            }
+            
             ptree.put(to_string(Configuration::Range(begin,i-1)),prev);
             return ptree;
         } catch (std::runtime_error& e)
@@ -128,7 +133,9 @@ pt::ptree Configuration::readBack()
                 } catch (caen::Error& e)
                 {
                     //Function not supported so we just skip it
-                    std::cerr << "WARNING: " << digitizer.name() << " could not read configuration for " << to_string(id) << ": " << e.what() << std::endl;
+                    if (getVerbose()) {
+                        std::cerr << "WARNING: " << digitizer.name() << " could not read configuration for " << to_string(id) << ": " << e.what() << std::endl;
+                    }
                 } catch (std::runtime_error& e)
                 {
                     //Internal helper init probably failed so we just skip it
@@ -137,7 +144,7 @@ pt::ptree Configuration::readBack()
             }
             else
             {
-                pt::ptree fPtree = rangeNode(digitizer,id,0,digitizer.caen()->channels());
+                pt::ptree fPtree = rangeNode(digitizer,id,0,digitizer.caen()->channels(), getVerbose());
                 if (!fPtree.empty())
                 {
                     dPtree.put_child(to_string(id), fPtree);
