@@ -84,6 +84,8 @@ public:
     caen::EventInfo caenGetEventInfo(caen::ReadoutBuffer& buffer, int32_t n) { eventInfo_ = digitizer->getEventInfo(buffer, n); return eventInfo_; }
     void *caenDecodeEvent(caen::EventInfo& buffer, void *event) { event = digitizer->decodeEvent(buffer, event); return event; }
     caen::DPPEvents& caenGetDPPEvents(caen::ReadoutBuffer& buffer, caen::DPPEvents& events) { return digitizer->getDPPEvents(buffer, events); }
+    void *caenExtractDPPEvent(caen::DPPEvents& events, uint32_t channel, uint32_t eventNo) { return digitizer->extractDPPEvent(events, channel, eventNo); }
+    caen::BasicDPPEvent caenExtractBasicDPPEvent(caen::DPPEvents& events, uint32_t channel, uint32_t eventNo) { return digitizer->extractBasicDPPEvent(events, channel, eventNo); }
     caen::DPPWaveforms& caenDecodeDPPWaveforms(void *event, caen::DPPWaveforms& waveforms) { 
         return digitizer->decodeDPPWaveforms(event, waveforms); }
     caen::DPPWaveforms& caenDecodeDPPWaveforms(caen::DPPEvents& events, uint32_t channel, uint32_t eventNo, caen::DPPWaveforms& waveforms) { return digitizer->decodeDPPWaveforms(events, channel, eventNo, waveforms); }

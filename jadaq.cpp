@@ -87,9 +87,10 @@ int main(int argc, char **argv) {
     bool channelDumpEnabled = false;
     
     uint32_t eventIndex = 0, decodeChannels = 0, i = 0, j = 0;
+    caen::BasicDPPEvent basic;
     uint32_t charge, timestamp;
     int Ns;
-    _CAEN_DGTZ_DPP_QDC_Event_t evt;
+    void *event;
 
     std::vector<Digitizer> digitizers;
 
@@ -257,11 +258,18 @@ int main(int argc, char **argv) {
                     }
                     for (i = 0; i < decodeChannels; i++) {
                         for (j = 0; j < digitizer.caenGetPrivDPPEvents().nEvents[i]; j++) {
-                            /* TODO: we should avoid hard-coding type here */
-                            evt = ((_CAEN_DGTZ_DPP_QDC_Event_t **)digitizer.caenGetPrivDPPEvents().ptr)[i][j];
-                            /* we use the same 4 byte range for charge as CAEN sample */
-                            charge = evt.Charge & 0xFFFF;
-                            timestamp = evt.TimeTag;
+                            /* NOTE: we don't want to muck with underlying
+                             * event type here, so we rely on the wrapped
+                             * extraction and pull out timestamp, charge,
+                             * etc from the resulting BasicDPPEvent. */
+                            
+                            basic = digitizer.caenExtractBasicDPPEvent(digitizer.caenGetPrivDPPEvents(), i, j);
+                            /* We use the same 4 byte range for charge as CAEN sample */
+                            charge = basic.charge & 0xFFFF;
+                            /* NOTE: timestamp is 64-bit for PHA events
+                             * but we just consistently clip to 32-bit
+                             * for now. */ 
+                            timestamp = basic.timestamp & 0xFFFFFFFF;
                             /* On rollover we increment the high 32 bits*/
                             if (timestamp < (uint32_t)(fullTimeTags[i])) {
                                 fullTimeTags[i] &= 0xFFFFFFFF00000000;
@@ -270,9 +278,7 @@ int main(int argc, char **argv) {
                             /* Always insert current timestamp in the low 32 bits */
                             fullTimeTags[i] = fullTimeTags[i] & 0xFFFFFFFF00000000 | timestamp & 0x00000000FFFFFFFF;
                             
-                            Ns = (evt.Format & 0xFFF) << 3;
                             std::cout << "Channel " << i << " event " << j << " charge " << charge << " at time " << fullTimeTags[i] << " (" << timestamp << ")"<< std::endl;
-                            //std::cout << "DEBUG: event at " << &evt << " format is " << evt.Format << " , Ns is " << Ns << std::endl;
 
                             if (channelDumpEnabled) {
                                 /* NOTE: write in same "%16lu %8d" format as CAEN sample */
@@ -280,12 +286,7 @@ int main(int argc, char **argv) {
                             }
                             
                             try {
-                                digitizer.caenDecodeDPPWaveforms((void *)(&evt), digitizer.caenGetPrivDPPWaveforms());
-
-                                /* TODO: fix and switch to this implicit version! */
-                                /*
                                 digitizer.caenDecodeDPPWaveforms(digitizer.caenGetPrivDPPEvents(), i, j, digitizer.caenGetPrivDPPWaveforms());
-                                */
 
                                 std::cout << "Decoded " << digitizer.caenDumpPrivDPPWaveforms() << " DPP event waveforms from event " << j << " on channel " << i << std::endl;
                                 eventsDecoded += 1;

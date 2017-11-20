@@ -110,6 +110,26 @@ namespace caen {
     }
 
     /**
+     * @struct BasicDPPEvent
+     * @brief For a very basic shared DPP event readout
+     * @var BasicDPPEvent::timestamp
+     * Time stamp for the event.
+     * @var BasicDPPEvent::format
+     * Internal format for the event - a bitmask packing multiple values.
+     * @var BasicDPPEvent::Charge
+     * Measured integrated charge for the event.
+     */
+    struct BasicDPPEvent {
+        /* NOTE: we use 64 bit timestamp here to accomodate PHA TimeTag */
+        uint64_t timestamp;
+        uint32_t format;
+        /* Used to hold charge or energy in the PHA case. 
+         * For PSD with 16 bitChareLong and ChargeShort we pack them.
+        */
+        uint32_t charge;
+    };
+
+    /**
      * @struct ReadoutBuffer
      * @brief For parameter handling in ReadoutBuffer handling
      * @var ReadoutBuffer::data
@@ -2862,6 +2882,68 @@ namespace caen {
         DPPEvents& getDPPEvents(ReadoutBuffer buffer, DPPEvents& events)
         { errorHandler(_CAEN_DGTZ_GetDPPEvents(handle_, buffer.data, buffer.dataSize, events.ptr, events.nEvents)); return events; }
 
+        void *extractDPPEvent(DPPEvents& events, uint32_t channel, uint32_t eventNo) { 
+            void *event = NULL;
+            switch(getDPPFirmwareType())
+            {
+            case CAEN_DGTZ_DPPFirmware_PHA:
+                event = &(((CAEN_DGTZ_DPP_PHA_Event_t **)events.ptr)[channel][eventNo]);
+                break;
+            case CAEN_DGTZ_DPPFirmware_PSD:
+                event = &(((CAEN_DGTZ_DPP_PSD_Event_t **)events.ptr)[channel][eventNo]);
+                break;
+            case CAEN_DGTZ_DPPFirmware_CI:
+                event = &(((CAEN_DGTZ_DPP_CI_Event_t **)events.ptr)[channel][eventNo]);
+                break;
+            case CAEN_DGTZ_DPPFirmware_QDC:
+                event = &(((_CAEN_DGTZ_DPP_QDC_Event_t **)events.ptr)[channel][eventNo]);
+                break;
+            default:
+                errorHandler(CAEN_DGTZ_FunctionNotAllowed);
+            }
+            return event;
+        }
+
+        BasicDPPEvent extractBasicDPPEvent(DPPEvents& events, uint32_t channel, uint32_t eventNo) { 
+            BasicDPPEvent basic;
+            CAEN_DGTZ_DPP_PHA_Event_t PHAEvent;
+            CAEN_DGTZ_DPP_PSD_Event_t PSDEvent;
+            CAEN_DGTZ_DPP_CI_Event_t CIEvent;
+            _CAEN_DGTZ_DPP_QDC_Event_t QDCEvent;
+            switch(getDPPFirmwareType())
+            {
+            case CAEN_DGTZ_DPPFirmware_PHA:
+                PHAEvent = ((CAEN_DGTZ_DPP_PHA_Event_t **)events.ptr)[channel][eventNo];
+                basic.timestamp = PHAEvent.TimeTag;
+                basic.format = PHAEvent.Format;
+                /*NOTE: PHA does not contain Charge, pass Energy instead */
+                basic.charge = PHAEvent.Energy;
+                break;
+            case CAEN_DGTZ_DPPFirmware_PSD:
+                PSDEvent = ((CAEN_DGTZ_DPP_PSD_Event_t **)events.ptr)[channel][eventNo];
+                basic.timestamp = PSDEvent.TimeTag;
+                basic.format = PSDEvent.Format;
+                /*NOTE: PSD contains two half-size Charge values - pack them */
+                basic.charge = PSDEvent.ChargeLong << 16 | PSDEvent.ChargeShort;
+                break;
+            case CAEN_DGTZ_DPPFirmware_CI:
+                CIEvent = ((CAEN_DGTZ_DPP_CI_Event_t **)events.ptr)[channel][eventNo];
+                basic.timestamp = CIEvent.TimeTag;
+                basic.format = CIEvent.Format;
+                basic.charge = CIEvent.Charge;
+                break;
+            case CAEN_DGTZ_DPPFirmware_QDC:
+                QDCEvent = ((_CAEN_DGTZ_DPP_QDC_Event_t **)events.ptr)[channel][eventNo];
+                basic.timestamp = QDCEvent.TimeTag;
+                basic.format = QDCEvent.Format;
+                basic.charge = QDCEvent.Charge;
+                break;
+            default:
+                errorHandler(CAEN_DGTZ_FunctionNotAllowed);
+            }
+            return basic;
+        }
+        
         /* NOTE: the backend function takes a single event from the
          * acquired event matrix and decodes it to waveforms. We expose
          * the direct call as well as the helper to extract the
@@ -2873,31 +2955,7 @@ namespace caen {
             return waveforms; }
         DPPWaveforms& decodeDPPWaveforms(DPPEvents& events, uint32_t channel, uint32_t eventNo, DPPWaveforms& waveforms)
         {
-            /* MallocDPPEvents allocates a fixed number of events per
-             * channel. Offset must skip that size for each channel
-             * before the requested channel and then index with eventNo
-             * into the array for that channel. */
-            /* TODO: this does not point to same event as explicit indexing */
-            //void *event = (char *)((void **)(events.ptr[channel])) + eventNo * events.elemSize;
-
-            void *event = NULL;
-            switch(getDPPFirmwareType())
-            {
-                case CAEN_DGTZ_DPPFirmware_PHA:
-                    event = &(((CAEN_DGTZ_DPP_PHA_Event_t **)events.ptr)[channel][eventNo]);
-                    break;
-                case CAEN_DGTZ_DPPFirmware_PSD:
-                    event = &(((CAEN_DGTZ_DPP_PSD_Event_t **)events.ptr)[channel][eventNo]);
-                    break;
-                case CAEN_DGTZ_DPPFirmware_CI:
-                    event = &(((CAEN_DGTZ_DPP_CI_Event_t **)events.ptr)[channel][eventNo]);
-                    break;
-                case CAEN_DGTZ_DPPFirmware_QDC:
-                    event = (void *)&(((_CAEN_DGTZ_DPP_QDC_Event_t **)events.ptr)[channel][eventNo]);
-                    break;
-                default:
-                    errorHandler(CAEN_DGTZ_FunctionNotAllowed);
-            }
+            void *event = extractDPPEvent(events, channel, eventNo);
             return decodeDPPWaveforms(event, waveforms); 
         }
 
