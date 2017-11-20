@@ -29,10 +29,11 @@
 #include <chrono>
 #include <thread>
 #include <iostream>
+#include <iomanip>
 #include <fstream>
 #include "Configuration.hpp"
 #include "CAENConf.hpp"
-
+#include <boost/filesystem.hpp>
 
 /* Keep running marker and interrupt signal handler */
 static int interrupted = 0;
@@ -53,18 +54,18 @@ static void setup_interrupt_handler()
 int main(int argc, char **argv) {
     if (argc < 2 or argc > 5)
     {
-        std::cout << "Usage: " << argv[0] << " <jadaq_config_file> [<override_config_file>] [simple_output_file_pattern] [<register_dump_file>]" << std::endl;
+        std::cout << "Usage: " << argv[0] << " <jadaq_config_file> [<override_config_file>] [simple_output_file_prefix] [<register_dump_file>]" << std::endl;
         std::cout << "Reads in a partial/full configuration in <jadaq_config_file> " << std::endl;
         std::cout << "and configures the digitizer(s) accordingly." << std::endl;
         std::cout << "The current/resulting digitizer settings automatically " << std::endl;
         std::cout << "gets written out to <config_file>.out ." << std::endl;
         std::cout << "If the optional <override_config_file> on the CAEN sample " << std::endl;
         std::cout << "format is provided, any options there will be overriden." << std::endl;
-        std::cout << "If the optional <channel_dump_pattern> is provided the " << std::endl;
+        std::cout << "If the optional <simple_output_file_prefix> is provided the " << std::endl;
         std::cout << "individual timestamps and charges are sequentially recorded " << std::endl;
-        std::cout << "to a corresponding per-channel file with any percent codes " << std::endl;
-        std::cout << "expanded to the channel number (i.e. use ch%02d.txt for " << std::endl;
-        std::cout << "ch00.txt to ch63.txt)." << std::endl;
+        std::cout << "to a corresponding per-channel file with digitizer and " << std::endl;
+        std::cout << "channel appended (i.e. use 'output/list' for files named " << std::endl;
+        std::cout << "list-DIGITIZER-00.txt to ...-64.txt in 'output' dir." << std::endl;
         std::cout << "If the optional <register_dump_file> is provided a read " << std::endl;
         std::cout << "out of the important digitizer registers is dumped there." << std::endl;
         std::cout << "After configuration the acquisition is started from all " << std::endl;
@@ -140,13 +141,19 @@ int main(int argc, char **argv) {
         /* Record timestamps and charges in per-channel files on request */
         if (argc > 3 && strlen(argv[3])) {
             channelDumpEnabled = true;
-            std::string channelDumpFilePattern(argv[3]);
-            std::cout << "Dumping recorded channel output in " << channelDumpFilePattern << std::endl;
+            std::string channelDumpPrefix(argv[3]);
+            boost::filesystem::path prefix(channelDumpPrefix);
+            boost::filesystem::path dir = prefix.parent_path();
+            try {
+                boost::filesystem::create_directories(dir);
+            } catch (std::exception& e) {
+                std::cerr << "WARNING: failed to create channel dump output dir " << dir << " : " << e.what() << std::endl;                
+            }
+            std::cout << "Dumping individual recorded channel output in files " << channelDumpPrefix << "-DIGITIZER-CHANNEL.txt" << std::endl;
             for (int i=0; i<MAX_CHANNELS; i++) { 
-                /* TODO: actually use pattern - hard coded for now */
                 path.str("");
                 path.clear();
-                path << digitizer.name() << "_" << i << ".txt";
+                path << channelDumpPrefix << "-" << digitizer.name() << "-" << std::setfill('0') << std::setw(2) << i << ".txt";
                 channelWriters[i].open(path.str(), std::ofstream::out);
             }
         }
@@ -268,8 +275,8 @@ int main(int argc, char **argv) {
                             //std::cout << "DEBUG: event at " << &evt << " format is " << evt.Format << " , Ns is " << Ns << std::endl;
 
                             if (channelDumpEnabled) {
-                                /* TODO: write in same "%16lu %8d" format as CAEN sample */
-                                channelWriters[i] << fullTimeTags[i] <<" " << charge << std::endl;
+                                /* NOTE: write in same "%16lu %8d" format as CAEN sample */
+                                channelWriters[i] << std::setw(16) << fullTimeTags[i] << " " << std::setw(8) << charge << std::endl;
                             }
                             
                             try {
