@@ -249,14 +249,7 @@ int main(int argc, char **argv) {
                     std::cout << "Unpacked " << eventsUnpacked << " DPP events from all channels." << std::endl;
 
                     eventsDecoded = 0;
-                    /* Only try to decode waveforms if digitizer is actually
-                     * configured to record them in the first place. */
-                    if (digitizer.caenHasDPPWaveformsEnabled()) {
-                        decodeChannels = MAX_CHANNELS;
-                    } else {
-                        decodeChannels = 0;
-                    }
-                    for (i = 0; i < decodeChannels; i++) {
+                    for (i = 0; i < MAX_CHANNELS; i++) {
                         for (j = 0; j < digitizer.caenGetPrivDPPEvents().nEvents[i]; j++) {
                             /* NOTE: we don't want to muck with underlying
                              * event type here, so we rely on the wrapped
@@ -285,14 +278,19 @@ int main(int argc, char **argv) {
                                 channelWriters[i] << std::setw(16) << fullTimeTags[i] << " " << std::setw(8) << charge << std::endl;
                             }
                             
-                            try {
-                                digitizer.caenDecodeDPPWaveforms(digitizer.caenGetPrivDPPEvents(), i, j, digitizer.caenGetPrivDPPWaveforms());
+                            /* Only try to decode waveforms if digitizer is actually
+                             * configured to record them in the first place. */
+                            if (digitizer.caenHasDPPWaveformsEnabled()) {
+                                try {
+                                    digitizer.caenDecodeDPPWaveforms(digitizer.caenGetPrivDPPEvents(), i, j, digitizer.caenGetPrivDPPWaveforms());
 
-                                std::cout << "Decoded " << digitizer.caenDumpPrivDPPWaveforms() << " DPP event waveforms from event " << j << " on channel " << i << std::endl;
-                                eventsDecoded += 1;
-                            } catch(std::exception& e) {
-                                std::cerr << "failed to decode waveforms for event " << j << " on channel " << i << " : " << e.what() << std::endl;
+                                    std::cout << "Decoded " << digitizer.caenDumpPrivDPPWaveforms() << " DPP event waveforms from event " << j << " on channel " << i << std::endl;
+                                    eventsDecoded += 1;
+                                } catch(std::exception& e) {
+                                    std::cerr << "failed to decode waveforms for event " << j << " on channel " << i << " : " << e.what() << std::endl;
+                                }
                             }
+                            
 
                             /* TODO: pack and send out UDP */
 
