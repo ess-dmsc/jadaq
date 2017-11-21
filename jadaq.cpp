@@ -81,21 +81,21 @@ int main(int argc, char **argv) {
     uint32_t totalEventsFound = 0, totalBytesRead = 0, totalEventsUnpacked = 0;
     uint32_t totalEventsDecoded = 0;
 
-    /* Helpers for output - eventually move to asio receiver */
-    std::ofstream channelWriters[MAX_CHANNELS];
-    std::stringstream path;
-    bool channelDumpEnabled = false;
-    
     uint32_t eventIndex = 0, decodeChannels = 0, i = 0, j = 0;
     caen::BasicDPPEvent basic;
     uint32_t charge, timestamp;
-    int Ns;
-    void *event;
 
+    /* Active digitizers */
     std::vector<Digitizer> digitizers;
 
+    /* Path helpers */
+    std::string configFileName;
+    std::string overrideFileName;
+    std::string channelDumpPrefix;
+    std::string registerDumpFileName;
+    
     /* Read-in and write resulting digitizer configuration */
-    std::string configFileName(argv[1]);
+    configFileName = std::string(argv[1]);
     std::ifstream configFile(configFileName);
     if (!configFile.good())
     {
@@ -119,7 +119,32 @@ int main(int argc, char **argv) {
         // Extract a vector of all configured digitizers for later
         digitizers = configuration.getDigitizers();
     }
-    configFile.close();
+    configFile.close();    
+
+    /* Helpers for output - eventually move to asio receiver */
+    std::ofstream channelWriters[MAX_CHANNELS];
+    std::stringstream path;
+    bool overrideEnabled = false, channelDumpEnabled = false, registerDumpEnabled = false;
+    
+    if (argc > 2 && strlen(argv[2]) > 0) {
+        overrideEnabled = true;
+        overrideFileName = std::string(argv[2]);
+    }
+    if (argc > 3 && strlen(argv[3])) {
+        channelDumpEnabled = true;
+        channelDumpPrefix = std::string(argv[3]);
+        boost::filesystem::path prefix(channelDumpPrefix);
+        boost::filesystem::path dir = prefix.parent_path();
+        try {
+            boost::filesystem::create_directories(dir);
+        } catch (std::exception& e) {
+            std::cerr << "WARNING: failed to create channel dump output dir " << dir << " : " << e.what() << std::endl;                
+        }
+    }
+    if (argc > 4 && strlen(argv[4])) {
+        registerDumpEnabled = true;
+        registerDumpFileName = std::string(argv[4]);
+    }
 
     /* Prepare and start acquisition for all digitizers */
     std::cout << "Setup acquisition from " << digitizers.size() << " digitizer(s)." << std::endl;
@@ -128,9 +153,8 @@ int main(int argc, char **argv) {
         /* NOTE: apply overrides from provided CAEN config. 
          *       this can be used to mimic CAEN QDC sample.
          */
-        if (argc > 2 && strlen(argv[2]) > 0) {
-            std::string overrideFileName(argv[2]);
-            std::cout << "Override with configuration " << overrideFileName << std::endl;
+        if (overrideEnabled) {
+            std::cout << "Override " << digitizer.name() << " configuration with " << overrideFileName << std::endl;
             BoardParameters params;
             if (setup_parameters(&params, (char *)overrideFileName.c_str()) < 0) {
                 std::cerr << "Error in setup parameters from " << overrideFileName << std::endl;
@@ -140,17 +164,8 @@ int main(int argc, char **argv) {
         }
 
         /* Record timestamps and charges in per-channel files on request */
-        if (argc > 3 && strlen(argv[3])) {
-            channelDumpEnabled = true;
-            std::string channelDumpPrefix(argv[3]);
-            boost::filesystem::path prefix(channelDumpPrefix);
-            boost::filesystem::path dir = prefix.parent_path();
-            try {
-                boost::filesystem::create_directories(dir);
-            } catch (std::exception& e) {
-                std::cerr << "WARNING: failed to create channel dump output dir " << dir << " : " << e.what() << std::endl;                
-            }
-            std::cout << "Dumping individual recorded channel output in files " << channelDumpPrefix << "-DIGITIZER-CHANNEL.txt" << std::endl;
+        if (channelDumpEnabled) {
+            std::cout << "Dumping individual recorded channel output from " << digitizer.name() << " in files " << channelDumpPrefix << "-" << digitizer.name() << "-CHANNEL.txt" << std::endl;
             for (int i=0; i<MAX_CHANNELS; i++) { 
                 path.str("");
                 path.clear();
@@ -160,9 +175,8 @@ int main(int argc, char **argv) {
         }
 
         /* Dump actual digitizer registers for debugging on request */
-        if (argc > 4 && strlen(argv[4])) {
-            std::string registerDumpFileName(argv[4]);
-            std::cout << "Dumping digitizer registers in " << registerDumpFileName << std::endl;
+        if (registerDumpEnabled) {
+            std::cout << "Dumping digitizer " << digitizer.name() << " registers in " << registerDumpFileName << std::endl;
             if (dump_configuration(digitizer.caen()->handle(), (char *)registerDumpFileName.c_str()) < 0) {
                 std::cerr << "Error in dumping digitizer registers in " << registerDumpFileName << std::endl;
                 exit(1); 
@@ -193,6 +207,10 @@ int main(int argc, char **argv) {
             std::cout << "Prepare event buffer for digitizer " << digitizer.name() << std::endl;
             digitizer.caenMallocPrivEvent();
         }
+    }
+
+    std::cout << "Start acquisition from " << digitizers.size() << " digitizer(s)." << std::endl;
+    for (Digitizer& digitizer: digitizers) {
         std::cout << "Start acquisition on digitizer " << digitizer.name() << std::endl;
         digitizer.caenStartAcquisition();
     }
@@ -223,13 +241,13 @@ int main(int argc, char **argv) {
             for (Digitizer& digitizer: digitizers)
             {
                 /* NOTE: check and skip if there's no events to read */
-                std::cout << "Read at most " << digitizer.caenGetPrivReadoutBuffer().size << "b data from digitizer " << digitizer.name() << std::endl;
+                std::cout << "Read at most " << digitizer.caenGetPrivReadoutBuffer().size << "b data from " << digitizer.name() << std::endl;
                 digitizer.caenReadData(digitizer.caenGetPrivReadoutBuffer());
                 bytesRead = digitizer.caenGetPrivReadoutBuffer().dataSize;
                 totalBytesRead += bytesRead;
                 std::cout << "Read " << bytesRead << "b of acquired data" << std::endl;
                 eventsFound = digitizer.caenGetNumEvents(digitizer.caenGetPrivReadoutBuffer());
-                std::cout << "Acquired data contains " << eventsFound << " event(s)." << std::endl;
+                std::cout << "Acquired data from " << digitizer.name() << " contains " << eventsFound << " event(s)." << std::endl;
                 if (eventsFound < 1) {
                     std::cout << "No events found - no further handling." << std::endl;
                     throttleDown = 1000;
@@ -237,7 +255,7 @@ int main(int argc, char **argv) {
                 }
                 totalEventsFound += eventsFound;
                 if (digitizer.caenIsDPPFirmware()) {
-                    std::cout << "Unpack " << eventsFound << " DPP events." << std::endl;
+                    std::cout << "Unpack " << eventsFound << " DPP events from " << digitizer.name() << std::endl;
                     digitizer.caenGetDPPEvents(digitizer.caenGetPrivReadoutBuffer(), digitizer.caenGetPrivDPPEvents());
                     eventsUnpacked = 0;
                     for (i = 0; i < MAX_CHANNELS; i++) {
@@ -271,7 +289,7 @@ int main(int argc, char **argv) {
                             /* Always insert current timestamp in the low 32 bits */
                             fullTimeTags[i] = fullTimeTags[i] & 0xFFFFFFFF00000000 | timestamp & 0x00000000FFFFFFFF;
                             
-                            std::cout << "Channel " << i << " event " << j << " charge " << charge << " at time " << fullTimeTags[i] << " (" << timestamp << ")"<< std::endl;
+                            std::cout << digitizer.name() << " channel " << i << " event " << j << " charge " << charge << " at time " << fullTimeTags[i] << " (" << timestamp << ")"<< std::endl;
 
                             if (channelDumpEnabled) {
                                 /* NOTE: write in same "%16lu %8d" format as CAEN sample */
@@ -286,10 +304,10 @@ int main(int argc, char **argv) {
                                 try {
                                     digitizer.caenDecodeDPPWaveforms(digitizer.caenGetPrivDPPEvents(), i, j, digitizer.caenGetPrivDPPWaveforms());
 
-                                    std::cout << "Decoded " << digitizer.caenDumpPrivDPPWaveforms() << " DPP event waveforms from event " << j << " on channel " << i << std::endl;
+                                    std::cout << "Decoded " << digitizer.caenDumpPrivDPPWaveforms() << " DPP event waveforms from event " << j << " on channel " << i << " from " << digitizer.name() << std::endl;
                                     eventsDecoded += 1;
                                 } catch(std::exception& e) {
-                                    std::cerr << "failed to decode waveforms for event " << j << " on channel " << i << " : " << e.what() << std::endl;
+                                    std::cerr << "failed to decode waveforms for event " << j << " on channel " << i << " from " << digitizer.name() << " : " << e.what() << std::endl;
                                 }
                             }                            
 
@@ -306,10 +324,10 @@ int main(int argc, char **argv) {
                     eventsDecoded = 0;
                     for (eventIndex=0; eventIndex < eventsFound; eventIndex++) {
                         digitizer.caenGetEventInfo(digitizer.caenGetPrivReadoutBuffer(), eventIndex);
-                        std::cout << "Unpacked event " << digitizer.caenGetPrivEventInfo().EventCounter << "  of " << eventsFound << " events." << std::endl;
+                        std::cout << "Unpacked event " << digitizer.caenGetPrivEventInfo().EventCounter << "  of " << eventsFound << " events from " << digitizer.name() << std::endl;
                         eventsUnpacked += 1;
                         digitizer.caenDecodeEvent(digitizer.caenGetPrivEventInfo(), digitizer.caenGetPrivEvent());
-                        std::cout << "Decoded event " << digitizer.caenGetPrivEventInfo().EventCounter << "  of " << eventsFound << " events." << std::endl;
+                        std::cout << "Decoded event " << digitizer.caenGetPrivEventInfo().EventCounter << "  of " << eventsFound << " events from " << digitizer.name() << std::endl;
                         eventsDecoded += 1;
                     }
                     totalEventsUnpacked += eventsUnpacked;
@@ -338,13 +356,13 @@ int main(int argc, char **argv) {
 
     /* Stop acquisition for all digitizers */
     std::cout << "Stop acquisition from " << digitizers.size() << " digitizer(s)." << std::endl;
-
     for (Digitizer& digitizer: digitizers)
     {
         std::cout << "Stop acquisition on digitizer " << digitizer.name() << std::endl;
         digitizer.caenStopAcquisition();
     }
     /* Clean up after all digitizers: buffers, etc. */
+    std::cout << "Clean up after " << digitizers.size() << " digitizer(s)." << std::endl;
     for (Digitizer& digitizer: digitizers)
     {
         if (channelDumpEnabled) {

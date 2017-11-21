@@ -3075,12 +3075,12 @@ namespace caen {
          */
         uint32_t getGroupDCOffset() 
         { 
-            std::cout << "in getGroupDCOffset broadcast" << std::endl;
+            //std::cout << "in getGroupDCOffset broadcast" << std::endl;
             uint32_t offset; errorHandler(CAEN_DGTZ_ReadRegister(handle_, 0x8098, &offset)); return offset; 
         }
         virtual uint32_t getGroupDCOffset(uint32_t group)
         {
-            std::cout << "in getGroupDCOffset " << group << std::endl;
+            //std::cout << "in getGroupDCOffset " << group << std::endl;
             uint32_t offset;
             if (group >= groups())  // Needed because of bug in CAEN_DGTZ_GetGroupDCOffset - patch sent
                 errorHandler(CAEN_DGTZ_InvalidChannelNumber);
