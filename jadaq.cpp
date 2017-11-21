@@ -105,6 +105,7 @@ int main(int argc, char **argv) {
         digitizers.push_back(Digitizer(0,0x11130000));
     } else {
         std::cout << "Reading digitizer configuration from" << configFileName << std::endl;
+        /* NOTE: switch verbose (2nd) arg on here to enable conf warnings */ 
         Configuration configuration(configFile, false);
         std::string outFileName = configFileName+".out";
         std::ofstream outFile(outFileName);
@@ -375,12 +376,9 @@ int main(int argc, char **argv) {
             std::cout << "Closing channel dump files for " << digitizer.name() << std::endl;
             channelWriters = writer_map[digitizer.name()];
             for (int i=0; i<MAX_CHANNELS; i++) { 
-                //std::cout << "DEBUG: closing channel " << i << " dump file for " << digitizer.name() << std::endl;
                 channelWriters[i].close();
             }
-            //std::cout << "DEBUG: erase map entry for " << digitizer.name() << std::endl;
             writer_map.erase(digitizer.name());
-            //std::cout << "DEBUG: delete array for " << digitizer.name() << std::endl;
             delete[] channelWriters;
         }
 

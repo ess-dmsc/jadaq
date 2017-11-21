@@ -3257,6 +3257,12 @@ namespace caen {
         void setChannelZSParams(uint32_t channel, ZSParams params)
         { errorHandler(CAEN_DGTZ_SetChannelZSParams(handle_, channel, params.weight, params.threshold, params.nsamp));}
 
+        /* TODO: reject AnalogMonOutput access on DPP?
+         * "Note: this function is not supported by V1742, V1743, and any
+         * digitizer when running a DPP firmware."
+         * According to digitizer library doc. Seems to be harmless on
+         * 740DPP, however.
+         */
         CAEN_DGTZ_AnalogMonitorOutputMode_t getAnalogMonOutput()
         { CAEN_DGTZ_AnalogMonitorOutputMode_t mode; errorHandler(CAEN_DGTZ_GetAnalogMonOutput(handle_, &mode)); return mode; }
         void setAnalogMonOutput(CAEN_DGTZ_AnalogMonitorOutputMode_t mode)
@@ -3270,11 +3276,39 @@ namespace caen {
          *       channelmask into a register, so the docs are wrong
          *       (confirmed by upstream).
          */
-        /* NOTE: we explicitly initialize params here since some of them
-         * may remain untouched garbage otherwise */
+        /* NOTE: from the CAEN digitizer library it sounds like these
+         * only apply for the V1724 model (in practice X780 and X781 too).
+         * To make matters worse it looks like only the set function but
+         * not the get function includes rejection of other models. Thus
+         * we end up actually getting a value in our confs but can't set
+         * it again without causing errors.
+         */
         AIMParams getAnalogInspectionMonParams()
-        { AIMParams params; params.channelmask = 0; params.offset = 0; params.mf = (CAEN_DGTZ_AnalogMonitorMagnify_t)0; params.ami = (CAEN_DGTZ_AnalogMonitorInspectorInverter_t)0;
-            errorHandler(CAEN_DGTZ_GetAnalogInspectionMonParams(handle_, &params.channelmask, &params.offset, &params.mf, &params.ami)); return params; }
+        { 
+            /* TODO: patch and send upstream */
+            /* NOTE: it looks like model check is missing in upstream
+             * get function. We mimic the check from the corresponding
+             * set function here to refuse all but X724, X780 and X781
+             * models. */
+            switch (familyCode()) {
+            case CAEN_DGTZ_XX724_FAMILY_CODE:
+            case CAEN_DGTZ_XX780_FAMILY_CODE:
+            case CAEN_DGTZ_XX781_FAMILY_CODE:
+                /* Allowed to proceed */
+                break;
+            default:
+                errorHandler(CAEN_DGTZ_FunctionNotAllowed);
+                break;    
+            }
+            /* NOTE: we explicitly initialize params here since some of
+             * them may remain untouched garbage otherwise */
+            AIMParams params; 
+            params.channelmask = 0;
+            params.offset = 0;
+            params.mf = (CAEN_DGTZ_AnalogMonitorMagnify_t)0;
+            params.ami = (CAEN_DGTZ_AnalogMonitorInspectorInverter_t)0;
+            errorHandler(CAEN_DGTZ_GetAnalogInspectionMonParams(handle_, &params.channelmask, &params.offset, &params.mf, &params.ami)); return params; 
+        }
         void setAnalogInspectionMonParams(AIMParams params)
         { errorHandler(CAEN_DGTZ_SetAnalogInspectionMonParams(handle_, params.channelmask, params.offset, params.mf, params.ami)); }
 

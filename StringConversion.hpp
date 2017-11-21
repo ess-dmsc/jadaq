@@ -68,6 +68,7 @@ std::string bin_string(T v)
 }
 // binary string
 unsigned int bs2ui(const std::string& s);
+unsigned int stou(const std::string& str, size_t *pos, int base);
 int s2i(const std::string& s);
 unsigned int s2ui(const std::string& s);
 uint16_t s2ui16(const std::string& s);

@@ -30,13 +30,25 @@
 
 #define STR_MATCH(S,V,R) if (std::regex_search(S, std::regex(#V, std::regex::icase))) return R
 
+/* NOTE: we cannot use stoi for uint32_t parsing since it fails range
+ * check for values between MAX_INT and MAX_UINT. Make our own 'stou'
+ * wrapper instead. */
+unsigned int stou(const std::string& str, size_t *pos=0, int base=10) 
+{
+    unsigned long result = std::stoul(str, pos, base);
+    if (result > std::numeric_limits<unsigned>::max()) {
+        throw std::out_of_range("stou");
+    }
+    return result;
+}
+
 int s2i(const std::string& s)
 {
     try {
         return std::stoi(s,nullptr);
     }
     catch (std::exception& e) {
-        std::cerr << "ERROR: s2i got invalid input: " << s << "(" << e.what() << ")" << std::endl;
+        std::cerr << "ERROR: s2i got invalid input: " << s << " (" << e.what() << ")" << std::endl;
         throw;
     }
 }
@@ -44,10 +56,10 @@ int s2i(const std::string& s)
 unsigned int s2ui(const std::string& s)
 {
     try {
-        return std::stoi(s,nullptr,0);
+        return stou(s,nullptr,0);
     }
     catch (std::exception& e) {
-        std::cerr << "ERROR: s2ui got invalid input: " << s << "(" << e.what() << ")" << std::endl;
+        std::cerr << "ERROR: s2ui got invalid input: " << s << " (" << e.what() << ")" << std::endl;
         throw;
     }
 }
@@ -57,7 +69,7 @@ uint16_t s2ui16(const std::string& s)
         return (uint16_t)s2ui(s);
     }
     catch (std::exception& e) {
-        std::cerr << "ERROR: s2ui16 got invalid input: " << s << "(" << e.what() << ")" << std::endl;
+        std::cerr << "ERROR: s2ui16 got invalid input: " << s << " (" << e.what() << ")" << std::endl;
         throw;
     }
 }
@@ -73,7 +85,7 @@ unsigned int bs2ui(const std::string& s)
         return std::stoi(s,nullptr,2);
     }
     catch (std::exception& e) {
-        std::cerr << "ERROR: bs2ui got invalid input: " << s << "(" << e.what() << ")" << std::endl;
+        std::cerr << "ERROR: bs2ui got invalid input: " << s << " (" << e.what() << ")" << std::endl;
         throw;
     }
 }
