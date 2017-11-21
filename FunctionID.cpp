@@ -221,7 +221,7 @@ const std::string to_string(FunctionID id) {
         CASE_TO_STR(DPPTriggerHoldOffWidth)
         CASE_TO_STR(DPPShapedTriggerWidth)
         default :
-            std::cerr << "to_string did not  find function id: " << id << std::endl;
+            std::cerr << "to_string did not find function id: " << id << std::endl;
             throw std::invalid_argument{"Unknown function ID"};
     }
 }

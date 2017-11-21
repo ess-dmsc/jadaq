@@ -118,9 +118,12 @@ static void set_(caen::Digitizer* digitizer, FunctionID functionID, const std::s
         SET_CASE(digitizer,EasyDPPAlgorithmControl,s2edppac(value))
         SET_CASE(digitizer,DPPTriggerHoldOffWidth,s2ui(value))
         SET_CASE(digitizer,DPPShapedTriggerWidth,s2ui(value))
-        default:
-            std::cerr << "set_ found unknown functionid: " << functionID << " (" << value << ")" << std::endl;
-            throw std::invalid_argument{"Unknown Function"};
+    default:
+        /* lookup function name to determine if it is missing or just
+         * read-only. Automatically throws invalid_argument exception
+         * if ID is missing. */
+        std::string name = to_string(functionID);
+        throw std::runtime_error{"Cannot set read-only variables"};
     }
 }
 
@@ -151,8 +154,11 @@ static void set_(caen::Digitizer* digitizer, FunctionID functionID, int index, c
         SET_ICASE(digitizer,DPPTriggerHoldOffWidth,index,s2ui(value))
         SET_ICASE(digitizer,DPPShapedTriggerWidth,index,s2ui(value))
         default:
-            std::cerr << "indexed set_ found unknown functionid: " << functionID << std::endl;
-            throw std::invalid_argument{"Unknown Function"};
+        /* lookup function name to determine if it is missing or just
+         * read-only. Automatically throws invalid_argument exception
+         * if ID is missing. */
+        std::string name = to_string(functionID);
+        throw std::runtime_error{"Cannot set read-only variables"};
     }
 }
 

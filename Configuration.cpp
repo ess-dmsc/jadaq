@@ -103,8 +103,10 @@ static pt::ptree rangeNode(Digitizer& digitizer, FunctionID id, int begin, int e
             return ptree;
         } catch (std::runtime_error& e)
         {
-            //Internal helper init probably failed so we just skip it
-            std::cerr << "WARNING: " << digitizer.name() << " could not handle configuration range  [" << i << ":" << end << "] for " << to_string(id) << ": " << e.what() << std::endl;
+            if (verbose) {
+                //Internal helper init probably failed so we just skip it
+                std::cerr << "WARNING: " << digitizer.name() << " could not handle configuration range  [" << i << ":" << end << "] for " << to_string(id) << ": " << e.what() << std::endl;
+            }
             return ptree;
         }
     }
@@ -139,7 +141,9 @@ pt::ptree Configuration::readBack()
                 } catch (std::runtime_error& e)
                 {
                     //Internal helper init probably failed so we just skip it
-                    std::cerr << "WARNING: " << digitizer.name() << " could not handle configuration for " << to_string(id) << ": " << e.what() << std::endl;
+                    if (getVerbose()) {
+                        std::cerr << "WARNING: " << digitizer.name() << " could not handle configuration for " << to_string(id) << ": " << e.what() << std::endl;
+                    }   
                 }
             }
             else
@@ -156,7 +160,7 @@ pt::ptree Configuration::readBack()
     return out;
 }
 
-static void configure(Digitizer& digitizer, pt::ptree& conf)
+static void configure(Digitizer& digitizer, pt::ptree& conf, bool verbose)
 {
     /* NOTE: it seems we need to force stop and reset for all
      * configuration settings to work. Most notably setDCOffset will
@@ -175,9 +179,14 @@ static void configure(Digitizer& digitizer, pt::ptree& conf)
             try { digitizer.set(fid,setting.second.data()); }
             catch (caen::Error& e)
             {
-                std::cerr << "ERROR: " << digitizer.name() << " could not set" << to_string(fid) << '(' << setting.second.data() <<
-                          ") " << e.what() << std::endl;
+                std::cerr << "ERROR: " << digitizer.name() << " could not set" << to_string(fid) << '(' << setting.second.data() << ") " << e.what() << std::endl;
                 throw;
+            }
+            catch (std::runtime_error& e)
+            {
+                if (verbose) {
+                    std::cout << "WARNING: " << digitizer.name() << " ignoring attempt to set " << to_string(fid) << ": " << e.what() << std::endl;
+                }
             }
         }
         else //Setting with channel/group
@@ -194,6 +203,13 @@ static void configure(Digitizer& digitizer, pt::ptree& conf)
                         std::cerr << "ERROR: " << digitizer.name() << " could not set" << to_string(fid) <<
                                   '(' << i << ", " << rangeSetting.second.data() << ") " << e.what() << std::endl;
                         throw;
+                    }
+                    catch (std::runtime_error& e)
+                    {
+                        if (verbose) {
+                            std::cout << "WARNING: " << digitizer.name() << " ignoring attempt to set " << to_string(fid) << ": " << e.what() << std::endl;
+                        }
+                        
                     }
                 }
             }
@@ -231,7 +247,7 @@ void Configuration::apply()
             std::cerr << "ERROR: Unable to open digitizer [" << name << ']' << std::endl;
             continue;
         }
-        configure(*digitizer,conf);
+        configure(*digitizer,conf, getVerbose());
     }
 }
 
