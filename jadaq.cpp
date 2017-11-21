@@ -31,6 +31,7 @@
 #include <iostream>
 #include <iomanip>
 #include <fstream>
+#include <map>
 #include "Configuration.hpp"
 #include "CAENConf.hpp"
 #include <boost/filesystem.hpp>
@@ -122,7 +123,9 @@ int main(int argc, char **argv) {
     configFile.close();    
 
     /* Helpers for output - eventually move to asio receiver */
-    std::ofstream channelWriters[MAX_CHANNELS];
+    std::ofstream *channelWriters;
+    typedef std::map<const std::string, std::ofstream *> ofstream_map;
+    ofstream_map writer_map;
     std::stringstream path;
     bool overrideEnabled = false, channelDumpEnabled = false, registerDumpEnabled = false;
     
@@ -166,6 +169,8 @@ int main(int argc, char **argv) {
         /* Record timestamps and charges in per-channel files on request */
         if (channelDumpEnabled) {
             std::cout << "Dumping individual recorded channel output from " << digitizer.name() << " in files " << channelDumpPrefix << "-" << digitizer.name() << "-CHANNEL.txt" << std::endl;
+            channelWriters = new std::ofstream[MAX_CHANNELS];
+            writer_map[digitizer.name()] = channelWriters;
             for (int i=0; i<MAX_CHANNELS; i++) { 
                 path.str("");
                 path.clear();
@@ -294,6 +299,7 @@ int main(int argc, char **argv) {
                             if (channelDumpEnabled) {
                                 /* NOTE: write in same "%16lu %8d" format as CAEN sample */
                                 // TODO: which of these two formats should we keep?
+                                channelWriters = writer_map[digitizer.name()];
                                 channelWriters[i] << std::setw(16) << fullTimeTags[i] << " " << std::setw(8) << charge << std::endl;
                                 //channelWriters[i] << digitizer.name() << " " << std::setw(8) << i << " " << std::setw(16) << fullTimeTags[i] << " " << std::setw(8) << charge << std::endl;
                             }
@@ -366,9 +372,16 @@ int main(int argc, char **argv) {
     for (Digitizer& digitizer: digitizers)
     {
         if (channelDumpEnabled) {
+            std::cout << "Closing channel dump files for " << digitizer.name() << std::endl;
+            channelWriters = writer_map[digitizer.name()];
             for (int i=0; i<MAX_CHANNELS; i++) { 
+                //std::cout << "DEBUG: closing channel " << i << " dump file for " << digitizer.name() << std::endl;
                 channelWriters[i].close();
             }
+            //std::cout << "DEBUG: erase map entry for " << digitizer.name() << std::endl;
+            writer_map.erase(digitizer.name());
+            //std::cout << "DEBUG: delete array for " << digitizer.name() << std::endl;
+            delete[] channelWriters;
         }
 
         if (digitizer.caenIsDPPFirmware()) {
