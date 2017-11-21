@@ -94,13 +94,13 @@ int main(int argc, char **argv) {
 
     std::vector<Digitizer> digitizers;
 
-    /*  Read-in and write resulting digitizer configuration */
+    /* Read-in and write resulting digitizer configuration */
     std::string configFileName(argv[1]);
     std::ifstream configFile(configFileName);
     if (!configFile.good())
     {
         std::cerr << "Could not open jadaq configuration file: " << configFileName << std::endl;
-        // NOTE: fall back to hard coded digitizer for sample setup
+        /* NOTE: fall back to hard coded digitizer for sample setup */
         digitizers.push_back(Digitizer(0,0x11130000));
     } else {
         std::cout << "Reading digitizer configuration from" << configFileName << std::endl;
@@ -275,7 +275,9 @@ int main(int argc, char **argv) {
 
                             if (channelDumpEnabled) {
                                 /* NOTE: write in same "%16lu %8d" format as CAEN sample */
+                                // TODO: which of these two formats should we keep?
                                 channelWriters[i] << std::setw(16) << fullTimeTags[i] << " " << std::setw(8) << charge << std::endl;
+                                //channelWriters[i] << digitizer.name() << " " << std::setw(8) << i << " " << std::setw(16) << fullTimeTags[i] << " " << std::setw(8) << charge << std::endl;
                             }
                             
                             /* Only try to decode waveforms if digitizer is actually
@@ -289,13 +291,11 @@ int main(int argc, char **argv) {
                                 } catch(std::exception& e) {
                                     std::cerr << "failed to decode waveforms for event " << j << " on channel " << i << " : " << e.what() << std::endl;
                                 }
-                            }
-                            
+                            }                            
 
                             /* TODO: pack and send out UDP */
 
                         }
-                        
                     }
                     if (eventsDecoded < 1)
                         continue;
