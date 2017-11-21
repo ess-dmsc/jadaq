@@ -26,6 +26,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdarg.h>
 #include <CAENDigitizer.h>
 #include "_CAENDigitizer.h"
 
@@ -303,8 +304,9 @@ static CAEN_DGTZ_ErrorCode V1740DPP_QDC_GetChannelTriggerThreshold(int handle, u
 
 /* NOTE: QDC does not seem to support explicit channel for
  * NumEventsPerAggregate but it should not fail either. */
-static CAEN_DGTZ_ErrorCode V1740DPP_QDC_GetNumEventsPerAggregate(int handle, uint32_t *numEvents, int channel)
+static CAEN_DGTZ_ErrorCode V1740DPP_QDC_GetNumEventsPerAggregate(int handle, uint32_t *numEvents, ...)
 {
+    /* We just ignore optional channel arg here */
     /*
     if (channel >= 0)
         return CAEN_DGTZ_InvalidParam;
@@ -317,8 +319,9 @@ static CAEN_DGTZ_ErrorCode V1740DPP_QDC_GetNumEventsPerAggregate(int handle, uin
     return CAEN_DGTZ_Success;
 }
 
-static CAEN_DGTZ_ErrorCode V1740DPP_QDC_SetNumEventsPerAggregate(int handle, uint32_t numEvents, int channel)
+static CAEN_DGTZ_ErrorCode V1740DPP_QDC_SetNumEventsPerAggregate(int handle, uint32_t numEvents, ...)
 {
+    /* We just ignore optional channel arg here */
     /*
     if (channel >= 0)
         return CAEN_DGTZ_InvalidParam;
@@ -599,10 +602,18 @@ CAEN_DGTZ_ErrorCode CAENDGTZ_API _CAEN_DGTZ_GetChannelTriggerThreshold(int handl
 
 CAEN_DGTZ_ErrorCode CAENDGTZ_API _CAEN_DGTZ_GetNumEventsPerAggregate(int handle, uint32_t *numEvents, int channel)
 {
-    QDC_FUNCTION(GetNumEventsPerAggregate,handle,numEvents,channel)
+    if (channel < 0) {
+        QDC_FUNCTION(GetNumEventsPerAggregate, handle, numEvents)
+    } else {    
+        QDC_FUNCTION(GetNumEventsPerAggregate, handle, numEvents, channel)
+    }
 }
 
 CAEN_DGTZ_ErrorCode CAENDGTZ_API _CAEN_DGTZ_SetNumEventsPerAggregate(int handle, uint32_t numEvents, int channel)
 {
-    QDC_FUNCTION(SetNumEventsPerAggregate, handle, numEvents, channel)
+    if (channel < 0) {
+        QDC_FUNCTION(SetNumEventsPerAggregate, handle, numEvents)
+    } else {    
+        QDC_FUNCTION(SetNumEventsPerAggregate, handle, numEvents, channel)
+    }
 }

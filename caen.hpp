@@ -3043,6 +3043,7 @@ namespace caen {
 
         uint32_t getPostTriggerSize()
         { uint32_t percent; errorHandler(CAEN_DGTZ_GetPostTriggerSize(handle_, &percent)); return percent;}
+        /* TODO: setPostTriggerSize fails with CommError on V1740D. */
         void setPostTriggerSize(uint32_t percent)
         { errorHandler(CAEN_DGTZ_SetPostTriggerSize(handle_, percent)); }
 
@@ -3221,7 +3222,23 @@ namespace caen {
         { errorHandler(CAEN_DGTZ_SetFastTriggerDigitizing(handle_, mode));}
 
         CAEN_DGTZ_TriggerMode_t getFastTriggerMode()
-        { CAEN_DGTZ_TriggerMode_t mode; errorHandler(CAEN_DGTZ_GetFastTriggerMode(handle_, &mode)); return mode; }
+        { 
+            /* TODO: patch and send upstream */
+            /* NOTE: it looks like model check is missing in upstream
+             * get function. We mimic the check from the corresponding
+             * set function here to refuse all but X742 model. */
+            switch (familyCode()) {
+            case CAEN_DGTZ_XX742_FAMILY_CODE:
+                /* Allowed to proceed */
+                break;
+            default:
+                errorHandler(CAEN_DGTZ_FunctionNotAllowed);
+                break;    
+            }
+            CAEN_DGTZ_TriggerMode_t mode; 
+            errorHandler(CAEN_DGTZ_GetFastTriggerMode(handle_, &mode)); 
+            return mode;
+        }
         void setFastTriggerMode(CAEN_DGTZ_TriggerMode_t mode)
         { errorHandler(CAEN_DGTZ_SetFastTriggerMode(handle_, mode)); }
 
@@ -3430,13 +3447,39 @@ namespace caen {
         void setDPPEventAggregation(int threshold, int maxsize)
         { errorHandler(CAEN_DGTZ_SetDPPEventAggregation(handle_, threshold, maxsize)); }
 
-        /* NOTE: Default to channel -1, meaning all channels */ 
-        uint32_t getNumEventsPerAggregate(uint32_t channel=-1)
+        /* NOTE: The channel arg is optional for some models:
+         * "INT value corresponding to the channel index (required for
+         * DPP-PSD and DPP-CI, ignored by DPP-PHA)."
+         * We handle it properly in the backend implementation.
+         */ 
+        /* TODO: patch and send upstream? */
+        /* NOTE: backend get and set functions are not symmetric - namely
+         * the get includes explicit X751 handling which does NOT
+         * truncate the read value to 1023, whereas set does not
+         * handle X751 explicitly and thus will return InvalidParam for
+         * any value above 1023. 
+         * It looks like a bug that X751 is missing from the list of
+         * explicit cases in the set function.
+         */
+        uint32_t getNumEventsPerAggregate() { return getNumEventsPerAggregate(-1); }
+        uint32_t getNumEventsPerAggregate(int32_t channel)
         { uint32_t numEvents; errorHandler(_CAEN_DGTZ_GetNumEventsPerAggregate(handle_, &numEvents, channel)); return numEvents; }
-        void setNumEventsPerAggregate(uint32_t numEvents)
-        { uint32_t channel=-1; errorHandler(_CAEN_DGTZ_SetNumEventsPerAggregate(handle_, numEvents, channel)); }
-        void setNumEventsPerAggregate(uint32_t channel ,uint32_t numEvents)
-        { errorHandler(_CAEN_DGTZ_SetNumEventsPerAggregate(handle_, numEvents, channel)); }
+        void setNumEventsPerAggregate(uint32_t numEvents) { setNumEventsPerAggregate(-1, numEvents); }
+        void setNumEventsPerAggregate(uint32_t channel, uint32_t numEvents)
+        { 
+            uint32_t n = numEvents;
+            /* NOTE: we explicitly cap numEvents to 1023 here for the 
+             * X751 case as mentioned above. */
+            switch (familyCode()) {
+            case CAEN_DGTZ_XX751_FAMILY_CODE:
+                /* Allowed to proceed */
+                n &= 0x3FF;
+                break;
+            default:
+                break;    
+            }
+            errorHandler(_CAEN_DGTZ_SetNumEventsPerAggregate(handle_, n, channel));
+        }
 
         uint32_t getMaxNumAggregatesBLT()
         { uint32_t numAggr; errorHandler(CAEN_DGTZ_GetMaxNumAggregatesBLT(handle_, &numAggr)); return numAggr; }
