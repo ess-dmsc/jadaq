@@ -89,6 +89,7 @@ public:
     caen::DPPWaveforms& caenDecodeDPPWaveforms(void *event, caen::DPPWaveforms& waveforms) { 
         return digitizer->decodeDPPWaveforms(event, waveforms); }
     caen::DPPWaveforms& caenDecodeDPPWaveforms(caen::DPPEvents& events, uint32_t channel, uint32_t eventNo, caen::DPPWaveforms& waveforms) { return digitizer->decodeDPPWaveforms(events, channel, eventNo, waveforms); }
+    caen::BasicDPPWaveforms caenExtractBasicDPPWaveforms(caen::DPPWaveforms& waveforms) { return digitizer->extractBasicDPPWaveforms(waveforms); }
     bool caenHasDPPWaveformsEnabled() 
     { 
         caen::EasyDPPBoardConfiguration boardConf = digitizer->getEasyDPPBoardConfiguration();

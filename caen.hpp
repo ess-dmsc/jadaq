@@ -130,6 +130,34 @@ namespace caen {
     };
 
     /**
+     * @struct BasicDPPWaveforms
+     * @brief For a very basic shared DPP event readout
+     * @var BasicDPPWaveforms::Ns
+     * Array entry counter.
+     * @var BasicDPPWaveforms::Trace1
+     * First waveform array - samples.
+     * @var BasicDPPWaveforms::Trace2
+     * Second waveform array - ?.
+     * @var BasicDPPWaveforms::DTrace1
+     * First waveform array - gate.
+     * @var BasicDPPWaveforms::DTrace2
+     * Second waveform array - trigger.
+     * @var BasicDPPWaveforms::DTrace3
+     * Third waveform array - trigger hold off if available or NULL.
+     * @var BasicDPPWaveforms::DTrace4
+     * Fourth waveform array - overthreshold if available or NULL.
+     */
+    struct BasicDPPWaveforms {
+        uint32_t Ns;
+        uint16_t *Trace1;
+        uint16_t *Trace2;
+        uint8_t *DTrace1;
+        uint8_t *DTrace2;
+        uint8_t *DTrace3;
+        uint8_t *DTrace4;
+    };
+
+    /**
      * @struct ReadoutBuffer
      * @brief For parameter handling in ReadoutBuffer handling
      * @var ReadoutBuffer::data
@@ -2959,6 +2987,63 @@ namespace caen {
             return decodeDPPWaveforms(event, waveforms); 
         }
 
+        BasicDPPWaveforms extractBasicDPPWaveforms(DPPWaveforms& waveforms) { 
+            BasicDPPWaveforms basic;
+            CAEN_DGTZ_DPP_PHA_Waveforms_t *PHAWaveforms;
+            CAEN_DGTZ_DPP_PSD_Waveforms_t *PSDWaveforms;
+            CAEN_DGTZ_DPP_CI_Waveforms_t *CIWaveforms;
+            _CAEN_DGTZ_DPP_QDC_Waveforms_t *QDCWaveforms;
+            switch(getDPPFirmwareType())
+            {
+            case CAEN_DGTZ_DPPFirmware_PHA:
+                PHAWaveforms = (CAEN_DGTZ_DPP_PHA_Waveforms_t *)waveforms.ptr;
+                basic.Ns = PHAWaveforms->Ns;
+                /* NOTE: for whatever reason PHA uses int instead of
+                   uint for Trace1 and Trace2. Fake uint for now. */
+                std::cout << "WARNING: using uint16_t for Trace1 and Trace2 arrays in BasicDPPWaveforms - you may need to manually cast!" << std::endl;    
+                basic.Trace1 = (uint16_t*)PHAWaveforms->Trace1;
+                basic.Trace2 = (uint16_t*)PHAWaveforms->Trace2;
+                basic.DTrace1 = PHAWaveforms->DTrace1;
+                basic.DTrace2 = PHAWaveforms->DTrace2;
+                basic.DTrace3 = NULL;
+                basic.DTrace4 = NULL;
+                break;
+            case CAEN_DGTZ_DPPFirmware_PSD:
+                PSDWaveforms = (CAEN_DGTZ_DPP_PSD_Waveforms_t *)waveforms.ptr;
+                basic.Ns = PSDWaveforms->Ns;
+                basic.Trace1 = PSDWaveforms->Trace1;
+                basic.Trace2 = PSDWaveforms->Trace2;
+                basic.DTrace1 = PSDWaveforms->DTrace1;
+                basic.DTrace2 = PSDWaveforms->DTrace2;
+                basic.DTrace3 = PSDWaveforms->DTrace3;
+                basic.DTrace4 = PSDWaveforms->DTrace4;
+                break;
+            case CAEN_DGTZ_DPPFirmware_CI:
+                CIWaveforms = (CAEN_DGTZ_DPP_CI_Waveforms_t *)waveforms.ptr;
+                basic.Ns = CIWaveforms->Ns;
+                basic.Trace1 = CIWaveforms->Trace1;
+                basic.Trace2 = CIWaveforms->Trace2;
+                basic.DTrace1 = CIWaveforms->DTrace1;
+                basic.DTrace2 = CIWaveforms->DTrace2;
+                basic.DTrace3 = CIWaveforms->DTrace3;
+                basic.DTrace4 = CIWaveforms->DTrace4;
+                break;
+            case CAEN_DGTZ_DPPFirmware_QDC:
+                QDCWaveforms = (_CAEN_DGTZ_DPP_QDC_Waveforms_t *)waveforms.ptr;
+                basic.Ns = QDCWaveforms->Ns;
+                basic.Trace1 = QDCWaveforms->Trace1;
+                basic.Trace2 = QDCWaveforms->Trace2;
+                basic.DTrace1 = QDCWaveforms->DTrace1;
+                basic.DTrace2 = QDCWaveforms->DTrace2;
+                basic.DTrace3 = QDCWaveforms->DTrace3;
+                basic.DTrace4 = QDCWaveforms->DTrace4;
+                break;
+            default:
+                errorHandler(CAEN_DGTZ_FunctionNotAllowed);
+            }
+            return basic;
+        }
+        
         std::string dumpDPPWaveforms(DPPWaveforms& waveforms)
         { 
             std::stringstream ss;
