@@ -126,8 +126,8 @@ int main(int argc, char **argv) {
     /* TODO: switch to real data format */
     uint32_t data[4];
     const int RANK = 1;
-    hsize_t dimsf[1];
-    dimsf[0] = 1;    
+    hsize_t dimsf[4];
+    dimsf[0] = 4;
     DataSpace dataspace(RANK, dimsf);
     IntType datatype(PredType::NATIVE_INT);
     datatype.setOrder(H5T_ORDER_LE);
@@ -157,8 +157,8 @@ int main(int argc, char **argv) {
             digitizer = "V1740D_137";
             channel = 31;
             charge = 42;
-            localtime = 1234;
             globaltime = std::time(nullptr);
+            localtime = globaltime & 0xFFFF;
             std::cout << "Saving data from " << digitizer << " channel " << channel << " localtime " << localtime << " globaltime " << globaltime << " charge " << charge << std::endl;
 
             
@@ -171,36 +171,38 @@ int main(int argc, char **argv) {
                 group = outfile.openGroup(GROUP_NAME);
                 createGroup = false;
             } catch(FileIException error) {
-                std::cerr << "WARNING: could not open group " << GROUP_NAME << " (okay if first time) : " << std::endl;
-                error.printError();            
-            } catch (DataSetIException error) {
-                std::cerr << "WARNING: could not open group " << GROUP_NAME << " (okay if first time) : " << std::endl;
-                error.printError(); 
+                if (!createOutfile) {
+                    std::cerr << "ERROR: could not open group " << GROUP_NAME << " : " << std::endl;
+                    error.printError();
+                } else {
+                    //std::cout << "DEBUG: could not open group " << GROUP_NAME << " : " << std::endl;
+                }
             }
-            if (createDataset) {
+            if (createGroup) {
                 std::cout << "Create group " << GROUP_NAME << std::endl;
                 group = outfile.createGroup(GROUP_NAME);
                 createGroup = false;
             }
-            closeGroup = true;
+            //closeGroup = true;
 
-            /* Create a new dataset for the globaltime if it doesn't
+            /* Create a new dataset for globaltime stamp if it doesn't
              * exist in the group of the output file. */
+            nest.str("");
+            nest.clear();
+            nest << GROUP_NAME << "/" << globaltime;
+            DATASET_NAME = H5std_string(nest.str());
             createDataset = true;
             try {
-                nest.str("");
-                nest.clear();
-                nest << GROUP_NAME << "/" << globaltime;
-                DATASET_NAME = H5std_string(nest.str());
                 std::cout << "Try to open dataset " << DATASET_NAME << std::endl;
                 dataset = outfile.openDataSet(DATASET_NAME);
                 createDataset = false;
             } catch(FileIException error) {
-                std::cerr << "WARNING: could not open dataset " << DATASET_NAME << " (okay if first time) : " << std::endl;
-                error.printError();            
-            } catch (DataSetIException error) {
-                std::cerr << "WARNING: could not open dataset " << DATASET_NAME << " (okay if first time) : " << std::endl;
-                error.printError(); 
+                if (!createOutfile) {
+                    std::cerr << "ERROR: could not open dataset " << DATASET_NAME << " : file exception : " << std::endl;
+                    error.printError();
+                } else {
+                    //std::cout << "DEBUG: could not open dataset " << DATASET_NAME << " : " << std::endl;
+                }
             }
             if (createDataset) {
                 std::cout << "Create dataset " << DATASET_NAME << std::endl;
