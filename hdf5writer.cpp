@@ -28,8 +28,10 @@
 #include <chrono>
 #include <thread>
 #include <iostream>
+#include <sstream>
 #include <fstream>
 #include <string>
+#include <ctime>
 
 #include "H5Cpp.h"
 using namespace H5;
@@ -77,7 +79,6 @@ int main(int argc, char **argv) {
     std::string outputFileName = "out.h5";
 
     const H5std_string FILE_NAME(outputFileName);
-    H5std_string DATASET_NAME;
     
     /* Act on command-line arguments */
     if (argc > 1) {
@@ -99,11 +100,29 @@ int main(int argc, char **argv) {
     /* TODO: setup UDP listener */
     
     /* Prepare output file  and data sets */
-    /* TODO: should we truncate or just keep adding? */
-    //H5File outfile(FILE_NAME, H5F_ACC_TRUNC);
-    H5File outfile(FILE_NAME, H5F_ACC_RDWR);
+    bool createOutfile = true, closeOutfile = false;
+    bool createGroup = true, closeGroup = false;
+    bool createDataset = true, closeDataset = false;
+    H5std_string GROUP_NAME, DATASET_NAME;
+    std::stringstream nest;
+    H5File outfile;
+    Group group;
     DataSet dataset;
-    bool createDataset = true;
+    try {
+        /* TODO: should we truncate or just keep adding? */
+        if (createOutfile) {
+            std::cout << "Creating new outfile " << FILE_NAME << std::endl;
+            outfile = H5File(FILE_NAME, H5F_ACC_TRUNC);
+        } else {    
+            std::cout << "Opening existing outfile " << FILE_NAME << std::endl;
+            outfile = H5File(FILE_NAME, H5F_ACC_RDWR);
+        }
+    } catch(FileIException error) {
+        std::cerr << "ERROR: could not open/create outfile " << FILE_NAME << std::endl;
+        error.printError();
+        exit(1);
+    }
+    
     /* TODO: switch to real data format */
     uint32_t data[4];
     const int RANK = 1;
@@ -139,19 +158,46 @@ int main(int argc, char **argv) {
             channel = 31;
             charge = 42;
             localtime = 1234;
-            globaltime = 87651234;
+            globaltime = std::time(nullptr);
             std::cout << "Saving data from " << digitizer << " channel " << channel << " localtime " << localtime << " globaltime " << globaltime << " charge " << charge << std::endl;
 
-            /* Create a new dataset for the digitizer if it doesn't
+            
+            /* Create a new group for the digitizer if it doesn't
              * exist in the output file. */
-            DATASET_NAME = H5std_string(digitizer);
+            GROUP_NAME = H5std_string(digitizer);
+            createGroup = true;
+            try {
+                std::cout << "Try to open group " << GROUP_NAME << std::endl;
+                group = outfile.openGroup(GROUP_NAME);
+                createGroup = false;
+            } catch(FileIException error) {
+                std::cerr << "WARNING: could not open group " << GROUP_NAME << " (okay if first time) : " << std::endl;
+                error.printError();            
+            } catch (DataSetIException error) {
+                std::cerr << "WARNING: could not open group " << GROUP_NAME << " (okay if first time) : " << std::endl;
+                error.printError(); 
+            }
+            if (createDataset) {
+                std::cout << "Create group " << GROUP_NAME << std::endl;
+                group = outfile.createGroup(GROUP_NAME);
+                createGroup = false;
+            }
+            closeGroup = true;
+
+            /* Create a new dataset for the globaltime if it doesn't
+             * exist in the group of the output file. */
             createDataset = true;
             try {
+                nest.str("");
+                nest.clear();
+                nest << GROUP_NAME << "/" << globaltime;
+                DATASET_NAME = H5std_string(nest.str());
                 std::cout << "Try to open dataset " << DATASET_NAME << std::endl;
                 dataset = outfile.openDataSet(DATASET_NAME);
                 createDataset = false;
-            } catch( FileIException error ) {
-                    error.printError();            
+            } catch(FileIException error) {
+                std::cerr << "WARNING: could not open dataset " << DATASET_NAME << " (okay if first time) : " << std::endl;
+                error.printError();            
             } catch (DataSetIException error) {
                 std::cerr << "WARNING: could not open dataset " << DATASET_NAME << " (okay if first time) : " << std::endl;
                 error.printError(); 
@@ -159,13 +205,23 @@ int main(int argc, char **argv) {
             if (createDataset) {
                 std::cout << "Create dataset " << DATASET_NAME << std::endl;
                 dataset = outfile.createDataSet(DATASET_NAME, datatype, dataspace);
+                createDataset = false;
             }
+            closeDataset = true;
             
             data[0] = channel;
             data[1] = globaltime;
             data[2] = localtime;
             data[3] = charge;
             dataset.write(data, PredType::NATIVE_INT);
+
+            dataset.close();
+            closeDataset = false;
+            /* TODO: close needed? */
+            /*
+            group.close;
+            closeGroup = false;
+            */
             
         } catch(std::exception& e) {
             std::cerr << "unexpected exception during reception: " << e.what() << std::endl;
@@ -183,6 +239,15 @@ int main(int argc, char **argv) {
 
     /* TODO: close UDP listener */
     /* TODO: close data sets and output file */
+    if (closeDataset) {
+        dataset.close();
+    }
+    if (closeGroup) {
+        group.close();
+    }
+    if (closeOutfile) {
+        outfile.close();
+    }
     
     /* Clean up after all */
     std::cout << "Clean up after file writer" << std::endl;
