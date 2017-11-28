@@ -39,6 +39,8 @@ using namespace H5;
 
 #include "DataFormat.hpp"
 
+#define EVENTFIELDS (3)
+
 
 /* Keep running marker and interrupt signal handler */
 static int interrupted = 0;
@@ -57,7 +59,7 @@ static void setup_interrupt_handler()
 }
 
 int main(int argc, char **argv) {
-    if (argc > 2)
+    if (argc > 3)
     {
         std::cout << "Usage: " << argv[0] << " [<config_file>] [<output_file>]" << std::endl;
         std::cout << "Reads in a partial/full configuration in <config_file> " << std::endl;
@@ -66,8 +68,12 @@ int main(int argc, char **argv) {
         return -1;
     }
 
+    /* Data format version - please increment on versiondata on layout changes */
+    uint32_t versiondata[1] = {0};
+    hsize_t versiondims[1] = {1};
+
     /* Helpers */
-    uint32_t eventsWritten = 0;
+    uint32_t eventsReceived = 0, eventsWritten = 0;
 
     uint32_t eventIndex = 0, i = 0, j = 0;
     /* Dummy data */
@@ -78,8 +84,6 @@ int main(int argc, char **argv) {
     std::string configFileName;
     std::string outputFileName = "out.h5";
 
-    const H5std_string FILE_NAME(outputFileName);
-    
     /* Act on command-line arguments */
     if (argc > 1) {
         configFileName = std::string(argv[1]);
@@ -100,34 +104,49 @@ int main(int argc, char **argv) {
     /* TODO: setup UDP listener */
     
     /* Prepare output file  and data sets */
-    bool createOutfile = true, closeOutfile = false;
-    bool createGroup = true, closeGroup = false;
-    bool createDataset = true, closeDataset = false;
-    H5std_string GROUP_NAME, DATASET_NAME;
+    bool createOutfile = true, createGroup = true, createDataset = true;
+    const H5std_string outname(outputFileName);
+    H5std_string groupname, datasetname, versionname = H5std_string("version");
     std::stringstream nest;
-    H5File outfile;
-    Group group;
-    DataSet dataset;
+    H5File *outfile = NULL;
+    Group *rootgroup = NULL, *digitizergroup = NULL, *globaltimegroup = NULL;
+    DataSet *dataset = NULL;
+    DataSpace versionspace;
+    Attribute *versionattr = NULL;
     try {
         /* TODO: should we truncate or just keep adding? */
         if (createOutfile) {
-            std::cout << "Creating new outfile " << FILE_NAME << std::endl;
-            outfile = H5File(FILE_NAME, H5F_ACC_TRUNC);
+            std::cout << "Creating new outfile " << outname << std::endl;
+            outfile = new H5File(outname, H5F_ACC_TRUNC);
         } else {    
-            std::cout << "Opening existing outfile " << FILE_NAME << std::endl;
-            outfile = H5File(FILE_NAME, H5F_ACC_RDWR);
+            std::cout << "Opening existing outfile " << outname << std::endl;
+            outfile = new H5File(outname, H5F_ACC_RDWR);
         }
     } catch(FileIException error) {
-        std::cerr << "ERROR: could not open/create outfile " << FILE_NAME << std::endl;
+        std::cerr << "ERROR: could not open/create outfile " << outname << std::endl;
         error.printError();
         exit(1);
     }
-    
+
+    /* Set version info on top level node */
+    try {
+        std::cout << "Try to open root group" << std::endl;
+        rootgroup = new Group(outfile->openGroup("/"));
+        versionspace = DataSpace(1, versiondims);
+        versionattr = new Attribute(rootgroup->createAttribute(versionname, PredType::STD_I32BE, versionspace));
+        versionattr->write(PredType::NATIVE_INT, versiondata);
+        delete versionattr;
+        delete rootgroup;
+    } catch(FileIException error) {
+        std::cerr << "ERROR: could not open root group" << " : " << std::endl;
+        error.printError();
+    }
+
     /* TODO: switch to real data format */
-    uint32_t data[4];
+    uint32_t data[EVENTFIELDS];
     const int RANK = 1;
-    hsize_t dimsf[4];
-    dimsf[0] = 4;
+    hsize_t dimsf[1];
+    dimsf[0] = EVENTFIELDS;
     DataSpace dataspace(RANK, dimsf);
     IntType datatype(PredType::NATIVE_INT);
     datatype.setOrder(H5T_ORDER_LE);
@@ -155,76 +174,101 @@ int main(int argc, char **argv) {
             digitizerModel = "V1740D";
             digitizerID = "137";
             digitizer = "V1740D_137";
-            channel = 31;
-            charge = 42;
-            globaltime = std::time(nullptr);
-            localtime = globaltime & 0xFFFF;
-            std::cout << "Saving data from " << digitizer << " channel " << channel << " localtime " << localtime << " globaltime " << globaltime << " charge " << charge << std::endl;
 
-            
             /* Create a new group for the digitizer if it doesn't
              * exist in the output file. */
-            GROUP_NAME = H5std_string(digitizer);
+            groupname = H5std_string(digitizer);
             createGroup = true;
             try {
-                std::cout << "Try to open group " << GROUP_NAME << std::endl;
-                group = outfile.openGroup(GROUP_NAME);
+                std::cout << "Try to open group " << groupname << std::endl;
+                digitizergroup = new Group(outfile->openGroup(groupname));
                 createGroup = false;
             } catch(FileIException error) {
                 if (!createOutfile) {
-                    std::cerr << "ERROR: could not open group " << GROUP_NAME << " : " << std::endl;
+                    std::cerr << "ERROR: could not open group " << groupname << " : " << std::endl;
                     error.printError();
                 } else {
-                    //std::cout << "DEBUG: could not open group " << GROUP_NAME << " : " << std::endl;
+                    //std::cout << "DEBUG: could not open group " << groupname << " : " << std::endl;
                 }
             }
             if (createGroup) {
-                std::cout << "Create group " << GROUP_NAME << std::endl;
-                group = outfile.createGroup(GROUP_NAME);
+                std::cout << "Create group " << groupname << std::endl;
+                digitizergroup = new Group(outfile->createGroup(groupname));
                 createGroup = false;
             }
-            //closeGroup = true;
 
-            /* Create a new dataset for globaltime stamp if it doesn't
-             * exist in the group of the output file. */
+            /* Create a new group for the global time stamp if it
+             * doesn't exist in the output file. */
+            globaltime = std::time(nullptr);
+            eventsReceived = 1 + globaltime % 3;
             nest.str("");
             nest.clear();
-            nest << GROUP_NAME << "/" << globaltime;
-            DATASET_NAME = H5std_string(nest.str());
-            createDataset = true;
+            nest << globaltime;
+            groupname = H5std_string(nest.str());
+            createGroup = true;
             try {
-                std::cout << "Try to open dataset " << DATASET_NAME << std::endl;
-                dataset = outfile.openDataSet(DATASET_NAME);
-                createDataset = false;
-            } catch(FileIException error) {
+                std::cout << "Try to open group " << groupname << std::endl;
+                globaltimegroup = new Group(digitizergroup->openGroup(groupname));
+                createGroup = false;
+            } catch(GroupIException error) {
                 if (!createOutfile) {
-                    std::cerr << "ERROR: could not open dataset " << DATASET_NAME << " : file exception : " << std::endl;
+                    std::cerr << "ERROR: could not open group " << groupname << " : " << std::endl;
                     error.printError();
                 } else {
-                    //std::cout << "DEBUG: could not open dataset " << DATASET_NAME << " : " << std::endl;
+                    //std::cout << "DEBUG: could not open group " << groupname << " : " << std::endl;
                 }
             }
-            if (createDataset) {
-                std::cout << "Create dataset " << DATASET_NAME << std::endl;
-                dataset = outfile.createDataSet(DATASET_NAME, datatype, dataspace);
-                createDataset = false;
+            if (createGroup) {
+                std::cout << "Create group " << groupname << std::endl;
+                globaltimegroup = new Group(digitizergroup->createGroup(groupname));
+                createGroup = false;
             }
-            closeDataset = true;
             
-            data[0] = channel;
-            data[1] = globaltime;
-            data[2] = localtime;
-            data[3] = charge;
-            dataset.write(data, PredType::NATIVE_INT);
+            delete digitizergroup;
 
-            dataset.close();
-            closeDataset = false;
-            /* TODO: close needed? */
-            /*
-            group.close;
-            closeGroup = false;
-            */
+            /* Loop over received events and create a dataset for each
+             * of them. */
+            for (i=0; i < eventsReceived; i++) {
+                /* Create a new dataset named after event index under
+                 * globaltime group if it doesn't exist already. */
+                nest.str("");
+                nest.clear();
+                nest << "event-" << i;
+                datasetname = H5std_string(nest.str());
+                createDataset = true;
+                try {
+                    std::cout << "Try to open dataset " << datasetname << std::endl;
+                    dataset = new DataSet(globaltimegroup->openDataSet(datasetname));
+                    createDataset = false;
+                } catch(GroupIException error) {
+                    if (!createOutfile) {
+                        std::cerr << "ERROR: could not open dataset " << datasetname << " : file exception : " << std::endl;
+                        error.printError();
+                    } else {
+                        //std::cout << "DEBUG: could not open dataset " << datasetname << " : " << std::endl;
+                    }
+                }
+                if (createDataset) {
+                    std::cout << "Create dataset " << datasetname << std::endl;
+                    dataset = new DataSet(globaltimegroup->createDataSet(datasetname, datatype, dataspace));
+                    createDataset = false;
+                }
             
+                /* Fake event for now */
+                channel = (i % 2) * 31;
+                localtime = (globaltime + i) & 0xFFFF;
+                charge = 242 + (localtime+i*13) % 100;
+                std::cout << "Saving data from " << digitizer << " channel " << channel << " localtime " << localtime << " charge " << charge << std::endl;
+                data[0] = channel;
+                data[1] = localtime;
+                data[2] = charge;
+                dataset->write(data, PredType::NATIVE_INT);
+
+                if (dataset != NULL)
+                    delete dataset;
+            }
+            if (globaltimegroup != NULL)
+                delete globaltimegroup;
         } catch(std::exception& e) {
             std::cerr << "unexpected exception during reception: " << e.what() << std::endl;
             /* NOTE: throttle down on errors */
@@ -240,15 +284,11 @@ int main(int argc, char **argv) {
     std::cout << "Stop file writer" << std::endl;
 
     /* TODO: close UDP listener */
-    /* TODO: close data sets and output file */
-    if (closeDataset) {
-        dataset.close();
-    }
-    if (closeGroup) {
-        group.close();
-    }
-    if (closeOutfile) {
-        outfile.close();
+
+    /* Close output file */
+    if (outfile != NULL) {
+        std::cout << "Close outfile: " << outname << std::endl;
+        delete outfile;
     }
     
     /* Clean up after all */
