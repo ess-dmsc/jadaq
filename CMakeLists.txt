@@ -30,3 +30,9 @@ target_link_libraries(caen dl)
 
 add_executable(jadaq jadaq.cpp caen.hpp Configuration.cpp Configuration.hpp Digitizer.cpp Digitizer.hpp FunctionID.hpp FunctionID.cpp ini_parser.hpp StringConversion.cpp StringConversion.hpp CAENConf.cpp CAENConf.hpp)
 target_link_libraries(jadaq ${CAEN_LIB} caen ${Boost_FILESYSTEM_LIBRARY} ${Boost_SYSTEM_LIBRARY})
+
+# For hdf5writer
+find_package(HDF5 REQUIRED COMPONENTS C CXX)
+include_directories(${HDF5_INCLUDE_DIRS})
+add_executable(hdf5writer hdf5writer.cpp)
+target_link_libraries(hdf5writer ${HDF5_CXX_LIBRARIES})
