@@ -31,10 +31,14 @@
 #include <iostream>
 #include <string>
 #include <ctime>
+#include <boost/array.hpp>
+#include <boost/asio.hpp>
 
 #include "DataFormat.hpp"
 
 #define EVENTFIELDS (3)
+
+using boost::asio::ip::udp;
 
 /* Keep running marker and interrupt signal handler */
 static int interrupted = 0;
@@ -62,12 +66,14 @@ int main(int argc, char **argv) {
     }
 
     /* Helpers */
-    std::string address = "127.0.0.1";
-    uint16_t port = 12345;
+    std::string address = "127.0.0.1", port = "12345";
+    boost::asio::io_service io_service;
+    udp::endpoint receiver_endpoint;
+    udp::socket *socket = NULL;
+    boost::array<uint32_t, 3> send_buf = {{0, 0, 0}};
+
     uint32_t eventsSent = 0;
     std::string flavor;
-
-    
     uint32_t eventIndex = 0, eventsTarget = 0;
     /* Dummy data */
     std::string digitizer, digitizerModel, digitizerID;
@@ -79,15 +85,24 @@ int main(int argc, char **argv) {
         address = std::string(argv[1]);
     }
     if (argc > 2) {
-        port = std::stoi(argv[2]);
+        port = std::string(argv[2]);
     }
     std::cout << "Sending UDP packages to: " << address << ":" << port << std::endl;
 
-    /* Prepare and start event handling */
+    /* Setup UDP sender */
+    try {
+        udp::resolver resolver(io_service);
+        udp::resolver::query query(udp::v4(), address.c_str(), port.c_str());
+        receiver_endpoint = *resolver.resolve(query);
+        socket = new udp::socket(io_service);
+        socket->open(udp::v4());
+    } catch (std::exception& e) {
+        std::cerr << e.what() << std::endl;
+    }
+
+    /* Prepare and start event generator */
     std::cout << "Setup event generator" << std::endl;
 
-    /* TODO: setup UDP sender */
-    
     /* TODO: switch to real data format */
     uint32_t data[EVENTFIELDS];
 
@@ -105,8 +120,6 @@ int main(int argc, char **argv) {
             std::this_thread::sleep_for(std::chrono::milliseconds(throttleDown));
         }
         try {
-            std::cout << "Generate fake events" << std::endl;
-            /* TODO: actualy receive data here - fake for now */
             digitizerModel = "V1740D";
             digitizerID = "137";
             digitizer = "V1740D_137";
@@ -115,6 +128,7 @@ int main(int argc, char **argv) {
             /* Loop generating variable number of events */
             flavor = "list";
             eventsTarget = 1 + globaltime % 3;
+            std::cout << "Generate " << eventsTarget << " fake events from " << digitizer << std::endl;
 
             for (eventIndex = 0; eventIndex < eventsTarget; eventIndex++) {
                 /* Create a new dataset named after event index under
@@ -123,13 +137,15 @@ int main(int argc, char **argv) {
                 localtime = (globaltime + eventIndex) & 0xFFFF;
                 charge = 242 + (localtime+eventIndex*13) % 100;
                 std::cout << "Sending event from " << digitizer << " channel " << channel << " localtime " << localtime << " charge " << charge << std::endl;
+                /* TODO: actualy use DataFormat for packaging */
                 data[0] = channel;
                 data[1] = localtime;
                 data[2] = charge;
-                /* TODO: really send! */
+                /* Send data to preconfigured receiver */
+                socket->send_to(boost::asio::buffer(data), receiver_endpoint);
                 eventsSent += 1;
             }
-            /* TODO: remove this sleep once we change to real data packages? */
+            /* TODO: make this delay command-line configurable? */
             throttleDown = 1000;
         } catch(std::exception& e) {
             std::cerr << "unexpected exception during reception: " << e.what() << std::endl;
@@ -145,7 +161,9 @@ int main(int argc, char **argv) {
     /* Stop event generator and clean up */
     std::cout << "Stop event generator and clean up" << std::endl;
 
-    /* TODO: close UDP listener */
+    /* Close UDP listener */
+    if (socket != NULL)
+        delete socket;
 
     std::cout << "Shutting down." << std::endl;
 

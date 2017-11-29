@@ -39,4 +39,4 @@ target_link_libraries(hdf5writer ${HDF5_CXX_LIBRARIES})
 
 # For eventgen
 add_executable(eventgen eventgen.cpp DataFormat.hpp)
-target_link_libraries(eventgen ${Boost_ASIO_LIBRARY})
+target_link_libraries(eventgen ${Boost_ASIO_LIBRARY} ${Boost_SYSTEM_LIBRARY} pthread)
