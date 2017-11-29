@@ -35,7 +35,7 @@ target_link_libraries(jadaq ${CAEN_LIB} caen ${Boost_FILESYSTEM_LIBRARY} ${Boost
 find_package(HDF5 REQUIRED COMPONENTS C CXX)
 include_directories(${HDF5_INCLUDE_DIRS})
 add_executable(hdf5writer hdf5writer.cpp)
-target_link_libraries(hdf5writer ${HDF5_CXX_LIBRARIES})
+target_link_libraries(hdf5writer ${HDF5_CXX_LIBRARIES} ${Boost_ASIO_LIBRARY} ${Boost_SYSTEM_LIBRARY} pthread)
 
 # For eventgen
 add_executable(eventgen eventgen.cpp DataFormat.hpp)

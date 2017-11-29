@@ -33,13 +33,16 @@
 #include <string>
 #include <ctime>
 
+#include <boost/array.hpp>
+#include <boost/asio.hpp>
+
 #include "H5Cpp.h"
+
+using boost::asio::ip::udp;
+
 using namespace H5;
 
-
 #include "DataFormat.hpp"
-
-#define EVENTFIELDS (3)
 
 
 /* Keep running marker and interrupt signal handler */
@@ -81,7 +84,17 @@ int main(int argc, char **argv) {
     std::string digitizer, digitizerModel, digitizerID;
     uint32_t channel = 0, charge = 0, localtime = 0;
     uint64_t globaltime = 0;
-    
+
+    /* Listening helpers */
+    /* TODO: expose address and port as input args */
+    std::string address = "127.0.0.1", port = "12345";
+    boost::asio::io_service io_service;
+    udp::endpoint receiver_endpoint;
+    udp::socket *socket = NULL;
+    boost::array<uint32_t, EVENTFIELDS> recv_buf = EVENTINIT;
+    udp::endpoint remote_endpoint;
+    boost::system::error_code error;
+
     /* Path helpers */
     std::string configFileName;
     std::string outputFileName = "out.h5";
@@ -103,8 +116,6 @@ int main(int argc, char **argv) {
     /* Prepare and start event handling */
     std::cout << "Setup hdf5writer" << std::endl;
 
-    /* TODO: setup UDP listener */
-    
     /* Prepare output file  and data sets */
     bool createOutfile = true, createGroup = true, createDataset = true;
     const H5std_string outname(outputFileName);
@@ -157,6 +168,13 @@ int main(int argc, char **argv) {
     /* Turn off the auto-printing of errors - manual print instead. */
     Exception::dontPrint();
 
+    /* Setup UDP listener */
+    try {
+        socket = new udp::socket(io_service, udp::endpoint(udp::v4(), std::stoi(port)));
+    } catch (std::exception& e) {
+        std::cerr << e.what() << std::endl;
+    }
+
     /* Set up interrupt handler and start handling acquired data */
     setup_interrupt_handler();
 
@@ -170,6 +188,20 @@ int main(int argc, char **argv) {
             /* NOTE: for running without hogging CPU if nothing to do */
             std::this_thread::sleep_for(std::chrono::milliseconds(throttleDown));
         }
+        try {
+            socket->receive_from(boost::asio::buffer(recv_buf),
+                                remote_endpoint, 0, error);
+            if (error && error != boost::asio::error::message_size)
+                throw boost::system::system_error(error);
+            std::cout << "Received data: "  << std::endl;
+            for (int i = 0; i < EVENTFIELDS; i++) {
+                std::cout << data[i] << " ";
+            }
+            std::cout << std::endl;
+        } catch (std::exception& e) {
+            std::cerr << e.what() << std::endl;
+        }
+
         try {
             std::cout << "Receive data" << std::endl;
             /* TODO: actualy receive data here - fake for now */
@@ -289,7 +321,9 @@ int main(int argc, char **argv) {
     /* Stop file writer and clean up */
     std::cout << "Stop file writer and clean up" << std::endl;
 
-    /* TODO: close UDP listener */
+    /* Close UDP listener */
+    if (socket != NULL)
+        delete socket;
 
     /* Close output file */
     if (outfile != NULL) {

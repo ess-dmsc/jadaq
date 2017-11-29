@@ -36,8 +36,6 @@
 
 #include "DataFormat.hpp"
 
-#define EVENTFIELDS (3)
-
 using boost::asio::ip::udp;
 
 /* Keep running marker and interrupt signal handler */
@@ -70,7 +68,7 @@ int main(int argc, char **argv) {
     boost::asio::io_service io_service;
     udp::endpoint receiver_endpoint;
     udp::socket *socket = NULL;
-    boost::array<uint32_t, 3> send_buf = {{0, 0, 0}};
+    boost::array<uint32_t, EVENTFIELDS> send_buf = EVENTINIT;
 
     uint32_t eventsSent = 0;
     std::string flavor;

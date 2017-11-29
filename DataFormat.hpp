@@ -30,6 +30,9 @@
 #include <cstdint>
 #include <cstddef>
 
+#define EVENTFIELDS (3)
+#define EVENTINIT {{0, 0, 0}}
+
 /* Every Data set contains meta data with the digitizer and format
  * followed by the actual List and/or waveform data points. */
 namespace Data {
