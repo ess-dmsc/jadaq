@@ -51,6 +51,7 @@ private:
 public:
     Digitizer(int usb, uint32_t vme) : digitizer(caen::Digitizer::USB(usb,vme)), usb_(usb), vme_(vme) {}
     const std::string name() { return digitizer->modelName() + "_" + std::to_string(digitizer->serialNumber()); }
+    const std::string serial() { return std::to_string(digitizer->serialNumber()); }
     const int usb() { return usb_; }
     const int vme() { return vme_; }
     void set(FunctionID functionID, std::string value);
@@ -92,6 +93,9 @@ public:
     caen::BasicDPPWaveforms caenExtractBasicDPPWaveforms(caen::DPPWaveforms& waveforms) { return digitizer->extractBasicDPPWaveforms(waveforms); }
     bool caenHasDPPWaveformsEnabled() 
     { 
+        if (!caenIsDPPFirmware()) {
+            return false;
+        }
         caen::EasyDPPBoardConfiguration boardConf = digitizer->getEasyDPPBoardConfiguration();
         uint8_t waveformRecording = boardConf.getValue("waveformRecording");
         return (waveformRecording == 1);

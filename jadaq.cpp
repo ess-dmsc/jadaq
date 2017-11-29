@@ -85,7 +85,7 @@ int main(int argc, char **argv) {
     uint32_t eventIndex = 0, decodeChannels = 0, i = 0, j = 0, k = 0;
     caen::BasicDPPEvent basicEvent;
     caen::BasicDPPWaveforms basicWaveforms;
-    uint32_t charge, timestamp;
+    uint32_t charge = 0, timestamp = 0;
 
     /* Active digitizers */
     std::vector<Digitizer> digitizers;
@@ -242,7 +242,7 @@ int main(int argc, char **argv) {
 
     std::cout << "Running acquisition loop - Ctrl-C to interrupt" << std::endl;
 
-    uint32_t throttleDown = 100;
+    uint32_t throttleDown = 0;
     bool keepRunning = true;
     while(keepRunning) {
         /* Continuously acquire and process data:
@@ -251,10 +251,9 @@ int main(int argc, char **argv) {
          *   - pack data
          *   - send out on UDP
          */
-        if (throttleDown) {
+        if (throttleDown > 0) {
             /* NOTE: for running without hogging CPU if nothing to do */
-            std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-            throttleDown = 100;
+            std::this_thread::sleep_for(std::chrono::milliseconds(throttleDown));
         }
         try {
             std::cout << "Read out data from " << digitizers.size() << " digitizer(s)." << std::endl;
@@ -272,7 +271,7 @@ int main(int argc, char **argv) {
                 std::cout << "Acquired data from " << digitizer.name() << " contains " << eventsFound << " event(s)." << std::endl;
                 if (eventsFound < 1) {
                     std::cout << "No events found - no further handling." << std::endl;
-                    throttleDown = 1000;
+                    throttleDown = std::min((uint32_t)2000, 2*throttleDown + 100);
                     continue;
                 }
                 totalEventsFound += eventsFound;
@@ -299,10 +298,12 @@ int main(int argc, char **argv) {
                             basicEvent = digitizer.caenExtractBasicDPPEvent(digitizer.caenGetPrivDPPEvents(), i, j);
                             /* We use the same 4 byte range for charge as CAEN sample */
                             charge = basicEvent.charge & 0xFFFF;
+                            /* TODO: include timestamp high bits from Extra field? */
                             /* NOTE: timestamp is 64-bit for PHA events
                              * but we just consistently clip to 32-bit
                              * for now. */ 
                             timestamp = basicEvent.timestamp & 0xFFFFFFFF;
+
                             /* On rollover we increment the high 32 bits*/
                             if (timestamp < (uint32_t)(fullTimeTags[i])) {
                                 fullTimeTags[i] &= 0xFFFFFFFF00000000;
@@ -315,7 +316,7 @@ int main(int argc, char **argv) {
 
                             if (channelDumpEnabled) {
                                 /* NOTE: write in same "%16lu %8d" format as CAEN sample */
-                                // TODO: which of these two formats should we keep?
+                                // TODO: which of these formats should we keep?
                                 /* TODO: change to a single file per
                                  * digitizer with columns: 
                                  * globaltime localtime digtizerid channel charge
@@ -323,7 +324,7 @@ int main(int argc, char **argv) {
                                 channelChargeWriters = charge_writer_map[digitizer.name()];
                                 //channelChargeWriters[i] << std::setw(16) << fullTimeTags[i] << " " << std::setw(8) << charge << std::endl;
                                 //channelChargeWriters[i] << digitizer.name() << " " << std::setw(8) << i << " " << std::setw(16) << fullTimeTags[i] << " " << std::setw(8) << charge << std::endl;
-                                channelChargeWriters[i] << std::setw(16) << timestamp << " " << digitizer.name() << " " << std::setw(8) << i << " " << std::setw(8) << charge << std::endl;
+                                channelChargeWriters[i] << std::setw(16) << timestamp << " " << digitizer.serial() << " " << std::setw(8) << i << " " << std::setw(8) << charge << std::endl;
                             }
                             
                             /* Only try to decode waveforms if digitizer is actually
@@ -382,7 +383,7 @@ int main(int argc, char **argv) {
                     
                     /* TODO: pack and send out UDP */
                 }
-                throttleDown = 100;
+                throttleDown = 0;
             }
             std::cout << "= Accumulated Stats =" << std::endl;
             std::cout << "Bytes read: " << totalBytesRead << std::endl;
