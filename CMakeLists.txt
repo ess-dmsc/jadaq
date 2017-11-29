@@ -36,3 +36,7 @@ find_package(HDF5 REQUIRED COMPONENTS C CXX)
 include_directories(${HDF5_INCLUDE_DIRS})
 add_executable(hdf5writer hdf5writer.cpp)
 target_link_libraries(hdf5writer ${HDF5_CXX_LIBRARIES})
+
+# For eventgen
+add_executable(eventgen eventgen.cpp DataFormat.hpp)
+target_link_libraries(eventgen ${Boost_ASIO_LIBRARY})

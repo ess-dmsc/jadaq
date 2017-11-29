@@ -76,7 +76,7 @@ int main(int argc, char **argv) {
     uint32_t eventsReceived = 0, eventsWritten = 0;
     std::string flavor;
 
-    uint32_t eventIndex = 0, i = 0, j = 0;
+    uint32_t eventIndex = 0;
     /* Dummy data */
     std::string digitizer, digitizerModel, digitizerID;
     uint32_t channel = 0, charge = 0, localtime = 0;
@@ -231,12 +231,12 @@ int main(int argc, char **argv) {
             /* Loop over received events and create a dataset for each
              * of them. */
             flavor = "list";
-            for (i = 0; i < eventsReceived; i++) {
+            for (eventIndex = 0; eventIndex < eventsReceived; eventIndex++) {
                 /* Create a new dataset named after event index under
                  * globaltime group if it doesn't exist already. */
                 nest.str("");
                 nest.clear();
-                nest << flavor << "-" << i;
+                nest << flavor << "-" << eventIndex;
                 datasetname = H5std_string(nest.str());
                 createDataset = true;
                 try {
@@ -258,9 +258,9 @@ int main(int argc, char **argv) {
                 }
             
                 /* Fake event for now */
-                channel = (i % 2) * 31;
-                localtime = (globaltime + i) & 0xFFFF;
-                charge = 242 + (localtime+i*13) % 100;
+                channel = (eventIndex % 2) * 31;
+                localtime = (globaltime + eventIndex) & 0xFFFF;
+                charge = 242 + (localtime+eventIndex*13) % 100;
                 std::cout << "Saving data from " << digitizer << " channel " << channel << " localtime " << localtime << " charge " << charge << std::endl;
                 data[0] = channel;
                 data[1] = localtime;
