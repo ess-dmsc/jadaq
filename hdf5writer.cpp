@@ -69,8 +69,8 @@ int main(int argc, char **argv) {
     }
 
     /* Data format version - please increment on versiondata on layout changes */
-    uint32_t versiondata[1] = {0};
-    hsize_t versiondims[1] = {1};
+    uint32_t versiondata[3] = {1, 0, 0};
+    hsize_t versiondims[1] = {3};
 
     /* Helpers */
     uint32_t eventsReceived = 0, eventsWritten = 0;
