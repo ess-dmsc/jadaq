@@ -74,11 +74,13 @@ int main(int argc, char **argv) {
 
     /* Helpers */
     uint32_t eventsReceived = 0, eventsWritten = 0;
+    std::string flavor;
 
     uint32_t eventIndex = 0, i = 0, j = 0;
     /* Dummy data */
     std::string digitizer, digitizerModel, digitizerID;
-    uint32_t channel = 0, charge = 0 , globaltime = 0, localtime = 0;
+    uint32_t channel = 0, charge = 0, localtime = 0;
+    uint64_t globaltime = 0;
     
     /* Path helpers */
     std::string configFileName;
@@ -115,6 +117,7 @@ int main(int argc, char **argv) {
     Attribute *versionattr = NULL;
     try {
         /* TODO: should we truncate or just keep adding? */
+        /* TODO: enable H5F_ACC_SWMR_WRITE ?*/
         if (createOutfile) {
             std::cout << "Creating new outfile " << outname << std::endl;
             outfile = new H5File(outname, H5F_ACC_TRUNC);
@@ -133,8 +136,8 @@ int main(int argc, char **argv) {
         std::cout << "Try to open root group" << std::endl;
         rootgroup = new Group(outfile->openGroup("/"));
         versionspace = DataSpace(1, versiondims);
-        versionattr = new Attribute(rootgroup->createAttribute(versionname, PredType::STD_I32BE, versionspace));
-        versionattr->write(PredType::NATIVE_INT, versiondata);
+        versionattr = new Attribute(rootgroup->createAttribute(versionname, PredType::STD_U16LE, versionspace));
+        versionattr->write(PredType::STD_U16LE, versiondata);
         delete versionattr;
         delete rootgroup;
     } catch(FileIException error) {
@@ -148,7 +151,7 @@ int main(int argc, char **argv) {
     hsize_t dimsf[1];
     dimsf[0] = EVENTFIELDS;
     DataSpace dataspace(RANK, dimsf);
-    IntType datatype(PredType::NATIVE_INT);
+    IntType datatype(PredType::STD_U32LE);
     datatype.setOrder(H5T_ORDER_LE);
 
     /* Turn off the auto-printing of errors - manual print instead. */
@@ -228,12 +231,13 @@ int main(int argc, char **argv) {
 
             /* Loop over received events and create a dataset for each
              * of them. */
+            flavor = "list";
             for (i=0; i < eventsReceived; i++) {
                 /* Create a new dataset named after event index under
                  * globaltime group if it doesn't exist already. */
                 nest.str("");
                 nest.clear();
-                nest << "event-" << i;
+                nest << flavor << "-" << i;
                 datasetname = H5std_string(nest.str());
                 createDataset = true;
                 try {
@@ -262,7 +266,7 @@ int main(int argc, char **argv) {
                 data[0] = channel;
                 data[1] = localtime;
                 data[2] = charge;
-                dataset->write(data, PredType::NATIVE_INT);
+                dataset->write(data, PredType::STD_U32LE);
 
                 if (dataset != NULL)
                     delete dataset;
