@@ -162,14 +162,13 @@ int main(int argc, char **argv) {
 
     std::cout << "Running file writer loop - Ctrl-C to interrupt" << std::endl;
 
-    uint32_t throttleDown = 100;
+    uint32_t throttleDown = 0;
     bool keepRunning = true;
     while(keepRunning) {
         /* Continuously receive and dump data */
-        if (throttleDown) {
+        if (throttleDown > 0) {
             /* NOTE: for running without hogging CPU if nothing to do */
-            std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-            throttleDown = 100;
+            std::this_thread::sleep_for(std::chrono::milliseconds(throttleDown));
         }
         try {
             std::cout << "Receive data" << std::endl;
@@ -232,7 +231,7 @@ int main(int argc, char **argv) {
             /* Loop over received events and create a dataset for each
              * of them. */
             flavor = "list";
-            for (i=0; i < eventsReceived; i++) {
+            for (i = 0; i < eventsReceived; i++) {
                 /* Create a new dataset named after event index under
                  * globaltime group if it doesn't exist already. */
                 nest.str("");
@@ -273,6 +272,9 @@ int main(int argc, char **argv) {
             }
             if (globaltimegroup != NULL)
                 delete globaltimegroup;
+
+            /* TODO: remove this sleep once we change to real data packages */
+            throttleDown = 1000;
         } catch(std::exception& e) {
             std::cerr << "unexpected exception during reception: " << e.what() << std::endl;
             /* NOTE: throttle down on errors */
@@ -284,8 +286,8 @@ int main(int argc, char **argv) {
         }
     }
 
-    /* Stop file writer */
-    std::cout << "Stop file writer" << std::endl;
+    /* Stop file writer and clean up */
+    std::cout << "Stop file writer and clean up" << std::endl;
 
     /* TODO: close UDP listener */
 
@@ -294,10 +296,6 @@ int main(int argc, char **argv) {
         std::cout << "Close outfile: " << outname << std::endl;
         delete outfile;
     }
-    
-    /* Clean up after all */
-    std::cout << "Clean up after file writer" << std::endl;
-
 
     std::cout << "Shutting down." << std::endl;
 
