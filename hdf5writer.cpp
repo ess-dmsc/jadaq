@@ -72,11 +72,11 @@ int main(int argc, char **argv) {
     }
 
     /* Data format version - please increment on versiondata on layout changes */
-    uint32_t versiondata[3] = {1, 0, 0};
-    hsize_t versiondims[1] = {3};
+    uint32_t versiondata[VERSIONPARTS] = VERSION;
+    hsize_t versiondims[1] = {VERSIONPARTS};
 
     /* Helpers */
-    uint32_t eventsReceived = 0, eventsWritten = 0;
+    uint32_t bytesReceived = 0, eventsReceived = 0, eventsWritten = 0;
     std::string flavor;
 
     uint32_t eventIndex = 0;
@@ -86,11 +86,13 @@ int main(int argc, char **argv) {
     uint64_t globaltime = 0;
 
     /* Listening helpers */
-    /* TODO: expose address and port as input args */
+    /* TODO: expose address and port as input args or conf values */
     std::string address = "127.0.0.1", port = "12345";
     boost::asio::io_service io_service;
     udp::endpoint receiver_endpoint;
     udp::socket *socket = NULL;
+    /* TODO: switch to this static buffer using MAXBUFSIZE */
+    //boost::array<uint8_t, MAXBUFSIZE> recv_buf;
     boost::array<uint32_t, EVENTFIELDS> recv_buf = EVENTINIT;
     udp::endpoint remote_endpoint;
     boost::system::error_code error;
@@ -189,11 +191,11 @@ int main(int argc, char **argv) {
             std::this_thread::sleep_for(std::chrono::milliseconds(throttleDown));
         }
         try {
-            socket->receive_from(boost::asio::buffer(recv_buf),
-                                remote_endpoint, 0, error);
+            bytesReceived = socket->receive_from(boost::asio::buffer(recv_buf),
+                                                 remote_endpoint, 0, error);
             if (error && error != boost::asio::error::message_size)
                 throw boost::system::system_error(error);
-            std::cout << "Received data: "  << std::endl;
+            std::cout << "Received " << bytesReceived << "b of data from " << remote_endpoint.address().to_string() << std::endl;
             for (int i = 0; i < EVENTFIELDS; i++) {
                 std::cout << data[i] << " ";
             }

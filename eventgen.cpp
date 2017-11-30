@@ -68,6 +68,8 @@ int main(int argc, char **argv) {
     boost::asio::io_service io_service;
     udp::endpoint receiver_endpoint;
     udp::socket *socket = NULL;
+    /* TODO: switch to this static buffer using MAXBUFSIZE */
+    //boost::array<uint8_t, MAXBUFSIZE> recv_buf;
     boost::array<uint32_t, EVENTFIELDS> send_buf = EVENTINIT;
 
     uint32_t eventsSent = 0;

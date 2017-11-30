@@ -30,39 +30,45 @@
 #include <cstdint>
 #include <cstddef>
 
+/* TODO: switch to a static buffer using MAXBUFSIZE */
 #define EVENTFIELDS (3)
 #define EVENTINIT {{0, 0, 0}}
+
+#define MAXBUFSIZE (8192)
+
+#define VERSIONPARTS (3)
+#define VERSION {1, 0, 0}
 
 /* Every Data set contains meta data with the digitizer and format
  * followed by the actual List and/or waveform data points. */
 namespace Data {
     /* Shared meta data for the entire data package */
-    struct Meta {
-        uint8_t version;
-        char digitizerModel[12];
-        uint8_t digitizerID;
-        uint8_t pad[2];
+    struct Meta { // 20 bytes
+        uint16_t version[3];
+        char digitizerModel[8];
+        uint16_t digitizerID;
         uint32_t globalTime;
     };
-    namespace List{
-        struct Element // 56 bit
+    namespace List {
+        struct Element // 72 bit
         {
             uint32_t localTime;
-            uint16_t adcValue;
-            uint8_t channel;
+            uint16_t extendTime;
+            uint32_t adcValue;
+            uint16_t channel;
         };
     }; // namespace List
-    namespace Waveform{
+    namespace Waveform {
         struct Element // variable size
         {
             uint32_t localTime;
-            uint16_t adcValue;
-            uint8_t channel;
+            uint32_t adcValue;
+            uint16_t channel;
             uint16_t WFlength;
             uint16_t waveform[];
         };
     }; // namespace Waveform
-    /* Actual payload of elements */
+    /* Actual package with metadata and payload of element(s) */
     struct Buffer
     {
         void* data;
