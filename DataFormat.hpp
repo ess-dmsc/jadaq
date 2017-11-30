@@ -38,16 +38,19 @@
 
 #define VERSIONPARTS (3)
 #define VERSION {1, 0, 0}
+#define MAXMODELSIZE (8)
 
 /* Every Data set contains meta data with the digitizer and format
  * followed by the actual List and/or waveform data points. */
 namespace Data {
     /* Shared meta data for the entire data package */
-    struct Meta { // 20 bytes
-        uint16_t version[3];
-        char digitizerModel[8];
+    struct Meta { // 28 bytes
+        uint16_t version[VERSIONPARTS] = VERSION;
+        char digitizerModel[MAXMODELSIZE];
         uint16_t digitizerID;
-        uint32_t globalTime;
+        uint64_t globalTime;
+        uint16_t listEvents;
+        uint16_t waveformEvents;
     };
     namespace List {
         struct Element // 72 bit

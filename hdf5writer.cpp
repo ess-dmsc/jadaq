@@ -35,6 +35,7 @@
 
 #include <boost/array.hpp>
 #include <boost/asio.hpp>
+#include <boost/asio/buffer.hpp>
 
 #include "H5Cpp.h"
 
@@ -76,7 +77,8 @@ int main(int argc, char **argv) {
     hsize_t versiondims[1] = {VERSIONPARTS};
 
     /* Helpers */
-    uint32_t bytesReceived = 0, eventsReceived = 0, eventsWritten = 0;
+    uint32_t eventsReceived = 0, eventsWritten = 0;
+    size_t bytesReceived = 0;
     std::string flavor;
 
     uint32_t eventIndex = 0;
@@ -91,11 +93,18 @@ int main(int argc, char **argv) {
     boost::asio::io_service io_service;
     udp::endpoint receiver_endpoint;
     udp::socket *socket = NULL;
-    /* TODO: switch to this static buffer using MAXBUFSIZE */
-    //boost::array<uint8_t, MAXBUFSIZE> recv_buf;
-    boost::array<uint32_t, EVENTFIELDS> recv_buf = EVENTINIT;
+    /* NOTE: use a static buffer of MAXBUFSIZE bytes for receiving */
+    std::array<char, MAXBUFSIZE> bytes;
     udp::endpoint remote_endpoint;
     boost::system::error_code error;
+    Data::Buffer packedData;
+    packedData.data = NULL;
+    packedData.size = MAXBUFSIZE;
+    packedData.dataSize = 0;
+    Data::Meta metadata;
+    Data::List::Element listEvent;
+    Data::Waveform::Element *waveEvent = NULL;
+    uint32_t offset = 0;
 
     /* Path helpers */
     std::string configFileName;
@@ -191,15 +200,30 @@ int main(int argc, char **argv) {
             std::this_thread::sleep_for(std::chrono::milliseconds(throttleDown));
         }
         try {
-            bytesReceived = socket->receive_from(boost::asio::buffer(recv_buf),
-                                                 remote_endpoint, 0, error);
+            /* TODO: switch to Buffer transfer with explicit indexing
+             * for meta and payloads */
+            bytesReceived = socket->receive_from(boost::asio::buffer((char*)(&metadata),sizeof(metadata)), remote_endpoint, 0, error);
             if (error && error != boost::asio::error::message_size)
                 throw boost::system::system_error(error);
             std::cout << "Received " << bytesReceived << "b of data from " << remote_endpoint.address().to_string() << std::endl;
-            for (int i = 0; i < EVENTFIELDS; i++) {
-                std::cout << data[i] << " ";
+            std::cout << "Metadata version: " << metadata.version[0] << "." << metadata.version[1] << "." << metadata.version[2] << std::endl;
+            std::cout << "Metadata digitizerModel: " << metadata.digitizerModel << std::endl;
+            std::cout << "Metadata digitizerID: " << metadata.digitizerID << std::endl;
+            std::cout << "Metadata globalTime: " << metadata.globalTime << std::endl;
+            std::cout << "Metadata listEvents: " << metadata.listEvents << std::endl;
+            std::cout << "Metadata waveformEvents: " << metadata.waveformEvents << std::endl;
+            /*
+            packedData = boost::asio::buffer_cast<Data::Buffer>recvBuf;
+            metadata = (Data::Meta *)packedData.data;
+            offset = sizeof(Data::Meta);
+            while (offset < bytesReceived) {
+                listEvent = (Data::List::Element *)((char *)metadata+offset);
+                offset += sizeof(Data::List::Element);
+                std::cout << "found list event: " << listEvent.channel
+            << " " <<listEvent.localtime << " " << listEvent.adcValue <<
+            std::endl;
             }
-            std::cout << std::endl;
+            */
         } catch (std::exception& e) {
             std::cerr << e.what() << std::endl;
         }

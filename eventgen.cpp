@@ -71,12 +71,15 @@ int main(int argc, char **argv) {
     /* TODO: switch to this static buffer using MAXBUFSIZE */
     //boost::array<uint8_t, MAXBUFSIZE> recv_buf;
     boost::array<uint32_t, EVENTFIELDS> send_buf = EVENTINIT;
+    Data::Meta metadata;
+    Data::List::Element listEvent;
 
     uint32_t eventsSent = 0;
     std::string flavor;
     uint32_t eventIndex = 0, eventsTarget = 0;
     /* Dummy data */
-    std::string digitizer, digitizerModel, digitizerID;
+    std::string digitizer, digitizerModel;
+    uint16_t digitizerID = 0;
     uint32_t channel = 0, charge = 0, localtime = 0;
     uint64_t globaltime = 0;
     
@@ -121,9 +124,18 @@ int main(int argc, char **argv) {
         }
         try {
             digitizerModel = "V1740D";
-            digitizerID = "137";
+            digitizerID = 137;
             digitizer = "V1740D_137";
             globaltime = std::time(nullptr);
+
+            /* NOTE: implicit version field from header init */
+            /* NOTE: safe copy with explicit string termination */
+            strncpy(metadata.digitizerModel, digitizerModel.c_str(), MAXMODELSIZE);
+            metadata.digitizerModel[MAXMODELSIZE-1] = '\0';
+            metadata.digitizerID = digitizerID;
+            metadata.globalTime = globaltime;
+            metadata.listEvents = 0;
+            metadata.waveformEvents = 0;
 
             /* Loop generating variable number of events */
             flavor = "list";
@@ -136,13 +148,14 @@ int main(int argc, char **argv) {
                 channel = (eventIndex % 2) * 31;
                 localtime = (globaltime + eventIndex) & 0xFFFF;
                 charge = 242 + (localtime+eventIndex*13) % 100;
-                std::cout << "Sending event from " << digitizer << " channel " << channel << " localtime " << localtime << " charge " << charge << std::endl;
+                std::cout << "Sending event at " << globaltime << " from " << digitizer << " channel " << channel << " localtime " << localtime << " charge " << charge << std::endl;
                 /* TODO: actualy use DataFormat for packaging */
                 data[0] = channel;
                 data[1] = localtime;
                 data[2] = charge;
                 /* Send data to preconfigured receiver */
-                socket->send_to(boost::asio::buffer(data), receiver_endpoint);
+                //socket->send_to(boost::asio::buffer(data), receiver_endpoint);
+                socket->send_to(boost::asio::buffer((char*)(&metadata),sizeof(metadata)), receiver_endpoint);
                 eventsSent += 1;
             }
             /* TODO: make this delay command-line configurable? */
