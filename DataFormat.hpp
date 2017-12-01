@@ -31,22 +31,27 @@
 #include <cstddef>
 #include <iostream>
 
-/* TODO: switch to a static buffer using MAXBUFSIZE */
+/* NOTE: Data format version - bump on changes in struct format */
+#define VERSION {1, 1, 0}
+#define VERSIONPARTS (3)
+
+/* Default to 1 MB buffer */
+#define MAXBUFSIZE (1024*1024)
+
+/* Max length of digitizer model string */
+#define MAXMODELSIZE (8)
+
+/* TODO: switch to a hdf5 struct */
 #define EVENTFIELDS (3)
 #define EVENTINIT {{0, 0, 0}}
 
-#define MAXBUFSIZE (8192)
 
-#define VERSIONPARTS (3)
-#define VERSION {1, 0, 0}
-#define MAXMODELSIZE (8)
-
-/* Every Data set contains meta data with the digitizer and format
+/** Every Data set contains meta data with the digitizer and format
  * followed by the actual List and/or waveform data points. */
 namespace Data {
     /* Shared meta data for the entire data package */
     struct Meta { // 28 bytes
-        uint16_t version[VERSIONPARTS] = VERSION;
+        uint16_t version[VERSIONPARTS];
         char digitizerModel[MAXMODELSIZE];
         uint16_t digitizerID;
         uint64_t globalTime;
@@ -92,6 +97,20 @@ namespace Data {
         size_t dataSize;  // Size of current data
     };
 
+
+    /** @brief
+        Translate the basic version arrays to a string.
+     */
+    std::string makeVersion(uint16_t version[]) {
+        std::stringstream ss;
+        for (int i=0; i<VERSIONPARTS; i++) {
+            if (i > 0)
+                ss << '.';
+            ss << version[i];
+        }
+        return ss.str();
+    }
+
     /** @brief
         Takes a pre-allocated data buffer and prepares it for EventData
         use with given number of list events and waveform events.
@@ -102,11 +121,8 @@ namespace Data {
         do the slicing.
     */
     EventData *setupEventData(void *data, uint32_t dataSize, uint32_t listEntries, uint32_t waveformEntries) {
-        std::cout << "DEBUG: in setupEventData " << data << " " << dataSize << " " << listEntries << " " << waveformEntries << std::endl;
         EventData *eventData = (EventData *)data;
-        std::cout << "DEBUG: setting allocatedSize in setupEventData: " << eventData->allocatedSize << std::endl;
         eventData->allocatedSize = dataSize;
-        std::cout << "DEBUG: set allocatedSize to " << eventData->allocatedSize << " in setupEventData" << std::endl;
 
         /* NOTE: We must make sure padding and layout on receiver
          * matches the sender. We could use boost::serialize but it comes
@@ -114,17 +130,18 @@ namespace Data {
          * similarity for now. */
         /* TODO: implement better checksum for validation after transfer */
         eventData->checksum = sizeof(EventData) + sizeof(Meta) + sizeof(List::Element) * listEntries + sizeof(Waveform::Element) * waveformEntries;
-        std::cout << "DEBUG: set checksum to " << eventData->checksum << " in setupEventData" << std::endl;
+
         eventData->listEventsLength = listEntries;
-        std::cout << "DEBUG: set listEventsLength to " << eventData->listEventsLength << " in setupEventData" << std::endl;
-        eventData->metadata = (Meta *)(eventData+1);
-        std::cout << "DEBUG: set metadata to " << eventData->metadata << " i.e. +" << ((char*)(eventData->metadata) - (char *)data) << " in setupEventData" << std::endl;
-        eventData->listEvents = (List::Element *)(eventData->metadata+1);
-        std::cout << "DEBUG: set listEvents to " << eventData->listEvents << " in setupEventData" << std::endl;
         eventData->waveformEventsLength = waveformEntries;
-        std::cout << "DEBUG: set waveformEventsLength to " << eventData->waveformEventsLength << " in setupEventData" << std::endl;
+
+        eventData->metadata = (Meta *)(eventData+1);
+        /* Init version in probably zeroed-out metadata */
+        uint16_t version[VERSIONPARTS] = VERSION;
+        memcpy(eventData->metadata->version, version, sizeof(version[0])*VERSIONPARTS);
+
+        eventData->listEvents = (List::Element *)(eventData->metadata+1);
         eventData->waveformEvents = (Waveform::Element *)(eventData->listEvents+listEntries);
-        std::cout << "DEBUG: set waveformEvents to " << eventData->waveformEvents << " in setupEventData" << std::endl;
+
         /* fuzzy out-of-bounds check */
         uint32_t bufSize = (char *)(eventData->waveformEvents + eventData->waveformEventsLength * (sizeof(Waveform::Element) + sizeof(uint16_t *))) - (char *)data;
         if (bufSize > dataSize) {
@@ -133,7 +150,6 @@ namespace Data {
             std::cerr << "ERROR: " << ss.str() << std::endl;
             throw std::runtime_error(ss.str());
         }
-        std::cout << "DEBUG: return eventData " << eventData << " in setupEventData" << std::endl;
         return eventData;
     }
 

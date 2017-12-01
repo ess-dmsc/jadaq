@@ -73,16 +73,17 @@ int main(int argc, char **argv) {
     }
 
     /* Data format version - please increment on versiondata on layout changes */
-    uint32_t versiondata[VERSIONPARTS] = VERSION;
+    uint16_t versiondata[VERSIONPARTS] = VERSION;
     hsize_t versiondims[1] = {VERSIONPARTS};
 
     /* Helpers */
-    uint32_t eventsReceived = 0, eventsWritten = 0;
+    uint32_t listEventsReceived = 0, waveformEventsReceived = 0, eventsWritten = 0;
     std::string flavor;
 
     uint32_t eventIndex = 0;
     /* Dummy data */
-    std::string digitizer, digitizerModel, digitizerID;
+    std::string digitizer, digitizerModel;
+    uint16_t digitizerID = 0;
     uint32_t channel = 0, charge = 0, localtime = 0;
     uint64_t globaltime = 0;
 
@@ -104,6 +105,7 @@ int main(int argc, char **argv) {
     Data::EventData *eventData;
     Data::Meta *metadata;
     Data::List::Element *listEvent;
+    Data::Waveform::Element *waveformEvent;
     uint32_t offset = 0;
 
     /* Path helpers */
@@ -167,7 +169,7 @@ int main(int argc, char **argv) {
         error.printError();
     }
 
-    /* TODO: switch to real data format */
+    /* TODO: switch to real struct data format in hdf5 */
     uint32_t data[EVENTFIELDS];
     const int RANK = 1;
     hsize_t dimsf[1];
@@ -200,37 +202,40 @@ int main(int argc, char **argv) {
             std::this_thread::sleep_for(std::chrono::milliseconds(throttleDown));
         }
         try {
-            /* TODO: switch to Buffer transfer with explicit indexing
-             * for meta and payloads */
+            std::cout << "Receive data" << std::endl;
             packedEvents.dataSize = socket->receive_from(boost::asio::buffer((char*)(packedEvents.data), MAXBUFSIZE), remote_endpoint, 0, error);
             if (error && error != boost::asio::error::message_size)
                 throw boost::system::system_error(error);
+
             std::cout << "Received " << packedEvents.dataSize << "b of data from " << remote_endpoint.address().to_string() << std::endl;
 
             std::cout << "Unpack received package of " << packedEvents.dataSize << "b" << std::endl;
             eventData = Data::unpackEventData(packedEvents);
             metadata = eventData->metadata;
-            std::cout << "Metadata version: " << metadata->version[0] << "." << metadata->version[1] << "." << metadata->version[2] << std::endl;
-            std::cout << "Metadata digitizerModel: " << metadata->digitizerModel << std::endl;
-            std::cout << "Metadata digitizerID: " << metadata->digitizerID << std::endl;
-            std::cout << "Metadata globalTime: " << metadata->globalTime << std::endl;
-            std::cout << "EventData listEvents: " << eventData->listEventsLength << std::endl;
-            std::cout << "EventData waveformEvents: " << eventData->waveformEventsLength << std::endl;
-            eventsReceived = eventData->listEventsLength;
-            for (eventIndex = 0; eventIndex < eventsReceived; eventIndex++) {
-                listEvent = &(eventData->listEvents[eventIndex]);
-                std::cout << "received list event no " << eventIndex << " has localtime " << listEvent->localTime << " channel " << listEvent->channel << " charge " << listEvent->adcValue << std::endl;
-            }
-        } catch (std::exception& e) {
-            std::cerr << e.what() << std::endl;
-        }
+            std::cout << "Unpacked event data:" << std::endl;
+            std::cout << "checksum: " << eventData->checksum << std::endl;
+            std::cout << "listEventsLength: " << eventData->listEventsLength << std::endl;
+            std::cout << "waveformEventsLength: " << eventData->waveformEventsLength << std::endl;
 
-        try {
-            std::cout << "Receive data" << std::endl;
-            /* TODO: actualy receive data here - fake for now */
-            digitizerModel = "V1740D";
-            digitizerID = "137";
-            digitizer = "V1740D_137";
+            std::cout << "Unpacked metadata:" << std::endl;
+            std::cout << "version: " << metadata->version[0] << "." << metadata->version[1] << "." << metadata->version[2] << std::endl;
+            std::cout << "digitizerModel: " << metadata->digitizerModel << std::endl;
+            std::cout << "digitizerID: " << metadata->digitizerID << std::endl;
+            std::cout << "globalTime: " << metadata->globalTime << std::endl;
+
+            if (strcmp(Data::makeVersion(versiondata).c_str(), Data::makeVersion(metadata->version).c_str()) != 0) {
+                std::cerr << "ERROR: version mismatch between local and remote data format: " << std::endl;
+                std::cout << "local version: " << Data::makeVersion(versiondata) << std::endl;
+                std::cout << "remote version: " << Data::makeVersion(metadata->version) << std::endl;
+                throw std::runtime_error("version mismatch between local and remote data format");
+            }
+
+            digitizerModel = metadata->digitizerModel;
+            digitizerID = metadata->digitizerID;
+            nest.str("");
+            nest.clear();
+            nest << digitizerModel << "_" << digitizerID;
+            digitizer = nest.str();
 
             /* Create a new group for the digitizer if it doesn't
              * exist in the output file. */
@@ -256,8 +261,7 @@ int main(int argc, char **argv) {
 
             /* Create a new group for the global time stamp if it
              * doesn't exist in the output file. */
-            globaltime = std::time(nullptr);
-            eventsReceived = 1 + globaltime % 3;
+            globaltime = metadata->globalTime;
             nest.str("");
             nest.clear();
             nest << globaltime;
@@ -283,10 +287,14 @@ int main(int argc, char **argv) {
             
             delete digitizergroup;
 
+            /* TODO: handle waveformEvents as well*/
+            waveformEventsReceived = eventData->waveformEventsLength;
+
             /* Loop over received events and create a dataset for each
              * of them. */
+            listEventsReceived = eventData->listEventsLength;
             flavor = "list";
-            for (eventIndex = 0; eventIndex < eventsReceived; eventIndex++) {
+            for (eventIndex = 0; eventIndex < listEventsReceived; eventIndex++) {
                 /* Create a new dataset named after event index under
                  * globaltime group if it doesn't exist already. */
                 nest.str("");
@@ -312,10 +320,11 @@ int main(int argc, char **argv) {
                     createDataset = false;
                 }
             
-                /* Fake event for now */
-                channel = (eventIndex % 2) * 31;
-                localtime = (globaltime + eventIndex) & 0xFFFF;
-                charge = 242 + (localtime+eventIndex*13) % 100;
+                /* Read out fields from event for now */
+                listEvent = &(eventData->listEvents[eventIndex]);
+                channel = listEvent->channel;
+                localtime = listEvent->localTime;
+                charge = listEvent->adcValue;
                 std::cout << "Saving data from " << digitizer << " channel " << channel << " localtime " << localtime << " charge " << charge << std::endl;
                 data[0] = channel;
                 data[1] = localtime;
@@ -327,9 +336,6 @@ int main(int argc, char **argv) {
             }
             if (globaltimegroup != NULL)
                 delete globaltimegroup;
-
-            /* TODO: remove this sleep once we change to real data packages */
-            throttleDown = 1000;
         } catch(std::exception& e) {
             std::cerr << "unexpected exception during reception: " << e.what() << std::endl;
             /* NOTE: throttle down on errors */
