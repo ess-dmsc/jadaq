@@ -68,11 +68,14 @@ int main(int argc, char **argv) {
     boost::asio::io_service io_service;
     udp::endpoint receiver_endpoint;
     udp::socket *socket = NULL;
-    /* TODO: switch to this static buffer using MAXBUFSIZE */
-    //boost::array<uint8_t, MAXBUFSIZE> recv_buf;
-    boost::array<uint32_t, EVENTFIELDS> send_buf = EVENTINIT;
-    Data::Meta metadata;
-    Data::List::Element listEvent;
+    /* NOTE: use a static buffer of MAXBUFSIZE bytes for sending */
+    //boost::array<uint8_t, MAXBUFSIZE> send_buf;
+    //boost::array<uint32_t, EVENTFIELDS> send_buf = EVENTINIT;
+    char send_buf[MAXBUFSIZE];
+    memset(send_buf, MAXBUFSIZE, 0);
+    Data::EventData *eventData;
+    Data::Meta *metadata;
+    Data::PackedEvents packedEvents;
 
     uint32_t eventsSent = 0;
     std::string flavor;
@@ -127,19 +130,26 @@ int main(int argc, char **argv) {
             digitizerID = 137;
             digitizer = "V1740D_137";
             globaltime = std::time(nullptr);
+            flavor = "list";
+            eventsTarget = 1 + globaltime % 3;
+
+            memset(send_buf, 0, MAXBUFSIZE);
+            eventData = Data::setupEventData((void *)send_buf, MAXBUFSIZE, eventsTarget, 0);
+
+            std::cout << "Prepared eventData " << eventData << " from send_buf " << (void *)send_buf << std::endl;
+
+            metadata = eventData->metadata;
 
             /* NOTE: implicit version field from header init */
             /* NOTE: safe copy with explicit string termination */
-            strncpy(metadata.digitizerModel, digitizerModel.c_str(), MAXMODELSIZE);
-            metadata.digitizerModel[MAXMODELSIZE-1] = '\0';
-            metadata.digitizerID = digitizerID;
-            metadata.globalTime = globaltime;
-            metadata.listEvents = 0;
-            metadata.waveformEvents = 0;
+            strncpy(eventData->metadata->digitizerModel, digitizerModel.c_str(), MAXMODELSIZE);
+            eventData->metadata->digitizerModel[MAXMODELSIZE-1] = '\0';
+            eventData->metadata->digitizerID = digitizerID;
+            eventData->metadata->globalTime = globaltime;
+
+            std::cout << "Prepared eventData has " << eventData->listEventsLength << " listEvents " << std::endl;
 
             /* Loop generating variable number of events */
-            flavor = "list";
-            eventsTarget = 1 + globaltime % 3;
             std::cout << "Generate " << eventsTarget << " fake events from " << digitizer << std::endl;
 
             for (eventIndex = 0; eventIndex < eventsTarget; eventIndex++) {
@@ -148,16 +158,28 @@ int main(int argc, char **argv) {
                 channel = (eventIndex % 2) * 31;
                 localtime = (globaltime + eventIndex) & 0xFFFF;
                 charge = 242 + (localtime+eventIndex*13) % 100;
-                std::cout << "Sending event at " << globaltime << " from " << digitizer << " channel " << channel << " localtime " << localtime << " charge " << charge << std::endl;
+                std::cout << "Filling event at " << globaltime << " from " << digitizer << " channel " << channel << " localtime " << localtime << " charge " << charge << std::endl;
                 /* TODO: actualy use DataFormat for packaging */
+                /*
                 data[0] = channel;
                 data[1] = localtime;
                 data[2] = charge;
-                /* Send data to preconfigured receiver */
-                //socket->send_to(boost::asio::buffer(data), receiver_endpoint);
-                socket->send_to(boost::asio::buffer((char*)(&metadata),sizeof(metadata)), receiver_endpoint);
-                eventsSent += 1;
+                */
+                std::cout << "DEBUG: listEvents at " << eventData->listEvents << std::endl;
+                eventData->listEvents[eventIndex].localTime = localtime;
+                eventData->listEvents[eventIndex].extendTime = 0;
+                eventData->listEvents[eventIndex].adcValue = charge;
+                eventData->listEvents[eventIndex].channel = channel;
             }
+
+            std::cout << "Packing event at " << globaltime << " from " << digitizer << " channel " << channel << " localtime " << localtime << " charge " << charge << std::endl;
+            packedEvents = Data::packEventData(eventData, eventsTarget, 0);
+            /* Send data to preconfigured receiver */
+            std::cout << "Sending packed event of " << packedEvents.dataSize << "b at " << globaltime << " from " << digitizer << " channel " << channel << " localtime " << localtime << " charge " << charge << std::endl;
+            //socket->send_to(boost::asio::buffer(data), receiver_endpoint);
+            socket->send_to(boost::asio::buffer((char*)(packedEvents.data), packedEvents.dataSize), receiver_endpoint);
+            eventsSent += eventsTarget;
+
             /* TODO: make this delay command-line configurable? */
             throttleDown = 1000;
         } catch(std::exception& e) {

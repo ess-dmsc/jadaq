@@ -78,7 +78,6 @@ int main(int argc, char **argv) {
 
     /* Helpers */
     uint32_t eventsReceived = 0, eventsWritten = 0;
-    size_t bytesReceived = 0;
     std::string flavor;
 
     uint32_t eventIndex = 0;
@@ -94,16 +93,17 @@ int main(int argc, char **argv) {
     udp::endpoint receiver_endpoint;
     udp::socket *socket = NULL;
     /* NOTE: use a static buffer of MAXBUFSIZE bytes for receiving */
-    std::array<char, MAXBUFSIZE> bytes;
+    //std::array<char, MAXBUFSIZE> bytes;
+    char recv_buf[MAXBUFSIZE];
     udp::endpoint remote_endpoint;
     boost::system::error_code error;
-    Data::Buffer packedData;
-    packedData.data = NULL;
-    packedData.size = MAXBUFSIZE;
-    packedData.dataSize = 0;
-    Data::Meta metadata;
-    Data::List::Element listEvent;
-    Data::Waveform::Element *waveEvent = NULL;
+    Data::PackedEvents packedEvents;
+    packedEvents.data = &recv_buf;
+    packedEvents.size = MAXBUFSIZE;
+    packedEvents.dataSize = 0;
+    Data::EventData *eventData;
+    Data::Meta *metadata;
+    Data::List::Element *listEvent;
     uint32_t offset = 0;
 
     /* Path helpers */
@@ -202,28 +202,25 @@ int main(int argc, char **argv) {
         try {
             /* TODO: switch to Buffer transfer with explicit indexing
              * for meta and payloads */
-            bytesReceived = socket->receive_from(boost::asio::buffer((char*)(&metadata),sizeof(metadata)), remote_endpoint, 0, error);
+            packedEvents.dataSize = socket->receive_from(boost::asio::buffer((char*)(packedEvents.data), MAXBUFSIZE), remote_endpoint, 0, error);
             if (error && error != boost::asio::error::message_size)
                 throw boost::system::system_error(error);
-            std::cout << "Received " << bytesReceived << "b of data from " << remote_endpoint.address().to_string() << std::endl;
-            std::cout << "Metadata version: " << metadata.version[0] << "." << metadata.version[1] << "." << metadata.version[2] << std::endl;
-            std::cout << "Metadata digitizerModel: " << metadata.digitizerModel << std::endl;
-            std::cout << "Metadata digitizerID: " << metadata.digitizerID << std::endl;
-            std::cout << "Metadata globalTime: " << metadata.globalTime << std::endl;
-            std::cout << "Metadata listEvents: " << metadata.listEvents << std::endl;
-            std::cout << "Metadata waveformEvents: " << metadata.waveformEvents << std::endl;
-            /*
-            packedData = boost::asio::buffer_cast<Data::Buffer>recvBuf;
-            metadata = (Data::Meta *)packedData.data;
-            offset = sizeof(Data::Meta);
-            while (offset < bytesReceived) {
-                listEvent = (Data::List::Element *)((char *)metadata+offset);
-                offset += sizeof(Data::List::Element);
-                std::cout << "found list event: " << listEvent.channel
-            << " " <<listEvent.localtime << " " << listEvent.adcValue <<
-            std::endl;
+            std::cout << "Received " << packedEvents.dataSize << "b of data from " << remote_endpoint.address().to_string() << std::endl;
+
+            std::cout << "Unpack received package of " << packedEvents.dataSize << "b" << std::endl;
+            eventData = Data::unpackEventData(packedEvents);
+            metadata = eventData->metadata;
+            std::cout << "Metadata version: " << metadata->version[0] << "." << metadata->version[1] << "." << metadata->version[2] << std::endl;
+            std::cout << "Metadata digitizerModel: " << metadata->digitizerModel << std::endl;
+            std::cout << "Metadata digitizerID: " << metadata->digitizerID << std::endl;
+            std::cout << "Metadata globalTime: " << metadata->globalTime << std::endl;
+            std::cout << "EventData listEvents: " << eventData->listEventsLength << std::endl;
+            std::cout << "EventData waveformEvents: " << eventData->waveformEventsLength << std::endl;
+            eventsReceived = eventData->listEventsLength;
+            for (eventIndex = 0; eventIndex < eventsReceived; eventIndex++) {
+                listEvent = &(eventData->listEvents[eventIndex]);
+                std::cout << "received list event no " << eventIndex << " has localtime " << listEvent->localTime << " channel " << listEvent->channel << " charge " << listEvent->adcValue << std::endl;
             }
-            */
         } catch (std::exception& e) {
             std::cerr << e.what() << std::endl;
         }
