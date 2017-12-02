@@ -35,6 +35,12 @@
 #include "Configuration.hpp"
 #include "CAENConf.hpp"
 #include <boost/filesystem.hpp>
+#include <boost/asio.hpp>
+#include <boost/algorithm/string/regex.hpp>
+
+#include "DataFormat.hpp"
+
+using boost::asio::ip::udp;
 
 /* Keep running marker and interrupt signal handler */
 static int interrupted = 0;
@@ -53,15 +59,17 @@ static void setup_interrupt_handler()
 }
 
 int main(int argc, char **argv) {
-    if (argc < 2 or argc > 5)
+    if (argc < 2 or argc > 6)
     {
-        std::cout << "Usage: " << argv[0] << " <jadaq_config_file> [<override_config_file>] [simple_output_file_prefix] [<register_dump_file>]" << std::endl;
+        std::cout << "Usage: " << argv[0] << " <jadaq_config_file> [<override_config_file>] [<send_events_to>] [simple_output_file_prefix] [<register_dump_file>]" << std::endl;
         std::cout << "Reads in a partial/full configuration in <jadaq_config_file> " << std::endl;
         std::cout << "and configures the digitizer(s) accordingly." << std::endl;
         std::cout << "The current/resulting digitizer settings automatically " << std::endl;
         std::cout << "gets written out to <config_file>.out ." << std::endl;
         std::cout << "If the optional <override_config_file> on the CAEN sample " << std::endl;
         std::cout << "format is provided, any options there will be overriden." << std::endl;
+        std::cout << "If the optional <send_events_to> address:port string is " << std::endl;
+        std::cout << "provided all acquired events are sent on UDP there as well." << std::endl;
         std::cout << "If the optional <simple_output_file_prefix> is provided the " << std::endl;
         std::cout << "individual timestamps and charges are sequentially recorded " << std::endl;
         std::cout << "to a corresponding per-channel file with digitizer and " << std::endl;
@@ -78,14 +86,26 @@ int main(int argc, char **argv) {
     /* Helpers */
     uint64_t fullTimeTags[MAX_CHANNELS];
     uint32_t eventsFound = 0, bytesRead = 0, eventsUnpacked = 0;
-    uint32_t eventsDecoded = 0;
+    uint32_t eventsDecoded = 0, eventsSent = 0;
     uint32_t totalEventsFound = 0, totalBytesRead = 0, totalEventsUnpacked = 0;
-    uint32_t totalEventsDecoded = 0;
+    uint32_t totalEventsDecoded = 0, totalEventsSent = 0;
 
     uint32_t eventIndex = 0, decodeChannels = 0, i = 0, j = 0, k = 0;
     caen::BasicDPPEvent basicEvent;
     caen::BasicDPPWaveforms basicWaveforms;
     uint32_t charge = 0, timestamp = 0;
+    uint64_t globaltime = 0;
+
+    /* Communication helpers */
+    std::string address = "127.0.0.1", port = "12345";
+    boost::asio::io_service io_service;
+    udp::endpoint receiver_endpoint;
+    udp::socket *socket = NULL;
+    /* NOTE: use a static buffer of MAXBUFSIZE bytes for sending */
+    char send_buf[MAXBUFSIZE];
+    Data::EventData *eventData;
+    Data::Meta *metadata;
+    Data::PackedEvents packedEvents;
 
     /* Active digitizers */
     std::vector<Digitizer> digitizers;
@@ -133,14 +153,22 @@ int main(int argc, char **argv) {
     bool overrideEnabled = false, channelDumpEnabled = false;
     /* TODO: debug and enable wavedump */
     bool waveDumpEnabled = false, registerDumpEnabled = false;
+    bool sendEventEnabled = false;
     
     if (argc > 2 && strlen(argv[2]) > 0) {
         overrideEnabled = true;
         overrideFileName = std::string(argv[2]);
     }
     if (argc > 3 && strlen(argv[3])) {
+        sendEventEnabled = true;
+        std::vector <std::string> parts;
+        boost::algorithm::split_regex(parts, argv[3], boost::regex(":"));
+        address = parts[0];
+        port = parts[1];
+    }
+    if (argc > 4 && strlen(argv[4])) {
         channelDumpEnabled = true;
-        channelDumpPrefix = std::string(argv[3]);
+        channelDumpPrefix = std::string(argv[4]);
         boost::filesystem::path prefix(channelDumpPrefix);
         boost::filesystem::path dir = prefix.parent_path();
         try {
@@ -149,9 +177,9 @@ int main(int argc, char **argv) {
             std::cerr << "WARNING: failed to create channel dump output dir " << dir << " : " << e.what() << std::endl;                
         }
     }
-    if (argc > 4 && strlen(argv[4])) {
+    if (argc > 5 && strlen(argv[5])) {
         registerDumpEnabled = true;
-        registerDumpFileName = std::string(argv[4]);
+        registerDumpFileName = std::string(argv[5]);
     }
 
     /* Prepare and start acquisition for all digitizers */
@@ -193,6 +221,18 @@ int main(int argc, char **argv) {
                     channelWaveWriters[i].open(path.str(), std::ofstream::out);
                 }
                 
+            }
+        }
+        if (sendEventEnabled) {
+            /* Setup UDP sender */
+            try {
+                udp::resolver resolver(io_service);
+                udp::resolver::query query(udp::v4(), address.c_str(), port.c_str());
+                receiver_endpoint = *resolver.resolve(query);
+                socket = new udp::socket(io_service);
+                socket->open(udp::v4());
+            } catch (std::exception& e) {
+                std::cerr << e.what() << std::endl;
             }
         }
 
@@ -275,6 +315,26 @@ int main(int argc, char **argv) {
                     continue;
                 }
                 totalEventsFound += eventsFound;
+
+                globaltime = std::time(nullptr);
+
+                if (sendEventEnabled) {
+                    /* Reset send buffer each time to prevent any stale data */
+                    memset(send_buf, 0, MAXBUFSIZE);
+                    /* TODO: is this event count correct for DPP? */
+                    eventData = Data::setupEventData((void *)send_buf, MAXBUFSIZE, eventsFound, 0);
+
+                    std::cout << "Prepared eventData " << eventData << " from send_buf " << (void *)send_buf << std::endl;
+
+                    metadata = eventData->metadata;
+                    /* NOTE: safe copy with explicit string termination */
+                    strncpy(eventData->metadata->digitizerModel, digitizer.model().c_str(), MAXMODELSIZE);
+                    eventData->metadata->digitizerModel[MAXMODELSIZE-1] = '\0';
+                    eventData->metadata->digitizerID = std::stoi(digitizer.serial());
+                    eventData->metadata->globalTime = globaltime;
+                    std::cout << "Prepared eventData has " << eventData->listEventsLength << " listEvents " << std::endl;
+                }
+
                 if (digitizer.caenIsDPPFirmware()) {
                     std::cout << "Unpack " << eventsFound << " DPP events from " << digitizer.name() << std::endl;
                     digitizer.caenGetDPPEvents(digitizer.caenGetPrivReadoutBuffer(), digitizer.caenGetPrivDPPEvents());
@@ -359,10 +419,27 @@ int main(int argc, char **argv) {
                                 }
                             }                            
 
-                            /* TODO: pack and send out UDP */
-
+                            if (sendEventEnabled) {
+                                /* Create a new dataset named after event index under
+                                 * globaltime group if it doesn't exist already. */
+                                std::cout << "Filling event at " << globaltime << " from " << digitizer.name() << " channel " << i << " localtime " << timestamp << " charge " << charge << std::endl;
+                                eventData->listEvents[j].localTime = timestamp;
+                                eventData->listEvents[j].extendTime = 0;
+                                eventData->listEvents[j].adcValue = charge;
+                                eventData->listEvents[j].channel = i;
+                            }   
                         }
                     }
+                    if (sendEventEnabled) {
+                        std::cout << "Packing events at " << globaltime << " from " << digitizer.name() << std::endl;
+                        packedEvents = Data::packEventData(eventData, eventsUnpacked, 0);
+                        /* Send data to preconfigured receiver */
+                        std::cout << "Sending packed events of " << packedEvents.dataSize << "b at " << globaltime << " from " << digitizer.name() << " to " << address << ":" << port << std::endl;
+                        socket->send_to(boost::asio::buffer((char*)(packedEvents.data), packedEvents.dataSize), receiver_endpoint);
+                        eventsSent += eventsUnpacked;
+                        totalEventsSent += eventsSent;
+                    }
+
                     if (eventsDecoded < 1)
                         continue;
                     totalEventsDecoded += eventsDecoded;
@@ -390,6 +467,7 @@ int main(int argc, char **argv) {
             std::cout << "Aggregated events found: " << totalEventsFound << std::endl;
             std::cout << "Individual events unpacked: " << totalEventsUnpacked << std::endl;
             std::cout << "Individual events decoded: " << totalEventsDecoded << std::endl;
+            std::cout << "Individual events sent: " << totalEventsSent << std::endl;
 
         } catch(std::exception& e) {
             std::cerr << "unexpected exception during acquisition: " << e.what() << std::endl;

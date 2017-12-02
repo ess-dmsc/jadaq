@@ -51,6 +51,7 @@ private:
 public:
     Digitizer(int usb, uint32_t vme) : digitizer(caen::Digitizer::USB(usb,vme)), usb_(usb), vme_(vme) {}
     const std::string name() { return digitizer->modelName() + "_" + std::to_string(digitizer->serialNumber()); }
+    const std::string model() { return digitizer->modelName(); }
     const std::string serial() { return std::to_string(digitizer->serialNumber()); }
     const int usb() { return usb_; }
     const int vme() { return vme_; }
