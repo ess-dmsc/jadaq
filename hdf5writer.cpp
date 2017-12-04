@@ -115,17 +115,16 @@ int main(int argc, char **argv) {
 
     /* Act on command-line arguments */
     if (argc > 1) {
-        configFileName = std::string(argv[1]);
-        std::cout << "Reading hdf5writer configuration from: " << configFileName << std::endl;
-    } else {
-        std::cout << "Using default hdf5writer configuration." << std::endl;
+        address = std::string(argv[1]);
     }
     if (argc > 2) {
-        outputFileName = std::string(argv[2]);
-        std::cout << "Writing hdf5 formatted data to: " << outputFileName << std::endl;
-    } else {
-        std::cout << "Using default hdf5 output location: " << outputFileName << std::endl;
+        port = std::string(argv[2]);
     }
+    if (argc > 3) {
+        outputFileName = std::string(argv[2]);
+    }
+    std::cout << "Listening for UDP packages on: " << address << ":" << port << std::endl;
+    std::cout << "Writing hdf5 formatted data to: " << outputFileName << std::endl;
 
     /* Prepare and start event handling */
     std::cout << "Setup hdf5writer" << std::endl;
