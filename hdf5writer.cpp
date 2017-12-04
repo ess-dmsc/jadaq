@@ -66,9 +66,8 @@ static void setup_interrupt_handler()
 int main(int argc, char **argv) {
     if (argc > 3)
     {
-        std::cout << "Usage: " << argv[0] << " [<config_file>] [<output_file>]" << std::endl;
-        std::cout << "Reads in a partial/full configuration in <config_file> " << std::endl;
-        std::cout << "and configures the hdf5writer accordingly. Then dumps " << std::endl;
+        std::cout << "Usage: " << argv[0] << " [<address>] [<port>] [<output_file>]" << std::endl;
+        std::cout << "Listens for events on <address>:<port> and dumps " << std::endl;
         std::cout << "received data as HDF5 into <output_file>. " << std::endl;
         return -1;
     }
@@ -89,7 +88,6 @@ int main(int argc, char **argv) {
     uint64_t globaltime = 0;
 
     /* Listening helpers */
-    /* TODO: expose address and port as input args or conf values */
     std::string address = "127.0.0.1", port = "12345";
     boost::asio::io_service io_service;
     udp::endpoint receiver_endpoint;
@@ -110,22 +108,20 @@ int main(int argc, char **argv) {
     uint32_t offset = 0;
 
     /* Path helpers */
-    std::string configFileName;
     std::string outputFileName = "out.h5";
 
     /* Act on command-line arguments */
     if (argc > 1) {
-        configFileName = std::string(argv[1]);
-        std::cout << "Reading hdf5writer configuration from: " << configFileName << std::endl;
-    } else {
-        std::cout << "Using default hdf5writer configuration." << std::endl;
+        address = std::string(argv[1]);
     }
     if (argc > 2) {
-        outputFileName = std::string(argv[2]);
-        std::cout << "Writing hdf5 formatted data to: " << outputFileName << std::endl;
-    } else {
-        std::cout << "Using default hdf5 output location: " << outputFileName << std::endl;
+        port = std::string(argv[2]);
     }
+    if (argc > 3) {
+        outputFileName = std::string(argv[2]);
+    }
+    std::cout << "Listening for UDP packages on: " << address << ":" << port << std::endl;
+    std::cout << "Writing hdf5 formatted data to: " << outputFileName << std::endl;
 
     /* Prepare and start event handling */
     std::cout << "Setup hdf5writer" << std::endl;
@@ -136,20 +132,38 @@ int main(int argc, char **argv) {
     H5std_string groupname, datasetname, versionname = H5std_string("version");
     std::stringstream nest;
     H5File *outfile = NULL;
+    unsigned int h5flags = 0;
+    /* NOTE: we enable single writer / multiple reader (SWMR) if hdf5 is
+     * recent enough to support it (version 1.10+). It should be noted
+     * that the SWMR user guide explicitly points out that adding groups
+     * or datasets is NOT supported with SWMR, so it may still not work
+     * for our purpose, and at least readers may have to regularly
+     * reopen the file to detect the addition of data. 
+     * It does seem to work at least for the simple hdf5monitor.py
+     * included here, however.
+     * We explicitly flush data to disk after each accumulated event
+     * package to make sure updates get written regularly.
+     */
+#if H5_VERSION_GE(1,10,0)
+        h5flags |= H5F_ACC_SWMR_WRITE;
+        std::cout << "NOTE: Found a recent HDF version - enabling SWMR." << std::endl;
+#else
+        std::cout << "WARNING: HDF versions before 1.10 do not support SWMR - disabling." << std::endl;
+#endif
     Group *rootgroup = NULL, *digitizergroup = NULL, *globaltimegroup = NULL;
     DataSet *dataset = NULL;
     DataSpace versionspace;
     Attribute *versionattr = NULL;
+    /* NOTE: enable H5F_ACC_SWMR_WRITE/READ if available - requires 1.10+ */
     try {
         /* TODO: should we truncate or just keep adding? */
-        /* TODO: enable H5F_ACC_SWMR_WRITE ?*/
         if (createOutfile) {
             std::cout << "Creating new outfile " << outname << std::endl;
-            outfile = new H5File(outname, H5F_ACC_TRUNC);
-        } else {    
-            std::cout << "Opening existing outfile " << outname << std::endl;
-            outfile = new H5File(outname, H5F_ACC_RDWR);
+            outfile = new H5File(outname, h5flags|H5F_ACC_TRUNC);
+            delete outfile;
         }
+        std::cout << "Opening existing outfile " << outname << std::endl;
+        outfile = new H5File(outname, h5flags|H5F_ACC_RDWR);
     } catch(FileIException error) {
         std::cerr << "ERROR: could not open/create outfile " << outname << std::endl;
         error.printError();
@@ -163,6 +177,7 @@ int main(int argc, char **argv) {
         versionspace = DataSpace(1, versiondims);
         versionattr = new Attribute(rootgroup->createAttribute(versionname, PredType::STD_U16LE, versionspace));
         versionattr->write(PredType::STD_U16LE, versiondata);
+        outfile->flush(H5F_SCOPE_GLOBAL);
         delete versionattr;
         delete rootgroup;
     } catch(FileIException error) {
@@ -335,6 +350,8 @@ int main(int argc, char **argv) {
                 if (dataset != NULL)
                     delete dataset;
             }
+            /* Write data to disk after handling each globaltimegroup */
+            outfile->flush(H5F_SCOPE_GLOBAL);
             if (globaltimegroup != NULL)
                 delete globaltimegroup;
         } catch(std::exception& e) {
