@@ -24,6 +24,7 @@
  *
  */
 
+#include <getopt.h>
 #include <signal.h>
 #include <chrono>
 #include <thread>
@@ -63,14 +64,61 @@ static void setup_interrupt_handler()
     sigaction(SIGTERM, &sigIntHandler, NULL);
 }
 
+void usageHelp(char *name) 
+{
+    std::cout << "Usage: " << name << " [<options>] [<output_file>]" << std::endl;
+    std::cout << "Where <options> can be:" << std::endl;
+    std::cout << "--address / -a ADDRESS   the UDP network address to listen on." << std::endl;
+    std::cout << "--port / -p PORT         the UDP network port to listen on." << std::endl;
+    std::cout << std::endl << "Listens for events on the network and dumps " << std::endl;
+    std::cout << "received data as HDF5 into <output_file>." << std::endl;
+}
+
 int main(int argc, char **argv) {
-    if (argc > 3)
-    {
-        std::cout << "Usage: " << argv[0] << " [<address>] [<port>] [<output_file>]" << std::endl;
-        std::cout << "Listens for events on <address>:<port> and dumps " << std::endl;
-        std::cout << "received data as HDF5 into <output_file>. " << std::endl;
-        return -1;
+    const char* const short_opts = "a:hp:";
+    const option long_opts[] = {
+        {"address", 1, nullptr, 'a'},
+        {"help", 0, nullptr, 'h'},
+        {"port", 1, nullptr, 'p'},
+        {nullptr, 0, nullptr, 0}
+    };
+
+    /* Default option values */
+    std::string address = DEFAULT_UDP_ADDRESS, port = DEFAULT_UDP_PORT;
+    std::string outputFileName = "out.h5";
+
+    /* Parse command line options */
+    while (true) {
+        const auto opt = getopt_long(argc, argv, short_opts, long_opts, nullptr);
+        if (-1 == opt)
+            break;
+
+        switch (opt) {
+        case 'a':
+            address = std::string(optarg);
+            break;
+        case 'p':
+            port = std::string(optarg);
+            break;
+        case 'h': // -h or --help
+        case '?': // Unrecognized option
+        default:
+            usageHelp(argv[0]);
+            break;
+        }
     }
+
+    /* Check and act on positional command-line arguments */
+    if (argc - optind > 1) {
+        usageHelp(argv[0]);
+        exit(1);
+    }
+    if(argc - optind > 0) {
+        outputFileName = std::string(argv[optind]);
+    }
+
+    std::cout << "Listening for UDP packages on: " << address << ":" << port << std::endl;
+    std::cout << "Writing hdf5 formatted data to: " << outputFileName << std::endl;
 
     /* Data format version - please increment on versiondata on layout changes */
     uint16_t versiondata[VERSIONPARTS] = VERSION;
@@ -88,7 +136,6 @@ int main(int argc, char **argv) {
     uint64_t globaltime = 0;
 
     /* Listening helpers */
-    std::string address = "127.0.0.1", port = "12345";
     boost::asio::io_service io_service;
     udp::endpoint receiver_endpoint;
     udp::socket *socket = NULL;
@@ -106,22 +153,6 @@ int main(int argc, char **argv) {
     Data::List::Element *listEvent;
     Data::Waveform::Element *waveformEvent;
     uint32_t offset = 0;
-
-    /* Path helpers */
-    std::string outputFileName = "out.h5";
-
-    /* Act on command-line arguments */
-    if (argc > 1) {
-        address = std::string(argv[1]);
-    }
-    if (argc > 2) {
-        port = std::string(argv[2]);
-    }
-    if (argc > 3) {
-        outputFileName = std::string(argv[2]);
-    }
-    std::cout << "Listening for UDP packages on: " << address << ":" << port << std::endl;
-    std::cout << "Writing hdf5 formatted data to: " << outputFileName << std::endl;
 
     /* Prepare and start event handling */
     std::cout << "Setup hdf5writer" << std::endl;

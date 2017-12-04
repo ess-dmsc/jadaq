@@ -20,7 +20,7 @@ find_library(CAEN_LIB NAMES CAENDigitizer
         HINTS   $ENV{HOME}/lib)
 include_directories(${CAEN_INCLUDE_DIR})
 
-find_package(Boost COMPONENTS system filesystem regex REQUIRED)
+find_package(Boost COMPONENTS system filesystem REQUIRED)
 
 add_library(debugCAENComm SHARED debugCAENComm.c)
 target_link_libraries(debugCAENComm dl)

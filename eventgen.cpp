@@ -25,6 +25,7 @@
  *
  */
 
+#include <getopt.h>
 #include <signal.h>
 #include <chrono>
 #include <thread>
@@ -54,17 +55,57 @@ static void setup_interrupt_handler()
     sigaction(SIGTERM, &sigIntHandler, NULL);
 }
 
+void usageHelp(char *name) 
+{
+    std::cout << "Usage: " << name << " [<options>]" << std::endl;
+    std::cout << "Where <options> can be:" << std::endl;
+    std::cout << "--address / -a ADDRESS   the UDP network address to send to." << std::endl;
+    std::cout << "--port / -p PORT         the UDP network port to send to." << std::endl;
+    std::cout << std::endl << "Generates events and sends them out on the network " << std::endl;
+    std::cout << "as UDP packages for the provided destination. Use a broadcast " << std::endl;
+    std::cout << "address to target multiple listeners." << std::endl;
+}
+
 int main(int argc, char **argv) {
-    if (argc > 3)
-    {
-        std::cout << "Usage: " << argv[0] << " <address> <port>" << std::endl;
-        std::cout << "Generates events and sends them out as UDP packages to " << std::endl;
-        std::cout << "given <address> and <port>." << std::endl;
-        return -1;
+    const char* const short_opts = "a:hp:";
+    const option long_opts[] = {
+        {"address", 1, nullptr, 'a'},
+        {"help", 0, nullptr, 'h'},
+        {"port", 1, nullptr, 'p'},
+        {nullptr, 0, nullptr, 0}
+    };
+
+    /* Default option values */
+    std::string address = DEFAULT_UDP_ADDRESS, port = DEFAULT_UDP_PORT;
+
+    /* Parse command line options */
+    while (true) {
+        const auto opt = getopt_long(argc, argv, short_opts, long_opts, nullptr);
+        if (-1 == opt)
+            break;
+
+        switch (opt) {
+        case 'a':
+            address = std::string(optarg);
+            break;
+        case 'p':
+            port = std::string(optarg);
+            break;
+        case 'h': // -h or --help
+        case '?': // Unrecognized option
+        default:
+            usageHelp(argv[0]);
+            break;
+        }
+    }
+
+    /* No further command-line arguments */
+    if (argc - optind > 0) {
+        usageHelp(argv[0]);
+        exit(1);
     }
 
     /* Helpers */
-    std::string address = "127.0.0.1", port = "12345";
     boost::asio::io_service io_service;
     udp::endpoint receiver_endpoint;
     udp::socket *socket = NULL;
@@ -84,13 +125,6 @@ int main(int argc, char **argv) {
     uint32_t channel = 0, charge = 0, localtime = 0;
     uint64_t globaltime = 0;
     
-    /* Act on command-line arguments */
-    if (argc > 1) {
-        address = std::string(argv[1]);
-    }
-    if (argc > 2) {
-        port = std::string(argv[2]);
-    }
     std::cout << "Sending UDP packages to: " << address << ":" << port << std::endl;
 
     /* Setup UDP sender */

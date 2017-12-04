@@ -25,6 +25,7 @@
  *
  */
 
+#include <getopt.h>
 #include <signal.h>
 #include <chrono>
 #include <thread>
@@ -36,7 +37,6 @@
 #include "CAENConf.hpp"
 #include <boost/filesystem.hpp>
 #include <boost/asio.hpp>
-#include <boost/algorithm/string/regex.hpp>
 
 #include "DataFormat.hpp"
 
@@ -58,30 +58,104 @@ static void setup_interrupt_handler()
     sigaction(SIGTERM, &sigIntHandler, NULL);
 }
 
+void usageHelp(char *name) 
+{
+    std::cout << "Usage: " << name << " [<options>] [<jadaq_config_file>]" << std::endl;
+    std::cout << "Where <options> can be:" << std::endl;
+    std::cout << "--address / -a ADDRESS     optional UDP network address to send to." << std::endl;
+    std::cout << "--port / -p PORT           optional UDP network port to send to." << std::endl;
+    std::cout << "--confoverride / -c FILE   optional conf overrides on CAEN format." << std::endl;
+    std::cout << "--dumpprefix / -d PREFIX   optional prefix for output dump to file." << std::endl;
+    std::cout << "--registerdump / -r FILE   optional file to save register dump in." << std::endl;
+    std::cout << std::endl << "Reads in a configuration from <jadaq_config_file> " << std::endl;
+    std::cout << "and configures the digitizer(s) accordingly." << std::endl;
+    std::cout << "The current/resulting digitizer settings automatically " << std::endl;
+    std::cout << "gets written out to <config_file>.out ." << std::endl;
+    std::cout << "After configuration the acquisition is started from all " << std::endl;
+    std::cout << "configured digitizers and for each data readout the " << std::endl;
+    std::cout << "events are unpacked/decoded. They can be written to disk " << std::endl;
+    std::cout << "on request and sent out on the network as UDP packages if " << std::endl;
+    std::cout << "both address and port are provided. Use a broadcast address" << std::endl;
+    std::cout << "to target multiple listeners." << std::endl;
+    std::cout << "If the optional simpledump prefix is provided the " << std::endl;
+    std::cout << "individual timestamps and charges are sequentially recorded " << std::endl;
+    std::cout << "to a corresponding per-channel file with digitizer and " << std::endl;
+    std::cout << "channel appended (i.e. use 'output/list' for files named " << std::endl;
+    std::cout << "list-DIGITIZER-charge-00.txt to ...-64.txt in 'output' dir." << std::endl;
+    std::cout << "If the optional register dump file is provided a read-out " << std::endl;
+    std::cout << "of the important digitizer registers is dumped there." << std::endl;
+}
+
 int main(int argc, char **argv) {
-    if (argc < 2 or argc > 6)
-    {
-        std::cout << "Usage: " << argv[0] << " <jadaq_config_file> [<override_config_file>] [<send_events_to>] [simple_output_file_prefix] [<register_dump_file>]" << std::endl;
-        std::cout << "Reads in a partial/full configuration in <jadaq_config_file> " << std::endl;
-        std::cout << "and configures the digitizer(s) accordingly." << std::endl;
-        std::cout << "The current/resulting digitizer settings automatically " << std::endl;
-        std::cout << "gets written out to <config_file>.out ." << std::endl;
-        std::cout << "If the optional <override_config_file> on the CAEN sample " << std::endl;
-        std::cout << "format is provided, any options there will be overriden." << std::endl;
-        std::cout << "If the optional <send_events_to> address:port string is " << std::endl;
-        std::cout << "provided all acquired events are sent on UDP there as well." << std::endl;
-        std::cout << "If the optional <simple_output_file_prefix> is provided the " << std::endl;
-        std::cout << "individual timestamps and charges are sequentially recorded " << std::endl;
-        std::cout << "to a corresponding per-channel file with digitizer and " << std::endl;
-        std::cout << "channel appended (i.e. use 'output/list' for files named " << std::endl;
-        std::cout << "list-DIGITIZER-charge-00.txt to ...-64.txt in 'output' dir." << std::endl;
-        std::cout << "If the optional <register_dump_file> is provided a read " << std::endl;
-        std::cout << "out of the important digitizer registers is dumped there." << std::endl;
-        std::cout << "After configuration the acquisition is started from all " << std::endl;
-        std::cout << "configured digitizers and for each data readout the " << std::endl;
-        std::cout << "events are unpacked/decoded and sent out on UDP." << std::endl;
-        return -1;
+    const char* const short_opts = "a:c:d:hp:r:";
+    const option long_opts[] = {
+        {"address", 1, nullptr, 'a'},
+        {"confoverride", 1, nullptr, 'c'},
+        {"dumpprefix", 1, nullptr, 'd'},
+        {"help", 0, nullptr, 'h'},
+        {"port", 1, nullptr, 'p'},
+        {"registerdump", 1, nullptr, 'r'},
+        {nullptr, 0, nullptr, 0}
+    };
+
+    /* Default option values */
+    std::string address = DEFAULT_UDP_ADDRESS, port = DEFAULT_UDP_PORT;
+    std::string configFileName = "";
+    std::string overrideFileName = "";
+    std::string channelDumpPrefix = "";
+    std::string registerDumpFileName = "";
+    bool overrideEnabled = false, channelDumpEnabled = false;
+    /* TODO: debug and enable wavedump */
+    bool waveDumpEnabled = false, registerDumpEnabled = false;
+    bool sendEventEnabled = false;
+
+    /* Parse command line options */
+    while (true) {
+        const auto opt = getopt_long(argc, argv, short_opts, long_opts, nullptr);
+        if (-1 == opt)
+            break;
+
+        switch (opt) {
+        case 'a':
+            address = std::string(optarg);
+            break;
+        case 'c':
+            overrideFileName = std::string(optarg);
+            overrideEnabled = true;
+            break;
+        case 'd':
+            channelDumpPrefix = std::string(optarg);
+            channelDumpEnabled = true;
+            waveDumpEnabled = true;
+            break;
+        case 'p':
+            port = std::string(optarg);
+            break;
+        case 'r':
+            registerDumpFileName = std::string(optarg);
+            registerDumpEnabled = true;
+            break;
+        case 'h': // -h or --help
+        case '?': // Unrecognized option
+        default:
+            usageHelp(argv[0]);
+            break;
+        }
     }
+
+    if (address.length() > 0 && port.length() > 0) {
+            sendEventEnabled = true;
+    }
+    
+    /* No further command-line arguments */
+    if (argc - optind > 1) {
+        usageHelp(argv[0]);
+        exit(1);
+    }
+    if (argc - optind > 1) {
+        configFileName = argv[optind];
+    }
+    
 
     /* Helpers */
     uint64_t fullTimeTags[MAX_CHANNELS];
@@ -97,7 +171,6 @@ int main(int argc, char **argv) {
     uint64_t globaltime = 0;
 
     /* Communication helpers */
-    std::string address = "127.0.0.1", port = "12345";
     boost::asio::io_service io_service;
     udp::endpoint receiver_endpoint;
     udp::socket *socket = NULL;
@@ -110,14 +183,7 @@ int main(int argc, char **argv) {
     /* Active digitizers */
     std::vector<Digitizer> digitizers;
 
-    /* Path helpers */
-    std::string configFileName;
-    std::string overrideFileName;
-    std::string channelDumpPrefix;
-    std::string registerDumpFileName;
-    
     /* Read-in and write resulting digitizer configuration */
-    configFileName = std::string(argv[1]);
     std::ifstream configFile(configFileName);
     if (!configFile.good())
     {
@@ -150,25 +216,8 @@ int main(int argc, char **argv) {
     ofstream_map charge_writer_map;
     ofstream_map wave_writer_map;
     std::stringstream path;
-    bool overrideEnabled = false, channelDumpEnabled = false;
-    /* TODO: debug and enable wavedump */
-    bool waveDumpEnabled = false, registerDumpEnabled = false;
-    bool sendEventEnabled = false;
     
-    if (argc > 2 && strlen(argv[2]) > 0) {
-        overrideEnabled = true;
-        overrideFileName = std::string(argv[2]);
-    }
-    if (argc > 3 && strlen(argv[3])) {
-        sendEventEnabled = true;
-        std::vector <std::string> parts;
-        boost::algorithm::split_regex(parts, argv[3], boost::regex(":"));
-        address = parts[0];
-        port = parts[1];
-    }
-    if (argc > 4 && strlen(argv[4])) {
-        channelDumpEnabled = true;
-        channelDumpPrefix = std::string(argv[4]);
+    if (channelDumpEnabled) {
         boost::filesystem::path prefix(channelDumpPrefix);
         boost::filesystem::path dir = prefix.parent_path();
         try {
@@ -176,10 +225,6 @@ int main(int argc, char **argv) {
         } catch (std::exception& e) {
             std::cerr << "WARNING: failed to create channel dump output dir " << dir << " : " << e.what() << std::endl;                
         }
-    }
-    if (argc > 5 && strlen(argv[5])) {
-        registerDumpEnabled = true;
-        registerDumpFileName = std::string(argv[5]);
     }
 
     /* Prepare and start acquisition for all digitizers */
