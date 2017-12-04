@@ -2891,6 +2891,7 @@ namespace caen {
         { errorHandler(_CAEN_DGTZ_FreeDPPWaveforms(handle_, waveforms.ptr)); waveforms.ptr = NULL; waveforms.allocatedSize = 0; }
 
         /* Detector data information and manipulation*/
+        /* TODO: getNumEvents is only accurate for non-DDP firmware - disable for DPP? */
         uint32_t getNumEvents(ReadoutBuffer buffer)
         {uint32_t n; errorHandler(CAEN_DGTZ_GetNumEvents(handle_, buffer.data, buffer.dataSize, &n)); return n; }
 

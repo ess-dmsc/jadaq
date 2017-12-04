@@ -28,6 +28,7 @@
 #include <chrono>
 #include <thread>
 #include <iostream>
+#include <iomanip>
 #include <sstream>
 #include <fstream>
 #include <string>
@@ -299,7 +300,7 @@ int main(int argc, char **argv) {
                  * globaltime group if it doesn't exist already. */
                 nest.str("");
                 nest.clear();
-                nest << flavor << "-" << eventIndex;
+                nest << flavor << "-" << std::setfill('0') << std::setw(3) << eventIndex;
                 datasetname = H5std_string(nest.str());
                 createDataset = true;
                 try {

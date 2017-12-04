@@ -307,25 +307,39 @@ int main(int argc, char **argv) {
                 bytesRead = digitizer.caenGetPrivReadoutBuffer().dataSize;
                 totalBytesRead += bytesRead;
                 std::cout << "Read " << bytesRead << "b of acquired data" << std::endl;
-                eventsFound = digitizer.caenGetNumEvents(digitizer.caenGetPrivReadoutBuffer());
-                std::cout << "Acquired data from " << digitizer.name() << " contains " << eventsFound << " event(s)." << std::endl;
-                if (eventsFound < 1) {
-                    std::cout << "No events found - no further handling." << std::endl;
-                    throttleDown = std::min((uint32_t)2000, 2*throttleDown + 100);
-                    continue;
-                }
-                totalEventsFound += eventsFound;
 
                 globaltime = std::time(nullptr);
+
+                if (digitizer.caenIsDPPFirmware()) {
+                    std::cout << "Unpack aggregated DPP events from " << digitizer.name() << std::endl;
+                    digitizer.caenGetDPPEvents(digitizer.caenGetPrivReadoutBuffer(), digitizer.caenGetPrivDPPEvents());
+                    eventsFound = 0;
+                    for (i = 0; i < MAX_CHANNELS; i++) {
+                        eventsFound += digitizer.caenGetPrivDPPEvents().nEvents[i];
+                    }
+                    eventsUnpacked = eventsFound;
+                    if (eventsFound < 1)
+                        continue;
+                    totalEventsUnpacked += eventsUnpacked;
+                    totalEventsFound += eventsFound;
+                    std::cout << "Unpacked " << eventsUnpacked << " DPP events from all channels." << std::endl;
+                } else {
+                    eventsFound = digitizer.caenGetNumEvents(digitizer.caenGetPrivReadoutBuffer());
+                    std::cout << "Acquired data from " << digitizer.name() << " contains " << eventsFound << " event(s)." << std::endl;
+                    if (eventsFound < 1) {
+                        std::cout << "No events found - no further handling." << std::endl;
+                        throttleDown = std::min((uint32_t)2000, 2*throttleDown + 100);
+                        continue;
+                    }
+                    totalEventsFound += eventsFound;
+                    eventsUnpacked = 0;
+                }
 
                 if (sendEventEnabled) {
                     /* Reset send buffer each time to prevent any stale data */
                     memset(send_buf, 0, MAXBUFSIZE);
-                    /* TODO: is this event count correct for DPP? */
                     eventData = Data::setupEventData((void *)send_buf, MAXBUFSIZE, eventsFound, 0);
-
                     std::cout << "Prepared eventData " << eventData << " from send_buf " << (void *)send_buf << std::endl;
-
                     metadata = eventData->metadata;
                     /* NOTE: safe copy with explicit string termination */
                     strncpy(eventData->metadata->digitizerModel, digitizer.model().c_str(), MAXMODELSIZE);
@@ -336,17 +350,7 @@ int main(int argc, char **argv) {
                 }
 
                 if (digitizer.caenIsDPPFirmware()) {
-                    std::cout << "Unpack " << eventsFound << " DPP events from " << digitizer.name() << std::endl;
-                    digitizer.caenGetDPPEvents(digitizer.caenGetPrivReadoutBuffer(), digitizer.caenGetPrivDPPEvents());
-                    eventsUnpacked = 0;
-                    for (i = 0; i < MAX_CHANNELS; i++) {
-                        eventsUnpacked += digitizer.caenGetPrivDPPEvents().nEvents[i];
-                    }
-                    if (eventsUnpacked < 1)
-                        continue;
-                    totalEventsUnpacked += eventsUnpacked;
-                    std::cout << "Unpacked " << eventsUnpacked << " DPP events from all channels." << std::endl;
-
+                    eventIndex = 0;
                     eventsDecoded = 0;
                     for (i = 0; i < MAX_CHANNELS; i++) {
                         for (j = 0; j < digitizer.caenGetPrivDPPEvents().nEvents[i]; j++) {
@@ -420,32 +424,17 @@ int main(int argc, char **argv) {
                             }                            
 
                             if (sendEventEnabled) {
-                                /* Create a new dataset named after event index under
-                                 * globaltime group if it doesn't exist already. */
                                 std::cout << "Filling event at " << globaltime << " from " << digitizer.name() << " channel " << i << " localtime " << timestamp << " charge " << charge << std::endl;
-                                eventData->listEvents[j].localTime = timestamp;
-                                eventData->listEvents[j].extendTime = 0;
-                                eventData->listEvents[j].adcValue = charge;
-                                eventData->listEvents[j].channel = i;
-                            }   
+                                eventData->listEvents[eventIndex].localTime = timestamp;
+                                eventData->listEvents[eventIndex].extendTime = 0;
+                                eventData->listEvents[eventIndex].adcValue = charge;
+                                eventData->listEvents[eventIndex].channel = i;
+                            }
+                            eventIndex += 1;
                         }
                     }
-                    if (sendEventEnabled) {
-                        std::cout << "Packing events at " << globaltime << " from " << digitizer.name() << std::endl;
-                        packedEvents = Data::packEventData(eventData, eventsUnpacked, 0);
-                        /* Send data to preconfigured receiver */
-                        std::cout << "Sending packed events of " << packedEvents.dataSize << "b at " << globaltime << " from " << digitizer.name() << " to " << address << ":" << port << std::endl;
-                        socket->send_to(boost::asio::buffer((char*)(packedEvents.data), packedEvents.dataSize), receiver_endpoint);
-                        eventsSent += eventsUnpacked;
-                        totalEventsSent += eventsSent;
-                    }
-
-                    if (eventsDecoded < 1)
-                        continue;
-                    totalEventsDecoded += eventsDecoded;
-
-                } else {
-                    eventsUnpacked = 0;
+                } else { 
+                    /* Handle the non-DPP case */
                     eventsDecoded = 0;
                     for (eventIndex=0; eventIndex < eventsFound; eventIndex++) {
                         digitizer.caenGetEventInfo(digitizer.caenGetPrivReadoutBuffer(), eventIndex);
@@ -454,12 +443,38 @@ int main(int argc, char **argv) {
                         digitizer.caenDecodeEvent(digitizer.caenGetPrivEventInfo(), digitizer.caenGetPrivEvent());
                         std::cout << "Decoded event " << digitizer.caenGetPrivEventInfo().EventCounter << "  of " << eventsFound << " events from " << digitizer.name() << std::endl;
                         eventsDecoded += 1;
+                        /* TODO: enable something like the following */
+                        /*
+                        basicEvent = digitizer.caenExtractBasicEvent(digitizer.caenGetPrivEventInfo());
+                        timestamp = basicEvent.timestamp & 0xFFFFFFFF;
+                        charge = basicEvent.charge;
+                        channel = basicEvent.channel;
+                        if (sendEventEnabled) {
+                            std::cout << "Filling event at " << globaltime << " from " << digitizer.name() << " channel " << i << " localtime " << timestamp << " charge " << charge << std::endl;
+                            eventData->listEvents[eventIndex].localTime = timestamp;
+                            eventData->listEvents[eventIndex].extendTime = 0;
+                            eventData->listEvents[eventIndex].adcValue = charge;
+                            eventData->listEvents[eventIndex].channel = i;
+                        }   
+                        */
                     }
                     totalEventsUnpacked += eventsUnpacked;
                     totalEventsDecoded += eventsDecoded;
-                    
-                    /* TODO: pack and send out UDP */
                 }
+
+                    
+                /* Pack and send out UDP */
+                eventsSent = 0;
+                if (sendEventEnabled) {
+                    std::cout << "Packing events at " << globaltime << " from " << digitizer.name() << std::endl;
+                    packedEvents = Data::packEventData(eventData, eventsFound, 0);
+                    /* Send data to preconfigured receiver */
+                    std::cout << "Sending " << eventsUnpacked << " packed events of " << packedEvents.dataSize << "b at " << globaltime << " from " << digitizer.name() << " to " << address << ":" << port << std::endl;
+                    socket->send_to(boost::asio::buffer((char*)(packedEvents.data), packedEvents.dataSize), receiver_endpoint);
+                    eventsSent += eventsUnpacked;
+                }
+                totalEventsSent += eventsSent;
+
                 throttleDown = 0;
             }
             std::cout << "= Accumulated Stats =" << std::endl;
