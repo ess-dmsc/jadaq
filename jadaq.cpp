@@ -164,11 +164,13 @@ int main(int argc, char **argv) {
     uint32_t totalEventsFound = 0, totalBytesRead = 0, totalEventsUnpacked = 0;
     uint32_t totalEventsDecoded = 0, totalEventsSent = 0;
 
-    uint32_t eventIndex = 0, decodeChannels = 0, i = 0, j = 0, k = 0;
-    caen::BasicDPPEvent basicEvent;
-    caen::BasicDPPWaveforms basicWaveforms;
-    uint32_t charge = 0, timestamp = 0;
-    uint64_t globaltime = 0;
+    uint32_t eventIndex = 0, decodeChannels = 0, j = 0, k = 0;
+    caen::BasicEvent basicEvent;
+    caen::BasicDPPEvent basicDPPEvent;
+    caen::BasicDPPWaveforms basicDPPWaveforms;
+    uint32_t charge = 0, timestamp = 0, channel = 0;
+    uint64_t globaltime = 0, count = 0;
+    uint16_t *samples = NULL;
 
     /* Communication helpers */
     boost::asio::io_service io_service;
@@ -249,21 +251,21 @@ int main(int argc, char **argv) {
             std::cout << "Dumping individual recorded channel charges from " << digitizer.name() << " in files " << channelDumpPrefix << "-" << digitizer.name() << "-charge-CHANNEL.txt" << std::endl;
             channelChargeWriters = new std::ofstream[MAX_CHANNELS];
             charge_writer_map[digitizer.name()] = channelChargeWriters;
-            for (int i=0; i<MAX_CHANNELS; i++) { 
+            for (channel=0; channel<MAX_CHANNELS; channel++) {
                 path.str("");
                 path.clear();
-                path << channelDumpPrefix << "-" << digitizer.name() << "-charge-" << std::setfill('0') << std::setw(2) << i << ".txt";
-                channelChargeWriters[i].open(path.str(), std::ofstream::out);
+                path << channelDumpPrefix << "-" << digitizer.name() << "-charge-" << std::setfill('0') << std::setw(2) << channel << ".txt";
+                channelChargeWriters[channel].open(path.str(), std::ofstream::out);
             }
             if (digitizer.caenHasDPPWaveformsEnabled() && waveDumpEnabled) {
                 std::cout << "Dumping individual recorded channel waveforms from " << digitizer.name() << " in files " << channelDumpPrefix << "-" << digitizer.name() << "-wave-CHANNEL.txt" << std::endl;
                 channelWaveWriters = new std::ofstream[MAX_CHANNELS];
                 wave_writer_map[digitizer.name()] = channelWaveWriters;
-                for (int i=0; i<MAX_CHANNELS; i++) { 
+                for (channel=0; channel<MAX_CHANNELS; channel++) {
                     path.str("");
                     path.clear();
-                    path << channelDumpPrefix << "-" << digitizer.name() << "-wave-" << std::setfill('0') << std::setw(2) << i << ".txt";
-                    channelWaveWriters[i].open(path.str(), std::ofstream::out);
+                    path << channelDumpPrefix << "-" << digitizer.name() << "-wave-" << std::setfill('0') << std::setw(2) << channel << ".txt";
+                    channelWaveWriters[channel].open(path.str(), std::ofstream::out);
                 }
                 
             }
@@ -291,8 +293,8 @@ int main(int argc, char **argv) {
         }
 
         /* Init helpers */
-        for (i = 0; i < MAX_CHANNELS; i++) {
-            fullTimeTags[i] = 0;
+        for (channel = 0; channel < MAX_CHANNELS; channel++) {
+            fullTimeTags[channel] = 0;
         }
 
         /* Prepare buffers - must happen AFTER digitizer has been configured! */
@@ -359,8 +361,8 @@ int main(int argc, char **argv) {
                     std::cout << "Unpack aggregated DPP events from " << digitizer.name() << std::endl;
                     digitizer.caenGetDPPEvents(digitizer.caenGetPrivReadoutBuffer(), digitizer.caenGetPrivDPPEvents());
                     eventsFound = 0;
-                    for (i = 0; i < MAX_CHANNELS; i++) {
-                        eventsFound += digitizer.caenGetPrivDPPEvents().nEvents[i];
+                    for (channel = 0; channel < MAX_CHANNELS; channel++) {
+                        eventsFound += digitizer.caenGetPrivDPPEvents().nEvents[channel];
                     }
                     eventsUnpacked = eventsFound;
                     if (eventsFound < 1)
@@ -397,31 +399,31 @@ int main(int argc, char **argv) {
                 if (digitizer.caenIsDPPFirmware()) {
                     eventIndex = 0;
                     eventsDecoded = 0;
-                    for (i = 0; i < MAX_CHANNELS; i++) {
-                        for (j = 0; j < digitizer.caenGetPrivDPPEvents().nEvents[i]; j++) {
+                    for (channel = 0; channel < MAX_CHANNELS; channel++) {
+                        for (j = 0; j < digitizer.caenGetPrivDPPEvents().nEvents[channel]; j++) {
                             /* NOTE: we don't want to muck with underlying
                              * event type here, so we rely on the wrapped
                              * extraction and pull out timestamp, charge,
                              * etc from the resulting BasicDPPEvent. */
                             
-                            basicEvent = digitizer.caenExtractBasicDPPEvent(digitizer.caenGetPrivDPPEvents(), i, j);
+                            basicDPPEvent = digitizer.caenExtractBasicDPPEvent(digitizer.caenGetPrivDPPEvents(), channel, j);
                             /* We use the same 4 byte range for charge as CAEN sample */
-                            charge = basicEvent.charge & 0xFFFF;
+                            charge = basicDPPEvent.charge & 0xFFFF;
                             /* TODO: include timestamp high bits from Extra field? */
                             /* NOTE: timestamp is 64-bit for PHA events
                              * but we just consistently clip to 32-bit
                              * for now. */ 
-                            timestamp = basicEvent.timestamp & 0xFFFFFFFF;
+                            timestamp = basicDPPEvent.timestamp & 0xFFFFFFFF;
 
                             /* On rollover we increment the high 32 bits*/
-                            if (timestamp < (uint32_t)(fullTimeTags[i])) {
-                                fullTimeTags[i] &= 0xFFFFFFFF00000000;
-                                fullTimeTags[i] += 0x100000000;
+                            if (timestamp < (uint32_t)(fullTimeTags[channel])) {
+                                fullTimeTags[channel] &= 0xFFFFFFFF00000000;
+                                fullTimeTags[channel] += 0x100000000;
                             }
                             /* Always insert current timestamp in the low 32 bits */
-                            fullTimeTags[i] = fullTimeTags[i] & 0xFFFFFFFF00000000 | timestamp & 0x00000000FFFFFFFF;
+                            fullTimeTags[channel] = fullTimeTags[channel] & 0xFFFFFFFF00000000 | timestamp & 0x00000000FFFFFFFF;
                             
-                            std::cout << digitizer.name() << " channel " << i << " event " << j << " charge " << charge << " at time " << fullTimeTags[i] << " (" << timestamp << ")"<< std::endl;
+                            std::cout << digitizer.name() << " channel " << channel << " event " << j << " charge " << charge << " at time " << fullTimeTags[channel] << " (" << timestamp << ")"<< std::endl;
 
                             if (channelDumpEnabled) {
                                 /* NOTE: write in same "%16lu %8d" format as CAEN sample */
@@ -431,18 +433,18 @@ int main(int argc, char **argv) {
                                  * globaltime localtime digtizerid channel charge
                                  */
                                 channelChargeWriters = charge_writer_map[digitizer.name()];
-                                //channelChargeWriters[i] << std::setw(16) << fullTimeTags[i] << " " << std::setw(8) << charge << std::endl;
-                                //channelChargeWriters[i] << digitizer.name() << " " << std::setw(8) << i << " " << std::setw(16) << fullTimeTags[i] << " " << std::setw(8) << charge << std::endl;
-                                channelChargeWriters[i] << std::setw(16) << timestamp << " " << digitizer.serial() << " " << std::setw(8) << i << " " << std::setw(8) << charge << std::endl;
+                                //channelChargeWriters[channel] << std::setw(16) << fullTimeTags[channel] << " " << std::setw(8) << charge << std::endl;
+                                //channelChargeWriters[channel] << digitizer.name() << " " << std::setw(8) << channel << " " << std::setw(16) << fullTimeTags[channel] << " " << std::setw(8) << charge << std::endl;
+                                channelChargeWriters[channel] << std::setw(16) << timestamp << " " << digitizer.serial() << " " << std::setw(8) << channel << " " << std::setw(8) << charge << std::endl;
                             }
                             
                             /* Only try to decode waveforms if digitizer is actually
                              * configured to record them in the first place. */
                             if (digitizer.caenHasDPPWaveformsEnabled()) {
                                 try {
-                                    digitizer.caenDecodeDPPWaveforms(digitizer.caenGetPrivDPPEvents(), i, j, digitizer.caenGetPrivDPPWaveforms());
+                                    digitizer.caenDecodeDPPWaveforms(digitizer.caenGetPrivDPPEvents(), channel, j, digitizer.caenGetPrivDPPWaveforms());
 
-                                    std::cout << "Decoded " << digitizer.caenDumpPrivDPPWaveforms() << " DPP event waveforms from event " << j << " on channel " << i << " from " << digitizer.name() << std::endl;
+                                    std::cout << "Decoded " << digitizer.caenDumpPrivDPPWaveforms() << " DPP event waveforms from event " << j << " on channel " << channel << " from " << digitizer.name() << std::endl;
                                     eventsDecoded += 1;
                                     if (channelDumpEnabled and waveDumpEnabled) {
                                         channelWaveWriters = wave_writer_map[digitizer.name()];
@@ -451,29 +453,29 @@ int main(int argc, char **argv) {
                                          * extraction and pull out
                                          * values from the resulting
                                          * BasicDPPWaveforms. */
-                                        basicWaveforms = digitizer.caenExtractBasicDPPWaveforms(digitizer.caenGetPrivDPPWaveforms());
-                                        for(k=0; k<basicWaveforms.Ns; k++) {
-                                            channelWaveWriters[k] << basicWaveforms.Trace1[j];                 /* samples */
-                                            channelWaveWriters[k] << 2000 + 200 * basicWaveforms.DTrace1[j];  /* gate    */
-                                            channelWaveWriters[k] << 1000 + 200 *basicWaveforms.DTrace2[j];  /* trigger */
-                                            if (basicWaveforms.DTrace3 != NULL)
-                                                channelWaveWriters[k] << 500 + 200 * basicWaveforms.DTrace3[j];   /* trg hold off */
-                                            if (basicWaveforms.DTrace4 != NULL)
-                                                channelWaveWriters[k] << 100 + 200 * basicWaveforms.DTrace4[j];  /* overthreshold */
+                                        basicDPPWaveforms = digitizer.caenExtractBasicDPPWaveforms(digitizer.caenGetPrivDPPWaveforms());
+                                        for(k=0; k<basicDPPWaveforms.Ns; k++) {
+                                            channelWaveWriters[k] << basicDPPWaveforms.Trace1[j];                 /* samples */
+                                            channelWaveWriters[k] << 2000 + 200 * basicDPPWaveforms.DTrace1[j];  /* gate    */
+                                            channelWaveWriters[k] << 1000 + 200 *basicDPPWaveforms.DTrace2[j];  /* trigger */
+                                            if (basicDPPWaveforms.DTrace3 != NULL)
+                                                channelWaveWriters[k] << 500 + 200 * basicDPPWaveforms.DTrace3[j];   /* trg hold off */
+                                            if (basicDPPWaveforms.DTrace4 != NULL)
+                                                channelWaveWriters[k] << 100 + 200 * basicDPPWaveforms.DTrace4[j];  /* overthreshold */
                                             channelWaveWriters[k] << std::endl;
                                         }
                                     }                                    
                                 } catch(std::exception& e) {
-                                    std::cerr << "failed to decode waveforms for event " << j << " on channel " << i << " from " << digitizer.name() << " : " << e.what() << std::endl;
+                                    std::cerr << "failed to decode waveforms for event " << j << " on channel " << channel << " from " << digitizer.name() << " : " << e.what() << std::endl;
                                 }
                             }                            
 
                             if (sendEventEnabled) {
-                                std::cout << "Filling event at " << globaltime << " from " << digitizer.name() << " channel " << i << " localtime " << timestamp << " charge " << charge << std::endl;
+                                std::cout << "Filling event at " << globaltime << " from " << digitizer.name() << " channel " << channel << " localtime " << timestamp << " charge " << charge << std::endl;
                                 eventData->listEvents[eventIndex].localTime = timestamp;
                                 eventData->listEvents[eventIndex].extendTime = 0;
                                 eventData->listEvents[eventIndex].adcValue = charge;
-                                eventData->listEvents[eventIndex].channel = i;
+                                eventData->listEvents[eventIndex].channel = channel;
                             }
                             eventIndex += 1;
                         }
@@ -488,20 +490,21 @@ int main(int argc, char **argv) {
                         digitizer.caenDecodeEvent(digitizer.caenGetPrivEventInfo(), digitizer.caenGetPrivEvent());
                         std::cout << "Decoded event " << digitizer.caenGetPrivEventInfo().EventCounter << "  of " << eventsFound << " events from " << digitizer.name() << std::endl;
                         eventsDecoded += 1;
-                        /* TODO: enable something like the following */
-                        /*
-                        basicEvent = digitizer.caenExtractBasicEvent(digitizer.caenGetPrivEventInfo());
-                        timestamp = basicEvent.timestamp & 0xFFFFFFFF;
-                        charge = basicEvent.charge;
-                        channel = basicEvent.channel;
+                        /* TODO: where do we get real channel from in these events?!? */
+                        /*       it looks like decoded events is really a matrix
+                         *       of channel events a bit like in the DPPEvents case */
+                        channel = 4242;
+                        basicEvent = digitizer.caenExtractBasicEvent(digitizer.caenGetPrivEventInfo(), digitizer.caenGetPrivEvent(), channel, eventIndex);
+                        timestamp = basicEvent.timestamp;
+                        count = basicEvent.count;
+                        samples = basicEvent.samples;
                         if (sendEventEnabled) {
-                            std::cout << "Filling event at " << globaltime << " from " << digitizer.name() << " channel " << i << " localtime " << timestamp << " charge " << charge << std::endl;
-                            eventData->listEvents[eventIndex].localTime = timestamp;
-                            eventData->listEvents[eventIndex].extendTime = 0;
-                            eventData->listEvents[eventIndex].adcValue = charge;
-                            eventData->listEvents[eventIndex].channel = i;
+                            std::cout << "Filling event at " << globaltime << " from " << digitizer.name() << " channel " << channel << " localtime " << timestamp << " sample count " << count << std::endl;
+                            eventData->waveformEvents[eventIndex].localTime = timestamp;
+                            eventData->waveformEvents[eventIndex].waveformLength = count;
+                            memcpy(eventData->waveformEvents[eventIndex].waveform, samples, (count * sizeof(samples[0])));
+                            eventData->waveformEvents[eventIndex].channel = channel;
                         }   
-                        */
                     }
                     totalEventsUnpacked += eventsUnpacked;
                     totalEventsDecoded += eventsDecoded;
@@ -554,8 +557,8 @@ int main(int argc, char **argv) {
         if (channelDumpEnabled) {
             std::cout << "Closing channel charge dump files for " << digitizer.name() << std::endl;
             channelChargeWriters = charge_writer_map[digitizer.name()];
-            for (int i=0; i<MAX_CHANNELS; i++) { 
-                channelChargeWriters[i].close();
+            for (channel=0; channel<MAX_CHANNELS; channel++) {
+                channelChargeWriters[channel].close();
             }
             charge_writer_map.erase(digitizer.name());
             delete[] channelChargeWriters;
@@ -566,8 +569,8 @@ int main(int argc, char **argv) {
                 if (channelDumpEnabled && waveDumpEnabled) {
                     std::cout << "Closing channel wave dump files for " << digitizer.name() << std::endl;
                     channelWaveWriters = wave_writer_map[digitizer.name()];
-                    for (int i=0; i<MAX_CHANNELS; i++) { 
-                        channelWaveWriters[i].close();
+                    for (channel=0; channel<MAX_CHANNELS; channel++) {
+                        channelWaveWriters[channel].close();
                     }
                     wave_writer_map.erase(digitizer.name());
                     delete[] channelWaveWriters;

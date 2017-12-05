@@ -110,13 +110,46 @@ namespace caen {
     }
 
     /**
+     * @struct BasicEvent
+     * @brief For a basic shared event readout - essentially merges main
+     * parts of EventInfo and decoded Event data.
+     * @var BasicEvent::boardId
+     * ID of the board.
+     * @var BasicEvent::channel
+     * Which channel where the event came from.
+     * @var BasicEvent::eventIndex
+     * Index of the event for given channel.
+     * @var BasicEvent::timestamp
+     * Time stamp for the event.
+     * @var BasicWaveform::count
+     * Waveform sample values.
+     * @var BasicWaveform::samples
+     * Waveform sample values.
+     */
+
+    struct BasicEvent {
+        uint32_t boardId;
+        uint32_t channel;
+        uint32_t eventIndex;
+        uint32_t timestamp;
+        /* NOTE: we use 32 bit counter and 16 bit array to accomodate
+         * CAEN_DGTZ_UINT16_EVENT_t . Less is needed in case a
+         * CAEN_DGTZ_UINT8_EVENT_t is wrapped up underneath. */
+        uint32_t count;
+        uint16_t *samples;
+    };
+
+    /* Alias BasicWaveform to BasicEvent as they are merged */
+    typedef BasicEvent BasicWaveform;
+
+    /**
      * @struct BasicDPPEvent
      * @brief For a very basic shared DPP event readout
      * @var BasicDPPEvent::timestamp
      * Time stamp for the event.
      * @var BasicDPPEvent::format
      * Internal format for the event - a bitmask packing multiple values.
-     * @var BasicDPPEvent::Charge
+     * @var BasicDPPEvent::charge
      * Measured integrated charge for the event.
      */
     struct BasicDPPEvent {
@@ -131,7 +164,7 @@ namespace caen {
 
     /**
      * @struct BasicDPPWaveforms
-     * @brief For a very basic shared DPP event readout
+     * @brief For a very basic shared DPP waveform readout
      * @var BasicDPPWaveforms::Ns
      * Array entry counter.
      * @var BasicDPPWaveforms::Trace1
@@ -2907,6 +2940,19 @@ namespace caen {
 
         void* decodeEvent(EventInfo info, void* event)
         { errorHandler(CAEN_DGTZ_DecodeEvent(handle_, info.data, &event)); return event; }
+
+        BasicEvent extractBasicEvent(EventInfo& info, void *event, uint32_t channel, uint32_t eventNo) {
+            BasicEvent basic;
+            /* TODO: we cannot generally assume event is CAEN_DGTZ_UINT16_EVE */
+            CAEN_DGTZ_UINT16_EVENT_t *realEvent = (CAEN_DGTZ_UINT16_EVENT_t *)event;
+            basic.boardId = info.BoardId;
+            basic.eventIndex = eventNo;
+            basic.channel = channel;
+            basic.timestamp = info.TriggerTimeTag;
+            basic.count = realEvent->ChSize[channel];
+            memcpy(basic.samples, realEvent->DataChannel[channel], basic.count*sizeof(basic.samples));
+            return basic;
+        }
 
         DPPEvents& getDPPEvents(ReadoutBuffer buffer, DPPEvents& events)
         { errorHandler(_CAEN_DGTZ_GetDPPEvents(handle_, buffer.data, buffer.dataSize, events.ptr, events.nEvents)); return events; }

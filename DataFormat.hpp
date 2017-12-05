@@ -71,9 +71,8 @@ namespace Data {
         struct Element // variable size
         {
             uint32_t localTime;
-            uint32_t adcValue;
             uint16_t channel;
-            uint16_t WaveformLength;
+            uint16_t waveformLength;
             uint16_t waveform[];
         };
     }; // namespace Waveform
@@ -166,7 +165,7 @@ namespace Data {
         Waveform::Element *wave = eventData->waveformEvents;
         size_t waveSize = 0;
         for (int i = 0; i < eventData->waveformEventsLength; i++) {
-            waveSize = eventData->waveformEvents[i].WaveformLength * sizeof(uint16_t);
+            waveSize = eventData->waveformEvents[i].waveformLength * sizeof(uint16_t);
             packedEvents.dataSize += waveSize;
         }
         return packedEvents;
