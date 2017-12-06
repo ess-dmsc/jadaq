@@ -385,6 +385,7 @@ int main(int argc, char **argv) {
                 if (sendEventEnabled) {
                     /* Reset send buffer each time to prevent any stale data */
                     memset(send_buf, 0, MAXBUFSIZE);
+                    /* TODO: add check to make sure send_buf always fits eventData */
                     eventData = Data::setupEventData((void *)send_buf, MAXBUFSIZE, eventsFound, 0);
                     std::cout << "Prepared eventData " << eventData << " from send_buf " << (void *)send_buf << std::endl;
                     metadata = eventData->metadata;

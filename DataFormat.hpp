@@ -52,11 +52,11 @@
  * followed by the actual List and/or waveform data points. */
 namespace Data {
     /* Shared meta data for the entire data package */
-    struct Meta { // 28 bytes
-        uint16_t version[VERSIONPARTS];
-        char digitizerModel[MAXMODELSIZE];
-        uint16_t digitizerID;
+    struct Meta { // 24 bytes
         uint64_t globalTime;
+        uint16_t digitizerID;
+        char digitizerModel[MAXMODELSIZE];
+        uint16_t version[VERSIONPARTS];
     };
     namespace List {
         struct Element // 72 bit
@@ -78,7 +78,8 @@ namespace Data {
     }; // namespace Waveform
     /* Wrapped up data with multiple events */
     /* Actual metadata, listevent and waveformevent contents are
-     * appended right after EventData during setup. */
+     * appended right after EventData during setup to keep it as one big
+     * contiguous chunk for sending. */
     struct EventData // 24 bytes
     {
         Meta *metadata;
@@ -86,8 +87,8 @@ namespace Data {
         uint32_t allocatedSize;
         uint32_t checksum;
         uint16_t listEventsLength;
-        List::Element *listEvents;
         uint16_t waveformEventsLength;
+        List::Element *listEvents;
         Waveform::Element *waveformEvents;
     };
     /* Actual package with metadata and payload of element(s) */
@@ -179,8 +180,17 @@ namespace Data {
         EventData *eventData = (EventData *)packedEvents.data;
         uint32_t listEventsLength = eventData->listEventsLength;
         uint32_t waveformEventsLength = eventData->waveformEventsLength;
-        return setupEventData(packedEvents.data, packedEvents.dataSize,
-                              listEventsLength, waveformEventsLength);
+        uint32_t checksum = eventData->checksum;
+        eventData = setupEventData(packedEvents.data, packedEvents.dataSize,
+                                   listEventsLength, waveformEventsLength);
+        /* Make sure platform similarity assertion holds true */
+        if (checksum != eventData->checksum) {
+            std::stringstream ss;
+            ss << "received eventData checksum does not match! " << checksum << " vs " << eventData->checksum;
+            std::cerr << "ERROR: " << ss.str() << std::endl;
+            throw std::runtime_error(ss.str());
+        }
+        return eventData;
     }
 } // namespace Data
 #endif //MULTIBLADEDATAHANDLER_DATAFORMAT_HPP
