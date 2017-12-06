@@ -154,8 +154,8 @@ int main(int argc, char **argv) {
         usageHelp(argv[0]);
         exit(1);
     }
-    if (argc - optind > 1) {
-        configFileName = argv[optind];
+    if (argc - optind > 0) {
+        configFileName = argv[optind];        
     }
     
 
