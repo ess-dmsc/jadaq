@@ -460,14 +460,14 @@ int main(int argc, char **argv) {
                                          * BasicDPPWaveforms. */
                                         basicDPPWaveforms = digitizer.caenExtractBasicDPPWaveforms(digitizer.caenGetPrivDPPWaveforms());
                                         for(k=0; k<basicDPPWaveforms.Ns; k++) {
-                                            channelWaveWriters[k] << basicDPPWaveforms.Trace1[j];                 /* samples */
-                                            channelWaveWriters[k] << 2000 + 200 * basicDPPWaveforms.DTrace1[j];  /* gate    */
-                                            channelWaveWriters[k] << 1000 + 200 *basicDPPWaveforms.DTrace2[j];  /* trigger */
+                                            channelWaveWriters[channel] << basicDPPWaveforms.Trace1[k];                 /* samples */
+                                            channelWaveWriters[channel] << 2000 + 200 * basicDPPWaveforms.DTrace1[k];  /* gate    */
+                                            channelWaveWriters[channel] << 1000 + 200 *basicDPPWaveforms.DTrace2[k];  /* trigger */
                                             if (basicDPPWaveforms.DTrace3 != NULL)
-                                                channelWaveWriters[k] << 500 + 200 * basicDPPWaveforms.DTrace3[j];   /* trg hold off */
+                                                channelWaveWriters[channel] << 500 + 200 * basicDPPWaveforms.DTrace3[k];   /* trg hold off */
                                             if (basicDPPWaveforms.DTrace4 != NULL)
-                                                channelWaveWriters[k] << 100 + 200 * basicDPPWaveforms.DTrace4[j];  /* overthreshold */
-                                            channelWaveWriters[k] << std::endl;
+                                                channelWaveWriters[channel] << 100 + 200 * basicDPPWaveforms.DTrace4[k];  /* overthreshold */
+                                            channelWaveWriters[channel] << std::endl;
                                         }
                                     }                                    
                                 } catch(std::exception& e) {
