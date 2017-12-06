@@ -68,8 +68,8 @@ void usageHelp(char *name)
 {
     std::cout << "Usage: " << name << " [<options>] [<output_file>]" << std::endl;
     std::cout << "Where <options> can be:" << std::endl;
-    std::cout << "--address / -a ADDRESS   the UDP network address to listen on." << std::endl;
-    std::cout << "--port / -p PORT         the UDP network port to listen on." << std::endl;
+    std::cout << "--address / -a ADDRESS   the UDP network address to listen on (default is " << UDP_LISTEN_ALL << ")." << std::endl;
+    std::cout << "--port / -p PORT         the UDP network port to listen on (default is " << DEFAULT_UDP_PORT << ")." << std::endl;
     std::cout << std::endl << "Listens for events on the network and dumps " << std::endl;
     std::cout << "received data as HDF5 into <output_file>." << std::endl;
 }
@@ -84,7 +84,8 @@ int main(int argc, char **argv) {
     };
 
     /* Default option values */
-    std::string address = DEFAULT_UDP_ADDRESS, port = DEFAULT_UDP_PORT;
+    /* Listen on all network addresses by default */
+    std::string address = UDP_LISTEN_ALL, port = DEFAULT_UDP_PORT;
     std::string outputFileName = "out.h5";
 
     /* Parse command line options */
@@ -104,6 +105,7 @@ int main(int argc, char **argv) {
         case '?': // Unrecognized option
         default:
             usageHelp(argv[0]);
+            exit(0);
             break;
         }
     }
@@ -230,9 +232,17 @@ int main(int argc, char **argv) {
 
     /* Setup UDP listener */
     try {
-        socket = new udp::socket(io_service, udp::endpoint(udp::v4(), std::stoi(port)));
+        udp::endpoint local_end;
+        /* Bind to any address if not explicitly provided */
+        if (address == UDP_LISTEN_ALL || address == "") { 
+            local_end = udp::endpoint(udp::v4(), std::stoi(port));
+        } else {
+            local_end = udp::endpoint(boost::asio::ip::address::from_string(address), std::stoi(port));
+        }
+        socket = new udp::socket(io_service, local_end);
     } catch (std::exception& e) {
-        std::cerr << e.what() << std::endl;
+        std::cerr << "ERROR opening socket on " << address << ":" << port << ": " << e.what() << std::endl;
+        exit(1);
     }
 
     /* Set up interrupt handler and start handling acquired data */

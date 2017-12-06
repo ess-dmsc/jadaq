@@ -62,8 +62,8 @@ void usageHelp(char *name)
 {
     std::cout << "Usage: " << name << " [<options>] [<jadaq_config_file>]" << std::endl;
     std::cout << "Where <options> can be:" << std::endl;
-    std::cout << "--address / -a ADDRESS     optional UDP network address to send to." << std::endl;
-    std::cout << "--port / -p PORT           optional UDP network port to send to." << std::endl;
+    std::cout << "--address / -a ADDRESS     optional UDP network address to send to (unset by default)." << std::endl;
+    std::cout << "--port / -p PORT           optional UDP network port to send to (default is " << DEFAULT_UDP_PORT << ")." << std::endl;
     std::cout << "--confoverride / -c FILE   optional conf overrides on CAEN format." << std::endl;
     std::cout << "--dumpprefix / -d PREFIX   optional prefix for output dump to file." << std::endl;
     std::cout << "--registerdump / -r FILE   optional file to save register dump in." << std::endl;
@@ -99,7 +99,8 @@ int main(int argc, char **argv) {
     };
 
     /* Default option values */
-    std::string address = DEFAULT_UDP_ADDRESS, port = DEFAULT_UDP_PORT;
+    /* Don't enable UDP by default */
+    std::string address = "", port = DEFAULT_UDP_PORT;
     std::string configFileName = "";
     std::string overrideFileName = "";
     std::string channelDumpPrefix = "";
@@ -139,6 +140,7 @@ int main(int argc, char **argv) {
         case '?': // Unrecognized option
         default:
             usageHelp(argv[0]);
+            exit(0);
             break;
         }
     }
@@ -225,7 +227,8 @@ int main(int argc, char **argv) {
         try {
             boost::filesystem::create_directories(dir);
         } catch (std::exception& e) {
-            std::cerr << "WARNING: failed to create channel dump output dir " << dir << " : " << e.what() << std::endl;                
+            std::cerr << "WARNING: failed to create channel dump output dir " << dir << " : " << e.what() << std::endl;
+            exit(1);
         }
     }
 
@@ -279,7 +282,8 @@ int main(int argc, char **argv) {
                 socket = new udp::socket(io_service);
                 socket->open(udp::v4());
             } catch (std::exception& e) {
-                std::cerr << e.what() << std::endl;
+                std::cerr << "ERROR in UDP connection setup to " << address << " : " << e.what() << std::endl;
+                exit(1);
             }
         }
 
@@ -335,8 +339,8 @@ int main(int argc, char **argv) {
         /* Continuously acquire and process data:
          *   - read out data
          *   - decode data
-         *   - pack data
-         *   - send out on UDP
+         *   - optionally dump data on simple format
+         *   - optionally pack and send out data on UDP
          */
         if (throttleDown > 0) {
             /* NOTE: for running without hogging CPU if nothing to do */
@@ -345,10 +349,9 @@ int main(int argc, char **argv) {
         try {
             std::cout << "Read out data from " << digitizers.size() << " digitizer(s)." << std::endl;
             /* Read out acquired data for all digitizers */
-            /* TODO: split digitizer handling into threads */
+            /* TODO: split digitizer handling loop into separate threads */
             for (Digitizer& digitizer: digitizers)
             {
-                /* NOTE: check and skip if there's no events to read */
                 std::cout << "Read at most " << digitizer.caenGetPrivReadoutBuffer().size << "b data from " << digitizer.name() << std::endl;
                 digitizer.caenReadData(digitizer.caenGetPrivReadoutBuffer());
                 bytesRead = digitizer.caenGetPrivReadoutBuffer().dataSize;
@@ -357,6 +360,7 @@ int main(int argc, char **argv) {
 
                 globaltime = std::time(nullptr);
 
+                /* NOTE: check and skip if there's no actual events to handle */
                 if (digitizer.caenIsDPPFirmware()) {
                     std::cout << "Unpack aggregated DPP events from " << digitizer.name() << std::endl;
                     digitizer.caenGetDPPEvents(digitizer.caenGetPrivReadoutBuffer(), digitizer.caenGetPrivDPPEvents());

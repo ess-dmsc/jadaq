@@ -45,7 +45,8 @@
 #define EVENTFIELDS (3)
 #define EVENTINIT {{0, 0, 0}}
 
-#define DEFAULT_UDP_ADDRESS "127.0.0.1"
+#define UDP_LISTEN_ALL "*"
+#define DEFAULT_UDP_SEND_ADDRESS "127.0.0.1"
 #define DEFAULT_UDP_PORT "12345"
 
 /** Every Data set contains meta data with the digitizer and format

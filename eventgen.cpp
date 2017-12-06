@@ -59,8 +59,8 @@ void usageHelp(char *name)
 {
     std::cout << "Usage: " << name << " [<options>]" << std::endl;
     std::cout << "Where <options> can be:" << std::endl;
-    std::cout << "--address / -a ADDRESS   the UDP network address to send to." << std::endl;
-    std::cout << "--port / -p PORT         the UDP network port to send to." << std::endl;
+    std::cout << "--address / -a ADDRESS   the UDP network address to send to (default is " << DEFAULT_UDP_SEND_ADDRESS << ")." << std::endl;
+    std::cout << "--port / -p PORT         the UDP network port to send to (default is " << DEFAULT_UDP_PORT << ")." << std::endl;
     std::cout << std::endl << "Generates events and sends them out on the network " << std::endl;
     std::cout << "as UDP packages for the provided destination. Use a broadcast " << std::endl;
     std::cout << "address to target multiple listeners." << std::endl;
@@ -76,7 +76,7 @@ int main(int argc, char **argv) {
     };
 
     /* Default option values */
-    std::string address = DEFAULT_UDP_ADDRESS, port = DEFAULT_UDP_PORT;
+    std::string address = DEFAULT_UDP_SEND_ADDRESS, port = DEFAULT_UDP_PORT;
 
     /* Parse command line options */
     while (true) {
@@ -95,6 +95,7 @@ int main(int argc, char **argv) {
         case '?': // Unrecognized option
         default:
             usageHelp(argv[0]);
+            exit(0);
             break;
         }
     }
@@ -135,7 +136,8 @@ int main(int argc, char **argv) {
         socket = new udp::socket(io_service);
         socket->open(udp::v4());
     } catch (std::exception& e) {
-        std::cerr << e.what() << std::endl;
+        std::cerr << "ERROR in UDP connection setup to " << address << " : " << e.what() << std::endl;
+        exit(1);
     }
 
     /* Prepare and start event generator */
