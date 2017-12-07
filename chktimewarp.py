@@ -34,7 +34,7 @@ if __name__ == '__main__':
 
    print "Parsing simple dump in %s" % dump_path
    entries = parse_dump(dump_path)
-   expect_diff = -1
+   expect_diff = None
    warps = 0
    print "Checking %d parsed entries for time warps" % len(entries)
    if entries[1:]:
@@ -42,11 +42,14 @@ if __name__ == '__main__':
            prev = int(entries[i-1][0])
            cur = int(entries[i][0])
            diff = cur - prev
-           if expect_diff < 0:
+           if expect_diff is None:
                expect_diff = diff
-           if abs(diff - expect_diff) > 10:
+           # Warn if diff is bigger than expected, except after uint32 overflow
+           if abs(diff - expect_diff) > 10 and cur > expect_diff:
                warps +=1
                print "time warp of %d (%d vs %d) for entry %d" % \
                      (diff, cur, prev, i)
-   print "Found %d time jumps much bigger than %d" % (warps, expect_diff)
-           
+       print "Found %d time jumps much bigger than %d" % (warps, expect_diff)
+   else:
+       print "No entries to check for time jumps"
+
