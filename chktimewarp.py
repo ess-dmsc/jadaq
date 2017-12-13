@@ -69,7 +69,8 @@ if __name__ == '__main__':
                print "time warp of %d (%d vs %d) for entry %d" % \
                      (diff, cur, prev, i)
 
-       print "Found %d time jumps much bigger than %d" % (warps, expect_diff)
+       print "Found %d of %d time jumps much bigger than %d" % \
+             (warps, use_entries, expect_diff)
 
        if plot_enabled:
            events = numpy.arange(use_entries)

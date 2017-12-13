@@ -67,6 +67,7 @@ void usageHelp(char *name)
     std::cout << "--confoverride / -c FILE   optional conf overrides on CAEN format." << std::endl;
     std::cout << "--dumpprefix / -d PREFIX   optional prefix for output dump to file." << std::endl;
     std::cout << "--registerdump / -r FILE   optional file to save register dump in." << std::endl;
+    std::cout << "--eventstop / -e EVENTS    optionally only handle EVENTS before exit." << std::endl;
     std::cout << std::endl << "Reads in a configuration from <jadaq_config_file> " << std::endl;
     std::cout << "and configures the digitizer(s) accordingly." << std::endl;
     std::cout << "The current/resulting digitizer settings automatically " << std::endl;
@@ -87,7 +88,7 @@ void usageHelp(char *name)
 }
 
 int main(int argc, char **argv) {
-    const char* const short_opts = "a:c:d:hp:r:";
+    const char* const short_opts = "a:c:d:e:hp:r:";
     const option long_opts[] = {
         {"address", 1, nullptr, 'a'},
         {"confoverride", 1, nullptr, 'c'},
@@ -95,6 +96,7 @@ int main(int argc, char **argv) {
         {"help", 0, nullptr, 'h'},
         {"port", 1, nullptr, 'p'},
         {"registerdump", 1, nullptr, 'r'},
+        {"eventstop", 1, nullptr, 'r'},
         {nullptr, 0, nullptr, 0}
     };
 
@@ -109,6 +111,7 @@ int main(int argc, char **argv) {
     /* TODO: debug and enable wavedump */
     bool waveDumpEnabled = false, registerDumpEnabled = false;
     bool sendEventEnabled = false;
+    uint32_t eventStop = 0;
 
     /* Parse command line options */
     while (true) {
@@ -128,6 +131,9 @@ int main(int argc, char **argv) {
             channelDumpPrefix = std::string(optarg);
             channelDumpEnabled = true;
             waveDumpEnabled = true;
+            break;
+        case 'e':
+            eventStop = std::stoi(optarg);
             break;
         case 'p':
             port = std::string(optarg);
@@ -322,6 +328,7 @@ int main(int argc, char **argv) {
         }
     }
 
+    uint64_t acquisitionStart = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
     std::cout << "Start acquisition from " << digitizers.size() << " digitizer(s)." << std::endl;
     for (Digitizer& digitizer: digitizers) {
         std::cout << "Start acquisition on digitizer " << digitizer.name() << std::endl;
@@ -343,6 +350,13 @@ int main(int argc, char **argv) {
          *   - optionally dump data on simple format
          *   - optionally pack and send out data on UDP
          */
+        if (eventStop <= totalEventsFound) {
+            std::cout << "Stop condition reached. Handled " << totalEventsFound << " and requested stop after exceeding " << eventStop << " events." << std::endl;
+            keepRunning = false;
+            break;
+        } else if (eventStop > 0) {
+            std::cout << "Handled " << totalEventsFound << " out of " << eventStop << " events allowed so far." << std::endl;            
+        }
         if (throttleDown > 0) {
             /* NOTE: for running without hogging CPU if nothing to do */
             std::this_thread::sleep_for(std::chrono::milliseconds(throttleDown));
@@ -479,7 +493,7 @@ int main(int argc, char **argv) {
                             }                            
 
                             if (sendEventEnabled) {
-                                std::cout << "Filling event at " << globaltime << " from " << digitizer.name() << " channel " << channel << " localtime " << timestamp << " charge " << charge << std::endl;
+                                //std::cout << "Filling event at " << globaltime << " from " << digitizer.name() << " channel " << channel << " localtime " << timestamp << " charge " << charge << std::endl;
                                 eventData->listEvents[eventIndex].localTime = timestamp;
                                 eventData->listEvents[eventIndex].extendTime = 0;
                                 eventData->listEvents[eventIndex].adcValue = charge;
@@ -558,6 +572,10 @@ int main(int argc, char **argv) {
         std::cout << "Stop acquisition on digitizer " << digitizer.name() << std::endl;
         digitizer.caenStopAcquisition();
     }
+
+    uint64_t acquisitionStopped = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+    std::cout << "Acquisition loop ran for " << (acquisitionStopped - acquisitionStart) / 1000.0 << "s." << std::endl;
+
     /* Clean up after all digitizers: buffers, etc. */
     std::cout << "Clean up after " << digitizers.size() << " digitizer(s)." << std::endl;
     for (Digitizer& digitizer: digitizers)
