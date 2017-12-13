@@ -56,24 +56,30 @@ namespace Data {
     struct Meta { // 24 bytes
         uint64_t globalTime;
         uint16_t digitizerID;
-        char digitizerModel[MAXMODELSIZE];
         uint16_t version[VERSIONPARTS];
+        char digitizerModel[MAXMODELSIZE];
+       /* No padding required */
     };
     namespace List {
         struct Element // 72 bit
         {
             uint32_t localTime;
-            uint16_t extendTime;
             uint32_t adcValue;
+            uint16_t extendTime;
             uint16_t channel;
+            /* Pad to force 8-byte boundary alignment */
+            uint8_t __pad[4];
         };
     }; // namespace List
     namespace Waveform {
         struct Element // variable size
         {
             uint32_t localTime;
+            uint16_t extendTime;
             uint16_t channel;
             uint16_t waveformLength;
+            /* Pad to force 8-byte boundary alignment */
+            uint8_t __pad[2];
             uint16_t waveform[];
         };
     }; // namespace Waveform

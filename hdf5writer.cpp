@@ -142,7 +142,6 @@ int main(int argc, char **argv) {
     udp::endpoint receiver_endpoint;
     udp::socket *socket = NULL;
     /* NOTE: use a static buffer of MAXBUFSIZE bytes for receiving */
-    //std::array<char, MAXBUFSIZE> bytes;
     char recv_buf[MAXBUFSIZE];
     udp::endpoint remote_endpoint;
     boost::system::error_code error;
@@ -155,6 +154,17 @@ int main(int argc, char **argv) {
     Data::List::Element *listEvent;
     Data::Waveform::Element *waveformEvent;
     uint32_t offset = 0;
+    const H5std_string MEMBER1( "localTime_name" );
+    const H5std_string MEMBER2( "adcValue_name" );
+    const H5std_string MEMBER3( "extendTime_name" );
+    const H5std_string MEMBER4( "channel_name" );
+    const H5std_string MEMBER5( "__pad_name" );
+    CompType listEventType(sizeof(Data::List::Element));
+    listEventType.insertMember(MEMBER1, HOFFSET(Data::List::Element, localTime), PredType::STD_U32LE);
+    listEventType.insertMember(MEMBER2, HOFFSET(Data::List::Element, adcValue), PredType::STD_U32LE); 
+    listEventType.insertMember(MEMBER3, HOFFSET(Data::List::Element, extendTime), PredType::STD_U16LE);
+    listEventType.insertMember(MEMBER4, HOFFSET(Data::List::Element, channel), PredType::STD_U16LE);
+    listEventType.insertMember(MEMBER5, HOFFSET(Data::List::Element, __pad), PredType::STD_U32LE);
 
     /* Prepare and start event handling */
     std::cout << "Setup hdf5writer" << std::endl;
@@ -222,10 +232,8 @@ int main(int argc, char **argv) {
     uint32_t data[EVENTFIELDS];
     const int RANK = 1;
     hsize_t dimsf[1];
-    dimsf[0] = EVENTFIELDS;
+    dimsf[0] = 1;
     DataSpace dataspace(RANK, dimsf);
-    IntType datatype(PredType::STD_U32LE);
-    datatype.setOrder(H5T_ORDER_LE);
 
     /* Turn off the auto-printing of errors - manual print instead. */
     Exception::dontPrint();
@@ -373,7 +381,7 @@ int main(int argc, char **argv) {
                 }
                 if (createDataset) {
                     std::cout << "Create dataset " << datasetname << std::endl;
-                    dataset = new DataSet(globaltimegroup->createDataSet(datasetname, datatype, dataspace));
+                    dataset = new DataSet(globaltimegroup->createDataSet(datasetname, listEventType, dataspace));
                     createDataset = false;
                 }
             
@@ -383,10 +391,7 @@ int main(int argc, char **argv) {
                 localtime = listEvent->localTime;
                 charge = listEvent->adcValue;
                 std::cout << "Saving data from " << digitizer << " channel " << channel << " localtime " << localtime << " charge " << charge << std::endl;
-                data[0] = channel;
-                data[1] = localtime;
-                data[2] = charge;
-                dataset->write(data, PredType::STD_U32LE);
+                dataset->write(listEvent, listEventType);
 
                 if (dataset != NULL)
                     delete dataset;
