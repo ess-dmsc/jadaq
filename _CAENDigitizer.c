@@ -329,8 +329,20 @@ static CAEN_DGTZ_ErrorCode V1740DPP_QDC_SetNumEventsPerAggregate(int handle, uin
     CAEN_DGTZ_ErrorCode err = CAEN_DGTZ_Success;
     uint32_t config = 0;
 
-    // TODO actually understand the 0x800C & 0x8020 register correlation
-    // and why do we care about waveform?
+    /* TODO: actually understand the 0x800C & 0x8020 register correlation
+     * and why do we care about waveform?
+     *
+     * User Manual UM4874 DPP-QDC Digital Pulse Processing for QDC
+     * explains it on page 13 and onwards. It sounds like the waveform
+     * recording severely limits the maximum number of available aggregates
+     * (=acquisition buffers). The number of aggregates is 2^Nb where Nb is
+     * the value assigned to register 0x800C. If a specific (i.e. positive)
+     * numEvents value is given it results in 2^3 = 8 aggregates. The
+     * same applies for 0 if waveformRecording is enabled in board
+     * configuration. Similarly auto results in 2^10 = 1024 aggregates if
+     * waveformRecording is disabled.
+     */
+    /* if user provided numEvents == 0 it means auto layout for best fit */
     if (numEvents == 0) {
         CAEN_DGTZ_ReadRegister(handle, 0x8000, &config);
         if (config & (1<<16)) {                                          /* waveform enabled      */
