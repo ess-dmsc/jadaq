@@ -1,6 +1,8 @@
 #!/usr/bin/python
 
-"""Simple hdf5 dumper from python, which reads HDF5 files in SWMR mode"""
+"""Simple hdf5 monitor from python, which reads HDF5 files in SWMR mode and
+continuously displays the contents.
+"""
 
 import os
 import sys
