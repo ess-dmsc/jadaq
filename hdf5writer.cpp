@@ -390,7 +390,7 @@ int main(int argc, char **argv) {
                 channel = listEvent->channel;
                 localtime = listEvent->localTime;
                 charge = listEvent->adcValue;
-                std::cout << "Saving data from " << digitizer << " channel " << channel << " localtime " << localtime << " charge " << charge << std::endl;
+                std::cout << "Saving data event " << eventIndex << " from " << digitizer << " channel " << channel << " localtime " << localtime << " charge " << charge << std::endl;
                 dataset->write(listEvent, listEventType);
 
                 if (dataset != NULL)

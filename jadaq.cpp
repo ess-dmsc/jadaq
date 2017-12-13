@@ -358,7 +358,9 @@ int main(int argc, char **argv) {
                 totalBytesRead += bytesRead;
                 std::cout << "Read " << bytesRead << "b of acquired data" << std::endl;
 
-                globaltime = std::time(nullptr);
+                /* NOTE: use time since epoch with millisecond resolution to
+                 * keep timestamps unique */
+                globaltime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
 
                 /* NOTE: check and skip if there's no actual events to handle */
                 if (digitizer.caenIsDPPFirmware()) {
