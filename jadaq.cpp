@@ -336,6 +336,7 @@ int main(int argc, char **argv) {
     uint32_t throttleDown = 0;
     bool keepRunning = true;
     while(keepRunning) {
+        /* TODO: hand off decoding and sending to threads? */
         /* Continuously acquire and process data:
          *   - read out data
          *   - decode data

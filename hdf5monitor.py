@@ -11,42 +11,43 @@ import h5py
 listelem_fields = ['channel', 'localTime', 'adcValue', 'extendTime']
 waveformelem_fields = ['channel', 'localTime', 'extendTime', 'waveform']
 
-def show_listelem_struct(data):
+def show_listelem_struct(name, data):
     """Helper to print list elements on compound form"""
-    print "List Element:"
-    for name in listelem_fields:
-        key = "%s_name" % name
-        print "    %s %d" % (name, data[0][key])
+    print "Element %s:" % name
+    for field in listelem_fields:
+        key = "%s_name" % field
+        print "    %s %d" % (field, data[0][key])
 
-def show_listelem_flat(data):
+def show_listelem_flat(name, data):
     """Helper to print list elements on flat array form"""
-    print "List Element:"
-    for (name, index) in zip(listelem_fields, range(len(listelem_fields))):    
-        print "    %s %d" % (name, data[index])
+    print "Element %s:" % name
+    for (field, index) in zip(listelem_fields, range(len(listelem_fields))):    
+        print "    %s %d" % (field, data[index])
 
-def show_waveformelem_struct(data):
+def show_waveformelem_struct(name, data):
     """Helper to print waveform elements on compound form"""
-    print "Waveform Element:"
-    for name in waveformelem_fields:
-        key = "%s_name" % name
-        print "    %s %d" % (name, data[0][key])
+    print "Element %s:" % name
+    for field in waveformelem_fields:
+        key = "%s_name" % field
+        print "    %s %d" % (field, data[0][key])
 
 def show_entries(root):
     """Print out the contents of root and recursively apply to nested items"""
     
     for (key, val) in root.items():
-        print "Root %s:" % root
-        print "%s = %s" % (key, val)
         try:
             # We print out compound element fields based on the DataFormat
             # struct and the corresponding names defined in the hdf5writer.
             if key.startswith('list-'):
                 if val.shape[0] == 1:
-                    show_listelem_struct(val)
+                    show_listelem_struct(key, val)
                 else:
-                    show_listelem_flat(val)
-            if key.startswith('waveform-'):
-                show_waveformelem_struct(val)
+                    show_listelem_flat(key, val)
+            elif key.startswith('waveform-'):
+                show_waveformelem_struct(key, val)
+            else:
+                print "Root %s:" % root
+                print "Node %s:  %s" % (key, val)
             # Keep following until we hit a leaf node
             show_entries(root[key])
         except:
