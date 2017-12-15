@@ -38,6 +38,9 @@
 #include "CAENConf.hpp"
 #include <boost/filesystem.hpp>
 #include <boost/asio.hpp>
+#include <boost/asio/io_service.hpp>
+#include <boost/bind.hpp>
+#include <boost/thread/thread.hpp>
 
 #include "DataFormat.hpp"
 
@@ -45,7 +48,6 @@ using boost::asio::ip::udp;
 
 /* A simple helper to get current time since epoch in milliseconds */
 #define getTimeMsecs() (std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count())
-
 
 /* Shared runtime configuration */
 struct RuntimeConf {
@@ -96,6 +98,17 @@ struct CommHelper {
     Data::PackedEvents packedEvents;
 };
 
+/* Per-digitizer thread helpers */
+struct ThreadHelper {
+    /* TODO: move thread pool etc here as well? */
+    std::atomic<bool> ready;
+};
+
+/* For channel dump and communication */
+typedef std::map<const std::string, std::ofstream *> ofstream_map;
+typedef std::map<const std::string, CommHelper *> comm_helper_map;
+typedef std::map<const std::string, ThreadHelper *> thread_helper_map;
+
 /* Keep running marker and interrupt signal handler */
 static int interrupted = 0;
 static void interrupt_handler(int s) {
@@ -121,6 +134,7 @@ void usageHelp(char *name)
     std::cout << "--registerdump / -r FILE   optional file to save register dump in." << std::endl;
     std::cout << "--targetevents / -e COUNT  stop acquisition loop after COUNT events." << std::endl;
     std::cout << "--targettime / -t SECS     stop acquisition loop after SECS seconds." << std::endl;
+    std::cout << "--workers / -w THREADS     use a thread pool with THREADS workers." << std::endl;
     std::cout << std::endl << "Reads in a configuration from <jadaq_config_file> " << std::endl;
     std::cout << "and configures the digitizer(s) accordingly." << std::endl;
     std::cout << "The current/resulting digitizer settings automatically " << std::endl;
@@ -140,8 +154,217 @@ void usageHelp(char *name)
     std::cout << "of the important digitizer registers is dumped there." << std::endl;
 }
 
+void myTask(const char *name) {
+    std::cout << getTimeMsecs() << ": my task starting task " << name << std::endl;
+    boost::this_thread::sleep(boost::posix_time::milliseconds(1000));
+    std::cout << getTimeMsecs() << ": my task finished task " << name << std::endl;
+}
+
+void extractEvents(Digitizer &digitizer, LocalStats *stats, RuntimeConf conf, comm_helper_map commHelpers, uint64_t globaltime, ofstream_map charge_writer_map, ofstream_map wave_writer_map, boost::asio::io_service &threadIOService) {
+    /* NOTE: these are per-digitizer local helpers */
+    uint64_t count = 0;
+    uint32_t eventIndex = 0, decodeChannels = 0, j = 0, k = 0;
+    uint32_t charge = 0, timestamp = 0, channel = 0;
+    uint16_t *samples = NULL;
+    caen::BasicEvent basicEvent;
+    caen::BasicDPPEvent basicDPPEvent;
+    caen::BasicDPPWaveforms basicDPPWaveforms;
+    std::ofstream *channelChargeWriters, *channelWaveWriters;
+
+    if (digitizer.caenIsDPPFirmware()) {
+        eventIndex = 0;
+        for (channel = 0; channel < MAX_CHANNELS; channel++) {
+            for (j = 0; j < digitizer.caenGetPrivDPPEvents().nEvents[channel]; j++) {
+                /* NOTE: we don't want to muck with underlying
+                 * event type here, so we rely on the wrapped
+                 * extraction and pull out timestamp, charge,
+                 * etc from the resulting BasicDPPEvent. */
+                
+                basicDPPEvent = digitizer.caenExtractBasicDPPEvent(digitizer.caenGetPrivDPPEvents(), channel, j);
+                /* We use the same 4 byte range for charge as CAEN sample */
+                charge = basicDPPEvent.charge & 0xFFFF;
+                /* TODO: include timestamp high bits from Extra field? */
+                /* NOTE: timestamp is 64-bit for PHA events
+                 * but we just consistently clip to 32-bit
+                 * for now. */ 
+                timestamp = basicDPPEvent.timestamp & 0xFFFFFFFF;
+                
+                std::cout << digitizer.name() << " channel " << channel << " event " << j << " charge " << charge << " at global time " << globaltime << " and local time " << timestamp << std::endl;
+                
+                if (conf.channelDumpEnabled) {
+                    /* NOTE: write in requested format */
+                    channelChargeWriters = charge_writer_map[digitizer.name()];
+                    /* NOTE: we use explicit "\n" rather than std::endl.
+                     *       This is in order to avoid automatic
+                     *       ofstream flush after each line.
+                     */
+                    channelChargeWriters[channel] << std::setw(16) << timestamp << " " << digitizer.serial() << " " << std::setw(8) << channel << " " << std::setw(8) << charge << "\n";
+                }
+                
+                /* Only try to decode waveforms if digitizer is actually
+                 * configured to record them in the first place. */
+                if (digitizer.caenHasDPPWaveformsEnabled()) {
+                    try {
+                        digitizer.caenDecodeDPPWaveforms(digitizer.caenGetPrivDPPEvents(), channel, j, digitizer.caenGetPrivDPPWaveforms());
+                        
+                        std::cout << "Decoded " << digitizer.caenDumpPrivDPPWaveforms() << " DPP event waveforms from event " << j << " on channel " << channel << " from " << digitizer.name() << std::endl;
+                        stats->eventsDecoded += 1;
+                        if (conf.channelDumpEnabled and conf.waveDumpEnabled) {
+                            channelWaveWriters = wave_writer_map[digitizer.name()];
+                            /* NOTE: we don't want to muck with underlying
+                             * event type here, so we rely on the wrapped
+                             * extraction and pull out
+                             * values from the resulting
+                             * BasicDPPWaveforms. */
+                            basicDPPWaveforms = digitizer.caenExtractBasicDPPWaveforms(digitizer.caenGetPrivDPPWaveforms());
+                            for(k=0; k<basicDPPWaveforms.Ns; k++) {
+                                channelWaveWriters[channel] << basicDPPWaveforms.Trace1[k];                 /* samples */
+                                channelWaveWriters[channel] << " " << 2000 + 200 * basicDPPWaveforms.DTrace1[k];  /* gate    */
+                                channelWaveWriters[channel] << " " << 1000 + 200 *basicDPPWaveforms.DTrace2[k];  /* trigger */
+                                if (basicDPPWaveforms.DTrace3 != NULL)
+                                    channelWaveWriters[channel] << " " << 500 + 200 * basicDPPWaveforms.DTrace3[k];   /* trg hold off */
+                                if (basicDPPWaveforms.DTrace4 != NULL)
+                                    channelWaveWriters[channel] << " " << 100 + 200 * basicDPPWaveforms.DTrace4[k];  /* overthreshold */
+                                /* NOTE: we use explicit "\n" rather than std::endl.
+                                 *       This is in order to avoid automatic
+                                 *       ofstream flush after each line.
+                                 */
+                                channelWaveWriters[channel] << "\n";
+                            }
+                        }                                    
+                    } catch(std::exception& e) {
+                        std::cerr << "failed to decode waveforms for event " << j << " on channel " << channel << " from " << digitizer.name() << " : " << e.what() << std::endl;
+                    }
+                }                            
+                
+                if (conf.sendEventEnabled) {
+                    CommHelper *digitizerComm = commHelpers[digitizer.name()];
+                    //std::cout << "Filling event at " << globaltime << " from " << digitizer.name() << " channel " << channel << " localtime " << timestamp << " charge " << charge << std::endl;
+                    digitizerComm->eventData->listEvents[eventIndex].localTime = timestamp;
+                    digitizerComm->eventData->listEvents[eventIndex].extendTime = 0;
+                    digitizerComm->eventData->listEvents[eventIndex].adcValue = charge;
+                    digitizerComm->eventData->listEvents[eventIndex].channel = channel;
+                }
+                eventIndex += 1;
+            }
+        }
+    } else { 
+        /* Handle the non-DPP case */
+        for (eventIndex=0; eventIndex < stats->eventsFound; eventIndex++) {
+            digitizer.caenGetEventInfo(digitizer.caenGetPrivReadoutBuffer(), eventIndex);
+            std::cout << "Unpacked event " << digitizer.caenGetPrivEventInfo().EventCounter << "  of " << stats->eventsFound << " events from " << digitizer.name() << std::endl;
+            stats->eventsUnpacked += 1;
+            digitizer.caenDecodeEvent(digitizer.caenGetPrivEventInfo(), digitizer.caenGetPrivEvent());
+            std::cout << "Decoded event " << digitizer.caenGetPrivEventInfo().EventCounter << "  of " << stats->eventsFound << " events from " << digitizer.name() << std::endl;
+            stats->eventsDecoded += 1;
+            /* TODO: where do we get real channel from in these events?!? */
+            /*       it looks like decoded events is really a matrix
+             *       of channel events a bit like in the DPPEvents case */
+            channel = 4242;
+            basicEvent = digitizer.caenExtractBasicEvent(digitizer.caenGetPrivEventInfo(), digitizer.caenGetPrivEvent(), channel, eventIndex);
+            timestamp = basicEvent.timestamp;
+            count = basicEvent.count;
+            samples = basicEvent.samples;
+            if (conf.sendEventEnabled) {
+                CommHelper *digitizerComm = commHelpers[digitizer.name()];
+                //std::cout << "Filling event at " << globaltime << " from " << digitizer.name() << " channel " << channel << " localtime " << timestamp << " sample count " << count << std::endl;
+                digitizerComm->eventData->waveformEvents[eventIndex].localTime = timestamp;
+                digitizerComm->eventData->waveformEvents[eventIndex].waveformLength = count;
+                memcpy(digitizerComm->eventData->waveformEvents[eventIndex].waveform, samples, (count * sizeof(samples[0])));
+                digitizerComm->eventData->waveformEvents[eventIndex].channel = channel;
+            }   
+        }
+    }   
+}
+
+void digitizerAcquisition(Digitizer &digitizer, LocalStats *stats, TotalStats *totals, RuntimeConf conf, thread_helper_map threadHelpers, comm_helper_map commHelpers, ofstream_map charge_writer_map, ofstream_map wave_writer_map, boost::asio::io_service &threadIOService) {
+    /* NOTE: these are per-digitizer local helpers */
+    uint32_t channel = 0;
+    uint64_t globaltime = 0;
+    stats->bytesRead = 0;
+    stats->eventsFound = 0; 
+    stats->eventsUnpacked = 0;
+    stats->eventsDecoded = 0;
+    stats->eventsSent = 0;
+
+    /* Throttle down first if digitizer is idle or recently threw error */
+    digitizer.idleYield();
+
+    /* NOTE: use time since epoch with millisecond resolution to
+     * keep timestamps unique */
+    globaltime = getTimeMsecs();
+
+    std::cout << "Read at most " << digitizer.caenGetPrivReadoutBuffer().size << "b data from " << digitizer.name() << std::endl;
+    digitizer.caenReadData(digitizer.caenGetPrivReadoutBuffer());
+    stats->bytesRead = digitizer.caenGetPrivReadoutBuffer().dataSize;
+    std::cout << "Read " << stats->bytesRead << "b of acquired data" << std::endl;
+
+    /* NOTE: check and skip if there's no actual events to handle */
+    if (digitizer.caenIsDPPFirmware()) {
+        std::cout << "Unpack aggregated DPP events from " << digitizer.name() << std::endl;
+        digitizer.caenGetDPPEvents(digitizer.caenGetPrivReadoutBuffer(), digitizer.caenGetPrivDPPEvents());
+        for (channel = 0; channel < MAX_CHANNELS; channel++) {
+            stats->eventsFound += digitizer.caenGetPrivDPPEvents().nEvents[channel];
+        }
+        stats->eventsUnpacked += stats->eventsFound;
+        std::cout << "Unpacked " << stats->eventsUnpacked << " DPP events from all channels." << std::endl;
+    } else {
+        stats->eventsFound += digitizer.caenGetNumEvents(digitizer.caenGetPrivReadoutBuffer());
+        std::cout << "Acquired data from " << digitizer.name() << " contains " << stats->eventsFound << " event(s)." << std::endl;
+    }
+    if (stats->eventsFound < 1) {
+        std::cout << "No events found - no further handling." << std::endl;
+        digitizer.throttleDown();
+        return;
+    }
+
+    if (conf.sendEventEnabled) {
+        CommHelper *digitizerComm = commHelpers[digitizer.name()];
+        /* Reset send buffer each time to prevent any stale data */
+        memset(digitizerComm->sendBuf, 0, MAXBUFSIZE);
+        /* TODO: add check to make sure sendBuf always fits eventData */
+        digitizerComm->eventData = Data::setupEventData((void *)digitizerComm->sendBuf, MAXBUFSIZE, stats->eventsFound, 0);
+        std::cout << "Prepared eventData " << digitizerComm->eventData << " from sendBuf " << (void *)digitizerComm->sendBuf << std::endl;
+        digitizerComm->metadata = digitizerComm->eventData->metadata;
+        /* NOTE: safe copy with explicit string termination */
+        strncpy(digitizerComm->eventData->metadata->digitizerModel, digitizer.model().c_str(), MAXMODELSIZE);
+        digitizerComm->eventData->metadata->digitizerModel[MAXMODELSIZE-1] = '\0';
+        digitizerComm->eventData->metadata->digitizerID = std::stoi(digitizer.serial());
+        digitizerComm->eventData->metadata->globalTime = globaltime;
+        std::cout << "Prepared eventData has " << digitizerComm->eventData->listEventsLength << " listEvents " << std::endl;
+    }
+
+    extractEvents(digitizer, stats, conf, commHelpers, globaltime, charge_writer_map, wave_writer_map, threadIOService);
+
+    /* Pack and send out UDP */
+    if (conf.sendEventEnabled) {
+        CommHelper *digitizerComm = commHelpers[digitizer.name()];
+        std::cout << "Packing events at " << globaltime << " from " << digitizer.name() << std::endl;
+        digitizerComm->packedEvents = Data::packEventData(digitizerComm->eventData, stats->eventsFound, 0);
+        /* Send data to preconfigured receiver */
+        std::cout << "Sending " << stats->eventsUnpacked << " packed events of " << digitizerComm->packedEvents.dataSize << "b at " << globaltime << " from " << digitizer.name() << " to " << conf.address << ":" << conf.port << std::endl;
+        digitizerComm->socket->send_to(boost::asio::buffer((char*)(digitizerComm->packedEvents.data), digitizerComm->packedEvents.dataSize), digitizerComm->remoteEndpoint);
+        stats->eventsSent += stats->eventsUnpacked;
+    }                
+
+    /* Update total stats atomically */
+    totals->bytesRead += stats->bytesRead;
+    totals->eventsFound += stats->eventsFound;
+    totals->eventsUnpacked += stats->eventsUnpacked;
+    totals->eventsDecoded += stats->eventsDecoded;
+    totals->eventsSent += stats->eventsSent;
+
+    /* No throttling if handling succeeded this far */
+    digitizer.resetThrottle();
+
+    /* Mark hadnling complete so that next acquisition can begin */
+    ThreadHelper *digitizerThread = threadHelpers[digitizer.name()];
+    digitizerThread->ready = true;
+}
+
+
 int main(int argc, char **argv) {
-    const char* const short_opts = "a:c:d:e:hp:r:t:";
+    const char* const short_opts = "a:c:d:e:hp:r:t:w:";
     const option long_opts[] = {
         {"address", 1, nullptr, 'a'},
         {"confoverride", 1, nullptr, 'c'},
@@ -151,6 +374,7 @@ int main(int argc, char **argv) {
         {"port", 1, nullptr, 'p'},
         {"registerdump", 1, nullptr, 'r'},
         {"targettime", 1, nullptr, 't'},
+        {"workers", 1, nullptr, 'w'},
         {nullptr, 0, nullptr, 0}
     };
 
@@ -203,6 +427,9 @@ int main(int argc, char **argv) {
         case 't':
             conf.stopAfterSeconds = std::stoi(optarg);
             break;
+        case 'w':
+            conf.workerThreads = std::stoi(optarg);
+            break;
         case 'h': // -h or --help
         case '?': // Unrecognized option
         default:
@@ -235,11 +462,13 @@ int main(int argc, char **argv) {
     totals.eventsSent = 0;    
 
     /* Singleton helpers */
-    uint64_t acquisitionStart = 0, acquisitionStopped = 0;
+    uint64_t acquisitionStart = 0, acquisitionStopped = 0, now = 0;
+    boost::asio::io_service threadIOService;
+    boost::thread_group threadPool;
 
     /* Active digitizers */
     std::vector<Digitizer> digitizers;
-    typedef std::map<const std::string, CommHelper *> comm_helper_map;
+    thread_helper_map threadHelpers;
     comm_helper_map commHelpers;
 
     /* Read-in and write resulting digitizer configuration */
@@ -271,7 +500,6 @@ int main(int argc, char **argv) {
 
     /* Helpers for output - eventually move to stand-alone asio receiver? */
     std::ofstream *channelChargeWriters, *channelWaveWriters;
-    typedef std::map<const std::string, std::ofstream *> ofstream_map;
     ofstream_map charge_writer_map;
     ofstream_map wave_writer_map;
     std::stringstream path;
@@ -328,6 +556,12 @@ int main(int argc, char **argv) {
                 
             }
         }
+
+        ThreadHelper *digitizerThread = new ThreadHelper();
+        threadHelpers[digitizer.name()] = digitizerThread;
+        digitizerThread->ready = true;
+
+        /* Setup worker done helper for this digitizer */
         if (conf.sendEventEnabled) {
             /* Setup UDP sender for this digitizer */
             try {
@@ -381,12 +615,25 @@ int main(int argc, char **argv) {
         digitizer.caenStartAcquisition();
     }
 
+    /* Auto-detect available cores and create a thread for each if
+     * workerThreads is not explicitly set. */
+    if (conf.workerThreads < 1) {
+        conf.workerThreads = boost::thread::hardware_concurrency();
+    }
+    /* Set up thread pool to distribute tasks to multiple cores */
+    std::cout << "Start thread pool of " << conf.workerThreads << " worker(s)." << std::endl;
+    /* Use a work wrapper to allow waiting for all pending tasks on exit */
+    boost::asio::io_service::work *work = new boost::asio::io_service::work(threadIOService);
+    for (int i=0; i<conf.workerThreads; i++) {
+        std::cout << "Create thread " << i << " for thread pool." << std::endl;
+        threadPool.create_thread(boost::bind(&boost::asio::io_service::run, &threadIOService));
+    }
+
     /* Set up interrupt handler and start handling acquired data */
     setup_interrupt_handler();
 
     std::cout << "Running acquisition loop - Ctrl-C to interrupt" << std::endl;
 
-    uint32_t throttleDown = 0;
     bool keepRunning = true;
     while(keepRunning) {
         /* Continuously acquire and process data:
@@ -403,220 +650,46 @@ int main(int argc, char **argv) {
         } else if (conf.stopAfterEvents > 0) {
             std::cout << "Handled " << totals.eventsFound << " out of " << conf.stopAfterEvents << " events allowed so far." << std::endl;            
         }
-        if (throttleDown > 0) {
-            /* NOTE: for running without hogging CPU if nothing to do */
-            std::this_thread::sleep_for(std::chrono::milliseconds(throttleDown));
-        }
-        try {
-            std::cout << "Read out data from " << digitizers.size() << " digitizer(s)." << std::endl;
-            /* Read out acquired data for all digitizers */
-            /* TODO: split digitizer handling loop into separate threads */
-            /* TODO: additionally hand off decoding and sending to threads? */
-            for (Digitizer& digitizer: digitizers) {
-                /* NOTE: these are per-digitizer helpers */
-                uint32_t eventIndex = 0, decodeChannels = 0, j = 0, k = 0;
-                caen::BasicEvent basicEvent;
-                caen::BasicDPPEvent basicDPPEvent;
-                caen::BasicDPPWaveforms basicDPPWaveforms;
-                uint32_t charge = 0, timestamp = 0, channel = 0;
-                uint64_t globaltime = 0, now = 0, count = 0;
-                uint16_t *samples = NULL;
+        std::cout << "Read out data from " << digitizers.size() << " digitizer(s)." << std::endl;
+        /* Read out acquired data for all digitizers */
+        /* TODO: split digitizer handling loop into separate threads */
+        /* TODO: additionally hand off decoding and sending to threads? */
+        for (Digitizer& digitizer: digitizers) {
+            try {
+                /* NOTE: these are per-digitizer local stats */
                 LocalStats stats;
-                stats.bytesRead = 0;
-                stats.eventsFound = 0; 
-                stats.eventsUnpacked = 0;
-                stats.eventsDecoded = 0;
-                stats.eventsSent = 0;
 
-                /* NOTE: use time since epoch with millisecond resolution to
-                 * keep timestamps unique */
-                globaltime = getTimeMsecs();
-
-                std::cout << "Read at most " << digitizer.caenGetPrivReadoutBuffer().size << "b data from " << digitizer.name() << std::endl;
-                digitizer.caenReadData(digitizer.caenGetPrivReadoutBuffer());
-                stats.bytesRead = digitizer.caenGetPrivReadoutBuffer().dataSize;
-                std::cout << "Read " << stats.bytesRead << "b of acquired data" << std::endl;
-
-                /* NOTE: check and skip if there's no actual events to handle */
-                if (digitizer.caenIsDPPFirmware()) {
-                    std::cout << "Unpack aggregated DPP events from " << digitizer.name() << std::endl;
-                    digitizer.caenGetDPPEvents(digitizer.caenGetPrivReadoutBuffer(), digitizer.caenGetPrivDPPEvents());
-                    for (channel = 0; channel < MAX_CHANNELS; channel++) {
-                        stats.eventsFound += digitizer.caenGetPrivDPPEvents().nEvents[channel];
-                    }
-                    stats.eventsUnpacked += stats.eventsFound;
-                    if (stats.eventsFound < 1)
-                        continue;
-                    std::cout << "Unpacked " << stats.eventsUnpacked << " DPP events from all channels." << std::endl;
+                /* TODO: move actual work to thread pool like this 
+                   std::cout << "Post task for thread pool." << std::endl;
+                   threadIOService.post(boost::bind(myTask, "task1"));
+                   threadIOService.post(boost::bind(myTask, "task2"));
+                */
+                ThreadHelper *digitizerThread = threadHelpers[digitizer.name()];
+                if (digitizerThread->ready) {
+                    digitizerThread->ready = false;
+                    std::cout << "Enqueuing new digitizer acquisition for " << digitizer.name() << std::endl;
+                    /* TODO: actually post digitizerAcquisition */
+                    digitizerAcquisition(digitizer, &stats, &totals, conf, threadHelpers, commHelpers, charge_writer_map, wave_writer_map, threadIOService);
                 } else {
-                    stats.eventsFound += digitizer.caenGetNumEvents(digitizer.caenGetPrivReadoutBuffer());
-                    std::cout << "Acquired data from " << digitizer.name() << " contains " << stats.eventsFound << " event(s)." << std::endl;
-                    if (stats.eventsFound < 1) {
-                        std::cout << "No events found - no further handling." << std::endl;
-                        throttleDown = std::min((uint32_t)2000, 2*throttleDown + 100);
-                        continue;
-                    }
+                    std::cout << "Acquisition still active for digitizer " << digitizer.name() << std::endl;
                 }
-
-                if (conf.sendEventEnabled) {
-                    CommHelper *digitizerComm = commHelpers[digitizer.name()];
-                    /* Reset send buffer each time to prevent any stale data */
-                    memset(digitizerComm->sendBuf, 0, MAXBUFSIZE);
-                    /* TODO: add check to make sure sendBuf always fits eventData */
-                    digitizerComm->eventData = Data::setupEventData((void *)digitizerComm->sendBuf, MAXBUFSIZE, stats.eventsFound, 0);
-                    std::cout << "Prepared eventData " << digitizerComm->eventData << " from sendBuf " << (void *)digitizerComm->sendBuf << std::endl;
-                    digitizerComm->metadata = digitizerComm->eventData->metadata;
-                    /* NOTE: safe copy with explicit string termination */
-                    strncpy(digitizerComm->eventData->metadata->digitizerModel, digitizer.model().c_str(), MAXMODELSIZE);
-                    digitizerComm->eventData->metadata->digitizerModel[MAXMODELSIZE-1] = '\0';
-                    digitizerComm->eventData->metadata->digitizerID = std::stoi(digitizer.serial());
-                    digitizerComm->eventData->metadata->globalTime = globaltime;
-                    std::cout << "Prepared eventData has " << digitizerComm->eventData->listEventsLength << " listEvents " << std::endl;
-                }
-
-                if (digitizer.caenIsDPPFirmware()) {
-                    eventIndex = 0;
-                    for (channel = 0; channel < MAX_CHANNELS; channel++) {
-                        for (j = 0; j < digitizer.caenGetPrivDPPEvents().nEvents[channel]; j++) {
-                            /* NOTE: we don't want to muck with underlying
-                             * event type here, so we rely on the wrapped
-                             * extraction and pull out timestamp, charge,
-                             * etc from the resulting BasicDPPEvent. */
-                            
-                            basicDPPEvent = digitizer.caenExtractBasicDPPEvent(digitizer.caenGetPrivDPPEvents(), channel, j);
-                            /* We use the same 4 byte range for charge as CAEN sample */
-                            charge = basicDPPEvent.charge & 0xFFFF;
-                            /* TODO: include timestamp high bits from Extra field? */
-                            /* NOTE: timestamp is 64-bit for PHA events
-                             * but we just consistently clip to 32-bit
-                             * for now. */ 
-                            timestamp = basicDPPEvent.timestamp & 0xFFFFFFFF;
-
-                            std::cout << digitizer.name() << " channel " << channel << " event " << j << " charge " << charge << " at global time " << globaltime << " and local time " << timestamp << std::endl;
-
-                            if (conf.channelDumpEnabled) {
-                                /* NOTE: write in requested format */
-                                channelChargeWriters = charge_writer_map[digitizer.name()];
-                                /* NOTE: we use explicit "\n" rather than std::endl.
-                                 *       This is in order to avoid automatic
-                                 *       ofstream flush after each line.
-                                 */
-                                channelChargeWriters[channel] << std::setw(16) << timestamp << " " << digitizer.serial() << " " << std::setw(8) << channel << " " << std::setw(8) << charge << "\n";
-                            }
-                            
-                            /* Only try to decode waveforms if digitizer is actually
-                             * configured to record them in the first place. */
-                            if (digitizer.caenHasDPPWaveformsEnabled()) {
-                                try {
-                                    digitizer.caenDecodeDPPWaveforms(digitizer.caenGetPrivDPPEvents(), channel, j, digitizer.caenGetPrivDPPWaveforms());
-
-                                    std::cout << "Decoded " << digitizer.caenDumpPrivDPPWaveforms() << " DPP event waveforms from event " << j << " on channel " << channel << " from " << digitizer.name() << std::endl;
-                                    stats.eventsDecoded += 1;
-                                    if (conf.channelDumpEnabled and conf.waveDumpEnabled) {
-                                        channelWaveWriters = wave_writer_map[digitizer.name()];
-                                        /* NOTE: we don't want to muck with underlying
-                                         * event type here, so we rely on the wrapped
-                                         * extraction and pull out
-                                         * values from the resulting
-                                         * BasicDPPWaveforms. */
-                                        basicDPPWaveforms = digitizer.caenExtractBasicDPPWaveforms(digitizer.caenGetPrivDPPWaveforms());
-                                        for(k=0; k<basicDPPWaveforms.Ns; k++) {
-                                            channelWaveWriters[channel] << basicDPPWaveforms.Trace1[k];                 /* samples */
-                                            channelWaveWriters[channel] << " " << 2000 + 200 * basicDPPWaveforms.DTrace1[k];  /* gate    */
-                                            channelWaveWriters[channel] << " " << 1000 + 200 *basicDPPWaveforms.DTrace2[k];  /* trigger */
-                                            if (basicDPPWaveforms.DTrace3 != NULL)
-                                                channelWaveWriters[channel] << " " << 500 + 200 * basicDPPWaveforms.DTrace3[k];   /* trg hold off */
-                                            if (basicDPPWaveforms.DTrace4 != NULL)
-                                                channelWaveWriters[channel] << " " << 100 + 200 * basicDPPWaveforms.DTrace4[k];  /* overthreshold */
-                                            /* NOTE: we use explicit "\n" rather than std::endl.
-                                             *       This is in order to avoid automatic
-                                             *       ofstream flush after each line.
-                                             */
-                                            channelWaveWriters[channel] << "\n";
-                                        }
-                                    }                                    
-                                } catch(std::exception& e) {
-                                    std::cerr << "failed to decode waveforms for event " << j << " on channel " << channel << " from " << digitizer.name() << " : " << e.what() << std::endl;
-                                }
-                            }                            
-
-                            if (conf.sendEventEnabled) {
-                                CommHelper *digitizerComm = commHelpers[digitizer.name()];
-                                //std::cout << "Filling event at " << globaltime << " from " << digitizer.name() << " channel " << channel << " localtime " << timestamp << " charge " << charge << std::endl;
-                                digitizerComm->eventData->listEvents[eventIndex].localTime = timestamp;
-                                digitizerComm->eventData->listEvents[eventIndex].extendTime = 0;
-                                digitizerComm->eventData->listEvents[eventIndex].adcValue = charge;
-                                digitizerComm->eventData->listEvents[eventIndex].channel = channel;
-                            }
-                            eventIndex += 1;
-                        }
-                    }
-                } else { 
-                    /* Handle the non-DPP case */
-                    for (eventIndex=0; eventIndex < stats.eventsFound; eventIndex++) {
-                        digitizer.caenGetEventInfo(digitizer.caenGetPrivReadoutBuffer(), eventIndex);
-                        std::cout << "Unpacked event " << digitizer.caenGetPrivEventInfo().EventCounter << "  of " << stats.eventsFound << " events from " << digitizer.name() << std::endl;
-                        stats.eventsUnpacked += 1;
-                        digitizer.caenDecodeEvent(digitizer.caenGetPrivEventInfo(), digitizer.caenGetPrivEvent());
-                        std::cout << "Decoded event " << digitizer.caenGetPrivEventInfo().EventCounter << "  of " << stats.eventsFound << " events from " << digitizer.name() << std::endl;
-                        stats.eventsDecoded += 1;
-                        /* TODO: where do we get real channel from in these events?!? */
-                        /*       it looks like decoded events is really a matrix
-                         *       of channel events a bit like in the DPPEvents case */
-                        channel = 4242;
-                        basicEvent = digitizer.caenExtractBasicEvent(digitizer.caenGetPrivEventInfo(), digitizer.caenGetPrivEvent(), channel, eventIndex);
-                        timestamp = basicEvent.timestamp;
-                        count = basicEvent.count;
-                        samples = basicEvent.samples;
-                        if (conf.sendEventEnabled) {
-                            CommHelper *digitizerComm = commHelpers[digitizer.name()];
-                            //std::cout << "Filling event at " << globaltime << " from " << digitizer.name() << " channel " << channel << " localtime " << timestamp << " sample count " << count << std::endl;
-                            digitizerComm->eventData->waveformEvents[eventIndex].localTime = timestamp;
-                            digitizerComm->eventData->waveformEvents[eventIndex].waveformLength = count;
-                            memcpy(digitizerComm->eventData->waveformEvents[eventIndex].waveform, samples, (count * sizeof(samples[0])));
-                            digitizerComm->eventData->waveformEvents[eventIndex].channel = channel;
-                        }   
-                    }
-                }
-
-                /* Pack and send out UDP */
-                if (conf.sendEventEnabled) {
-                    CommHelper *digitizerComm = commHelpers[digitizer.name()];
-                    std::cout << "Packing events at " << globaltime << " from " << digitizer.name() << std::endl;
-                    digitizerComm->packedEvents = Data::packEventData(digitizerComm->eventData, stats.eventsFound, 0);
-                    /* Send data to preconfigured receiver */
-                    std::cout << "Sending " << stats.eventsUnpacked << " packed events of " << digitizerComm->packedEvents.dataSize << "b at " << globaltime << " from " << digitizer.name() << " to " << conf.address << ":" << conf.port << std::endl;
-                    digitizerComm->socket->send_to(boost::asio::buffer((char*)(digitizerComm->packedEvents.data), digitizerComm->packedEvents.dataSize), digitizerComm->remoteEndpoint);
-                    stats.eventsSent += stats.eventsUnpacked;
-                }
-
-                /* Update total stats atomically */
-                now = getTimeMsecs();
-                totals.runMilliseconds = now - acquisitionStart;
-                totals.bytesRead += stats.bytesRead;
-                totals.eventsFound += stats.eventsFound;
-                totals.eventsUnpacked += stats.eventsUnpacked;
-                totals.eventsDecoded += stats.eventsDecoded;
-                totals.eventsSent += stats.eventsSent;
-
-                /* No throttling if handling succeeded this far */
-                throttleDown = 0;
+            } catch(std::exception& e) {
+                std::cerr << "unexpected exception during acquisition: " << e.what() << std::endl;
+                /* NOTE: throttle down on errors */
+                digitizer.throttleDown();
             }
-            
-
-            std::cout << "= Accumulated Stats =" << std::endl;
-            std::cout << "Runtime in seconds: " << totals.runMilliseconds / 1000.0 << std::endl;
-            std::cout << "Bytes read: " << totals.bytesRead << std::endl;
-            std::cout << "Aggregated events found: " << totals.eventsFound << std::endl;
-            std::cout << "Individual events unpacked: " << totals.eventsUnpacked << std::endl;
-            std::cout << "Individual events decoded: " << totals.eventsDecoded << std::endl;
-            std::cout << "Individual events sent: " << totals.eventsSent << std::endl;
-
-        } catch(std::exception& e) {
-            std::cerr << "unexpected exception during acquisition: " << e.what() << std::endl;
-            /* NOTE: throttle down on errors */
-            throttleDown = 2000;
         }
+
+        now = getTimeMsecs();
+        totals.runMilliseconds = now - acquisitionStart;
+        std::cout << "= Accumulated Stats =" << std::endl;
+        std::cout << "Runtime in seconds: " << totals.runMilliseconds / 1000.0 << std::endl;
+        std::cout << "Bytes read: " << totals.bytesRead << std::endl;
+        std::cout << "Aggregated events found: " << totals.eventsFound << std::endl;
+        std::cout << "Individual events unpacked: " << totals.eventsUnpacked << std::endl;
+        std::cout << "Individual events decoded: " << totals.eventsDecoded << std::endl;
+        std::cout << "Individual events sent: " << totals.eventsSent << std::endl;
+
         if (interrupted) {
             std::cout << "caught interrupt - stop acquisition and clean up." << std::endl;
             break;
@@ -633,6 +706,14 @@ int main(int argc, char **argv) {
 
     acquisitionStopped = getTimeMsecs();
     std::cout << "Acquisition loop ran for " << (acquisitionStopped - acquisitionStart) / 1000.0 << "s." << std::endl;
+
+    /* TODO: delete CommHelper and ThreadHelper objects */
+
+    /* Stop and wait for thread pool to complete */
+    /* NOTE: this delete forces tasks to finish first */
+    delete work;
+    std::cout << "Wait for " << conf.workerThreads << " worker thread(s) to finish." << std::endl;
+    threadPool.join_all();
 
     /* Clean up after all digitizers: buffers, etc. */
     std::cout << "Clean up after " << digitizers.size() << " digitizer(s)." << std::endl;

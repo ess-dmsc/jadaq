@@ -33,11 +33,14 @@
 
 #include <string>
 #include <unordered_map>
+#include <chrono>
+#include <thread>
 
 class Digitizer
 {
 private:
     caen::Digitizer* digitizer;
+    uint32_t throttleDownMSecs = 0;    
     /* We bind a ReadoutBuffer to each digitizer for ease of use */
     caen::ReadoutBuffer readoutBuffer_;
     /* Standard firmware uses eventInfo and Event while DPP firmware
@@ -57,6 +60,14 @@ public:
     const int vme() { return vme_; }
     void set(FunctionID functionID, std::string value);
     void set(FunctionID functionID, int index, std::string value);
+    void idleYield() { 
+        if (throttleDownMSecs > 0) {
+            /* NOTE: for running without hogging CPU if nothing to do */
+            std::this_thread::sleep_for(std::chrono::milliseconds(throttleDownMSecs));
+        }
+    }
+    void throttleDown() { throttleDownMSecs = std::min((uint32_t)2000, 2*throttleDownMSecs + 100); }
+    void resetThrottle() { throttleDownMSecs = 0; }
     std::string get(FunctionID functionID);
     std::string get(FunctionID functionID, int index);
     caen::Digitizer* caen() { return digitizer; }
