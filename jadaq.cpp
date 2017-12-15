@@ -84,6 +84,17 @@ struct TotalStats {
     std::atomic<uint32_t> eventsSent;
 };
 
+/* Per-digitizer communication helpers */
+struct CommHelper {
+    boost::asio::io_service sendIOService;
+    udp::endpoint remoteEndpoint;
+    udp::socket *socket = NULL;
+    /* NOTE: use a static buffer of MAXBUFSIZE bytes for sending */
+    char sendBuf[MAXBUFSIZE];
+    Data::EventData *eventData;
+    Data::Meta *metadata;
+    Data::PackedEvents packedEvents;
+};
 
 /* Keep running marker and interrupt signal handler */
 static int interrupted = 0;
@@ -223,29 +234,13 @@ int main(int argc, char **argv) {
     totals.eventsDecoded = 0;
     totals.eventsSent = 0;    
 
-    /* Helpers */
-    uint64_t fullTimeTags[MAX_CHANNELS];
-    uint32_t eventIndex = 0, decodeChannels = 0, j = 0, k = 0;
-    caen::BasicEvent basicEvent;
-    caen::BasicDPPEvent basicDPPEvent;
-    caen::BasicDPPWaveforms basicDPPWaveforms;
-    uint32_t charge = 0, timestamp = 0, channel = 0;
-    uint64_t globaltime = 0, acquisitionStart = 0, acquisitionStopped = 0;
-    uint64_t now = 0, count = 0;
-    uint16_t *samples = NULL;
-
-    /* Communication helpers */
-    boost::asio::io_service io_service;
-    udp::endpoint receiver_endpoint;
-    udp::socket *socket = NULL;
-    /* NOTE: use a static buffer of MAXBUFSIZE bytes for sending */
-    char send_buf[MAXBUFSIZE];
-    Data::EventData *eventData;
-    Data::Meta *metadata;
-    Data::PackedEvents packedEvents;
+    /* Singleton helpers */
+    uint64_t acquisitionStart = 0, acquisitionStopped = 0;
 
     /* Active digitizers */
     std::vector<Digitizer> digitizers;
+    typedef std::map<const std::string, CommHelper *> comm_helper_map;
+    comm_helper_map commHelpers;
 
     /* Read-in and write resulting digitizer configuration */
     std::ifstream configFile(conf.configFileName);
@@ -274,7 +269,7 @@ int main(int argc, char **argv) {
     }
     configFile.close();    
 
-    /* Helpers for output - eventually move to asio receiver */
+    /* Helpers for output - eventually move to stand-alone asio receiver? */
     std::ofstream *channelChargeWriters, *channelWaveWriters;
     typedef std::map<const std::string, std::ofstream *> ofstream_map;
     ofstream_map charge_writer_map;
@@ -314,7 +309,7 @@ int main(int argc, char **argv) {
             std::cout << "Dumping individual recorded channel charges from " << digitizer.name() << " in files " << conf.channelDumpPrefix << "-" << digitizer.name() << "-charge-CHANNEL.txt" << std::endl;
             channelChargeWriters = new std::ofstream[MAX_CHANNELS];
             charge_writer_map[digitizer.name()] = channelChargeWriters;
-            for (channel=0; channel<MAX_CHANNELS; channel++) {
+            for (int channel=0; channel<MAX_CHANNELS; channel++) {
                 path.str("");
                 path.clear();
                 path << conf.channelDumpPrefix << "-" << digitizer.name() << "-charge-" << std::setfill('0') << std::setw(2) << channel << ".txt";
@@ -324,7 +319,7 @@ int main(int argc, char **argv) {
                 std::cout << "Dumping individual recorded channel waveforms from " << digitizer.name() << " in files " << conf.channelDumpPrefix << "-" << digitizer.name() << "-wave-CHANNEL.txt" << std::endl;
                 channelWaveWriters = new std::ofstream[MAX_CHANNELS];
                 wave_writer_map[digitizer.name()] = channelWaveWriters;
-                for (channel=0; channel<MAX_CHANNELS; channel++) {
+                for (int channel=0; channel<MAX_CHANNELS; channel++) {
                     path.str("");
                     path.clear();
                     path << conf.channelDumpPrefix << "-" << digitizer.name() << "-wave-" << std::setfill('0') << std::setw(2) << channel << ".txt";
@@ -334,13 +329,15 @@ int main(int argc, char **argv) {
             }
         }
         if (conf.sendEventEnabled) {
-            /* Setup UDP sender */
+            /* Setup UDP sender for this digitizer */
             try {
-                udp::resolver resolver(io_service);
+                CommHelper *digitizerComm = new CommHelper();
+                commHelpers[digitizer.name()] = digitizerComm;
+                udp::resolver resolver(digitizerComm->sendIOService);
                 udp::resolver::query query(udp::v4(), conf.address.c_str(), conf.port.c_str());
-                receiver_endpoint = *resolver.resolve(query);
-                socket = new udp::socket(io_service);
-                socket->open(udp::v4());
+                digitizerComm->remoteEndpoint = *resolver.resolve(query);
+                digitizerComm->socket = new udp::socket(digitizerComm->sendIOService);
+                digitizerComm->socket->open(udp::v4());
             } catch (std::exception& e) {
                 std::cerr << "ERROR in UDP connection setup to " << conf.address << " : " << e.what() << std::endl;
                 exit(1);
@@ -354,11 +351,6 @@ int main(int argc, char **argv) {
                 std::cerr << "Error in dumping digitizer registers in " << conf.registerDumpFileName << std::endl;
                 exit(1); 
             }
-        }
-
-        /* Init helpers */
-        for (channel = 0; channel < MAX_CHANNELS; channel++) {
-            fullTimeTags[channel] = 0;
         }
 
         /* Prepare buffers - must happen AFTER digitizer has been configured! */
@@ -397,7 +389,6 @@ int main(int argc, char **argv) {
     uint32_t throttleDown = 0;
     bool keepRunning = true;
     while(keepRunning) {
-        /* TODO: hand off decoding and sending to threads? */
         /* Continuously acquire and process data:
          *   - read out data
          *   - decode data
@@ -406,7 +397,7 @@ int main(int argc, char **argv) {
          */
         if (conf.stopAfterEvents > 0 && conf.stopAfterEvents <= totals.eventsFound ||
             conf.stopAfterSeconds > 0 && conf.stopAfterSeconds * 1000 <= totals.runMilliseconds) {
-            std::cout << "Stop condition reached: ran for " << totals.runMilliseconds / 1000.0 << "seconds (target is " << conf.stopAfterSeconds << ") and handled " << totals.eventsFound << " events (target is " << conf.stopAfterEvents << ")." << std::endl;
+            std::cout << "Stop condition reached: ran for " << totals.runMilliseconds / 1000.0 << " seconds (target is " << conf.stopAfterSeconds << ") and handled " << totals.eventsFound << " events (target is " << conf.stopAfterEvents << ")." << std::endl;
             keepRunning = false;
             break;
         } else if (conf.stopAfterEvents > 0) {
@@ -420,8 +411,16 @@ int main(int argc, char **argv) {
             std::cout << "Read out data from " << digitizers.size() << " digitizer(s)." << std::endl;
             /* Read out acquired data for all digitizers */
             /* TODO: split digitizer handling loop into separate threads */
-            for (Digitizer& digitizer: digitizers)
-            {
+            /* TODO: additionally hand off decoding and sending to threads? */
+            for (Digitizer& digitizer: digitizers) {
+                /* NOTE: these are per-digitizer helpers */
+                uint32_t eventIndex = 0, decodeChannels = 0, j = 0, k = 0;
+                caen::BasicEvent basicEvent;
+                caen::BasicDPPEvent basicDPPEvent;
+                caen::BasicDPPWaveforms basicDPPWaveforms;
+                uint32_t charge = 0, timestamp = 0, channel = 0;
+                uint64_t globaltime = 0, now = 0, count = 0;
+                uint16_t *samples = NULL;
                 LocalStats stats;
                 stats.bytesRead = 0;
                 stats.eventsFound = 0; 
@@ -460,18 +459,19 @@ int main(int argc, char **argv) {
                 }
 
                 if (conf.sendEventEnabled) {
+                    CommHelper *digitizerComm = commHelpers[digitizer.name()];
                     /* Reset send buffer each time to prevent any stale data */
-                    memset(send_buf, 0, MAXBUFSIZE);
-                    /* TODO: add check to make sure send_buf always fits eventData */
-                    eventData = Data::setupEventData((void *)send_buf, MAXBUFSIZE, stats.eventsFound, 0);
-                    std::cout << "Prepared eventData " << eventData << " from send_buf " << (void *)send_buf << std::endl;
-                    metadata = eventData->metadata;
+                    memset(digitizerComm->sendBuf, 0, MAXBUFSIZE);
+                    /* TODO: add check to make sure sendBuf always fits eventData */
+                    digitizerComm->eventData = Data::setupEventData((void *)digitizerComm->sendBuf, MAXBUFSIZE, stats.eventsFound, 0);
+                    std::cout << "Prepared eventData " << digitizerComm->eventData << " from sendBuf " << (void *)digitizerComm->sendBuf << std::endl;
+                    digitizerComm->metadata = digitizerComm->eventData->metadata;
                     /* NOTE: safe copy with explicit string termination */
-                    strncpy(eventData->metadata->digitizerModel, digitizer.model().c_str(), MAXMODELSIZE);
-                    eventData->metadata->digitizerModel[MAXMODELSIZE-1] = '\0';
-                    eventData->metadata->digitizerID = std::stoi(digitizer.serial());
-                    eventData->metadata->globalTime = globaltime;
-                    std::cout << "Prepared eventData has " << eventData->listEventsLength << " listEvents " << std::endl;
+                    strncpy(digitizerComm->eventData->metadata->digitizerModel, digitizer.model().c_str(), MAXMODELSIZE);
+                    digitizerComm->eventData->metadata->digitizerModel[MAXMODELSIZE-1] = '\0';
+                    digitizerComm->eventData->metadata->digitizerID = std::stoi(digitizer.serial());
+                    digitizerComm->eventData->metadata->globalTime = globaltime;
+                    std::cout << "Prepared eventData has " << digitizerComm->eventData->listEventsLength << " listEvents " << std::endl;
                 }
 
                 if (digitizer.caenIsDPPFirmware()) {
@@ -492,30 +492,15 @@ int main(int argc, char **argv) {
                              * for now. */ 
                             timestamp = basicDPPEvent.timestamp & 0xFFFFFFFF;
 
-                            /* On rollover we increment the high 32 bits*/
-                            if (timestamp < (uint32_t)(fullTimeTags[channel])) {
-                                fullTimeTags[channel] &= 0xFFFFFFFF00000000;
-                                fullTimeTags[channel] += 0x100000000;
-                            }
-                            /* Always insert current timestamp in the low 32 bits */
-                            fullTimeTags[channel] = fullTimeTags[channel] & 0xFFFFFFFF00000000 | timestamp & 0x00000000FFFFFFFF;
-                            
-                            std::cout << digitizer.name() << " channel " << channel << " event " << j << " charge " << charge << " at time " << fullTimeTags[channel] << " (" << timestamp << ")"<< std::endl;
+                            std::cout << digitizer.name() << " channel " << channel << " event " << j << " charge " << charge << " at global time " << globaltime << " and local time " << timestamp << std::endl;
 
                             if (conf.channelDumpEnabled) {
-                                /* NOTE: write in same "%16lu %8d" format as CAEN sample */
-                                // TODO: which of these formats should we keep?
-                                /* TODO: change to a single file per
-                                 * digitizer with columns: 
-                                 * globaltime localtime digtizerid channel charge
-                                 */
+                                /* NOTE: write in requested format */
                                 channelChargeWriters = charge_writer_map[digitizer.name()];
                                 /* NOTE: we use explicit "\n" rather than std::endl.
                                  *       This is in order to avoid automatic
                                  *       ofstream flush after each line.
                                  */
-                                //channelChargeWriters[channel] << std::setw(16) << fullTimeTags[channel] << " " << std::setw(8) << charge << "\n";
-                                //channelChargeWriters[channel] << digitizer.name() << " " << std::setw(8) << channel << " " << std::setw(16) << fullTimeTags[channel] << " " << std::setw(8) << charge << "\n";
                                 channelChargeWriters[channel] << std::setw(16) << timestamp << " " << digitizer.serial() << " " << std::setw(8) << channel << " " << std::setw(8) << charge << "\n";
                             }
                             
@@ -556,11 +541,12 @@ int main(int argc, char **argv) {
                             }                            
 
                             if (conf.sendEventEnabled) {
+                                CommHelper *digitizerComm = commHelpers[digitizer.name()];
                                 //std::cout << "Filling event at " << globaltime << " from " << digitizer.name() << " channel " << channel << " localtime " << timestamp << " charge " << charge << std::endl;
-                                eventData->listEvents[eventIndex].localTime = timestamp;
-                                eventData->listEvents[eventIndex].extendTime = 0;
-                                eventData->listEvents[eventIndex].adcValue = charge;
-                                eventData->listEvents[eventIndex].channel = channel;
+                                digitizerComm->eventData->listEvents[eventIndex].localTime = timestamp;
+                                digitizerComm->eventData->listEvents[eventIndex].extendTime = 0;
+                                digitizerComm->eventData->listEvents[eventIndex].adcValue = charge;
+                                digitizerComm->eventData->listEvents[eventIndex].channel = channel;
                             }
                             eventIndex += 1;
                         }
@@ -583,22 +569,24 @@ int main(int argc, char **argv) {
                         count = basicEvent.count;
                         samples = basicEvent.samples;
                         if (conf.sendEventEnabled) {
-                            std::cout << "Filling event at " << globaltime << " from " << digitizer.name() << " channel " << channel << " localtime " << timestamp << " sample count " << count << std::endl;
-                            eventData->waveformEvents[eventIndex].localTime = timestamp;
-                            eventData->waveformEvents[eventIndex].waveformLength = count;
-                            memcpy(eventData->waveformEvents[eventIndex].waveform, samples, (count * sizeof(samples[0])));
-                            eventData->waveformEvents[eventIndex].channel = channel;
+                            CommHelper *digitizerComm = commHelpers[digitizer.name()];
+                            //std::cout << "Filling event at " << globaltime << " from " << digitizer.name() << " channel " << channel << " localtime " << timestamp << " sample count " << count << std::endl;
+                            digitizerComm->eventData->waveformEvents[eventIndex].localTime = timestamp;
+                            digitizerComm->eventData->waveformEvents[eventIndex].waveformLength = count;
+                            memcpy(digitizerComm->eventData->waveformEvents[eventIndex].waveform, samples, (count * sizeof(samples[0])));
+                            digitizerComm->eventData->waveformEvents[eventIndex].channel = channel;
                         }   
                     }
                 }
-                    
+
                 /* Pack and send out UDP */
                 if (conf.sendEventEnabled) {
+                    CommHelper *digitizerComm = commHelpers[digitizer.name()];
                     std::cout << "Packing events at " << globaltime << " from " << digitizer.name() << std::endl;
-                    packedEvents = Data::packEventData(eventData, stats.eventsFound, 0);
+                    digitizerComm->packedEvents = Data::packEventData(digitizerComm->eventData, stats.eventsFound, 0);
                     /* Send data to preconfigured receiver */
-                    std::cout << "Sending " << stats.eventsUnpacked << " packed events of " << packedEvents.dataSize << "b at " << globaltime << " from " << digitizer.name() << " to " << conf.address << ":" << conf.port << std::endl;
-                    socket->send_to(boost::asio::buffer((char*)(packedEvents.data), packedEvents.dataSize), receiver_endpoint);
+                    std::cout << "Sending " << stats.eventsUnpacked << " packed events of " << digitizerComm->packedEvents.dataSize << "b at " << globaltime << " from " << digitizer.name() << " to " << conf.address << ":" << conf.port << std::endl;
+                    digitizerComm->socket->send_to(boost::asio::buffer((char*)(digitizerComm->packedEvents.data), digitizerComm->packedEvents.dataSize), digitizerComm->remoteEndpoint);
                     stats.eventsSent += stats.eventsUnpacked;
                 }
 
@@ -653,11 +641,16 @@ int main(int argc, char **argv) {
         if (conf.channelDumpEnabled) {
             std::cout << "Closing channel charge dump files for " << digitizer.name() << std::endl;
             channelChargeWriters = charge_writer_map[digitizer.name()];
-            for (channel=0; channel<MAX_CHANNELS; channel++) {
+            for (int channel=0; channel<MAX_CHANNELS; channel++) {
                 channelChargeWriters[channel].close();
             }
             charge_writer_map.erase(digitizer.name());
             delete[] channelChargeWriters;
+        }
+
+        if (conf.sendEventEnabled) {
+            std::cout << "Closing comm helpers for " << digitizer.name() << std::endl;
+            delete commHelpers[digitizer.name()];
         }
 
         if (digitizer.caenIsDPPFirmware()) {
@@ -665,7 +658,7 @@ int main(int argc, char **argv) {
                 if (conf.channelDumpEnabled && conf.waveDumpEnabled) {
                     std::cout << "Closing channel wave dump files for " << digitizer.name() << std::endl;
                     channelWaveWriters = wave_writer_map[digitizer.name()];
-                    for (channel=0; channel<MAX_CHANNELS; channel++) {
+                    for (int channel=0; channel<MAX_CHANNELS; channel++) {
                         channelWaveWriters[channel].close();
                     }
                     wave_writer_map.erase(digitizer.name());
