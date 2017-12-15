@@ -10,26 +10,43 @@ import sys
 import time
 import h5py
 
-def extract_listelem_struct(serial, name, data):
+def extract_listelem_struct(serial, name, data, globaltime):
     """Helper to print list elements on compound form"""
-    return "%16s %8s %8s %8s" % (data[0]['localTime_name'], serial,
-                            data[0]['channel_name'], data[0]['adcValue_name'])
+    line = ""
+    if with_globaltime:
+        line = "%16s " % globaltime
+    line += "%16s %8s %8s %8s" % (data[0]['localTime_name'], serial,
+                                  data[0]['channel_name'],
+                                  data[0]['adcValue_name'])
+    return line
 
-def extract_listelem_flat(serial, name, data):
+def extract_listelem_flat(serial, name, data, globaltime):
     """Helper to print list elements on flat array form"""
-    return "%16s %8s %8s %8s" % (data[0][0], serial, data[0][1], data[0][2])
+    line = ""
+    if with_globaltime:
+        line = "%16s " % globaltime
+    line += "%16s %8s %8s %8s" % (data[0][0], serial, data[0][1], data[0][2])
+    return line
 
-def extract_waveformelem_struct(serial, name, data):
+def extract_waveformelem_struct(serial, name, data, globaltime):
     """Helper to print waveform elements on compound form"""
-    return "%16s %8s %8s %s" % (data[0]['localTime_name'], serial,
-                            data[0]['channel_name'], ' '.join(data[0]['waveform_name']))
+    line = ""
+    if with_globaltime:
+        line = "%16s " % globaltime
+    line += "%16s %8s %8s %s" % (data[0]['localTime_name'], serial,
+                                 data[0]['channel_name'],
+                                 ' '.join(data[0]['waveform_name']))
+    return line
 
-def dump_entries(serial, root, out_fd):
+def dump_entries(serial, root, out_fd, with_globaltime=False):
     """Write out the contents of root and nested values in simple columns in
     file outpath.
     """
+    globaltime = None
     if not serial and root.name != "/":
         serial = root.name.split("_", 1)[1]
+    if with_globaltime and root.name.count("/") == 2:
+        globaltime = root.name.split("/", 2)[2]
     for (key, val) in root.items():
         line = None
         try:
@@ -37,15 +54,18 @@ def dump_entries(serial, root, out_fd):
             # struct and the corresponding names defined in the hdf5writer.
             if key.startswith('list-'):
                 if val.shape[0] == 1:
-                    line = extract_listelem_struct(serial, key, val)
+                    line = extract_listelem_struct(serial, key, val,
+                                                   globaltime)
                 else:
-                    line = extract_listelem_flat(serial, key, val)
+                    line = extract_listelem_flat(serial, key, val,
+                                                 globaltime)
             elif key.startswith('waveform-'):
-                line = extract_waveformelem_struct(serial, key, val)
+                line = extract_waveformelem_struct(serial, key, val,
+                                                   globaltime)
             if line:
                 out_fd.write("%s\n" % line)
             # Keep following until we hit a leaf node
-            dump_entries(serial, root[key], out_fd)
+            dump_entries(serial, root[key], out_fd, with_globaltime)
         except:
             # just ignore leaf entries
             pass
@@ -53,10 +73,14 @@ def dump_entries(serial, root, out_fd):
 if __name__ == '__main__':
     inpath = 'out.h5'
     outpath = 'out.txt'
+    with_globaltime = False
     if sys.argv[1:]:
         inpath = sys.argv[1]
     if sys.argv[2:]:
         outpath = sys.argv[2]
+    if sys.argv[3:]:
+        with_globaltime = (sys.argv[3][0].lower() in ('y', '1', 't'))
+    
     try:
         h5file = h5py.File(inpath, 'r', libver='latest', swmr=True)
     except Exception, exc:
@@ -67,7 +91,7 @@ if __name__ == '__main__':
     print "Dumping contents as simple text columns in %s" % outpath
     try:
         out_fd = open(outpath, 'w')
-        dump_entries(None, root, out_fd)
+        dump_entries(None, root, out_fd, with_globaltime)
         out_fd.close()
         print "Dumped contents to %s" % outpath
     except Exception, exc:
