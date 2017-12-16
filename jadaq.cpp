@@ -48,6 +48,7 @@ using boost::asio::ip::udp;
 
 /* A simple helper to get current time since epoch in milliseconds */
 #define getTimeMsecs() (std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count())
+#define IDLESLEEP (10)
 
 /* Shared runtime configuration */
 struct RuntimeConf {
@@ -123,8 +124,17 @@ static void setup_interrupt_handler() {
     sigaction(SIGTERM, &sigIntHandler, NULL);
 }
 
-void usageHelp(char *name) 
-{
+void showTotals(TotalStats &totals) {
+    std::cout << "= Accumulated Stats =" << std::endl;
+    std::cout << "Runtime in seconds: " << totals.runMilliseconds / 1000.0 << std::endl;
+    std::cout << "Bytes read: " << totals.bytesRead << std::endl;
+    std::cout << "Aggregated events found: " << totals.eventsFound << std::endl;
+    std::cout << "Individual events unpacked: " << totals.eventsUnpacked << std::endl;
+    std::cout << "Individual events decoded: " << totals.eventsDecoded << std::endl;
+    std::cout << "Individual events sent: " << totals.eventsSent << std::endl;
+}
+
+void usageHelp(char *name) {
     std::cout << "Usage: " << name << " [<options>] [<jadaq_config_file>]" << std::endl;
     std::cout << "Where <options> can be:" << std::endl;
     std::cout << "--address / -a ADDRESS     optional UDP network address to send to (unset by default)." << std::endl;
@@ -173,6 +183,7 @@ void extractEvents(Digitizer &digitizer, LocalStats *stats, RuntimeConf conf, co
 
     if (digitizer.caenIsDPPFirmware()) {
         eventIndex = 0;
+        /* TODO: additionally hand off decoding into per-channel threads? */
         for (channel = 0; channel < MAX_CHANNELS; channel++) {
             for (j = 0; j < digitizer.caenGetPrivDPPEvents().nEvents[channel]; j++) {
                 /* NOTE: we don't want to muck with underlying
@@ -277,7 +288,11 @@ void extractEvents(Digitizer &digitizer, LocalStats *stats, RuntimeConf conf, co
     }   
 }
 
-void digitizerAcquisition(Digitizer &digitizer, LocalStats *stats, TotalStats *totals, RuntimeConf conf, thread_helper_map threadHelpers, comm_helper_map commHelpers, ofstream_map charge_writer_map, ofstream_map wave_writer_map, boost::asio::io_service &threadIOService) {
+void digitizerAcquisition(Digitizer &digitizer, TotalStats *totals, RuntimeConf conf, thread_helper_map threadHelpers, comm_helper_map commHelpers, ofstream_map charge_writer_map, ofstream_map wave_writer_map, boost::asio::io_service &threadIOService) {
+    /* NOTE: these are per-digitizer local stats */
+    LocalStats localStats;
+    LocalStats *stats = &localStats;
+
     /* NOTE: these are per-digitizer local helpers */
     uint32_t channel = 0;
     uint64_t globaltime = 0;
@@ -463,9 +478,10 @@ int main(int argc, char **argv) {
 
     /* Singleton helpers */
     uint64_t acquisitionStart = 0, acquisitionStopped = 0, now = 0;
+    uint16_t tasksEnqueued = 0;
     boost::asio::io_service threadIOService;
     boost::thread_group threadPool;
-
+    
     /* Active digitizers */
     std::vector<Digitizer> digitizers;
     thread_helper_map threadHelpers;
@@ -652,24 +668,21 @@ int main(int argc, char **argv) {
         }
         std::cout << "Read out data from " << digitizers.size() << " digitizer(s)." << std::endl;
         /* Read out acquired data for all digitizers */
-        /* TODO: split digitizer handling loop into separate threads */
-        /* TODO: additionally hand off decoding and sending to threads? */
+        tasksEnqueued = 0;
         for (Digitizer& digitizer: digitizers) {
             try {
-                /* NOTE: these are per-digitizer local stats */
-                LocalStats stats;
-
-                /* TODO: move actual work to thread pool like this 
-                   std::cout << "Post task for thread pool." << std::endl;
-                   threadIOService.post(boost::bind(myTask, "task1"));
-                   threadIOService.post(boost::bind(myTask, "task2"));
-                */
                 ThreadHelper *digitizerThread = threadHelpers[digitizer.name()];
                 if (digitizerThread->ready) {
                     digitizerThread->ready = false;
                     std::cout << "Enqueuing new digitizer acquisition for " << digitizer.name() << std::endl;
-                    /* TODO: actually post digitizerAcquisition */
-                    digitizerAcquisition(digitizer, &stats, &totals, conf, threadHelpers, commHelpers, charge_writer_map, wave_writer_map, threadIOService);
+#ifdef NOTHREADS
+                    /* Inline digitizerAcquisition without threading */
+                    digitizerAcquisition(digitizer, &totals, conf, threadHelpers, commHelpers, charge_writer_map, wave_writer_map, threadIOService);
+#else
+                    /* Enqueue digitizerAcquisition for thread handling */
+                    threadIOService.post(boost::bind(digitizerAcquisition, digitizer, &totals, conf, threadHelpers, commHelpers, charge_writer_map, wave_writer_map, boost::ref(threadIOService)));
+#endif
+                    tasksEnqueued++;
                 } else {
                     std::cout << "Acquisition still active for digitizer " << digitizer.name() << std::endl;
                 }
@@ -682,13 +695,16 @@ int main(int argc, char **argv) {
 
         now = getTimeMsecs();
         totals.runMilliseconds = now - acquisitionStart;
-        std::cout << "= Accumulated Stats =" << std::endl;
-        std::cout << "Runtime in seconds: " << totals.runMilliseconds / 1000.0 << std::endl;
-        std::cout << "Bytes read: " << totals.bytesRead << std::endl;
-        std::cout << "Aggregated events found: " << totals.eventsFound << std::endl;
-        std::cout << "Individual events unpacked: " << totals.eventsUnpacked << std::endl;
-        std::cout << "Individual events decoded: " << totals.eventsDecoded << std::endl;
-        std::cout << "Individual events sent: " << totals.eventsSent << std::endl;
+        if (tasksEnqueued > 0) {
+            showTotals(totals);
+        } else {
+            if (totals.runMilliseconds % 1000 < IDLESLEEP) {
+                showTotals(totals);
+            }
+            //std::cout << "Digitizer loop idle - throttle down" << std::endl;
+            /* NOTE: for running without hogging CPU if nothing to do */
+            std::this_thread::sleep_for(std::chrono::milliseconds(IDLESLEEP));
+        }
 
         if (interrupted) {
             std::cout << "caught interrupt - stop acquisition and clean up." << std::endl;
@@ -707,13 +723,13 @@ int main(int argc, char **argv) {
     acquisitionStopped = getTimeMsecs();
     std::cout << "Acquisition loop ran for " << (acquisitionStopped - acquisitionStart) / 1000.0 << "s." << std::endl;
 
-    /* TODO: delete CommHelper and ThreadHelper objects */
-
     /* Stop and wait for thread pool to complete */
     /* NOTE: this delete forces tasks to finish first */
     delete work;
     std::cout << "Wait for " << conf.workerThreads << " worker thread(s) to finish." << std::endl;
     threadPool.join_all();
+
+    showTotals(totals);
 
     /* Clean up after all digitizers: buffers, etc. */
     std::cout << "Clean up after " << digitizers.size() << " digitizer(s)." << std::endl;
@@ -728,6 +744,9 @@ int main(int argc, char **argv) {
             charge_writer_map.erase(digitizer.name());
             delete[] channelChargeWriters;
         }
+
+        std::cout << "Closing thread helpers for " << digitizer.name() << std::endl;
+        delete threadHelpers[digitizer.name()];
 
         if (conf.sendEventEnabled) {
             std::cout << "Closing comm helpers for " << digitizer.name() << std::endl;
