@@ -197,7 +197,7 @@ int main(int argc, char **argv) {
             }
 
             std::cout << "Packing event at " << globaltime << " from " << digitizer << " channel " << channel << " localtime " << localtime << " charge " << charge << std::endl;
-            packedEvents = Data::packEventData(eventData, eventsTarget, 0);
+            packedEvents = Data::packEventData(eventData);
             /* Send data to preconfigured receiver */
             std::cout << "Sending packed event of " << packedEvents.dataSize << "b at " << globaltime << " from " << digitizer << " channel " << channel << " localtime " << localtime << " charge " << charge << std::endl;
             socket->send_to(boost::asio::buffer((char*)(packedEvents.data), packedEvents.dataSize), receiver_endpoint);

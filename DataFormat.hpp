@@ -41,6 +41,12 @@
 /* Max length of digitizer model string */
 #define MAXMODELSIZE (8)
 
+/* TODO: is this limit big enough - maybe switch to var len anyway? */
+/* NOTE: We can't bump to say 1024 - it causes message too big on send */
+/* TODO: even fail with optimize aggregates setup and send waveform */
+/* MAX waveform array elements */
+#define MAXWAVESAMPLES (512)
+
 /* TODO: switch to a hdf5 struct */
 #define EVENTFIELDS (3)
 #define EVENTINIT {{0, 0, 0}}
@@ -72,7 +78,7 @@ namespace Data {
         };
     }; // namespace List
     namespace Waveform {
-        struct Element // variable size
+        struct Element // semi-variable size
         {
             uint32_t localTime;
             uint16_t extendTime;
@@ -80,7 +86,14 @@ namespace Data {
             uint16_t waveformLength;
             /* Pad to force 8-byte boundary alignment */
             uint8_t __pad[2];
-            uint16_t waveform[];
+            /* TODO: consider going back to variable size or packing
+             * for less waveform overhead */
+            uint16_t waveformSample1[MAXWAVESAMPLES];
+            uint16_t waveformSample2[MAXWAVESAMPLES];
+            uint8_t waveformDSample1[MAXWAVESAMPLES];
+            uint8_t waveformDSample2[MAXWAVESAMPLES];
+            uint8_t waveformDSample3[MAXWAVESAMPLES];
+            uint8_t waveformDSample4[MAXWAVESAMPLES];
         };
     }; // namespace Waveform
     /* Wrapped up data with multiple events */
@@ -152,7 +165,7 @@ namespace Data {
         eventData->waveformEvents = (Waveform::Element *)(eventData->listEvents+listEntries);
 
         /* fuzzy out-of-bounds check */
-        uint32_t bufSize = (char *)(eventData->waveformEvents + eventData->waveformEventsLength * (sizeof(Waveform::Element) + sizeof(uint16_t *))) - (char *)data;
+        uint32_t bufSize = (char *)(eventData->waveformEvents + eventData->waveformEventsLength) - (char *)data;
         if (bufSize > dataSize) {
             std::stringstream ss;
             ss << "bufSize too large " << bufSize << " , cannot exceed " << dataSize;
@@ -162,7 +175,7 @@ namespace Data {
         return eventData;
     }
 
-    PackedEvents packEventData(EventData *eventData, uint32_t listEntries, uint32_t waveformEntries) 
+    PackedEvents packEventData(EventData *eventData) 
     {
         PackedEvents packedEvents;
         packedEvents.data = (void *)eventData;
@@ -170,12 +183,7 @@ namespace Data {
         packedEvents.dataSize = sizeof(EventData);
         packedEvents.dataSize += sizeof(Meta);
         packedEvents.dataSize += eventData->listEventsLength * sizeof(List::Element);
-        Waveform::Element *wave = eventData->waveformEvents;
-        size_t waveSize = 0;
-        for (int i = 0; i < eventData->waveformEventsLength; i++) {
-            waveSize = eventData->waveformEvents[i].waveformLength * sizeof(uint16_t);
-            packedEvents.dataSize += waveSize;
-        }
+        packedEvents.dataSize += eventData->waveformEventsLength * sizeof(Waveform::Element);
         return packedEvents;
     }
     /** @brief

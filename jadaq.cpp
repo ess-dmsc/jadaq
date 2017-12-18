@@ -63,6 +63,8 @@ struct RuntimeConf {
     bool waveDumpEnabled;
     bool registerDumpEnabled;
     bool sendEventEnabled;
+    bool sendListEventEnabled;
+    bool sendWaveformEventEnabled;
     uint32_t stopAfterEvents;
     uint32_t stopAfterSeconds;
     uint32_t workerThreads;
@@ -229,13 +231,13 @@ void extractEvents(Digitizer &digitizer, LocalStats *stats, RuntimeConf conf, co
                              * BasicDPPWaveforms. */
                             basicDPPWaveforms = digitizer.caenExtractBasicDPPWaveforms(digitizer.caenGetPrivDPPWaveforms());
                             for(k=0; k<basicDPPWaveforms.Ns; k++) {
-                                channelWaveWriters[channel] << basicDPPWaveforms.Trace1[k];                 /* samples */
-                                channelWaveWriters[channel] << " " << 2000 + 200 * basicDPPWaveforms.DTrace1[k];  /* gate    */
-                                channelWaveWriters[channel] << " " << 1000 + 200 *basicDPPWaveforms.DTrace2[k];  /* trigger */
-                                if (basicDPPWaveforms.DTrace3 != NULL)
-                                    channelWaveWriters[channel] << " " << 500 + 200 * basicDPPWaveforms.DTrace3[k];   /* trg hold off */
-                                if (basicDPPWaveforms.DTrace4 != NULL)
-                                    channelWaveWriters[channel] << " " << 100 + 200 * basicDPPWaveforms.DTrace4[k];  /* overthreshold */
+                                channelWaveWriters[channel] << basicDPPWaveforms.Sample1[k];                 /* samples */
+                                channelWaveWriters[channel] << " " << 2000 + 200 * basicDPPWaveforms.DSample1[k];  /* gate    */
+                                channelWaveWriters[channel] << " " << 1000 + 200 *basicDPPWaveforms.DSample2[k];  /* trigger */
+                                if (basicDPPWaveforms.DSample3 != NULL)
+                                    channelWaveWriters[channel] << " " << 500 + 200 * basicDPPWaveforms.DSample3[k];   /* trg hold off */
+                                if (basicDPPWaveforms.DSample4 != NULL)
+                                    channelWaveWriters[channel] << " " << 100 + 200 * basicDPPWaveforms.DSample4[k];  /* overthreshold */
                                 /* NOTE: we use explicit "\n" rather than std::endl.
                                  *       This is in order to avoid automatic
                                  *       ofstream flush after each line.
@@ -250,11 +252,29 @@ void extractEvents(Digitizer &digitizer, LocalStats *stats, RuntimeConf conf, co
                 
                 if (conf.sendEventEnabled) {
                     CommHelper *digitizerComm = commHelpers[digitizer.name()];
-                    //std::cout << "Filling event at " << globaltime << " from " << digitizer.name() << " channel " << channel << " localtime " << timestamp << " charge " << charge << std::endl;
-                    digitizerComm->eventData->listEvents[eventIndex].localTime = timestamp;
-                    digitizerComm->eventData->listEvents[eventIndex].extendTime = 0;
-                    digitizerComm->eventData->listEvents[eventIndex].adcValue = charge;
-                    digitizerComm->eventData->listEvents[eventIndex].channel = channel;
+                    if (conf.sendListEventEnabled) {
+                        //std::cout << "Filling event list at " << globaltime << " from " << digitizer.name() << " channel " << channel << " localtime " << timestamp << " charge " << charge << std::endl;
+                        digitizerComm->eventData->listEvents[eventIndex].localTime = timestamp;
+                        digitizerComm->eventData->listEvents[eventIndex].extendTime = 0;
+                        digitizerComm->eventData->listEvents[eventIndex].adcValue = charge;
+                        digitizerComm->eventData->listEvents[eventIndex].channel = channel;
+                    }
+                    if (conf.sendListEventEnabled && digitizer.caenHasDPPWaveformsEnabled()) {
+                        basicDPPWaveforms = digitizer.caenExtractBasicDPPWaveforms(digitizer.caenGetPrivDPPWaveforms());
+                        std::cout << "Filling event waveform at " << globaltime << " from " << digitizer.name() << " channel " << channel << " localtime " << timestamp << " samples " << basicDPPWaveforms.Ns << std::endl;
+                        digitizerComm->eventData->waveformEvents[eventIndex].localTime = timestamp;
+                        digitizerComm->eventData->waveformEvents[eventIndex].extendTime = 0;
+                        digitizerComm->eventData->waveformEvents[eventIndex].channel = channel;
+                        digitizerComm->eventData->waveformEvents[eventIndex].waveformLength = basicDPPWaveforms.Ns;
+                        memcpy(digitizerComm->eventData->waveformEvents[eventIndex].waveformSample1, basicDPPWaveforms.Sample1, basicDPPWaveforms.Ns*sizeof(basicDPPWaveforms.Sample1[0]));
+                        memcpy(digitizerComm->eventData->waveformEvents[eventIndex].waveformSample2, basicDPPWaveforms.Sample2, basicDPPWaveforms.Ns*sizeof(basicDPPWaveforms.Sample2[0]));
+                        memcpy(digitizerComm->eventData->waveformEvents[eventIndex].waveformDSample1, basicDPPWaveforms.DSample1, basicDPPWaveforms.Ns*sizeof(basicDPPWaveforms.DSample1[0]));
+                        memcpy(digitizerComm->eventData->waveformEvents[eventIndex].waveformDSample2, basicDPPWaveforms.DSample2, basicDPPWaveforms.Ns*sizeof(basicDPPWaveforms.DSample2[0]));
+                        memcpy(digitizerComm->eventData->waveformEvents[eventIndex].waveformDSample3, basicDPPWaveforms.DSample3, basicDPPWaveforms.Ns*sizeof(basicDPPWaveforms.DSample3[0]));
+                        memcpy(digitizerComm->eventData->waveformEvents[eventIndex].waveformDSample4, basicDPPWaveforms.DSample4, basicDPPWaveforms.Ns*sizeof(basicDPPWaveforms.DSample4[0]));
+                        std::cout << "Filled event waveform with " << digitizerComm->eventData->waveformEvents[eventIndex].waveformSample1[0] << ", .. ," << digitizerComm->eventData->waveformEvents[eventIndex].waveformSample1[basicDPPWaveforms.Ns-1] << " ." << std::endl;
+                    }
+                    
                 }
                 eventIndex += 1;
             }
@@ -281,7 +301,8 @@ void extractEvents(Digitizer &digitizer, LocalStats *stats, RuntimeConf conf, co
                 //std::cout << "Filling event at " << globaltime << " from " << digitizer.name() << " channel " << channel << " localtime " << timestamp << " sample count " << count << std::endl;
                 digitizerComm->eventData->waveformEvents[eventIndex].localTime = timestamp;
                 digitizerComm->eventData->waveformEvents[eventIndex].waveformLength = count;
-                memcpy(digitizerComm->eventData->waveformEvents[eventIndex].waveform, samples, (count * sizeof(samples[0])));
+                /* NOTE: only one sample array here so just use Sample1 */
+                memcpy(digitizerComm->eventData->waveformEvents[eventIndex].waveformSample1, samples, (count * sizeof(samples[0])));
                 digitizerComm->eventData->waveformEvents[eventIndex].channel = channel;
             }   
         }
@@ -294,6 +315,7 @@ void digitizerAcquisition(Digitizer &digitizer, TotalStats *totals, RuntimeConf 
     LocalStats *stats = &localStats;
 
     /* NOTE: these are per-digitizer local helpers */
+    uint16_t listCount = 0, waveCount = 0;
     uint32_t channel = 0;
     uint64_t globaltime = 0;
     stats->bytesRead = 0;
@@ -338,7 +360,18 @@ void digitizerAcquisition(Digitizer &digitizer, TotalStats *totals, RuntimeConf 
         /* Reset send buffer each time to prevent any stale data */
         memset(digitizerComm->sendBuf, 0, MAXBUFSIZE);
         /* TODO: add check to make sure sendBuf always fits eventData */
-        digitizerComm->eventData = Data::setupEventData((void *)digitizerComm->sendBuf, MAXBUFSIZE, stats->eventsFound, 0);
+        /* NOTE: only set waveform count (last arg) if actually enabled */
+        if (conf.sendListEventEnabled) {
+            listCount = stats->eventsFound;
+        } else {
+            listCount = 0;
+        }
+        if (conf.sendWaveformEventEnabled && digitizer.caenHasDPPWaveformsEnabled()) {
+            waveCount = stats->eventsFound;
+        } else {
+            waveCount = 0;
+        }
+        digitizerComm->eventData = Data::setupEventData((void *)digitizerComm->sendBuf, MAXBUFSIZE, listCount, waveCount);
         std::cout << "Prepared eventData " << digitizerComm->eventData << " from sendBuf " << (void *)digitizerComm->sendBuf << std::endl;
         digitizerComm->metadata = digitizerComm->eventData->metadata;
         /* NOTE: safe copy with explicit string termination */
@@ -346,7 +379,7 @@ void digitizerAcquisition(Digitizer &digitizer, TotalStats *totals, RuntimeConf 
         digitizerComm->eventData->metadata->digitizerModel[MAXMODELSIZE-1] = '\0';
         digitizerComm->eventData->metadata->digitizerID = std::stoi(digitizer.serial());
         digitizerComm->eventData->metadata->globalTime = globaltime;
-        std::cout << "Prepared eventData has " << digitizerComm->eventData->listEventsLength << " listEvents " << std::endl;
+        std::cout << "Prepared eventData has " << digitizerComm->eventData->listEventsLength << " listEvents and " << digitizerComm->eventData->waveformEventsLength << " waveformEvents."<< std::endl;
     }
 
     extractEvents(digitizer, stats, conf, commHelpers, globaltime, charge_writer_map, wave_writer_map, threadIOService);
@@ -355,9 +388,9 @@ void digitizerAcquisition(Digitizer &digitizer, TotalStats *totals, RuntimeConf 
     if (conf.sendEventEnabled) {
         CommHelper *digitizerComm = commHelpers[digitizer.name()];
         std::cout << "Packing events at " << globaltime << " from " << digitizer.name() << std::endl;
-        digitizerComm->packedEvents = Data::packEventData(digitizerComm->eventData, stats->eventsFound, 0);
+        digitizerComm->packedEvents = Data::packEventData(digitizerComm->eventData);
         /* Send data to preconfigured receiver */
-        std::cout << "Sending " << stats->eventsUnpacked << " packed events of " << digitizerComm->packedEvents.dataSize << "b at " << globaltime << " from " << digitizer.name() << " to " << conf.address << ":" << conf.port << std::endl;
+        std::cout << "Sending " << digitizerComm->eventData->listEventsLength << " list and " << digitizerComm->eventData->waveformEventsLength << " waveform events packed into " << digitizerComm->packedEvents.dataSize << "b at " << globaltime << " from " << digitizer.name() << " to " << conf.address << ":" << conf.port << std::endl;
         digitizerComm->socket->send_to(boost::asio::buffer((char*)(digitizerComm->packedEvents.data), digitizerComm->packedEvents.dataSize), digitizerComm->remoteEndpoint);
         stats->eventsSent += stats->eventsUnpacked;
     }                
@@ -379,7 +412,7 @@ void digitizerAcquisition(Digitizer &digitizer, TotalStats *totals, RuntimeConf 
 
 
 int main(int argc, char **argv) {
-    const char* const short_opts = "a:c:d:e:hp:r:t:w:";
+    const char* const short_opts = "a:c:d:e:hp:r:s:t:w:";
     const option long_opts[] = {
         {"address", 1, nullptr, 'a'},
         {"confoverride", 1, nullptr, 'c'},
@@ -388,6 +421,7 @@ int main(int argc, char **argv) {
         {"help", 0, nullptr, 'h'},
         {"port", 1, nullptr, 'p'},
         {"registerdump", 1, nullptr, 'r'},
+        {"sendtypes", 1, nullptr, 's'},
         {"targettime", 1, nullptr, 't'},
         {"workers", 1, nullptr, 'w'},
         {nullptr, 0, nullptr, 0}
@@ -406,6 +440,8 @@ int main(int argc, char **argv) {
     conf.waveDumpEnabled = false;
     conf.registerDumpEnabled = false;
     conf.sendEventEnabled = false;
+    conf.sendListEventEnabled = true;
+    conf.sendWaveformEventEnabled = false;
     conf.stopAfterEvents = 0;
     conf.stopAfterSeconds = 0;
     conf.workerThreads = 1;
@@ -439,6 +475,10 @@ int main(int argc, char **argv) {
             conf.registerDumpFileName = std::string(optarg);
             conf.registerDumpEnabled = true;
             break;
+        case 's':
+            conf.sendListEventEnabled = std::string(optarg).find("list") != std::string::npos;
+            conf.sendWaveformEventEnabled = std::string(optarg).find("waveform") != std::string::npos;
+            break;
         case 't':
             conf.stopAfterSeconds = std::stoi(optarg);
             break;
@@ -455,7 +495,11 @@ int main(int argc, char **argv) {
     }
 
     if (conf.address.length() > 0 && conf.port.length() > 0) {
-            conf.sendEventEnabled = true;
+        conf.sendEventEnabled = true;
+    }
+    if (conf.sendEventEnabled && !conf.sendListEventEnabled && !conf.sendWaveformEventEnabled) {
+        std::cerr << "WARNING: you provided send options but neither enabled send for list or waveform events. Disabling send!" << std::endl;
+        conf.sendEventEnabled = false;
     }
     
     /* No further command-line arguments */

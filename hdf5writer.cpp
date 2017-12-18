@@ -133,7 +133,10 @@ int main(int argc, char **argv) {
     uint32_t eventIndex = 0;
     /* Dummy data */
     std::string digitizer, digitizerModel;
-    uint16_t digitizerID = 0;
+    uint8_t *waveformDSample1 = NULL, *waveformDSample2 = NULL;
+    uint8_t *waveformDSample3 = NULL, *waveformDSample4 = NULL;
+    uint16_t *waveformSample1 = NULL, *waveformSample2 = NULL;
+    uint16_t digitizerID = 0, waveformLength = 0;
     uint32_t channel = 0, charge = 0, localtime = 0;
     uint64_t globaltime = 0;
 
@@ -154,17 +157,51 @@ int main(int argc, char **argv) {
     Data::List::Element *listEvent;
     Data::Waveform::Element *waveformEvent;
     uint32_t offset = 0;
-    const H5std_string MEMBER1( "localTime_name" );
-    const H5std_string MEMBER2( "adcValue_name" );
-    const H5std_string MEMBER3( "extendTime_name" );
-    const H5std_string MEMBER4( "channel_name" );
-    const H5std_string MEMBER5( "__pad_name" );
+    const H5std_string LISTMEMBER1("localTime_name");
+    const H5std_string LISTMEMBER2("adcValue_name");
+    const H5std_string LISTMEMBER3("extendTime_name");
+    const H5std_string LISTMEMBER4("channel_name");
+    const H5std_string LISTMEMBER5("__pad_name");
     CompType listEventType(sizeof(Data::List::Element));
-    listEventType.insertMember(MEMBER1, HOFFSET(Data::List::Element, localTime), PredType::STD_U32LE);
-    listEventType.insertMember(MEMBER2, HOFFSET(Data::List::Element, adcValue), PredType::STD_U32LE); 
-    listEventType.insertMember(MEMBER3, HOFFSET(Data::List::Element, extendTime), PredType::STD_U16LE);
-    listEventType.insertMember(MEMBER4, HOFFSET(Data::List::Element, channel), PredType::STD_U16LE);
-    listEventType.insertMember(MEMBER5, HOFFSET(Data::List::Element, __pad), PredType::STD_U32LE);
+    listEventType.insertMember(LISTMEMBER1, HOFFSET(Data::List::Element, localTime), PredType::STD_U32LE);
+    listEventType.insertMember(LISTMEMBER2, HOFFSET(Data::List::Element, adcValue), PredType::STD_U32LE); 
+    listEventType.insertMember(LISTMEMBER3, HOFFSET(Data::List::Element, extendTime), PredType::STD_U16LE);
+    listEventType.insertMember(LISTMEMBER4, HOFFSET(Data::List::Element, channel), PredType::STD_U16LE);
+    listEventType.insertMember(LISTMEMBER5, HOFFSET(Data::List::Element, __pad), PredType::STD_U32LE);
+    const H5std_string WAVEFORMMEMBER1("localTime_name");
+    const H5std_string WAVEFORMMEMBER2("extendTime_name");
+    const H5std_string WAVEFORMMEMBER3("channel_name");
+    const H5std_string WAVEFORMMEMBER4("waveformLength_name");
+    const H5std_string WAVEFORMMEMBER5("__pad_name");
+    const H5std_string WAVEFORMMEMBER6("waveformSample1_name");
+    const H5std_string WAVEFORMMEMBER7("waveformSample2_name");
+    const H5std_string WAVEFORMMEMBER8("waveformDSample1_name");
+    const H5std_string WAVEFORMMEMBER9("waveformDSample2_name");
+    const H5std_string WAVEFORMMEMBER10("waveformDSample3_name");
+    const H5std_string WAVEFORMMEMBER11("waveformDSample4_name");
+    /* We don't know the length of the actual waveform sample array */
+    /* TODO: use VarLenType instead of fixed ArrayType? */
+    /*
+    hvl_t waveformArrayHandle;
+    */
+    auto waveformSampleElemType = PredType::STD_U16LE;
+    auto waveformDSampleElemType = PredType::STD_U8LE;
+    const hsize_t waveSamples[1] = {MAXWAVESAMPLES};
+    ArrayType waveformSampleArrayType(waveformSampleElemType, 1, waveSamples);
+    ArrayType waveformDSampleArrayType(waveformDSampleElemType, 1, waveSamples);
+    
+    CompType waveformEventType(sizeof(Data::Waveform::Element)+MAXWAVESAMPLES*sizeof(PredType::STD_U16LE));
+    waveformEventType.insertMember(WAVEFORMMEMBER1, HOFFSET(Data::Waveform::Element, localTime), PredType::STD_U32LE);
+    waveformEventType.insertMember(WAVEFORMMEMBER2, HOFFSET(Data::Waveform::Element, extendTime), PredType::STD_U16LE);
+    waveformEventType.insertMember(WAVEFORMMEMBER3, HOFFSET(Data::Waveform::Element, channel), PredType::STD_U16LE);
+    waveformEventType.insertMember(WAVEFORMMEMBER4, HOFFSET(Data::Waveform::Element, waveformLength), PredType::STD_U16LE);
+    waveformEventType.insertMember(WAVEFORMMEMBER5, HOFFSET(Data::Waveform::Element, __pad), PredType::STD_U16LE);
+    waveformEventType.insertMember(WAVEFORMMEMBER6, HOFFSET(Data::Waveform::Element, waveformSample1), waveformSampleArrayType);
+    waveformEventType.insertMember(WAVEFORMMEMBER7, HOFFSET(Data::Waveform::Element, waveformSample2), waveformSampleArrayType);
+    waveformEventType.insertMember(WAVEFORMMEMBER8, HOFFSET(Data::Waveform::Element, waveformDSample1), waveformDSampleArrayType);
+    waveformEventType.insertMember(WAVEFORMMEMBER9, HOFFSET(Data::Waveform::Element, waveformDSample2), waveformDSampleArrayType);
+    waveformEventType.insertMember(WAVEFORMMEMBER10, HOFFSET(Data::Waveform::Element, waveformDSample3), waveformDSampleArrayType);
+    waveformEventType.insertMember(WAVEFORMMEMBER11, HOFFSET(Data::Waveform::Element, waveformDSample4), waveformDSampleArrayType);
 
     /* Prepare and start event handling */
     std::cout << "Setup hdf5writer" << std::endl;
@@ -228,7 +265,6 @@ int main(int argc, char **argv) {
         error.printError();
     }
 
-    /* TODO: switch to real struct data format in hdf5 */
     uint32_t data[EVENTFIELDS];
     const int RANK = 1;
     hsize_t dimsf[1];
@@ -352,11 +388,12 @@ int main(int argc, char **argv) {
             
             delete digitizergroup;
 
-            /* TODO: handle waveformEvents as well*/
-            waveformEventsReceived = eventData->waveformEventsLength;
-
             /* Loop over received events and create a dataset for each
              * of them. */
+
+            /* TODO: merge list and waveform handling into a shared function */
+
+            /* Handle list events */
             listEventsReceived = eventData->listEventsLength;
             flavor = "list";
             for (eventIndex = 0; eventIndex < listEventsReceived; eventIndex++) {
@@ -390,12 +427,59 @@ int main(int argc, char **argv) {
                 channel = listEvent->channel;
                 localtime = listEvent->localTime;
                 charge = listEvent->adcValue;
-                std::cout << "Saving data event " << eventIndex << " from " << digitizer << " channel " << channel << " localtime " << localtime << " charge " << charge << std::endl;
+                std::cout << "Saving list event " << eventIndex << " from " << digitizer << " channel " << channel << " localtime " << localtime << " charge " << charge << std::endl;
                 dataset->write(listEvent, listEventType);
 
                 if (dataset != NULL)
                     delete dataset;
             }
+            /* Handle waveform events */
+            waveformEventsReceived = eventData->waveformEventsLength;
+            flavor = "waveform";
+            for (eventIndex = 0; eventIndex < waveformEventsReceived; eventIndex++) {
+                /* Create a new dataset named after event index under
+                 * globaltime group if it doesn't exist already. */
+                nest.str("");
+                nest.clear();
+                nest << flavor << "-" << std::setfill('0') << std::setw(3) << eventIndex;
+                datasetname = H5std_string(nest.str());
+                createDataset = true;
+                try {
+                    std::cout << "Try to open dataset " << datasetname << std::endl;
+                    dataset = new DataSet(globaltimegroup->openDataSet(datasetname));
+                    createDataset = false;
+                } catch(GroupIException error) {
+                    if (!createOutfile) {
+                        std::cerr << "ERROR: could not open dataset " << datasetname << " : file exception : " << std::endl;
+                        error.printError();
+                    } else {
+                        //std::cout << "DEBUG: could not open dataset " << datasetname << " : " << std::endl;
+                    }
+                }
+                if (createDataset) {
+                    std::cout << "Create dataset " << datasetname << std::endl;
+                    dataset = new DataSet(globaltimegroup->createDataSet(datasetname, waveformEventType, dataspace));                    
+                    createDataset = false;
+                }
+            
+                /* Read out fields from event for now */
+                waveformEvent = &(eventData->waveformEvents[eventIndex]);
+                channel = waveformEvent->channel;
+                localtime = waveformEvent->localTime;
+                waveformLength = waveformEvent->waveformLength;
+                waveformSample1 = waveformEvent->waveformSample1;
+                waveformSample2 = waveformEvent->waveformSample2;
+                waveformDSample1 = waveformEvent->waveformDSample1;
+                waveformDSample2 = waveformEvent->waveformDSample2;
+                waveformDSample3 = waveformEvent->waveformDSample3;
+                waveformDSample4 = waveformEvent->waveformDSample4;
+                std::cout << "Saving waveform event " << eventIndex << " from " << digitizer << " channel " << channel << " localtime " << localtime << " samples " << waveformLength << std::endl;
+                dataset->write(waveformEvent, waveformEventType);
+
+                if (dataset != NULL)
+                    delete dataset;
+            }
+
             /* Write data to disk after handling each globaltimegroup */
             outfile->flush(H5F_SCOPE_GLOBAL);
             if (globaltimegroup != NULL)

@@ -167,27 +167,27 @@ namespace caen {
      * @brief For a very basic shared DPP waveform readout
      * @var BasicDPPWaveforms::Ns
      * Array entry counter.
-     * @var BasicDPPWaveforms::Trace1
+     * @var BasicDPPWaveforms::Sample1
      * First waveform array - samples.
-     * @var BasicDPPWaveforms::Trace2
+     * @var BasicDPPWaveforms::Sample2
      * Second waveform array - ?.
-     * @var BasicDPPWaveforms::DTrace1
+     * @var BasicDPPWaveforms::DSample1
      * First waveform array - gate.
-     * @var BasicDPPWaveforms::DTrace2
+     * @var BasicDPPWaveforms::DSample2
      * Second waveform array - trigger.
-     * @var BasicDPPWaveforms::DTrace3
+     * @var BasicDPPWaveforms::DSample3
      * Third waveform array - trigger hold off if available or NULL.
-     * @var BasicDPPWaveforms::DTrace4
+     * @var BasicDPPWaveforms::DSample4
      * Fourth waveform array - overthreshold if available or NULL.
      */
     struct BasicDPPWaveforms {
         uint32_t Ns;
-        uint16_t *Trace1;
-        uint16_t *Trace2;
-        uint8_t *DTrace1;
-        uint8_t *DTrace2;
-        uint8_t *DTrace3;
-        uint8_t *DTrace4;
+        uint16_t *Sample1;
+        uint16_t *Sample2;
+        uint8_t *DSample1;
+        uint8_t *DSample2;
+        uint8_t *DSample3;
+        uint8_t *DSample4;
     };
 
     /**
@@ -3048,42 +3048,42 @@ namespace caen {
                 /* NOTE: for whatever reason PHA uses int instead of
                    uint for Trace1 and Trace2. Fake uint for now. */
                 std::cout << "WARNING: using uint16_t for Trace1 and Trace2 arrays in BasicDPPWaveforms - you may need to manually cast!" << std::endl;    
-                basic.Trace1 = (uint16_t*)PHAWaveforms->Trace1;
-                basic.Trace2 = (uint16_t*)PHAWaveforms->Trace2;
-                basic.DTrace1 = PHAWaveforms->DTrace1;
-                basic.DTrace2 = PHAWaveforms->DTrace2;
-                basic.DTrace3 = NULL;
-                basic.DTrace4 = NULL;
+                basic.Sample1 = (uint16_t*)PHAWaveforms->Trace1;
+                basic.Sample2 = (uint16_t*)PHAWaveforms->Trace2;
+                basic.DSample1 = PHAWaveforms->DTrace1;
+                basic.DSample2 = PHAWaveforms->DTrace2;
+                basic.DSample3 = NULL;
+                basic.DSample4 = NULL;
                 break;
             case CAEN_DGTZ_DPPFirmware_PSD:
                 PSDWaveforms = (CAEN_DGTZ_DPP_PSD_Waveforms_t *)waveforms.ptr;
                 basic.Ns = PSDWaveforms->Ns;
-                basic.Trace1 = PSDWaveforms->Trace1;
-                basic.Trace2 = PSDWaveforms->Trace2;
-                basic.DTrace1 = PSDWaveforms->DTrace1;
-                basic.DTrace2 = PSDWaveforms->DTrace2;
-                basic.DTrace3 = PSDWaveforms->DTrace3;
-                basic.DTrace4 = PSDWaveforms->DTrace4;
+                basic.Sample1 = PSDWaveforms->Trace1;
+                basic.Sample2 = PSDWaveforms->Trace2;
+                basic.DSample1 = PSDWaveforms->DTrace1;
+                basic.DSample2 = PSDWaveforms->DTrace2;
+                basic.DSample3 = PSDWaveforms->DTrace3;
+                basic.DSample4 = PSDWaveforms->DTrace4;
                 break;
             case CAEN_DGTZ_DPPFirmware_CI:
                 CIWaveforms = (CAEN_DGTZ_DPP_CI_Waveforms_t *)waveforms.ptr;
                 basic.Ns = CIWaveforms->Ns;
-                basic.Trace1 = CIWaveforms->Trace1;
-                basic.Trace2 = CIWaveforms->Trace2;
-                basic.DTrace1 = CIWaveforms->DTrace1;
-                basic.DTrace2 = CIWaveforms->DTrace2;
-                basic.DTrace3 = CIWaveforms->DTrace3;
-                basic.DTrace4 = CIWaveforms->DTrace4;
+                basic.Sample1 = CIWaveforms->Trace1;
+                basic.Sample2 = CIWaveforms->Trace2;
+                basic.DSample1 = CIWaveforms->DTrace1;
+                basic.DSample2 = CIWaveforms->DTrace2;
+                basic.DSample3 = CIWaveforms->DTrace3;
+                basic.DSample4 = CIWaveforms->DTrace4;
                 break;
             case CAEN_DGTZ_DPPFirmware_QDC:
                 QDCWaveforms = (_CAEN_DGTZ_DPP_QDC_Waveforms_t *)waveforms.ptr;
                 basic.Ns = QDCWaveforms->Ns;
-                basic.Trace1 = QDCWaveforms->Trace1;
-                basic.Trace2 = QDCWaveforms->Trace2;
-                basic.DTrace1 = QDCWaveforms->DTrace1;
-                basic.DTrace2 = QDCWaveforms->DTrace2;
-                basic.DTrace3 = QDCWaveforms->DTrace3;
-                basic.DTrace4 = QDCWaveforms->DTrace4;
+                basic.Sample1 = QDCWaveforms->Trace1;
+                basic.Sample2 = QDCWaveforms->Trace2;
+                basic.DSample1 = QDCWaveforms->DTrace1;
+                basic.DSample2 = QDCWaveforms->DTrace2;
+                basic.DSample3 = QDCWaveforms->DTrace3;
+                basic.DSample4 = QDCWaveforms->DTrace4;
                 break;
             default:
                 errorHandler(CAEN_DGTZ_FunctionNotAllowed);
