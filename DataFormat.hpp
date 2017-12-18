@@ -43,9 +43,14 @@
 
 /* TODO: is this limit big enough - maybe switch to var len anyway? */
 /* NOTE: We can't bump to say 1024 - it causes message too big on send */
-/* TODO: even fail with optimize aggregates setup and send waveform */
 /* MAX waveform array elements */
 #define MAXWAVESAMPLES (512)
+
+/* TODO: enabling these breaks optimize aggregates setup and send waveform */
+/*
+#define INCLUDE_SAMPLE2
+#define INCLUDE_DSAMPLE
+*/
 
 /* TODO: switch to a hdf5 struct */
 #define EVENTFIELDS (3)
@@ -89,11 +94,15 @@ namespace Data {
             /* TODO: consider going back to variable size or packing
              * for less waveform overhead */
             uint16_t waveformSample1[MAXWAVESAMPLES];
+#ifdef INCLUDE_SAMPLE2
             uint16_t waveformSample2[MAXWAVESAMPLES];
+#endif
+#ifdef INCLUDE_DSAMPLE
             uint8_t waveformDSample1[MAXWAVESAMPLES];
             uint8_t waveformDSample2[MAXWAVESAMPLES];
             uint8_t waveformDSample3[MAXWAVESAMPLES];
             uint8_t waveformDSample4[MAXWAVESAMPLES];
+#endif
         };
     }; // namespace Waveform
     /* Wrapped up data with multiple events */

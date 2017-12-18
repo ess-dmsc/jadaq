@@ -133,9 +133,14 @@ int main(int argc, char **argv) {
     uint32_t eventIndex = 0;
     /* Dummy data */
     std::string digitizer, digitizerModel;
+#ifdef INCLUDE_DSAMPLE
     uint8_t *waveformDSample1 = NULL, *waveformDSample2 = NULL;
     uint8_t *waveformDSample3 = NULL, *waveformDSample4 = NULL;
-    uint16_t *waveformSample1 = NULL, *waveformSample2 = NULL;
+#endif
+    uint16_t *waveformSample1 = NULL;
+#ifdef INCLUDE_SAMPLE2
+    uint16_t *waveformSample2 = NULL;
+#endif
     uint16_t digitizerID = 0, waveformLength = 0;
     uint32_t channel = 0, charge = 0, localtime = 0;
     uint64_t globaltime = 0;
@@ -174,21 +179,28 @@ int main(int argc, char **argv) {
     const H5std_string WAVEFORMMEMBER4("waveformLength_name");
     const H5std_string WAVEFORMMEMBER5("__pad_name");
     const H5std_string WAVEFORMMEMBER6("waveformSample1_name");
+#ifdef INCLUDE_SAMPLE2
     const H5std_string WAVEFORMMEMBER7("waveformSample2_name");
+#endif
+#ifdef INCLUDE_DSAMPLE
     const H5std_string WAVEFORMMEMBER8("waveformDSample1_name");
     const H5std_string WAVEFORMMEMBER9("waveformDSample2_name");
     const H5std_string WAVEFORMMEMBER10("waveformDSample3_name");
     const H5std_string WAVEFORMMEMBER11("waveformDSample4_name");
+#endif
+    
     /* We don't know the length of the actual waveform sample array */
     /* TODO: use VarLenType instead of fixed ArrayType? */
     /*
     hvl_t waveformArrayHandle;
     */
-    auto waveformSampleElemType = PredType::STD_U16LE;
-    auto waveformDSampleElemType = PredType::STD_U8LE;
     const hsize_t waveSamples[1] = {MAXWAVESAMPLES};
+    auto waveformSampleElemType = PredType::STD_U16LE;
     ArrayType waveformSampleArrayType(waveformSampleElemType, 1, waveSamples);
+#ifdef INCLUDE_DSAMPLE
+    auto waveformDSampleElemType = PredType::STD_U8LE;
     ArrayType waveformDSampleArrayType(waveformDSampleElemType, 1, waveSamples);
+#endif
     
     CompType waveformEventType(sizeof(Data::Waveform::Element)+MAXWAVESAMPLES*sizeof(PredType::STD_U16LE));
     waveformEventType.insertMember(WAVEFORMMEMBER1, HOFFSET(Data::Waveform::Element, localTime), PredType::STD_U32LE);
@@ -197,11 +209,15 @@ int main(int argc, char **argv) {
     waveformEventType.insertMember(WAVEFORMMEMBER4, HOFFSET(Data::Waveform::Element, waveformLength), PredType::STD_U16LE);
     waveformEventType.insertMember(WAVEFORMMEMBER5, HOFFSET(Data::Waveform::Element, __pad), PredType::STD_U16LE);
     waveformEventType.insertMember(WAVEFORMMEMBER6, HOFFSET(Data::Waveform::Element, waveformSample1), waveformSampleArrayType);
+#ifdef INCLUDE_SAMPLE2
     waveformEventType.insertMember(WAVEFORMMEMBER7, HOFFSET(Data::Waveform::Element, waveformSample2), waveformSampleArrayType);
+#endif
+#ifdef INCLUDE_DSAMPLE
     waveformEventType.insertMember(WAVEFORMMEMBER8, HOFFSET(Data::Waveform::Element, waveformDSample1), waveformDSampleArrayType);
     waveformEventType.insertMember(WAVEFORMMEMBER9, HOFFSET(Data::Waveform::Element, waveformDSample2), waveformDSampleArrayType);
     waveformEventType.insertMember(WAVEFORMMEMBER10, HOFFSET(Data::Waveform::Element, waveformDSample3), waveformDSampleArrayType);
     waveformEventType.insertMember(WAVEFORMMEMBER11, HOFFSET(Data::Waveform::Element, waveformDSample4), waveformDSampleArrayType);
+#endif
 
     /* Prepare and start event handling */
     std::cout << "Setup hdf5writer" << std::endl;
@@ -468,11 +484,15 @@ int main(int argc, char **argv) {
                 localtime = waveformEvent->localTime;
                 waveformLength = waveformEvent->waveformLength;
                 waveformSample1 = waveformEvent->waveformSample1;
+#ifdef INCLUDE_SAMPLE2
                 waveformSample2 = waveformEvent->waveformSample2;
+#endif
+#ifdef INCLUDE_DSAMPLE
                 waveformDSample1 = waveformEvent->waveformDSample1;
                 waveformDSample2 = waveformEvent->waveformDSample2;
                 waveformDSample3 = waveformEvent->waveformDSample3;
                 waveformDSample4 = waveformEvent->waveformDSample4;
+#endif
                 std::cout << "Saving waveform event " << eventIndex << " from " << digitizer << " channel " << channel << " localtime " << localtime << " samples " << waveformLength << std::endl;
                 dataset->write(waveformEvent, waveformEventType);
 

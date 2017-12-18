@@ -267,11 +267,15 @@ void extractEvents(Digitizer &digitizer, LocalStats *stats, RuntimeConf conf, co
                         digitizerComm->eventData->waveformEvents[eventIndex].channel = channel;
                         digitizerComm->eventData->waveformEvents[eventIndex].waveformLength = basicDPPWaveforms.Ns;
                         memcpy(digitizerComm->eventData->waveformEvents[eventIndex].waveformSample1, basicDPPWaveforms.Sample1, basicDPPWaveforms.Ns*sizeof(basicDPPWaveforms.Sample1[0]));
+#ifdef INCLUDE_SAMPLE2
                         memcpy(digitizerComm->eventData->waveformEvents[eventIndex].waveformSample2, basicDPPWaveforms.Sample2, basicDPPWaveforms.Ns*sizeof(basicDPPWaveforms.Sample2[0]));
+#endif
+#ifdef INCLUDE_DSAMPLE
                         memcpy(digitizerComm->eventData->waveformEvents[eventIndex].waveformDSample1, basicDPPWaveforms.DSample1, basicDPPWaveforms.Ns*sizeof(basicDPPWaveforms.DSample1[0]));
                         memcpy(digitizerComm->eventData->waveformEvents[eventIndex].waveformDSample2, basicDPPWaveforms.DSample2, basicDPPWaveforms.Ns*sizeof(basicDPPWaveforms.DSample2[0]));
                         memcpy(digitizerComm->eventData->waveformEvents[eventIndex].waveformDSample3, basicDPPWaveforms.DSample3, basicDPPWaveforms.Ns*sizeof(basicDPPWaveforms.DSample3[0]));
                         memcpy(digitizerComm->eventData->waveformEvents[eventIndex].waveformDSample4, basicDPPWaveforms.DSample4, basicDPPWaveforms.Ns*sizeof(basicDPPWaveforms.DSample4[0]));
+#endif
                         std::cout << "Filled event waveform with " << digitizerComm->eventData->waveformEvents[eventIndex].waveformSample1[0] << ", .. ," << digitizerComm->eventData->waveformEvents[eventIndex].waveformSample1[basicDPPWaveforms.Ns-1] << " ." << std::endl;
                     }
                     
