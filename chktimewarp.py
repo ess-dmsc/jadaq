@@ -23,9 +23,9 @@ unexpected jumps in time stamps."""
     
 def parse_dump(dump_path, max_entries):
     """Parses the simple dump file in path and return a list of entries"""
+    entries = []
     try:
         dump_fd = open(dump_path, 'r')
-        entries = []
         count = 0
         for line in dump_fd:
             if max_entries > 0 and count > max_entries:
