@@ -2713,7 +2713,17 @@ namespace caen {
         errorHandler(CAEN_DGTZ_CloseDigitizer(handle));
     }
     
-    
+    /**
+     * @brief simple helper to get CAEN constant for linkType arg
+     * @param isUSB: if link is USB
+     */
+    static CAEN_DGTZ_ConnectionType getAutoType(bool isUSB) {
+        if (isUSB)
+            return CAEN_DGTZ_USB;
+        else
+            return CAEN_DGTZ_OpticalLink;
+    }
+
     /**
      * @brief Generic digitizer abstraction
      */
@@ -2752,6 +2762,14 @@ namespace caen {
          * Abstracted digitizer instance for the device.
          */
         static Digitizer* USB(int linkNum, uint32_t VMEBaseAddress) { return open(CAEN_DGTZ_USB,linkNum,0,VMEBaseAddress);}
+        /**
+         * @brief Instantiate Digitizer from Optical connection.
+         * @param linkNum: device index on the bus
+         * @param conetNode: node id if using optical connection
+         * @returns
+         * Abstracted digitizer instance for the device.
+         */
+        static Digitizer* Optical(int linkNum, int conetNode) { return open(CAEN_DGTZ_OpticalLink,linkNum,conetNode,0);}
 
         /* Destruction */
         /**
