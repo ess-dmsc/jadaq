@@ -1,8 +1,8 @@
-= JADAQ =
+# JADAQ
 jadaq - Just Another DAQ - very much work in progress
 
 
-== Install build and runtime dependencies ==
+## build and runtime dependencies
 git
 cmake
 boost-devel
@@ -11,7 +11,7 @@ python
 gcc/g++ (5.3 or later)
 
 
-== Set up ==
+## Set up
 Clone the project from github:
 ´´´
 git clone git@github.com:tblum/jadaq.git jadaq
@@ -48,7 +48,7 @@ make
 ´´´
 this will create a.o. the jadaq binary in the current directory.
 
-== Running ==
+## Running
 Once built you can run the binaries. The main application is 'jadaq' and
 you can get information about it and command line option by running:
 ´´´
@@ -96,7 +96,7 @@ and
 ´´´
 in separate terminals.
 
-== Debugging jumps in DPP timestamps ==
+## Debugging jumps in DPP timestamps
 We have seen occasional jumps in the resulting event timestamps. It
 looks like the acquisition can't keep up if the events arrive often
 enough and aggregates aren't tuned to catch them.
@@ -133,7 +133,7 @@ If you have python matplotlib installed the script will also plot the
 timestamps.
 
 
-== Debugging the CAEN layer ==
+## Debugging the CAEN layer
 
 debugCAENComm is a layer that can be inserted between the CAENDigitizer library
 and the CAENComm library for debugging purposes. It will print out which
