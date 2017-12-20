@@ -46,8 +46,6 @@
 
 using boost::asio::ip::udp;
 
-/* A simple helper to get current time since epoch in milliseconds */
-#define getTimeMsecs() (std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count())
 #define IDLESLEEP (10)
 
 /* Shared runtime configuration */
@@ -81,8 +79,8 @@ struct LocalStats {
 
 /* Use atomic to make sure updates from different threads won't cause races */
 struct TotalStats {
+    std::atomic<uint64_t> runStartTime;
     std::atomic<uint32_t> bytesRead;
-    std::atomic<uint32_t> runMilliseconds;
     std::atomic<uint32_t> eventsFound;
     std::atomic<uint32_t> eventsUnpacked;
     std::atomic<uint32_t> eventsDecoded;
@@ -127,8 +125,9 @@ static void setup_interrupt_handler() {
 }
 
 void showTotals(TotalStats &totals) {
+    uint64_t runtimeSeconds = getTimeMsecs() - totals.runStartTime / 1000.0;
     std::cout << "= Accumulated Stats =" << std::endl;
-    std::cout << "Runtime in seconds: " << totals.runMilliseconds / 1000.0 << std::endl;
+    std::cout << "Runtime in seconds: " << runtimeSeconds << std::endl;
     std::cout << "Bytes read: " << totals.bytesRead << std::endl;
     std::cout << "Aggregated events found: " << totals.eventsFound << std::endl;
     std::cout << "Individual events unpacked: " << totals.eventsUnpacked << std::endl;
@@ -321,7 +320,7 @@ void digitizerAcquisition(Digitizer &digitizer, TotalStats *totals, RuntimeConf 
     /* NOTE: these are per-digitizer local helpers */
     uint16_t listCount = 0, waveCount = 0;
     uint32_t channel = 0;
-    uint64_t globaltime = 0;
+    uint64_t globaltime = 0, runtimeSeconds = 0;
     stats->bytesRead = 0;
     stats->eventsFound = 0; 
     stats->eventsUnpacked = 0;
@@ -383,6 +382,7 @@ void digitizerAcquisition(Digitizer &digitizer, TotalStats *totals, RuntimeConf 
         digitizerComm->eventData->metadata->digitizerModel[MAXMODELSIZE-1] = '\0';
         digitizerComm->eventData->metadata->digitizerID = std::stoi(digitizer.serial());
         digitizerComm->eventData->metadata->globalTime = globaltime;
+        digitizerComm->eventData->metadata->runStartTime = totals->runStartTime;
         std::cout << "Prepared eventData has " << digitizerComm->eventData->listEventsLength << " listEvents and " << digitizerComm->eventData->waveformEventsLength << " waveformEvents."<< std::endl;
     }
 
@@ -518,7 +518,6 @@ int main(int argc, char **argv) {
     /* Total acquisition stats */
     TotalStats totals;
     totals.bytesRead = 0;
-    totals.runMilliseconds = 0;    
     totals.eventsFound = 0;
     totals.eventsUnpacked = 0;
     totals.eventsDecoded = 0;
@@ -526,6 +525,7 @@ int main(int argc, char **argv) {
 
     /* Singleton helpers */
     uint64_t acquisitionStart = 0, acquisitionStopped = 0, now = 0;
+    uint64_t runtimeSeconds = 0;
     uint16_t tasksEnqueued = 0;
     boost::asio::io_service threadIOService;
     boost::thread_group threadPool;
@@ -672,7 +672,7 @@ int main(int argc, char **argv) {
         }
     }
 
-    acquisitionStart = getTimeMsecs();
+    totals.runStartTime = acquisitionStart = getTimeMsecs();
     std::cout << "Start acquisition from " << digitizers.size() << " digitizer(s)." << std::endl;
     for (Digitizer& digitizer: digitizers) {
         std::cout << "Start acquisition on digitizer " << digitizer.name() << std::endl;
@@ -706,9 +706,10 @@ int main(int argc, char **argv) {
          *   - optionally dump data on simple format
          *   - optionally pack and send out data on UDP
          */
+        runtimeSeconds = getTimeMsecs() - totals.runStartTime / 1000.0;
         if (conf.stopAfterEvents > 0 && conf.stopAfterEvents <= totals.eventsFound ||
-            conf.stopAfterSeconds > 0 && conf.stopAfterSeconds * 1000 <= totals.runMilliseconds) {
-            std::cout << "Stop condition reached: ran for " << totals.runMilliseconds / 1000.0 << " seconds (target is " << conf.stopAfterSeconds << ") and handled " << totals.eventsFound << " events (target is " << conf.stopAfterEvents << ")." << std::endl;
+            conf.stopAfterSeconds > 0 && conf.stopAfterSeconds <= runtimeSeconds) {
+            std::cout << "Stop condition reached: ran for " << runtimeSeconds << " seconds (target is " << conf.stopAfterSeconds << ") and handled " << totals.eventsFound << " events (target is " << conf.stopAfterEvents << ")." << std::endl;
             keepRunning = false;
             break;
         } else if (conf.stopAfterEvents > 0) {
@@ -742,11 +743,10 @@ int main(int argc, char **argv) {
         }
 
         now = getTimeMsecs();
-        totals.runMilliseconds = now - acquisitionStart;
         if (tasksEnqueued > 0) {
             showTotals(totals);
         } else {
-            if (totals.runMilliseconds % 1000 < IDLESLEEP) {
+            if (now % 1000 < IDLESLEEP) {
                 showTotals(totals);
             }
             //std::cout << "Digitizer loop idle - throttle down" << std::endl;

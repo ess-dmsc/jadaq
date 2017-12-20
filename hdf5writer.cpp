@@ -33,7 +33,6 @@
 #include <sstream>
 #include <fstream>
 #include <string>
-#include <ctime>
 
 #include <boost/array.hpp>
 #include <boost/asio.hpp>
@@ -143,7 +142,7 @@ int main(int argc, char **argv) {
 #endif
     uint16_t digitizerID = 0, waveformLength = 0;
     uint32_t channel = 0, charge = 0, localtime = 0;
-    uint64_t globaltime = 0;
+    uint64_t globaltime = 0, runstarttime = 0;
 
     /* Listening helpers */
     boost::asio::io_service io_service;
@@ -241,12 +240,13 @@ int main(int argc, char **argv) {
      * package to make sure updates get written regularly.
      */
 #if H5_VERSION_GE(1,10,0)
-        h5flags |= H5F_ACC_SWMR_WRITE;
-        std::cout << "NOTE: Found a recent HDF version - enabling SWMR." << std::endl;
+    h5flags |= H5F_ACC_SWMR_WRITE;
+    std::cout << "NOTE: Found a recent HDF version - enabling SWMR." << std::endl;
 #else
-        std::cout << "WARNING: HDF versions before 1.10 do not support SWMR - disabling." << std::endl;
+    std::cout << "WARNING: HDF versions before 1.10 do not support SWMR - disabling." << std::endl;
 #endif
-    Group *rootgroup = NULL, *digitizergroup = NULL, *globaltimegroup = NULL;
+    Group *rootgroup = NULL, *digitizergroup = NULL;
+    Group *starttimegroup = NULL, *globaltimegroup = NULL;
     DataSet *dataset = NULL;
     DataSpace versionspace;
     Attribute *versionattr = NULL;
@@ -337,6 +337,7 @@ int main(int argc, char **argv) {
             std::cout << "version: " << metadata->version[0] << "." << metadata->version[1] << "." << metadata->version[2] << std::endl;
             std::cout << "digitizerModel: " << metadata->digitizerModel << std::endl;
             std::cout << "digitizerID: " << metadata->digitizerID << std::endl;
+            std::cout << "runStartTime: " << metadata->runStartTime << std::endl;
             std::cout << "globalTime: " << metadata->globalTime << std::endl;
 
             if (strcmp(Data::makeVersion(versiondata).c_str(), Data::makeVersion(metadata->version).c_str()) != 0) {
@@ -375,17 +376,17 @@ int main(int argc, char **argv) {
                 createGroup = false;
             }
 
-            /* Create a new group for the global time stamp if it
+            /* Create a new group for the start time stamp if it
              * doesn't exist in the output file. */
-            globaltime = metadata->globalTime;
+            runstarttime = metadata->runStartTime;
             nest.str("");
             nest.clear();
-            nest << globaltime;
+            nest << "Acquisition start at " << runstarttime;
             groupname = H5std_string(nest.str());
             createGroup = true;
             try {
                 std::cout << "Try to open group " << groupname << std::endl;
-                globaltimegroup = new Group(digitizergroup->openGroup(groupname));
+                starttimegroup = new Group(digitizergroup->openGroup(groupname));
                 createGroup = false;
             } catch(GroupIException error) {
                 if (!createOutfile) {
@@ -397,10 +398,37 @@ int main(int argc, char **argv) {
             }
             if (createGroup) {
                 std::cout << "Create group " << groupname << std::endl;
-                globaltimegroup = new Group(digitizergroup->createGroup(groupname));
+                starttimegroup = new Group(digitizergroup->createGroup(groupname));
                 createGroup = false;
             }
             
+            /* Create a new group for the global time stamp if it
+             * doesn't exist in the output file. */
+            globaltime = metadata->globalTime;
+            nest.str("");
+            nest.clear();
+            nest << globaltime;
+            groupname = H5std_string(nest.str());
+            createGroup = true;
+            try {
+                std::cout << "Try to open group " << groupname << std::endl;
+                globaltimegroup = new Group(starttimegroup->openGroup(groupname));
+                createGroup = false;
+            } catch(GroupIException error) {
+                if (!createOutfile) {
+                    std::cerr << "ERROR: could not open group " << groupname << " : " << std::endl;
+                    error.printError();
+                } else {
+                    //std::cout << "DEBUG: could not open group " << groupname << " : " << std::endl;
+                }
+            }
+            if (createGroup) {
+                std::cout << "Create group " << groupname << std::endl;
+                globaltimegroup = new Group(starttimegroup->createGroup(groupname));
+                createGroup = false;
+            }
+            
+            delete starttimegroup;
             delete digitizergroup;
 
             /* Loop over received events and create a dataset for each

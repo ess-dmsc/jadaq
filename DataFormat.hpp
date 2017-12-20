@@ -27,6 +27,7 @@
 #ifndef MULTIBLADEDATAHANDLER_DATAFORMAT_HPP
 #define MULTIBLADEDATAHANDLER_DATAFORMAT_HPP
 
+#include <chrono>
 #include <cstdint>
 #include <cstddef>
 #include <iostream>
@@ -56,12 +57,16 @@
 #define DEFAULT_UDP_SEND_ADDRESS "127.0.0.1"
 #define DEFAULT_UDP_PORT "12345"
 
+/* A simple helper to get current time since epoch in milliseconds */
+#define getTimeMsecs() (std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count())
+
 /** Every Data set contains meta data with the digitizer and format
  * followed by the actual List and/or waveform data points. */
 namespace Data {
     /* Shared meta data for the entire data package */
-    struct Meta { // 24 bytes
+    struct Meta { // 32 bytes
         uint64_t globalTime;
+        uint64_t runStartTime;
         uint16_t digitizerID;
         uint16_t version[VERSIONPARTS];
         char digitizerModel[MAXMODELSIZE];

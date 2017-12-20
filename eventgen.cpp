@@ -31,7 +31,6 @@
 #include <thread>
 #include <iostream>
 #include <string>
-#include <ctime>
 #include <boost/array.hpp>
 #include <boost/asio.hpp>
 
@@ -124,7 +123,7 @@ int main(int argc, char **argv) {
     std::string digitizer, digitizerModel;
     uint16_t digitizerID = 0;
     uint32_t channel = 0, charge = 0, localtime = 0;
-    uint64_t globaltime = 0;
+    uint64_t globaltime = 0, runstarttime = 0;
     
     std::cout << "Sending UDP packages to: " << address << ":" << port << std::endl;
 
@@ -147,6 +146,8 @@ int main(int argc, char **argv) {
     setup_interrupt_handler();
 
     std::cout << "Running event generator loop - Ctrl-C to interrupt" << std::endl;
+    runstarttime = getTimeMsecs();
+    std::cout << "Run started at " << runstarttime << std::endl;
 
     uint32_t throttleDown = 0;
     bool keepRunning = true;
@@ -160,7 +161,7 @@ int main(int argc, char **argv) {
             digitizerModel = "V1740D";
             digitizerID = 137;
             digitizer = "V1740D_137";
-            globaltime = std::time(nullptr);
+            globaltime = getTimeMsecs();
             flavor = "list";
             eventsTarget = 1 + globaltime % 3;
 
@@ -176,6 +177,7 @@ int main(int argc, char **argv) {
             eventData->metadata->digitizerModel[MAXMODELSIZE-1] = '\0';
             eventData->metadata->digitizerID = digitizerID;
             eventData->metadata->globalTime = globaltime;
+            eventData->metadata->runStartTime = runstarttime;
 
             std::cout << "Prepared eventData has " << eventData->listEventsLength << " listEvents " << std::endl;
 
@@ -189,7 +191,7 @@ int main(int argc, char **argv) {
                 localtime = (globaltime + eventIndex) & 0xFFFF;
                 charge = 242 + (localtime+eventIndex*13) % 100;
                 std::cout << "Filling event at " << globaltime << " from " << digitizer << " channel " << channel << " localtime " << localtime << " charge " << charge << std::endl;
-                std::cout << "DEBUG: listEvents at " << eventData->listEvents << std::endl;
+                //std::cout << "DEBUG: listEvents at " << eventData->listEvents << std::endl;
                 eventData->listEvents[eventIndex].localTime = localtime;
                 eventData->listEvents[eventIndex].extendTime = 0;
                 eventData->listEvents[eventIndex].adcValue = charge;
