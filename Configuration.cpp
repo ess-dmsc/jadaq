@@ -232,28 +232,20 @@ void Configuration::apply()
         }
         int usb = -1;
         int optical = -1;
-        int link = 0;
         uint32_t vme = 0;
         int conet = 0;
-        try {
-            usb = conf.get<int>("USB");
-            conf.erase("USB");
-            link = usb;
-        } catch (pt::ptree_error& e)
-        {
-            std::cerr << "ERROR: [" << name << ']' <<" does not contain USB number. REQUIRED" << std::endl;
-        }
-        try {
-            optical = conf.get<int>("OPTICAL");
+        /* Try optical link first, with fall-back to usb */
+        optical = conf.get<int>("OPTICAL", -1);
+        if (optical >= 0) {
             conf.erase("OPTICAL");
-            link = optical;
-        } catch (pt::ptree_error& e)
-        {
-            std::cerr << "ERROR: [" << name << ']' <<" does not contain OPTICAL number. REQUIRED" << std::endl;
-        }
-        if(usb == -1 && optical == -1) {
-            std::cerr << "ERROR: [" << name << ']' <<" does not contain USB or OPTICAL number. REQUIRED" << std::endl;
-            continue;
+        } else {
+            usb = conf.get<int>("USB", -1);
+            if (usb >= 0) {
+                conf.erase("USB");
+            } else {
+                std::cerr << "ERROR: [" << name << ']' <<" neither contains USB nor OPTICAL number. REQUIRED" << std::endl;
+                continue;
+            }
         }
         vme = conf.get<uint32_t>("VME",0);
         conf.erase("VME");
@@ -261,7 +253,7 @@ void Configuration::apply()
         conf.erase("CONETNODE");
         Digitizer* digitizer = nullptr;
         try {
-            digitizers.push_back(Digitizer((usb > 0), link, conet, vme));
+            digitizers.push_back(Digitizer(optical, usb, conet, vme));
             digitizer = &*digitizers.rbegin();
         } catch (caen::Error& e)
         {

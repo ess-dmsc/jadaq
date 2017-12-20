@@ -125,9 +125,9 @@ static void setup_interrupt_handler() {
 }
 
 void showTotals(TotalStats &totals) {
-    uint64_t runtimeSeconds = getTimeMsecs() - totals.runStartTime / 1000.0;
+    uint64_t runtimeMsecs = getTimeMsecs() - totals.runStartTime;
     std::cout << "= Accumulated Stats =" << std::endl;
-    std::cout << "Runtime in seconds: " << runtimeSeconds << std::endl;
+    std::cout << "Runtime in seconds: " << runtimeMsecs / 1000.0 << std::endl;
     std::cout << "Bytes read: " << totals.bytesRead << std::endl;
     std::cout << "Aggregated events found: " << totals.eventsFound << std::endl;
     std::cout << "Individual events unpacked: " << totals.eventsUnpacked << std::endl;
@@ -320,7 +320,7 @@ void digitizerAcquisition(Digitizer &digitizer, TotalStats *totals, RuntimeConf 
     /* NOTE: these are per-digitizer local helpers */
     uint16_t listCount = 0, waveCount = 0;
     uint32_t channel = 0;
-    uint64_t globaltime = 0, runtimeSeconds = 0;
+    uint64_t globaltime = 0, runtimeMsecs = 0;
     stats->bytesRead = 0;
     stats->eventsFound = 0; 
     stats->eventsUnpacked = 0;
@@ -525,7 +525,7 @@ int main(int argc, char **argv) {
 
     /* Singleton helpers */
     uint64_t acquisitionStart = 0, acquisitionStopped = 0, now = 0;
-    uint64_t runtimeSeconds = 0;
+    uint64_t runtimeMsecs = 0;
     uint16_t tasksEnqueued = 0;
     boost::asio::io_service threadIOService;
     boost::thread_group threadPool;
@@ -672,7 +672,8 @@ int main(int argc, char **argv) {
         }
     }
 
-    totals.runStartTime = acquisitionStart = getTimeMsecs();
+    acquisitionStart = getTimeMsecs();
+    totals.runStartTime = acquisitionStart;
     std::cout << "Start acquisition from " << digitizers.size() << " digitizer(s)." << std::endl;
     for (Digitizer& digitizer: digitizers) {
         std::cout << "Start acquisition on digitizer " << digitizer.name() << std::endl;
@@ -706,10 +707,10 @@ int main(int argc, char **argv) {
          *   - optionally dump data on simple format
          *   - optionally pack and send out data on UDP
          */
-        runtimeSeconds = getTimeMsecs() - totals.runStartTime / 1000.0;
+        runtimeMsecs = getTimeMsecs() - totals.runStartTime;
         if (conf.stopAfterEvents > 0 && conf.stopAfterEvents <= totals.eventsFound ||
-            conf.stopAfterSeconds > 0 && conf.stopAfterSeconds <= runtimeSeconds) {
-            std::cout << "Stop condition reached: ran for " << runtimeSeconds << " seconds (target is " << conf.stopAfterSeconds << ") and handled " << totals.eventsFound << " events (target is " << conf.stopAfterEvents << ")." << std::endl;
+            conf.stopAfterSeconds > 0 && conf.stopAfterSeconds * 1000 <= runtimeMsecs) {
+            std::cout << "Stop condition reached: ran for " << runtimeMsecs / 1000.0 << " seconds (target is " << conf.stopAfterSeconds << ") and handled " << totals.eventsFound << " events (target is " << conf.stopAfterEvents << ")." << std::endl;
             keepRunning = false;
             break;
         } else if (conf.stopAfterEvents > 0) {

@@ -55,7 +55,7 @@ private:
     int conet_;
 public:
     Digitizer(int usb, uint32_t vme) : digitizer(caen::Digitizer::USB(usb,vme)), usb_(usb), vme_(vme) {}
-    Digitizer(bool isUSB, int link, int conet, uint32_t vme) : digitizer(caen::Digitizer::open(caen::getAutoType(isUSB), link, conet, vme)), usb_(link), vme_(vme), conet_(conet) {}
+    Digitizer(int optical, int usb, int conet, uint32_t vme) : digitizer(caen::Digitizer::open(caen::pickBestLinkType(optical, usb), caen::pickBestLinkNum(optical, usb), conet, vme)), optical_(optical), usb_(usb), vme_(vme), conet_(conet) {}
     const std::string name() { return digitizer->modelName() + "_" + std::to_string(digitizer->serialNumber()); }
     const std::string model() { return digitizer->modelName(); }
     const std::string serial() { return std::to_string(digitizer->serialNumber()); }
