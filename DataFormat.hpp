@@ -52,10 +52,6 @@
 #define INCLUDE_DSAMPLE
 */
 
-/* TODO: switch to a hdf5 struct */
-#define EVENTFIELDS (3)
-#define EVENTINIT {{0, 0, 0}}
-
 #define UDP_LISTEN_ALL "*"
 #define DEFAULT_UDP_SEND_ADDRESS "127.0.0.1"
 #define DEFAULT_UDP_PORT "12345"

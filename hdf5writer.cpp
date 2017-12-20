@@ -281,7 +281,6 @@ int main(int argc, char **argv) {
         error.printError();
     }
 
-    uint32_t data[EVENTFIELDS];
     const int RANK = 1;
     hsize_t dimsf[1];
     dimsf[0] = 1;
