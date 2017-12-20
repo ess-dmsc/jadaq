@@ -313,6 +313,7 @@ void extractEvents(Digitizer &digitizer, LocalStats *stats, RuntimeConf conf, co
 }
 
 void digitizerAcquisition(Digitizer &digitizer, TotalStats *totals, RuntimeConf conf, thread_helper_map threadHelpers, comm_helper_map commHelpers, ofstream_map charge_writer_map, ofstream_map wave_writer_map, boost::asio::io_service &threadIOService) {
+
     /* NOTE: these are per-digitizer local stats */
     LocalStats localStats;
     LocalStats *stats = &localStats;
@@ -326,6 +327,9 @@ void digitizerAcquisition(Digitizer &digitizer, TotalStats *totals, RuntimeConf 
     stats->eventsUnpacked = 0;
     stats->eventsDecoded = 0;
     stats->eventsSent = 0;
+    
+    /* For thread status */
+    ThreadHelper *digitizerThread = threadHelpers[digitizer.name()];
 
     /* Throttle down first if digitizer is idle or recently threw error */
     digitizer.idleYield();
@@ -334,12 +338,20 @@ void digitizerAcquisition(Digitizer &digitizer, TotalStats *totals, RuntimeConf 
      * keep timestamps unique */
     globaltime = getTimeMsecs();
 
+    /* TODO: reset readout buffer, events and waveforms every time? */
+
     std::cout << "Read at most " << digitizer.caenGetPrivReadoutBuffer().size << "b data from " << digitizer.name() << std::endl;
     digitizer.caenReadData(digitizer.caenGetPrivReadoutBuffer());
     stats->bytesRead = digitizer.caenGetPrivReadoutBuffer().dataSize;
     std::cout << "Read " << stats->bytesRead << "b of acquired data" << std::endl;
 
     /* NOTE: check and skip if there's no actual events to handle */
+    if (stats->bytesRead < 1) {
+        std::cout << "No data to read - skip further handling." << std::endl;
+        digitizer.throttleDown();
+        digitizerThread->ready = true;
+        return;
+    }
     if (digitizer.caenIsDPPFirmware()) {
         std::cout << "Unpack aggregated DPP events from " << digitizer.name() << std::endl;
         digitizer.caenGetDPPEvents(digitizer.caenGetPrivReadoutBuffer(), digitizer.caenGetPrivDPPEvents());
@@ -355,6 +367,7 @@ void digitizerAcquisition(Digitizer &digitizer, TotalStats *totals, RuntimeConf 
     if (stats->eventsFound < 1) {
         std::cout << "No events found - no further handling." << std::endl;
         digitizer.throttleDown();
+        digitizerThread->ready = true;
         return;
     }
 
@@ -410,7 +423,6 @@ void digitizerAcquisition(Digitizer &digitizer, TotalStats *totals, RuntimeConf 
     digitizer.resetThrottle();
 
     /* Mark hadnling complete so that next acquisition can begin */
-    ThreadHelper *digitizerThread = threadHelpers[digitizer.name()];
     digitizerThread->ready = true;
 }
 
@@ -744,12 +756,10 @@ int main(int argc, char **argv) {
         }
 
         now = getTimeMsecs();
-        if (tasksEnqueued > 0) {
+        if (now % 1000 < IDLESLEEP) {
             showTotals(totals);
-        } else {
-            if (now % 1000 < IDLESLEEP) {
-                showTotals(totals);
-            }
+        }
+        if (tasksEnqueued < 1) {
             //std::cout << "Digitizer loop idle - throttle down" << std::endl;
             /* NOTE: for running without hogging CPU if nothing to do */
             std::this_thread::sleep_for(std::chrono::milliseconds(IDLESLEEP));
