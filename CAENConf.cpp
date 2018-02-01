@@ -441,13 +441,18 @@ int dump_configuration(int handle, char *fname)
     if(ret != CAEN_DGTZ_Success) fprintf(fout, "Errors during register dump.\n");
 
     address = 0x800C;
-    ret |= CAEN_DGTZ_ReadRegister(handle, address, &out); 
+    ret |= CAEN_DGTZ_ReadRegister(handle, address, &out);
     fprintf(fout, "(0x%X) AggregateOrganization\t0x%X\n", address, out);
     if(ret != CAEN_DGTZ_Success) fprintf(fout, "Errors during register dump.\n");
 
     address = 0x8020;
-    ret |= CAEN_DGTZ_ReadRegister(handle, address, &out); 
+    ret |= CAEN_DGTZ_ReadRegister(handle, address, &out);
     fprintf(fout, "(0x%X) EventsPerAggregate\t0x%X\n", address, out);
+    if(ret != CAEN_DGTZ_Success) fprintf(fout, "Errors during register dump.\n");
+
+    address = 0x811C;
+    ret |= CAEN_DGTZ_ReadRegister(handle, address, &out);
+    fprintf(fout, "(0x%X) Front Panel I/O Control\t0x%X\n", address, out);
     if(ret != CAEN_DGTZ_Success) fprintf(fout, "Errors during register dump.\n");
 
   //  address = 0x8024;
