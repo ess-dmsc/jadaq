@@ -37,15 +37,10 @@
 #include "Configuration.hpp"
 #include "CAENConf.hpp"
 #include <boost/filesystem.hpp>
-#include <boost/asio.hpp>
-#include <boost/asio/io_service.hpp>
-#include <boost/bind.hpp>
-#include <boost/thread/thread.hpp>
+#include "trace.hpp"
 
-#include "DataFormat.hpp"
 
-using boost::asio::ip::udp;
-
+#define NOTHREADS
 #define IDLESLEEP (10)
 
 /* Shared runtime configuration */
@@ -68,15 +63,6 @@ struct RuntimeConf {
     uint32_t workerThreads;
 };
 
-/* Per-readout stats */
-struct LocalStats {
-    uint32_t bytesRead = 0; 
-    uint32_t eventsFound = 0;
-    uint32_t eventsUnpacked = 0;
-    uint32_t eventsDecoded = 0; 
-    uint32_t eventsSent = 0;
-};
-
 /* Use atomic to make sure updates from different threads won't cause races */
 struct TotalStats {
     std::atomic<uint64_t> runStartTime;
@@ -87,18 +73,6 @@ struct TotalStats {
     std::atomic<uint32_t> eventsSent;
 };
 
-/* Per-digitizer communication helpers */
-struct CommHelper {
-    boost::asio::io_service sendIOService;
-    udp::endpoint remoteEndpoint;
-    udp::socket *socket = NULL;
-    /* NOTE: use a static buffer of MAXBUFSIZE bytes for sending */
-    char sendBuf[MAXBUFSIZE];
-    Data::EventData *eventData;
-    Data::Meta *metadata;
-    Data::PackedEvents packedEvents;
-};
-
 /* Per-digitizer thread helpers */
 struct ThreadHelper {
     /* TODO: move thread pool etc here as well? */
@@ -107,7 +81,6 @@ struct ThreadHelper {
 
 /* For channel dump and communication */
 typedef std::map<const std::string, std::ofstream *> ofstream_map;
-typedef std::map<const std::string, CommHelper *> comm_helper_map;
 typedef std::map<const std::string, ThreadHelper *> thread_helper_map;
 
 /* Keep running marker and interrupt signal handler */
@@ -125,14 +98,14 @@ static void setup_interrupt_handler() {
 }
 
 void showTotals(TotalStats &totals) {
-    uint64_t runtimeMsecs = getTimeMsecs() - totals.runStartTime;
-    std::cout << "= Accumulated Stats =" << std::endl;
-    std::cout << "Runtime in seconds: " << runtimeMsecs / 1000.0 << std::endl;
-    std::cout << "Bytes read: " << totals.bytesRead << std::endl;
-    std::cout << "Aggregated events found: " << totals.eventsFound << std::endl;
-    std::cout << "Individual events unpacked: " << totals.eventsUnpacked << std::endl;
-    std::cout << "Individual events decoded: " << totals.eventsDecoded << std::endl;
-    std::cout << "Individual events sent: " << totals.eventsSent << std::endl;
+    STAT(uint64_t runtimeMsecs = getTimeMsecs() - totals.runStartTime;)
+    STAT(std::cout << "= Accumulated Stats =" << std::endl;)
+    STAT(std::cout << "Runtime in seconds: " << runtimeMsecs / 1000.0 << std::endl;)
+    STAT(std::cout << "Bytes read: " << totals.bytesRead << std::endl;)
+    STAT(std::cout << "Aggregated events found: " << totals.eventsFound << std::endl;)
+    STAT(std::cout << "Individual events unpacked: " << totals.eventsUnpacked << std::endl;)
+    STAT(std::cout << "Individual events decoded: " << totals.eventsDecoded << std::endl;)
+    STAT(std::cout << "Individual events sent: " << totals.eventsSent << std::endl;)
 }
 
 void usageHelp(char *name) {
@@ -164,268 +137,6 @@ void usageHelp(char *name) {
     std::cout << "If the optional register dump file is provided a read-out " << std::endl;
     std::cout << "of the important digitizer registers is dumped there." << std::endl;
 }
-
-void myTask(const char *name) {
-    std::cout << getTimeMsecs() << ": my task starting task " << name << std::endl;
-    boost::this_thread::sleep(boost::posix_time::milliseconds(1000));
-    std::cout << getTimeMsecs() << ": my task finished task " << name << std::endl;
-}
-
-void extractEvents(Digitizer &digitizer, LocalStats *stats, RuntimeConf conf, comm_helper_map commHelpers, uint64_t globaltime, ofstream_map charge_writer_map, ofstream_map wave_writer_map, boost::asio::io_service &threadIOService) {
-    /* NOTE: these are per-digitizer local helpers */
-    uint64_t count = 0;
-    uint32_t eventIndex = 0, decodeChannels = 0, j = 0, k = 0;
-    uint32_t charge = 0, timestamp = 0, channel = 0;
-    uint16_t *samples = NULL;
-    caen::BasicEvent basicEvent;
-    caen::BasicDPPEvent basicDPPEvent;
-    caen::BasicDPPWaveforms basicDPPWaveforms;
-    std::ofstream *channelChargeWriters, *channelWaveWriters;
-
-    if (digitizer.caenIsDPPFirmware()) {
-        eventIndex = 0;
-        /* TODO: additionally hand off decoding into per-channel threads? */
-        for (channel = 0; channel < MAX_CHANNELS; channel++) {
-            for (j = 0; j < digitizer.caenGetPrivDPPEvents().nEvents[channel]; j++) {
-                /* NOTE: we don't want to muck with underlying
-                 * event type here, so we rely on the wrapped
-                 * extraction and pull out timestamp, charge,
-                 * etc from the resulting BasicDPPEvent. */
-                
-                basicDPPEvent = digitizer.caenExtractBasicDPPEvent(digitizer.caenGetPrivDPPEvents(), channel, j);
-                /* We use the same 4 byte range for charge as CAEN sample */
-                charge = basicDPPEvent.charge & 0xFFFF;
-                /* TODO: include timestamp high bits from Extra field? */
-                /* NOTE: timestamp is 64-bit for PHA events
-                 * but we just consistently clip to 32-bit
-                 * for now. */ 
-                timestamp = basicDPPEvent.timestamp & 0xFFFFFFFF;
-                
-                std::cout << digitizer.name() << " channel " << channel << " event " << j << " charge " << charge << " at global time " << globaltime << " and local time " << timestamp << std::endl;
-                
-                if (conf.channelDumpEnabled) {
-                    /* NOTE: write in requested format */
-                    channelChargeWriters = charge_writer_map[digitizer.name()];
-                    /* NOTE: we use explicit "\n" rather than std::endl.
-                     *       This is in order to avoid automatic
-                     *       ofstream flush after each line.
-                     */
-                    channelChargeWriters[channel] << std::setw(16) << timestamp << " " << digitizer.serial() << " " << std::setw(8) << channel << " " << std::setw(8) << charge << "\n";
-                }
-                
-                /* Only try to decode waveforms if digitizer is actually
-                 * configured to record them in the first place. */
-                if (digitizer.caenHasDPPWaveformsEnabled()) {
-                    try {
-                        digitizer.caenDecodeDPPWaveforms(digitizer.caenGetPrivDPPEvents(), channel, j, digitizer.caenGetPrivDPPWaveforms());
-                        
-                        std::cout << "Decoded " << digitizer.caenDumpPrivDPPWaveforms() << " DPP event waveforms from event " << j << " on channel " << channel << " from " << digitizer.name() << std::endl;
-                        stats->eventsDecoded += 1;
-                        if (conf.channelDumpEnabled and conf.waveDumpEnabled) {
-                            channelWaveWriters = wave_writer_map[digitizer.name()];
-                            /* NOTE: we don't want to muck with underlying
-                             * event type here, so we rely on the wrapped
-                             * extraction and pull out
-                             * values from the resulting
-                             * BasicDPPWaveforms. */
-                            basicDPPWaveforms = digitizer.caenExtractBasicDPPWaveforms(digitizer.caenGetPrivDPPWaveforms());
-                            for(k=0; k<basicDPPWaveforms.Ns; k++) {
-                                channelWaveWriters[channel] << basicDPPWaveforms.Sample1[k];                 /* samples */
-                                channelWaveWriters[channel] << " " << 2000 + 200 * basicDPPWaveforms.DSample1[k];  /* gate    */
-                                channelWaveWriters[channel] << " " << 1000 + 200 *basicDPPWaveforms.DSample2[k];  /* trigger */
-                                if (basicDPPWaveforms.DSample3 != NULL)
-                                    channelWaveWriters[channel] << " " << 500 + 200 * basicDPPWaveforms.DSample3[k];   /* trg hold off */
-                                if (basicDPPWaveforms.DSample4 != NULL)
-                                    channelWaveWriters[channel] << " " << 100 + 200 * basicDPPWaveforms.DSample4[k];  /* overthreshold */
-                                /* NOTE: we use explicit "\n" rather than std::endl.
-                                 *       This is in order to avoid automatic
-                                 *       ofstream flush after each line.
-                                 */
-                                channelWaveWriters[channel] << "\n";
-                            }
-                        }                                    
-                    } catch(std::exception& e) {
-                        std::cerr << "failed to decode waveforms for event " << j << " on channel " << channel << " from " << digitizer.name() << " : " << e.what() << std::endl;
-                    }
-                }                            
-                
-                if (conf.sendEventEnabled) {
-                    CommHelper *digitizerComm = commHelpers[digitizer.name()];
-                    if (conf.sendListEventEnabled) {
-                        //std::cout << "Filling event list at " << globaltime << " from " << digitizer.name() << " channel " << channel << " localtime " << timestamp << " charge " << charge << std::endl;
-                        digitizerComm->eventData->listEvents[eventIndex].localTime = timestamp;
-                        digitizerComm->eventData->listEvents[eventIndex].extendTime = 0;
-                        digitizerComm->eventData->listEvents[eventIndex].adcValue = charge;
-                        digitizerComm->eventData->listEvents[eventIndex].channel = channel;
-                    }
-                    if (conf.sendListEventEnabled && digitizer.caenHasDPPWaveformsEnabled()) {
-                        basicDPPWaveforms = digitizer.caenExtractBasicDPPWaveforms(digitizer.caenGetPrivDPPWaveforms());
-                        std::cout << "Filling event waveform at " << globaltime << " from " << digitizer.name() << " channel " << channel << " localtime " << timestamp << " samples " << basicDPPWaveforms.Ns << std::endl;
-                        digitizerComm->eventData->waveformEvents[eventIndex].localTime = timestamp;
-                        digitizerComm->eventData->waveformEvents[eventIndex].extendTime = 0;
-                        digitizerComm->eventData->waveformEvents[eventIndex].channel = channel;
-                        digitizerComm->eventData->waveformEvents[eventIndex].waveformLength = basicDPPWaveforms.Ns;
-                        memcpy(digitizerComm->eventData->waveformEvents[eventIndex].waveformSample1, basicDPPWaveforms.Sample1, basicDPPWaveforms.Ns*sizeof(basicDPPWaveforms.Sample1[0]));
-#ifdef INCLUDE_SAMPLE2
-                        memcpy(digitizerComm->eventData->waveformEvents[eventIndex].waveformSample2, basicDPPWaveforms.Sample2, basicDPPWaveforms.Ns*sizeof(basicDPPWaveforms.Sample2[0]));
-#endif
-#ifdef INCLUDE_DSAMPLE
-                        memcpy(digitizerComm->eventData->waveformEvents[eventIndex].waveformDSample1, basicDPPWaveforms.DSample1, basicDPPWaveforms.Ns*sizeof(basicDPPWaveforms.DSample1[0]));
-                        memcpy(digitizerComm->eventData->waveformEvents[eventIndex].waveformDSample2, basicDPPWaveforms.DSample2, basicDPPWaveforms.Ns*sizeof(basicDPPWaveforms.DSample2[0]));
-                        memcpy(digitizerComm->eventData->waveformEvents[eventIndex].waveformDSample3, basicDPPWaveforms.DSample3, basicDPPWaveforms.Ns*sizeof(basicDPPWaveforms.DSample3[0]));
-                        memcpy(digitizerComm->eventData->waveformEvents[eventIndex].waveformDSample4, basicDPPWaveforms.DSample4, basicDPPWaveforms.Ns*sizeof(basicDPPWaveforms.DSample4[0]));
-#endif
-                        std::cout << "Filled event waveform with " << digitizerComm->eventData->waveformEvents[eventIndex].waveformSample1[0] << ", .. ," << digitizerComm->eventData->waveformEvents[eventIndex].waveformSample1[basicDPPWaveforms.Ns-1] << " ." << std::endl;
-                    }
-                    
-                }
-                eventIndex += 1;
-            }
-        }
-    } else { 
-        /* Handle the non-DPP case */
-        for (eventIndex=0; eventIndex < stats->eventsFound; eventIndex++) {
-            digitizer.caenGetEventInfo(digitizer.caenGetPrivReadoutBuffer(), eventIndex);
-            std::cout << "Unpacked event " << digitizer.caenGetPrivEventInfo().EventCounter << "  of " << stats->eventsFound << " events from " << digitizer.name() << std::endl;
-            stats->eventsUnpacked += 1;
-            digitizer.caenDecodeEvent(digitizer.caenGetPrivEventInfo(), digitizer.caenGetPrivEvent());
-            std::cout << "Decoded event " << digitizer.caenGetPrivEventInfo().EventCounter << "  of " << stats->eventsFound << " events from " << digitizer.name() << std::endl;
-            stats->eventsDecoded += 1;
-            /* TODO: where do we get real channel from in these events?!? */
-            /*       it looks like decoded events is really a matrix
-             *       of channel events a bit like in the DPPEvents case */
-            channel = 4242;
-            basicEvent = digitizer.caenExtractBasicEvent(digitizer.caenGetPrivEventInfo(), digitizer.caenGetPrivEvent(), channel, eventIndex);
-            timestamp = basicEvent.timestamp;
-            count = basicEvent.count;
-            samples = basicEvent.samples;
-            if (conf.sendEventEnabled) {
-                CommHelper *digitizerComm = commHelpers[digitizer.name()];
-                //std::cout << "Filling event at " << globaltime << " from " << digitizer.name() << " channel " << channel << " localtime " << timestamp << " sample count " << count << std::endl;
-                digitizerComm->eventData->waveformEvents[eventIndex].localTime = timestamp;
-                digitizerComm->eventData->waveformEvents[eventIndex].waveformLength = count;
-                /* NOTE: only one sample array here so just use Sample1 */
-                memcpy(digitizerComm->eventData->waveformEvents[eventIndex].waveformSample1, samples, (count * sizeof(samples[0])));
-                digitizerComm->eventData->waveformEvents[eventIndex].channel = channel;
-            }   
-        }
-    }   
-}
-
-void digitizerAcquisition(Digitizer &digitizer, TotalStats *totals, RuntimeConf conf, thread_helper_map threadHelpers, comm_helper_map commHelpers, ofstream_map charge_writer_map, ofstream_map wave_writer_map, boost::asio::io_service &threadIOService) {
-
-    /* NOTE: these are per-digitizer local stats */
-    LocalStats localStats;
-    LocalStats *stats = &localStats;
-
-    /* NOTE: these are per-digitizer local helpers */
-    uint16_t listCount = 0, waveCount = 0;
-    uint32_t channel = 0;
-    uint64_t globaltime = 0, runtimeMsecs = 0;
-    stats->bytesRead = 0;
-    stats->eventsFound = 0; 
-    stats->eventsUnpacked = 0;
-    stats->eventsDecoded = 0;
-    stats->eventsSent = 0;
-    
-    /* For thread status */
-    ThreadHelper *digitizerThread = threadHelpers[digitizer.name()];
-
-    /* Throttle down first if digitizer is idle or recently threw error */
-    digitizer.idleYield();
-
-    /* NOTE: use time since epoch with millisecond resolution to
-     * keep timestamps unique */
-    globaltime = getTimeMsecs();
-
-    /* TODO: reset readout buffer, events and waveforms every time? */
-
-    std::cout << "Read at most " << digitizer.caenGetPrivReadoutBuffer().size << "b data from " << digitizer.name() << std::endl;
-    digitizer.caenReadData(digitizer.caenGetPrivReadoutBuffer());
-    stats->bytesRead = digitizer.caenGetPrivReadoutBuffer().dataSize;
-    std::cout << "Read " << stats->bytesRead << "b of acquired data" << std::endl;
-
-    /* NOTE: check and skip if there's no actual events to handle */
-    if (stats->bytesRead < 1) {
-        std::cout << "No data to read - skip further handling." << std::endl;
-        digitizer.throttleDown();
-        digitizerThread->ready = true;
-        return;
-    }
-    if (digitizer.caenIsDPPFirmware()) {
-        std::cout << "Unpack aggregated DPP events from " << digitizer.name() << std::endl;
-        digitizer.caenGetDPPEvents(digitizer.caenGetPrivReadoutBuffer(), digitizer.caenGetPrivDPPEvents());
-        for (channel = 0; channel < MAX_CHANNELS; channel++) {
-            stats->eventsFound += digitizer.caenGetPrivDPPEvents().nEvents[channel];
-        }
-        stats->eventsUnpacked += stats->eventsFound;
-        std::cout << "Unpacked " << stats->eventsUnpacked << " DPP events from all channels." << std::endl;
-    } else {
-        stats->eventsFound += digitizer.caenGetNumEvents(digitizer.caenGetPrivReadoutBuffer());
-        std::cout << "Acquired data from " << digitizer.name() << " contains " << stats->eventsFound << " event(s)." << std::endl;
-    }
-    if (stats->eventsFound < 1) {
-        std::cout << "No events found - no further handling." << std::endl;
-        digitizer.throttleDown();
-        digitizerThread->ready = true;
-        return;
-    }
-
-    if (conf.sendEventEnabled) {
-        CommHelper *digitizerComm = commHelpers[digitizer.name()];
-        /* Reset send buffer each time to prevent any stale data */
-        memset(digitizerComm->sendBuf, 0, MAXBUFSIZE);
-        /* TODO: add check to make sure sendBuf always fits eventData */
-        /* NOTE: only set waveform count (last arg) if actually enabled */
-        if (conf.sendListEventEnabled) {
-            listCount = stats->eventsFound;
-        } else {
-            listCount = 0;
-        }
-        if (conf.sendWaveformEventEnabled && digitizer.caenHasDPPWaveformsEnabled()) {
-            waveCount = stats->eventsFound;
-        } else {
-            waveCount = 0;
-        }
-        digitizerComm->eventData = Data::setupEventData((void *)digitizerComm->sendBuf, MAXBUFSIZE, listCount, waveCount);
-        std::cout << "Prepared eventData " << digitizerComm->eventData << " from sendBuf " << (void *)digitizerComm->sendBuf << std::endl;
-        digitizerComm->metadata = digitizerComm->eventData->metadata;
-        /* NOTE: safe copy with explicit string termination */
-        strncpy(digitizerComm->eventData->metadata->digitizerModel, digitizer.model().c_str(), MAXMODELSIZE);
-        digitizerComm->eventData->metadata->digitizerModel[MAXMODELSIZE-1] = '\0';
-        digitizerComm->eventData->metadata->digitizerID = std::stoi(digitizer.serial());
-        digitizerComm->eventData->metadata->globalTime = globaltime;
-        digitizerComm->eventData->metadata->runStartTime = totals->runStartTime;
-        std::cout << "Prepared eventData has " << digitizerComm->eventData->listEventsLength << " listEvents and " << digitizerComm->eventData->waveformEventsLength << " waveformEvents."<< std::endl;
-    }
-
-    extractEvents(digitizer, stats, conf, commHelpers, globaltime, charge_writer_map, wave_writer_map, threadIOService);
-
-    /* Pack and send out UDP */
-    if (conf.sendEventEnabled) {
-        CommHelper *digitizerComm = commHelpers[digitizer.name()];
-        std::cout << "Packing events at " << globaltime << " from " << digitizer.name() << std::endl;
-        digitizerComm->packedEvents = Data::packEventData(digitizerComm->eventData);
-        /* Send data to preconfigured receiver */
-        std::cout << "Sending " << digitizerComm->eventData->listEventsLength << " list and " << digitizerComm->eventData->waveformEventsLength << " waveform events packed into " << digitizerComm->packedEvents.dataSize << "b at " << globaltime << " from " << digitizer.name() << " to " << conf.address << ":" << conf.port << std::endl;
-        digitizerComm->socket->send_to(boost::asio::buffer((char*)(digitizerComm->packedEvents.data), digitizerComm->packedEvents.dataSize), digitizerComm->remoteEndpoint);
-        stats->eventsSent += stats->eventsUnpacked;
-    }                
-
-    /* Update total stats atomically */
-    totals->bytesRead += stats->bytesRead;
-    totals->eventsFound += stats->eventsFound;
-    totals->eventsUnpacked += stats->eventsUnpacked;
-    totals->eventsDecoded += stats->eventsDecoded;
-    totals->eventsSent += stats->eventsSent;
-
-    /* No throttling if handling succeeded this far */
-    digitizer.resetThrottle();
-
-    /* Mark hadnling complete so that next acquisition can begin */
-    digitizerThread->ready = true;
-}
-
 
 int main(int argc, char **argv) {
     const char* const short_opts = "a:c:d:e:hp:r:s:t:w:";
@@ -545,7 +256,6 @@ int main(int argc, char **argv) {
     /* Active digitizers */
     std::vector<Digitizer> digitizers;
     thread_helper_map threadHelpers;
-    comm_helper_map commHelpers;
 
     /* Read-in and write resulting digitizer configuration */
     std::ifstream configFile(conf.configFileName);
@@ -579,17 +289,6 @@ int main(int argc, char **argv) {
     ofstream_map charge_writer_map;
     ofstream_map wave_writer_map;
     std::stringstream path;
-    
-    if (conf.channelDumpEnabled) {
-        boost::filesystem::path prefix(conf.channelDumpPrefix);
-        boost::filesystem::path dir = prefix.parent_path();
-        try {
-            boost::filesystem::create_directories(dir);
-        } catch (std::exception& e) {
-            std::cerr << "WARNING: failed to create channel dump output dir " << dir << " : " << e.what() << std::endl;
-            exit(1);
-        }
-    }
 
     /* Prepare and start acquisition for all digitizers */
     std::cout << "Setup acquisition from " << digitizers.size() << " digitizer(s)." << std::endl;
@@ -608,59 +307,21 @@ int main(int argc, char **argv) {
             }
         }
 
-        /* Record timestamps and charges in per-channel files on request */
-        if (conf.channelDumpEnabled) {
-            std::cout << "Dumping individual recorded channel charges from " << digitizer.name() << " in files " << conf.channelDumpPrefix << "-" << digitizer.name() << "-charge-CHANNEL.txt" << std::endl;
-            channelChargeWriters = new std::ofstream[MAX_CHANNELS];
-            charge_writer_map[digitizer.name()] = channelChargeWriters;
-            for (int channel=0; channel<MAX_CHANNELS; channel++) {
-                path.str("");
-                path.clear();
-                path << conf.channelDumpPrefix << "-" << digitizer.name() << "-charge-" << std::setfill('0') << std::setw(2) << channel << ".txt";
-                channelChargeWriters[channel].open(path.str(), std::ofstream::out);
-            }
-            if (digitizer.caenHasDPPWaveformsEnabled() && conf.waveDumpEnabled) {
-                std::cout << "Dumping individual recorded channel waveforms from " << digitizer.name() << " in files " << conf.channelDumpPrefix << "-" << digitizer.name() << "-wave-CHANNEL.txt" << std::endl;
-                channelWaveWriters = new std::ofstream[MAX_CHANNELS];
-                wave_writer_map[digitizer.name()] = channelWaveWriters;
-                for (int channel=0; channel<MAX_CHANNELS; channel++) {
-                    path.str("");
-                    path.clear();
-                    path << conf.channelDumpPrefix << "-" << digitizer.name() << "-wave-" << std::setfill('0') << std::setw(2) << channel << ".txt";
-                    channelWaveWriters[channel].open(path.str(), std::ofstream::out);
-                }
-                
-            }
-        }
-
         ThreadHelper *digitizerThread = new ThreadHelper();
         threadHelpers[digitizer.name()] = digitizerThread;
         digitizerThread->ready = true;
 
         /* Setup worker done helper for this digitizer */
-        if (conf.sendEventEnabled) {
-            /* Setup UDP sender for this digitizer */
-            try {
-                CommHelper *digitizerComm = new CommHelper();
-                commHelpers[digitizer.name()] = digitizerComm;
-                udp::resolver resolver(digitizerComm->sendIOService);
-                udp::resolver::query query(udp::v4(), conf.address.c_str(), conf.port.c_str());
-                digitizerComm->remoteEndpoint = *resolver.resolve(query);
-                digitizerComm->socket = new udp::socket(digitizerComm->sendIOService);
-                digitizerComm->socket->open(udp::v4());
-            } catch (std::exception& e) {
-                std::cerr << "ERROR in UDP connection setup to " << conf.address << " : " << e.what() << std::endl;
-                exit(1);
-            }
-        }
-
-        /* Dump actual digitizer registers for debugging on request */
-        if (conf.registerDumpEnabled) {
-            std::cout << "Dumping digitizer " << digitizer.name() << " registers in " << conf.registerDumpFileName << std::endl;
-            if (dump_configuration(digitizer.caen()->handle(), (char *)conf.registerDumpFileName.c_str()) < 0) {
-                std::cerr << "Error in dumping digitizer registers in " << conf.registerDumpFileName << std::endl;
-                exit(1); 
-            }
+        try {
+            digitizer.commHelper = new CommHelper();
+            udp::resolver resolver(digitizer.commHelper->sendIOService);
+            udp::resolver::query query(udp::v4(), conf.address.c_str(), conf.port.c_str());
+            digitizer.commHelper->remoteEndpoint = *resolver.resolve(query);
+            digitizer.commHelper->socket = new udp::socket(digitizer.commHelper->sendIOService);
+            digitizer.commHelper->socket->open(udp::v4());
+        } catch (std::exception& e) {
+            std::cerr << "ERROR in UDP connection setup to " << conf.address << " : " << e.what() << std::endl;
+            exit(1);
         }
 
         /* Prepare buffers - must happen AFTER digitizer has been configured! */
@@ -739,10 +400,10 @@ int main(int argc, char **argv) {
                     std::cout << "Enqueuing new digitizer acquisition for " << digitizer.name() << std::endl;
 #ifdef NOTHREADS
                     /* Inline digitizerAcquisition without threading */
-                    digitizerAcquisition(digitizer, &totals, conf, threadHelpers, commHelpers, charge_writer_map, wave_writer_map, threadIOService);
+                    digitizer.acquisition();
 #else
                     /* Enqueue digitizerAcquisition for thread handling */
-                    threadIOService.post(boost::bind(digitizerAcquisition, digitizer, &totals, conf, threadHelpers, commHelpers, charge_writer_map, wave_writer_map, boost::ref(threadIOService)));
+                    threadIOService.post(boost::bind(digitizer.acquisition));
 #endif
                     tasksEnqueued++;
                 } else {
@@ -806,11 +467,6 @@ int main(int argc, char **argv) {
 
         std::cout << "Closing thread helpers for " << digitizer.name() << std::endl;
         delete threadHelpers[digitizer.name()];
-
-        if (conf.sendEventEnabled) {
-            std::cout << "Closing comm helpers for " << digitizer.name() << std::endl;
-            delete commHelpers[digitizer.name()];
-        }
 
         if (digitizer.caenIsDPPFirmware()) {
             if (digitizer.caenHasDPPWaveformsEnabled()) {

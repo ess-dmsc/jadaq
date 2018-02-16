@@ -133,7 +133,7 @@ namespace Data {
     /** @brief
         Translate the basic version arrays to a string.
      */
-    std::string makeVersion(uint16_t version[]) {
+    inline std::string makeVersion(uint16_t version[]) {
         std::stringstream ss;
         for (int i=0; i<VERSIONPARTS; i++) {
             if (i > 0)
@@ -152,7 +152,7 @@ namespace Data {
         saved last to avoid interference and it is left to the user to
         do the slicing.
     */
-    EventData *setupEventData(void *data, uint32_t dataSize, uint32_t listEntries, uint32_t waveformEntries) {
+    inline EventData *setupEventData(void *data, uint32_t dataSize, uint32_t listEntries, uint32_t waveformEntries) {
         EventData *eventData = (EventData *)data;
         eventData->allocatedSize = dataSize;
 
@@ -172,7 +172,7 @@ namespace Data {
         memcpy(eventData->metadata->version, version, sizeof(version[0])*VERSIONPARTS);
 
         eventData->listEvents = (List::Element *)(eventData->metadata+1);
-        eventData->waveformEvents = (Waveform::Element *)(eventData->listEvents+listEntries);
+        eventData->waveformEvents = nullptr; //(Waveform::Element *)(eventData->listEvents+listEntries);
 
         /* fuzzy out-of-bounds check */
         uint32_t bufSize = (char *)(eventData->waveformEvents + eventData->waveformEventsLength) - (char *)data;
@@ -185,7 +185,7 @@ namespace Data {
         return eventData;
     }
 
-    PackedEvents packEventData(EventData *eventData) 
+    inline PackedEvents packEventData(EventData *eventData)
     {
         PackedEvents packedEvents;
         packedEvents.data = (void *)eventData;
@@ -200,7 +200,7 @@ namespace Data {
      * Unpacking is very much like setup but with extraction of actual
      * list and waveform event counts from EventData first. 
      */
-    EventData *unpackEventData(PackedEvents packedEvents) 
+    inline EventData *unpackEventData(PackedEvents packedEvents)
     {
         EventData *eventData = (EventData *)packedEvents.data;
         uint32_t listEventsLength = eventData->listEventsLength;

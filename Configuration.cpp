@@ -253,7 +253,7 @@ void Configuration::apply()
         conf.erase("CONETNODE");
         Digitizer* digitizer = nullptr;
         try {
-            digitizers.push_back(Digitizer(optical, usb, conet, vme));
+            digitizers.emplace_back(Digitizer(optical, usb, conet, vme));
             digitizer = &*digitizers.rbegin();
         } catch (caen::Error& e)
         {

@@ -2973,8 +2973,8 @@ namespace caen {
         EventInfo getEventInfo(ReadoutBuffer buffer, int32_t n)
         { EventInfo info; errorHandler(CAEN_DGTZ_GetEventInfo(handle_, buffer.data, buffer.dataSize, n, &info, &info.data)); return info; }
 
-        void* decodeEvent(EventInfo info, void* event)
-        { errorHandler(CAEN_DGTZ_DecodeEvent(handle_, info.data, &event)); return event; }
+        void decodeEvent(EventInfo info, void* event)
+        { errorHandler(CAEN_DGTZ_DecodeEvent(handle_, info.data, &event)); }
 
         BasicEvent extractBasicEvent(EventInfo& info, void *event, uint32_t channel, uint32_t eventNo) {
             BasicEvent basic;

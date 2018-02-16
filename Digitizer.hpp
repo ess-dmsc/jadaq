@@ -35,6 +35,30 @@
 #include <unordered_map>
 #include <chrono>
 #include <thread>
+#include <boost/asio.hpp>
+#include <boost/asio/io_service.hpp>
+#include <boost/bind.hpp>
+#include <boost/thread/thread.hpp>
+#include <boost/asio.hpp>
+#include <boost/asio/io_service.hpp>
+#include <boost/bind.hpp>
+#include <boost/thread/thread.hpp>
+#include "trace.hpp"
+#include "DataFormat.hpp"
+
+using boost::asio::ip::udp;
+
+struct CommHelper {
+    boost::asio::io_service sendIOService;
+    udp::endpoint remoteEndpoint;
+    udp::socket *socket = NULL;
+    /* NOTE: use a static buffer of MAXBUFSIZE bytes for sending */
+    char sendBuf[MAXBUFSIZE];
+    Data::EventData *eventData;
+    Data::Meta *metadata;
+    Data::PackedEvents packedEvents;
+};
+
 
 class Digitizer
 {
@@ -46,13 +70,28 @@ private:
     /* Standard firmware uses eventInfo and Event while DPP firmware
      * keeps it all in a DPPEvents structure. */
     caen::EventInfo eventInfo_;
-    void *event_;
+    void *plainEvent;
     caen::DPPEvents events_;
     caen::DPPWaveforms waveforms;
     int usb_;
     int optical_;
     uint32_t vme_;
     int conet_;
+
+
+    STAT(struct Stats {
+        uint32_t bytesRead = 0;
+        uint32_t eventsFound = 0;
+        uint32_t eventsUnpacked = 0;
+        uint32_t eventsDecoded = 0;
+        uint32_t eventsSent = 0;
+    } stats;)
+
+    /* Per-digitizer communication helpers */
+    void extractPlainEvents();
+    void extractDPPEvents();
+    void extractEvents();
+
 public:
     Digitizer(int usb, uint32_t vme) : digitizer(caen::Digitizer::USB(usb,vme)), usb_(usb), vme_(vme) {}
     Digitizer(int optical, int usb, int conet, uint32_t vme) : digitizer(caen::Digitizer::open(caen::pickBestLinkType(optical, usb), caen::pickBestLinkNum(optical, usb), conet, vme)), optical_(optical), usb_(usb), vme_(vme), conet_(conet) {}
@@ -65,7 +104,16 @@ public:
     const int conet() { return conet_; }
     void set(FunctionID functionID, std::string value);
     void set(FunctionID functionID, int index, std::string value);
-    void idleYield() { 
+    std::string get(FunctionID functionID);
+    std::string get(FunctionID functionID, int index);
+
+    // TODO make CommHelper private
+    CommHelper* commHelper;
+    void acquisition();
+
+
+
+    void idleYield() {
         if (throttleDownMSecs > 0) {
             /* NOTE: for running without hogging CPU if nothing to do */
             std::this_thread::sleep_for(std::chrono::milliseconds(throttleDownMSecs));
@@ -73,8 +121,6 @@ public:
     }
     void throttleDown() { throttleDownMSecs = std::min((uint32_t)2000, 2*throttleDownMSecs + 100); }
     void resetThrottle() { throttleDownMSecs = 0; }
-    std::string get(FunctionID functionID);
-    std::string get(FunctionID functionID, int index);
     caen::Digitizer* caen() { return digitizer; }
 
     /* Wrap the main CAEN acquisiton functions here for convenience */
@@ -83,14 +129,14 @@ public:
     void caenFreePrivReadoutBuffer() { digitizer->freeReadoutBuffer(readoutBuffer_); }
     caen::ReadoutBuffer& caenGetPrivReadoutBuffer() { return readoutBuffer_; }
     /* Additional event buffers */
-    void caenMallocPrivEvent() { event_ = digitizer->mallocEvent(); }
-    void caenFreePrivEvent() { digitizer->freeEvent(event_); event_ = NULL; }
+    void caenMallocPrivEvent() { plainEvent = digitizer->mallocEvent(); }
+    void caenFreePrivEvent() { digitizer->freeEvent(plainEvent); plainEvent = NULL; }
     void caenMallocPrivDPPEvents() { events_ = digitizer->mallocDPPEvents(); }
     void caenFreePrivDPPEvents() { digitizer->freeDPPEvents(events_); }
     void caenMallocPrivDPPWaveforms() { waveforms = digitizer->mallocDPPWaveforms(); }
     void caenFreePrivDPPWaveforms() { digitizer->freeDPPWaveforms(waveforms); }
     caen::EventInfo& caenGetPrivEventInfo() { return eventInfo_; }
-    void *caenGetPrivEvent() { return event_; }
+    void *caenGetPrivEvent() { return plainEvent; }
     caen::DPPEvents& caenGetPrivDPPEvents() { return events_; }
     caen::DPPWaveforms& caenGetPrivDPPWaveforms() { return waveforms; }
     std::string caenDumpPrivDPPWaveforms() { return digitizer->dumpDPPWaveforms(waveforms); }
@@ -100,7 +146,7 @@ public:
     uint32_t caenGetNumEvents(caen::ReadoutBuffer& buffer) { return digitizer->getNumEvents(buffer); }
     uint32_t caenGetNumEventsPerAggregate() { return digitizer->getNumEventsPerAggregate(); }
     caen::EventInfo caenGetEventInfo(caen::ReadoutBuffer& buffer, int32_t n) { eventInfo_ = digitizer->getEventInfo(buffer, n); return eventInfo_; }
-    void *caenDecodeEvent(caen::EventInfo& buffer, void *event) { event = digitizer->decodeEvent(buffer, event); return event; }
+    //void *caenDecodeEvent(caen::EventInfo& buffer, void *event) { event = digitizer->decodeEvent(buffer, event); return event; }
     caen::BasicEvent caenExtractBasicEvent(caen::EventInfo& buffer, void* event, uint32_t channel, uint32_t eventNo) { return digitizer->extractBasicEvent(buffer, event, channel, eventNo); }
     caen::DPPEvents& caenGetDPPEvents(caen::ReadoutBuffer& buffer, caen::DPPEvents& events) { return digitizer->getDPPEvents(buffer, events); }
     void *caenExtractDPPEvent(caen::DPPEvents& events, uint32_t channel, uint32_t eventNo) { return digitizer->extractDPPEvent(events, channel, eventNo); }

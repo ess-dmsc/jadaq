@@ -30,6 +30,7 @@
 #include <chrono>
 #include <thread>
 
+
 #define MAX_GROUPS 8
 
 #define SET_CASE(D,F,V) \
@@ -313,4 +314,171 @@ void Digitizer::set(FunctionID functionID, int index, std::string value)
 void Digitizer::set(FunctionID functionID, std::string value)
 {
     return backOffRepeat<void>([this,&functionID,&value](){ return set_(digitizer,functionID,value); });
+}
+
+void Digitizer::extractPlainEvents()
+{
+    throw std::runtime_error("Plain Waveforms not suported.");
+    STAT(int eventsUnpacked = 0; int eventsDecoded = 0;)
+    // TODO test - I think it was never tested. channel never gets updated!
+    uint32_t numEvents = digitizer->getNumEvents(readoutBuffer_);
+    uint32_t channel = 0;
+    for (uint32_t eventIndex = 0; eventIndex < numEvents; eventIndex++) {
+        caen::EventInfo eventinfo = digitizer->getEventInfo(readoutBuffer_, eventIndex);
+        DEBUG(std::cout << "Unpacked event " << eventinfo.EventCounter << "  of " << numEvents
+                        << " events from " << name() << std::endl;)
+        STAT(eventsUnpacked += 1;)
+        digitizer->decodeEvent(eventinfo, plainEvent);
+        DEBUG(std::cout << "Decoded event " << eventinfo.EventCounter << "  of " << numEvents
+                        << " events from " << name() << std::endl;)
+        STAT(eventsDecoded += 1;)
+        caen::BasicEvent basicEvent = digitizer->extractBasicEvent(eventinfo, plainEvent, channel, eventIndex);
+        DEBUG(std::cout << "Filling event at " << globaltime << " from " << name() << " channel " << channel
+                        << " localtime " << basicEvent.timestamp << " sample count " << count << std::endl;)
+        commHelper->eventData->waveformEvents[eventIndex].localTime = basicEvent.timestamp;
+        commHelper->eventData->waveformEvents[eventIndex].waveformLength = basicEvent.count;
+        /* NOTE: only one sample array here so just use Sample1 */
+        memcpy(commHelper->eventData->waveformEvents[eventIndex].waveformSample1, basicEvent.samples,
+               (basicEvent.count * sizeof(basicEvent.samples[0])));
+        commHelper->eventData->waveformEvents[eventIndex].channel = basicEvent.channel;
+    }
+    STAT(stats.eventsUnpacked += eventsUnpacked;)
+    STAT(stats.eventsDecoded += eventsDecoded;)
+    STAT(stats.eventsFound += numEvents;)
+}
+
+void Digitizer::extractDPPEvents()
+{
+    uint32_t eventIndex = 0;
+    uint32_t charge = 0, timestamp = 0, channel = 0;
+    caen::BasicDPPEvent basicDPPEvent;
+    caen::BasicDPPWaveforms basicDPPWaveforms;
+    uint32_t eventsFound = 0;
+    STAT(uint32_t eventsDecoded = 0; uint32_t eventsUnpacked = 0;)
+    eventIndex = 0;
+    /* TODO: additionally hand off decoding into per-channel threads? */
+
+    DEBUG(std::cout << "Unpack aggregated DPP events from " << name() << std::endl;)
+    caenGetDPPEvents(caenGetPrivReadoutBuffer(), caenGetPrivDPPEvents());
+
+    for (channel = 0; channel < MAX_CHANNELS; channel++) {
+        uint32_t nEvents = caenGetPrivDPPEvents().nEvents[channel];
+        eventsFound += nEvents;
+        for (uint32_t j = 0; j < nEvents; j++) {
+            /* NOTE: we don't want to muck with underlying
+             * event type here, so we rely on the wrapped
+             * extraction and pull out timestamp, charge,
+             * etc from the resulting BasicDPPEvent. */
+
+            basicDPPEvent = caenExtractBasicDPPEvent(caenGetPrivDPPEvents(), channel, j);
+            /* We use the same 4 byte range for charge as CAEN sample */
+            charge = basicDPPEvent.charge & 0xFFFF;
+            /* TODO: include timestamp high bits from Extra field? */
+            /* NOTE: timestamp is 64-bit for PHA events
+             * but we just consistently clip to 32-bit
+             * for now. */
+            timestamp = basicDPPEvent.timestamp & 0xFFFFFFFF;
+
+            DEBUG(std::cout << name() << " channel " << channel << " event " << j << " charge " << charge << " at global time " << globaltime << " and local time " << timestamp << std::endl;)
+
+
+            /* Only try to decode waveforms if digitizer is actually
+             * configured to record them in the first place. */
+            if (caenHasDPPWaveformsEnabled()) {
+                throw std::runtime_error("DPP Waveforms not suported.");
+                try {
+                    caenDecodeDPPWaveforms(caenGetPrivDPPEvents(), channel, j, caenGetPrivDPPWaveforms());
+
+                    DEBUG(std::cout << "Decoded " << caenDumpPrivDPPWaveforms() << " DPP event waveforms from event " << j << " on channel " << channel << " from " << name() << std::endl;)
+                    STAT(eventsDecoded += 1;)
+                } catch(std::exception& e) {
+                    std::cerr << "failed to decode waveforms for event " << j << " on channel " << channel << " from " << name() << " : " << e.what() << std::endl;
+                }
+            }
+
+            DEBUG(std::cout << "Filling event list at " << globaltime << " from " << name() << " channel " << channel << " localtime " << timestamp << " charge " << charge << std::endl;)
+            commHelper->eventData->listEvents[eventIndex].localTime = timestamp;
+            commHelper->eventData->listEvents[eventIndex].extendTime = 0;
+            commHelper->eventData->listEvents[eventIndex].adcValue = charge;
+            commHelper->eventData->listEvents[eventIndex].channel = channel;
+
+            if (caenHasDPPWaveformsEnabled()) {
+                basicDPPWaveforms = caenExtractBasicDPPWaveforms(caenGetPrivDPPWaveforms());
+                DEBUG(std::cout << "Filling event waveform at " << globaltime << " from " << name() << " channel " << channel << " localtime " << timestamp << " samples " << basicDPPWaveforms.Ns << std::endl;)
+                commHelper->eventData->waveformEvents[eventIndex].localTime = timestamp;
+                commHelper->eventData->waveformEvents[eventIndex].extendTime = 0;
+                commHelper->eventData->waveformEvents[eventIndex].channel = channel;
+                commHelper->eventData->waveformEvents[eventIndex].waveformLength = basicDPPWaveforms.Ns;
+                memcpy(commHelper->eventData->waveformEvents[eventIndex].waveformSample1, basicDPPWaveforms.Sample1, basicDPPWaveforms.Ns*sizeof(basicDPPWaveforms.Sample1[0]));
+#ifdef INCLUDE_SAMPLE2
+                memcpy(commHelper->eventData->waveformEvents[eventIndex].waveformSample2, basicDPPWaveforms.Sample2, basicDPPWaveforms.Ns*sizeof(basicDPPWaveforms.Sample2[0]));
+#endif
+#ifdef INCLUDE_DSAMPLE
+                memcpy(commHelper->eventData->waveformEvents[eventIndex].waveformDSample1, basicDPPWaveforms.DSample1, basicDPPWaveforms.Ns*sizeof(basicDPPWaveforms.DSample1[0]));
+                memcpy(commHelper->eventData->waveformEvents[eventIndex].waveformDSample2, basicDPPWaveforms.DSample2, basicDPPWaveforms.Ns*sizeof(basicDPPWaveforms.DSample2[0]));
+                memcpy(commHelper->eventData->waveformEvents[eventIndex].waveformDSample3, basicDPPWaveforms.DSample3, basicDPPWaveforms.Ns*sizeof(basicDPPWaveforms.DSample3[0]));
+                memcpy(commHelper->eventData->waveformEvents[eventIndex].waveformDSample4, basicDPPWaveforms.DSample4, basicDPPWaveforms.Ns*sizeof(basicDPPWaveforms.DSample4[0]));
+#endif
+                DEBUG(std::cout << "Filled event waveform with " << digitizerComm->eventData->waveformEvents[eventIndex].waveformSample1[0] << ", .. ," << digitizerComm->eventData->waveformEvents[eventIndex].waveformSample1[basicDPPWaveforms.Ns-1] << " ." << std::endl;)
+            }
+            eventIndex += 1;
+        }
+    }
+    commHelper->eventData->listEventsLength = eventsFound;
+    commHelper->eventData->waveformEventsLength = 0;
+    STAT(stats.eventsDecoded += eventsDecoded;)
+    STAT(stats.eventsUnpacked += eventsFound;)
+    STAT(stats.eventsFound += eventsFound;)
+    DEBUG(STAT(std::cout << "Unpacked " << eventsUnpacked << " DPP events from all channels." << std::endl;))
+}
+
+void Digitizer::acquisition() {
+
+    /* NOTE: these are per-digitizer local helpers */
+    uint16_t listCount = 0, waveCount = 0;
+    uint32_t channel = 0;
+    uint64_t globaltime = 0, runtimeMsecs = 0;
+    uint32_t bytesRead = 0;
+    uint32_t eventsFound = 0;
+    STAT(uint32_t eventsUnpacked = 0; uint32_t eventsDecoded = 0; uint32_t eventsSent = 0;)
+
+    /* NOTE: use time since epoch with millisecond resolution to
+     * keep timestamps unique */
+    globaltime = getTimeMsecs();
+
+    /* TODO: reset readout buffer, events and waveforms every time? */
+
+    DEBUG(std::cout << "Read at most " << caenGetPrivReadoutBuffer().size << "b data from " << name() << std::endl;)
+    caenReadData(caenGetPrivReadoutBuffer());
+    bytesRead = caenGetPrivReadoutBuffer().dataSize;
+    DEBUG(std::cout << "Read " << bytesRead << "b of acquired data" << std::endl;)
+
+    /* NOTE: check and skip if there's no actual events to handle */
+    if (bytesRead < 1) {
+        DEBUG(std::cout << "No data to read - skip further handling." << std::endl;)
+        return;
+    }
+
+    /* Reset send buffer each time to prevent any stale data */
+    memset(commHelper->sendBuf, 0, MAXBUFSIZE);
+    /* TODO: add check to make sure sendBuf always fits eventData */
+    /* NOTE: only set waveform count (last arg) if actually enabled */
+
+    commHelper->eventData = Data::setupEventData((void *)commHelper->sendBuf, MAXBUFSIZE, 0, 0);
+
+    if (caenIsDPPFirmware()) {
+        extractDPPEvents();
+    } else {
+        extractPlainEvents();
+    }
+
+    /* Pack and send out UDP */
+    DEBUG(std::cout << "Packing events at " << globaltime << " from " << name() << std::endl;)
+    commHelper->packedEvents = Data::packEventData(commHelper->eventData);
+    /* Send data to preconfigured receiver */
+    DEBUG(std::cout << "Sending " << commHelper->eventData->listEventsLength << " list and " <<
+              commHelper->eventData->waveformEventsLength << " waveform events packed into " <<
+              commHelper->packedEvents.dataSize << "b at " << globaltime << " from " << name() << std::endl;)
+    commHelper->socket->send_to(boost::asio::buffer((char*)(commHelper->packedEvents.data), commHelper->packedEvents.dataSize), commHelper->remoteEndpoint);
+
 }
