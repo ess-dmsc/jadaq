@@ -175,13 +175,13 @@ namespace Data {
         eventData->waveformEvents = nullptr; //(Waveform::Element *)(eventData->listEvents+listEntries);
 
         /* fuzzy out-of-bounds check */
-        uint32_t bufSize = (char *)(eventData->waveformEvents + eventData->waveformEventsLength) - (char *)data;
+/*        uint32_t bufSize = (char *)(eventData->waveformEvents + eventData->waveformEventsLength) - (char *)data;
         if (bufSize > dataSize) {
             std::stringstream ss;
             ss << "bufSize too large " << bufSize << " , cannot exceed " << dataSize;
             std::cerr << "ERROR: " << ss.str() << std::endl;
             throw std::runtime_error(ss.str());
-        }
+            }*/
         return eventData;
     }
 
@@ -209,12 +209,12 @@ namespace Data {
         eventData = setupEventData(packedEvents.data, packedEvents.dataSize,
                                    listEventsLength, waveformEventsLength);
         /* Make sure platform similarity assertion holds true */
-        if (checksum != eventData->checksum) {
+/*        if (checksum != eventData->checksum) {
             std::stringstream ss;
             ss << "received eventData checksum does not match! " << checksum << " vs " << eventData->checksum;
             std::cerr << "ERROR: " << ss.str() << std::endl;
             throw std::runtime_error(ss.str());
-        }
+            }*/
         return eventData;
     }
 } // namespace Data
