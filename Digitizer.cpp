@@ -333,8 +333,6 @@ void Digitizer::extractPlainEvents()
                         << " events from " << name() << std::endl;)
         STAT(eventsDecoded += 1;)
         caen::BasicEvent basicEvent = digitizer->extractBasicEvent(eventinfo, plainEvent, channel, eventIndex);
-        DEBUG(std::cout << "Filling event at " << globaltime << " from " << name() << " channel " << channel
-                        << " localtime " << basicEvent.timestamp << " sample count " << count << std::endl;)
         commHelper->eventData->waveformEvents[eventIndex].localTime = basicEvent.timestamp;
         commHelper->eventData->waveformEvents[eventIndex].waveformLength = basicEvent.count;
         /* NOTE: only one sample array here so just use Sample1 */
@@ -379,7 +377,7 @@ void Digitizer::extractDPPEvents()
              * for now. */
             timestamp = basicDPPEvent.timestamp & 0xFFFFFFFF;
 
-            DEBUG(std::cout << name() << " channel " << channel << " event " << j << " charge " << charge << " at global time " << globaltime << " and local time " << timestamp << std::endl;)
+            DEBUG(std::cout << name() << " channel " << channel << " event " << j << " charge " << charge << " with local time " << timestamp << std::endl;)
 
 
             /* Only try to decode waveforms if digitizer is actually
@@ -396,7 +394,7 @@ void Digitizer::extractDPPEvents()
                 }
             }
 
-            DEBUG(std::cout << "Filling event list at " << globaltime << " from " << name() << " channel " << channel << " localtime " << timestamp << " charge " << charge << std::endl;)
+            DEBUG(std::cout << "Filling event list from " << name() << " channel " << channel << " localtime " << timestamp << " charge " << charge << std::endl;)
             commHelper->eventData->listEvents[eventIndex].localTime = timestamp;
             commHelper->eventData->listEvents[eventIndex].extendTime = 0;
             commHelper->eventData->listEvents[eventIndex].adcValue = charge;
@@ -404,7 +402,7 @@ void Digitizer::extractDPPEvents()
 
             if (caenHasDPPWaveformsEnabled()) {
                 basicDPPWaveforms = caenExtractBasicDPPWaveforms(caenGetPrivDPPWaveforms());
-                DEBUG(std::cout << "Filling event waveform at " << globaltime << " from " << name() << " channel " << channel << " localtime " << timestamp << " samples " << basicDPPWaveforms.Ns << std::endl;)
+                DEBUG(std::cout << "Filling event waveform from " << name() << " channel " << channel << " localtime " << timestamp << " samples " << basicDPPWaveforms.Ns << std::endl;)
                 commHelper->eventData->waveformEvents[eventIndex].localTime = timestamp;
                 commHelper->eventData->waveformEvents[eventIndex].extendTime = 0;
                 commHelper->eventData->waveformEvents[eventIndex].channel = channel;
@@ -419,7 +417,10 @@ void Digitizer::extractDPPEvents()
                 memcpy(commHelper->eventData->waveformEvents[eventIndex].waveformDSample3, basicDPPWaveforms.DSample3, basicDPPWaveforms.Ns*sizeof(basicDPPWaveforms.DSample3[0]));
                 memcpy(commHelper->eventData->waveformEvents[eventIndex].waveformDSample4, basicDPPWaveforms.DSample4, basicDPPWaveforms.Ns*sizeof(basicDPPWaveforms.DSample4[0]));
 #endif
-                DEBUG(std::cout << "Filled event waveform with " << digitizerComm->eventData->waveformEvents[eventIndex].waveformSample1[0] << ", .. ," << digitizerComm->eventData->waveformEvents[eventIndex].waveformSample1[basicDPPWaveforms.Ns-1] << " ." << std::endl;)
+                DEBUG(std::cout << "Filled event waveform with " <<
+                                commHelper->eventData->waveformEvents[eventIndex].waveformSample1[0] << ", .. ," <<
+                                commHelper->eventData->waveformEvents[eventIndex].waveformSample1[basicDPPWaveforms.Ns-1] <<
+                                " ." << std::endl;)
             }
             eventIndex += 1;
         }

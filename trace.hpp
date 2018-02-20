@@ -1,6 +1,10 @@
 //
 // Created by troels on 2/9/18.
 //
+#define DEBUGING
+#define STATS
+#define TIMING
+
 
 #ifndef JADAQ_TRACE_HPP
 #define JADAQ_TRACE_HPP
@@ -23,9 +27,6 @@
 #define STAT(x)
 #endif
 
-#define DEBUGING
-#define STATS
-#define TIMING
 
 
 #endif //JADAQ_TRACE_HPP
