@@ -2712,34 +2712,6 @@ namespace caen {
     {
         errorHandler(CAEN_DGTZ_CloseDigitizer(handle));
     }
-    
-    /* These helpers are used to select optical link over usb link if
-     * available. They are used in Digitizer.hpp and thus in the
-     * automatic digitizer initialization in Configuration.cpp .
-     */
-    /**
-     * @brief simple helper to get CAEN constant for linkType arg
-     * @param optical: optical linkNum
-     * @param usb: usb linkNum
-     */
-    static CAEN_DGTZ_ConnectionType pickBestLinkType(int optical, int usb) {
-        if (optical >= 0)
-            return CAEN_DGTZ_OpticalLink;
-        else
-            return CAEN_DGTZ_USB;
-    }
-
-    /**
-     * @brief simple helper to get CAEN constant for linkNum arg
-     * @param optical: optical linkNum
-     * @param usb: usb linkNum
-     */
-    static int pickBestLinkNum(int optical, int usb) {
-        if (optical >= 0)
-            return optical;
-        else
-            return usb;
-    }
 
     /**
      * @brief Generic digitizer abstraction

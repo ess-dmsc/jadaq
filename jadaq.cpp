@@ -262,8 +262,7 @@ int main(int argc, char **argv) {
     if (!configFile.good())
     {
         std::cerr << "Could not open jadaq configuration file: " << conf.configFileName << std::endl;
-        /* NOTE: fall back to hard coded digitizer for sample setup */
-        digitizers.push_back(Digitizer(0,0x11130000));
+        exit(1);
     } else {
         std::cout << "Reading digitizer configuration from" << conf.configFileName << std::endl;
         /* NOTE: switch verbose (2nd) arg on here to enable conf warnings */ 
@@ -274,11 +273,11 @@ int main(int argc, char **argv) {
         {
             std::cerr << "Unable to open output file: " << outFileName << std::endl;
         } else {
+            /* TODO Turn ON/Off with commandline switch */
             std::cout << "Writing current digitizer configuration to " << outFileName << std::endl;
             configuration.write(outFile);
             outFile.close();
         }
-
         // Extract a vector of all configured digitizers for later
         digitizers = configuration.getDigitizers();
     }

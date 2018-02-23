@@ -121,15 +121,19 @@ pt::ptree Configuration::readBack()
     for (Digitizer& digitizer: digitizers)
     {
         pt::ptree dPtree;
-        dPtree.put("USB", digitizer.usb());
-        if (digitizer.vme())
-        {
-            dPtree.put("VME", hex_string(digitizer.vme()));
+        switch (digitizer.linkType) {
+            case CAEN_DGTZ_USB:
+                dPtree.put("USB", digitizer.linkNum);
+                break;
+            case CAEN_DGTZ_OpticalLink:
+                dPtree.put("OPTICAL", digitizer.linkNum);
+                break;
+            default:
+            std::cerr << "ERROR: Unsupported Link Type: " << digitizer.linkType << std::endl;
         }
-        if (digitizer.conet())
-        {
-            dPtree.put("CONETNODE", digitizer.conet());
-        }
+        dPtree.put("VME", hex_string(digitizer.VMEBaseAddress));
+        dPtree.put("CONET", digitizer.conetNode);
+
         for (FunctionID id = functionIDbegin(); id < functionIDend(); ++id)
         {
             if (!needIndex(id))
@@ -234,26 +238,29 @@ void Configuration::apply()
         int optical = -1;
         uint32_t vme = 0;
         int conet = 0;
-        /* Try optical link first, with fall-back to usb */
+        usb = conf.get<int>("USB", -1);
+        conf.erase("USB");
         optical = conf.get<int>("OPTICAL", -1);
-        if (optical >= 0) {
-            conf.erase("OPTICAL");
-        } else {
-            usb = conf.get<int>("USB", -1);
-            if (usb >= 0) {
-                conf.erase("USB");
-            } else {
-                std::cerr << "ERROR: [" << name << ']' <<" neither contains USB nor OPTICAL number. REQUIRED" << std::endl;
-                continue;
-            }
-        }
+        conf.erase("OPTICAL");
         vme = conf.get<uint32_t>("VME",0);
         conf.erase("VME");
-        conet = conf.get<int>("CONETNODE",0);
-        conf.erase("CONETNODE");
+        conet = conf.get<int>("CONET",0);
+        conf.erase("CONET");
         Digitizer* digitizer = nullptr;
+        if (usb < 0 && optical < 0)
+        {
+            std::cerr << "ERROR: [" << name << ']' <<" contains neither USB nor OPTICAL number. One is REQUIRED." << std::endl;
+            continue;
+        } else if (usb >= 0 && optical >= 0)  {
+            std::cerr << "ERROR: [" << name << ']' <<" contains both USB and OPTICAL number. Omly one is VALID" << std::endl;
+            continue;
+        }
         try {
-            digitizers.emplace_back(Digitizer(optical, usb, conet, vme));
+            if (optical >= 0) {
+                digitizers.emplace_back(Digitizer(CAEN_DGTZ_OpticalLink, optical, conet, vme));
+            } else {
+                digitizers.emplace_back(Digitizer(CAEN_DGTZ_USB, usb, conet, vme));
+            }
             digitizer = &*digitizers.rbegin();
         } catch (caen::Error& e)
         {

@@ -64,7 +64,8 @@ class Digitizer
 {
 private:
     caen::Digitizer* digitizer;
-    uint32_t throttleDownMSecs = 0;    
+
+    uint32_t throttleDownMSecs = 0;
     /* We bind a ReadoutBuffer to each digitizer for ease of use */
     caen::ReadoutBuffer readoutBuffer_;
     /* Standard firmware uses eventInfo and Event while DPP firmware
@@ -73,10 +74,6 @@ private:
     void *plainEvent;
     caen::DPPEvents events_;
     caen::DPPWaveforms waveforms;
-    int usb_;
-    int optical_;
-    uint32_t vme_;
-    int conet_;
 
 
     STAT(struct Stats {
@@ -93,15 +90,18 @@ private:
     void extractEvents();
 
 public:
-    Digitizer(int usb, uint32_t vme) : digitizer(caen::Digitizer::USB(usb,vme)), usb_(usb), vme_(vme) {}
-    Digitizer(int optical, int usb, int conet, uint32_t vme) : digitizer(caen::Digitizer::open(caen::pickBestLinkType(optical, usb), caen::pickBestLinkNum(optical, usb), conet, vme)), optical_(optical), usb_(usb), vme_(vme), conet_(conet) {}
+    /* Connection parameters */
+    const CAEN_DGTZ_ConnectionType linkType;
+    const int linkNum;
+    const int conetNode;
+    const uint32_t VMEBaseAddress;
+
+    Digitizer(CAEN_DGTZ_ConnectionType linkType_, int linkNum_, int conetNode_, uint32_t VMEBaseAddress_) :
+            digitizer(caen::Digitizer::open(linkType_, linkNum_, conetNode_, VMEBaseAddress_)),
+            linkType(linkType_), linkNum(linkNum_), conetNode(conetNode_), VMEBaseAddress(VMEBaseAddress_) {}
     const std::string name() { return digitizer->modelName() + "_" + std::to_string(digitizer->serialNumber()); }
     const std::string model() { return digitizer->modelName(); }
     const std::string serial() { return std::to_string(digitizer->serialNumber()); }
-    const int usb() { return usb_; }
-    const int optical() { return optical_; }
-    const int vme() { return vme_; }
-    const int conet() { return conet_; }
     void set(FunctionID functionID, std::string value);
     void set(FunctionID functionID, int index, std::string value);
     std::string get(FunctionID functionID);
