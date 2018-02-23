@@ -98,29 +98,21 @@ public:
     Digitizer(CAEN_DGTZ_ConnectionType linkType_, int linkNum_, int conetNode_, uint32_t VMEBaseAddress_) :
             digitizer(caen::Digitizer::open(linkType_, linkNum_, conetNode_, VMEBaseAddress_)),
             linkType(linkType_), linkNum(linkNum_), conetNode(conetNode_), VMEBaseAddress(VMEBaseAddress_) {}
+    ~Digitizer();
     const std::string name() { return digitizer->modelName() + "_" + std::to_string(digitizer->serialNumber()); }
     const std::string model() { return digitizer->modelName(); }
     const std::string serial() { return std::to_string(digitizer->serialNumber()); }
+    uint32_t channels() {return digitizer->channels();}
+
     void set(FunctionID functionID, std::string value);
     void set(FunctionID functionID, int index, std::string value);
     std::string get(FunctionID functionID);
     std::string get(FunctionID functionID, int index);
 
-    // TODO make CommHelper private
-    CommHelper* commHelper;
     void acquisition();
 
-
-
-    void idleYield() {
-        if (throttleDownMSecs > 0) {
-            /* NOTE: for running without hogging CPU if nothing to do */
-            std::this_thread::sleep_for(std::chrono::milliseconds(throttleDownMSecs));
-        }
-    }
-    void throttleDown() { throttleDownMSecs = std::min((uint32_t)2000, 2*throttleDownMSecs + 100); }
-    void resetThrottle() { throttleDownMSecs = 0; }
-    caen::Digitizer* caen() { return digitizer; }
+    // TODO make CommHelper private
+    CommHelper* commHelper;
 
     /* Wrap the main CAEN acquisiton functions here for convenience */
     bool caenIsDPPFirmware() { return digitizer->getDPPFirmwareType() == CAEN_DGTZ_DPPFirmware_QDC; }
@@ -142,8 +134,6 @@ public:
     caen::ReadoutBuffer& caenReadData(caen::ReadoutBuffer& buffer, int mode=(int)CAEN_DGTZ_SLAVE_TERMINATED_READOUT_MBLT) { return digitizer->readData(buffer, (CAEN_DGTZ_ReadMode_t)mode); }
     caen::DPPEvents& caenGetDPPEvents(caen::ReadoutBuffer& buffer, caen::DPPEvents& events) { return digitizer->getDPPEvents(buffer, events); }
     caen::BasicDPPEvent caenExtractBasicDPPEvent(caen::DPPEvents& events, uint32_t channel, uint32_t eventNo) { return digitizer->extractBasicDPPEvent(events, channel, eventNo); }
-    caen::DPPWaveforms& caenDecodeDPPWaveforms(void *event, caen::DPPWaveforms& waveforms) { 
-        return digitizer->decodeDPPWaveforms(event, waveforms); }
     caen::DPPWaveforms& caenDecodeDPPWaveforms(caen::DPPEvents& events, uint32_t channel, uint32_t eventNo, caen::DPPWaveforms& waveforms) { return digitizer->decodeDPPWaveforms(events, channel, eventNo, waveforms); }
     caen::BasicDPPWaveforms caenExtractBasicDPPWaveforms(caen::DPPWaveforms& waveforms) { return digitizer->extractBasicDPPWaveforms(waveforms); }
     bool caenHasDPPWaveformsEnabled() 

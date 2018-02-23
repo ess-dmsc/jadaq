@@ -295,7 +295,10 @@ int main(int argc, char **argv) {
     {
         /* NOTE: apply overrides from provided CAEN config. 
          *       this can be used to mimic CAEN QDC sample.
+         *
+         *       TODO is this just legacy code???
          */
+        /*
         if (conf.overrideEnabled) {
             std::cout << "Override " << digitizer.name() << " configuration with " << conf.overrideFileName << std::endl;
             BoardParameters params;
@@ -305,7 +308,7 @@ int main(int argc, char **argv) {
                 std::cerr << "Error in configuring digitizer with overrides from " << conf.overrideFileName << std::endl;
             }
         }
-
+*/
         ThreadHelper *digitizerThread = new ThreadHelper();
         threadHelpers[digitizer.name()] = digitizerThread;
         digitizerThread->ready = true;
@@ -409,9 +412,8 @@ int main(int argc, char **argv) {
                     std::cout << "Acquisition still active for digitizer " << digitizer.name() << std::endl;
                 }
             } catch(std::exception& e) {
-                std::cerr << "unexpected exception during acquisition: " << e.what() << std::endl;
-                /* NOTE: throttle down on errors */
-                digitizer.throttleDown();
+                std::cerr << "ERROR: unexpected exception during acquisition: " << e.what() << std::endl;
+                throw;
             }
         }
 
@@ -489,11 +491,6 @@ int main(int argc, char **argv) {
         }
         std::cout << "Free readout buffer for " << digitizer.name() << std::endl;
         digitizer.caenFreePrivReadoutBuffer();
-    }
-    for (Digitizer& digitizer: digitizers)
-    {
-        std::cout << "Close digitizer " << digitizer.name() << std::endl;
-        delete digitizer.caen();
     }
 
     std::cout << "Acquisition complete - shutting down." << std::endl;

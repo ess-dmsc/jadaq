@@ -316,6 +316,12 @@ void Digitizer::set(FunctionID functionID, std::string value)
     return backOffRepeat<void>([this,&functionID,&value](){ return set_(digitizer,functionID,value); });
 }
 
+Digitizer::~Digitizer()
+{
+    DEBUG(std::cout << "Closing digitizer " << name() << std::endl;)
+    delete digitizer;
+}
+
 void Digitizer::extractPlainEvents()
 {
     throw std::runtime_error("Plain Waveforms not suported.");
