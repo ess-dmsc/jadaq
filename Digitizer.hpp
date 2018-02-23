@@ -87,7 +87,6 @@ private:
     /* Per-digitizer communication helpers */
     void extractPlainEvents();
     void extractDPPEvents();
-    void extractEvents();
 
 public:
     /* Connection parameters */
@@ -135,21 +134,13 @@ public:
     void caenFreePrivDPPEvents() { digitizer->freeDPPEvents(events_); }
     void caenMallocPrivDPPWaveforms() { waveforms = digitizer->mallocDPPWaveforms(); }
     void caenFreePrivDPPWaveforms() { digitizer->freeDPPWaveforms(waveforms); }
-    caen::EventInfo& caenGetPrivEventInfo() { return eventInfo_; }
-    void *caenGetPrivEvent() { return plainEvent; }
     caen::DPPEvents& caenGetPrivDPPEvents() { return events_; }
     caen::DPPWaveforms& caenGetPrivDPPWaveforms() { return waveforms; }
     std::string caenDumpPrivDPPWaveforms() { return digitizer->dumpDPPWaveforms(waveforms); }
     /* We default to slave terminated mode like in the sample from CAEN
      * Digitizer library docs. */
     caen::ReadoutBuffer& caenReadData(caen::ReadoutBuffer& buffer, int mode=(int)CAEN_DGTZ_SLAVE_TERMINATED_READOUT_MBLT) { return digitizer->readData(buffer, (CAEN_DGTZ_ReadMode_t)mode); }
-    uint32_t caenGetNumEvents(caen::ReadoutBuffer& buffer) { return digitizer->getNumEvents(buffer); }
-    uint32_t caenGetNumEventsPerAggregate() { return digitizer->getNumEventsPerAggregate(); }
-    caen::EventInfo caenGetEventInfo(caen::ReadoutBuffer& buffer, int32_t n) { eventInfo_ = digitizer->getEventInfo(buffer, n); return eventInfo_; }
-    //void *caenDecodeEvent(caen::EventInfo& buffer, void *event) { event = digitizer->decodeEvent(buffer, event); return event; }
-    caen::BasicEvent caenExtractBasicEvent(caen::EventInfo& buffer, void* event, uint32_t channel, uint32_t eventNo) { return digitizer->extractBasicEvent(buffer, event, channel, eventNo); }
     caen::DPPEvents& caenGetDPPEvents(caen::ReadoutBuffer& buffer, caen::DPPEvents& events) { return digitizer->getDPPEvents(buffer, events); }
-    void *caenExtractDPPEvent(caen::DPPEvents& events, uint32_t channel, uint32_t eventNo) { return digitizer->extractDPPEvent(events, channel, eventNo); }
     caen::BasicDPPEvent caenExtractBasicDPPEvent(caen::DPPEvents& events, uint32_t channel, uint32_t eventNo) { return digitizer->extractBasicDPPEvent(events, channel, eventNo); }
     caen::DPPWaveforms& caenDecodeDPPWaveforms(void *event, caen::DPPWaveforms& waveforms) { 
         return digitizer->decodeDPPWaveforms(event, waveforms); }
