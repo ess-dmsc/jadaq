@@ -326,7 +326,8 @@ Digitizer::Digitizer(CAEN_DGTZ_ConnectionType linkType_, int linkNum_, int conet
 Digitizer::~Digitizer()
 {
     DEBUG(std::cout << "Closing digitizer " << name() << std::endl;)
-    digitizer->freeEvent(plainEvent);
+    if (plainEvent != nullptr)
+        digitizer->freeEvent(plainEvent);
     digitizer->freeDPPEvents(events_);
     digitizer->freeDPPWaveforms(waveforms);
     digitizer->freeReadoutBuffer(readoutBuffer_);

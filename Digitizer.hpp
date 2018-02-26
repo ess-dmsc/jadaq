@@ -51,11 +51,11 @@ using boost::asio::ip::udp;
 struct CommHelper {
     boost::asio::io_service sendIOService;
     udp::endpoint remoteEndpoint;
-    udp::socket *socket = NULL;
+    udp::socket *socket = nullptr;
     /* NOTE: use a static buffer of MAXBUFSIZE bytes for sending */
     char sendBuf[MAXBUFSIZE];
-    Data::EventData *eventData;
-    Data::Meta *metadata;
+    Data::EventData *eventData = nullptr;
+    Data::Meta *metadata= nullptr;
     Data::PackedEvents packedEvents;
 };
 
@@ -74,7 +74,7 @@ private:
     /* Standard firmware uses eventInfo and Event while DPP firmware
      * keeps it all in a DPPEvents structure. */
     caen::EventInfo eventInfo_;
-    void *plainEvent;
+    void *plainEvent = nullptr;
     caen::DPPEvents events_;
     caen::DPPWaveforms waveforms;
 

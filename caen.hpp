@@ -201,9 +201,9 @@ namespace caen {
      * The size (in byte) of the buffer actually used
      */
     struct ReadoutBuffer {
-        char* data;
-        uint32_t size;
-        uint32_t dataSize;
+        char* data = nullptr;
+        uint32_t size = 0;
+        uint32_t dataSize = 0;
     };
 
     /**
@@ -340,10 +340,10 @@ namespace caen {
      */
     struct DPPEvents
     {
-        void** ptr;             // CAEN_DGTZ_DPP_XXX_Event_t* ptr[MAX_DPP_XXX_CHANNEL_SIZE]
-        uint32_t* nEvents;      // Number of events pr channel
-        uint32_t allocatedSize;
-        uint32_t elemSize;
+        void** ptr = nullptr;             // CAEN_DGTZ_DPP_XXX_Event_t* ptr[MAX_DPP_XXX_CHANNEL_SIZE]
+        uint32_t* nEvents = nullptr;      // Number of events pr channel
+        uint32_t allocatedSize = 0;
+        uint32_t elemSize = 0;
     };
 
     /**
@@ -359,8 +359,8 @@ namespace caen {
      */
     struct DPPWaveforms
     {
-        void* ptr;
-        uint32_t allocatedSize;
+        void* ptr = nullptr;
+        uint32_t allocatedSize = 0;
     };
 
     /**
@@ -2880,10 +2880,13 @@ namespace caen {
 
         /* Memory management */
         ReadoutBuffer mallocReadoutBuffer()
-        { ReadoutBuffer b; b.data = NULL; b.size = 0; b.dataSize = 0; errorHandler(_CAEN_DGTZ_MallocReadoutBuffer(handle_, &b.data, &b.size)); return b; }
-        void freeReadoutBuffer(ReadoutBuffer b)
-        { errorHandler(CAEN_DGTZ_FreeReadoutBuffer(&b.data)); }
-
+        { ReadoutBuffer buffer; errorHandler(_CAEN_DGTZ_MallocReadoutBuffer(handle_, &buffer.data, &buffer.size)); return buffer; }
+        void freeReadoutBuffer(ReadoutBuffer buffer) {
+            if (buffer.data != nullptr) {
+                errorHandler(CAEN_DGTZ_FreeReadoutBuffer(&buffer.data));
+                buffer.size = 0;
+            }
+        }
         // TODO Think of an intelligent way to handle events not using void pointers
         void* mallocEvent()
         { void* event; errorHandler(CAEN_DGTZ_AllocateEvent(handle_, &event)); return event; }
@@ -2900,7 +2903,7 @@ namespace caen {
             events.ptr = new void*[MAX_CHANNELS];
             events.nEvents = new uint32_t[MAX_CHANNELS];
             for (int i = 0; i < MAX_CHANNELS; i++) {
-                events.ptr[i] = NULL;
+                events.ptr[i] = nullptr;
                 events.nEvents[i] = 0;
             }
             switch(getDPPFirmwareType())
@@ -2920,16 +2923,38 @@ namespace caen {
                 default:
                     errorHandler(CAEN_DGTZ_FunctionNotAllowed);
             }
-            errorHandler(_CAEN_DGTZ_MallocDPPEvents(handle_, events.ptr, &events.allocatedSize));
+            try
+            {
+                errorHandler(_CAEN_DGTZ_MallocDPPEvents(handle_, events.ptr, &events.allocatedSize));
+            } catch (...) {
+                delete[] events.ptr;
+                delete[] events.nEvents;
+                events.ptr = nullptr;
+                events.nEvents = nullptr;
+                throw;
+            }
             return events;
         }
         void freeDPPEvents(DPPEvents events)
-        { errorHandler(_CAEN_DGTZ_FreeDPPEvents(handle_, events.ptr)); delete[](events.ptr); delete[](events.nEvents); events.ptr = NULL; events.nEvents = NULL; }
+        { if (events.ptr != nullptr)
+            {
+                errorHandler(_CAEN_DGTZ_FreeDPPEvents(handle_, events.ptr));
+                delete[](events.ptr);
+                delete[](events.nEvents);
+                events.ptr = nullptr;
+                events.nEvents = nullptr;
+            }
+        }
 
         DPPWaveforms mallocDPPWaveforms()
-        { DPPWaveforms waveforms; waveforms.ptr = NULL; waveforms.allocatedSize = 0; errorHandler(_CAEN_DGTZ_MallocDPPWaveforms(handle_, &waveforms.ptr, &waveforms.allocatedSize)); return waveforms; }
-        void freeDPPWaveforms(DPPWaveforms waveforms)
-        { errorHandler(_CAEN_DGTZ_FreeDPPWaveforms(handle_, waveforms.ptr)); waveforms.ptr = NULL; waveforms.allocatedSize = 0; }
+        { DPPWaveforms waveforms; errorHandler(_CAEN_DGTZ_MallocDPPWaveforms(handle_, &waveforms.ptr, &waveforms.allocatedSize)); return waveforms; }
+        void freeDPPWaveforms(DPPWaveforms waveforms) {
+            if (waveforms.ptr != nullptr) {
+                errorHandler(_CAEN_DGTZ_FreeDPPWaveforms(handle_, waveforms.ptr));
+                waveforms.ptr = nullptr;
+                waveforms.allocatedSize = 0;
+            }
+        }
 
         /* Detector data information and manipulation*/
         /* TODO: getNumEvents is only accurate for non-DDP firmware - disable for DPP? */
