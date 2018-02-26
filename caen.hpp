@@ -2896,6 +2896,7 @@ namespace caen {
             /* MallocDPPEvents docs specify that event matrix always
              *  must have MAX_CHANNELS entries. We use nEvents for
              *  internal accounting so it must be same length. */
+            // TODO use coorect number of max channels - this uses MAX_CHANNELS from QDC
             events.ptr = new void*[MAX_CHANNELS];
             events.nEvents = new uint32_t[MAX_CHANNELS];
             for (int i = 0; i < MAX_CHANNELS; i++) {

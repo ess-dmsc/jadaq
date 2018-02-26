@@ -264,7 +264,7 @@ int main(int argc, char **argv) {
         std::cerr << "Could not open jadaq configuration file: " << conf.configFileName << std::endl;
         exit(1);
     } else {
-        std::cout << "Reading digitizer configuration from" << conf.configFileName << std::endl;
+        DEBUG(std::cout << "Reading digitizer configuration from" << conf.configFileName << std::endl;)
         /* NOTE: switch verbose (2nd) arg on here to enable conf warnings */ 
         Configuration configuration(configFile, false);
         std::string outFileName = conf.configFileName+".out";
@@ -274,26 +274,20 @@ int main(int argc, char **argv) {
             std::cerr << "Unable to open output file: " << outFileName << std::endl;
         } else {
             /* TODO Turn ON/Off with commandline switch */
-            std::cout << "Writing current digitizer configuration to " << outFileName << std::endl;
+            DEBUG(std::cout << "Writing current digitizer configuration to " << outFileName << std::endl;)
             configuration.write(outFile);
             outFile.close();
         }
         // Extract a vector of all configured digitizers for later
         digitizers = configuration.getDigitizers();
     }
-    configFile.close();    
-
-    /* Helpers for output - eventually move to stand-alone asio receiver? */
-    std::ofstream *channelChargeWriters, *channelWaveWriters;
-    ofstream_map charge_writer_map;
-    ofstream_map wave_writer_map;
-    std::stringstream path;
+    configFile.close();
 
     /* Prepare and start acquisition for all digitizers */
     std::cout << "Setup acquisition from " << digitizers.size() << " digitizer(s)." << std::endl;
     for (Digitizer& digitizer: digitizers)
     {
-        /* NOTE: apply overrides from provided CAEN config. 
+        /* NOTE: apply overrides from provided CAEN config.
          *       this can be used to mimic CAEN QDC sample.
          *
          *       TODO is this just legacy code???
@@ -309,6 +303,7 @@ int main(int argc, char **argv) {
             }
         }
 */
+
         ThreadHelper *digitizerThread = new ThreadHelper();
         threadHelpers[digitizer.name()] = digitizerThread;
         digitizerThread->ready = true;
@@ -327,24 +322,7 @@ int main(int argc, char **argv) {
         }
 
         /* Prepare buffers - must happen AFTER digitizer has been configured! */
-        std::cout << "Prepare readout buffer for digitizer " << digitizer.name() << std::endl;
-        digitizer.caenMallocPrivReadoutBuffer();
-
-        /* We need to allocate additional space for events - format
-         * depends on whether digitizer runs DPP or not */
-        if (digitizer.caenIsDPPFirmware()) {
-            std::cout << "Prepare DPP event buffer for digitizer " << digitizer.name() << std::endl;
-            digitizer.caenMallocPrivDPPEvents();
-
-            if (digitizer.caenHasDPPWaveformsEnabled()) {
-                std::cout << "Prepare DPP waveforms buffer for digitizer " << digitizer.name() << std::endl;
-                digitizer.caenMallocPrivDPPWaveforms();
-                std::cout << "Allocated DPP waveforms buffer: " << digitizer.caenDumpPrivDPPWaveforms() << std::endl;
-            }
-        } else {
-            std::cout << "Prepare event buffer for digitizer " << digitizer.name() << std::endl;
-            digitizer.caenMallocPrivEvent();
-        }
+        digitizer.initialize();
     }
 
     acquisitionStart = getTimeMsecs();
@@ -456,41 +434,9 @@ int main(int argc, char **argv) {
     std::cout << "Clean up after " << digitizers.size() << " digitizer(s)." << std::endl;
     for (Digitizer& digitizer: digitizers)
     {
-        if (conf.channelDumpEnabled) {
-            std::cout << "Closing channel charge dump files for " << digitizer.name() << std::endl;
-            channelChargeWriters = charge_writer_map[digitizer.name()];
-            for (int channel=0; channel<MAX_CHANNELS; channel++) {
-                channelChargeWriters[channel].close();
-            }
-            charge_writer_map.erase(digitizer.name());
-            delete[] channelChargeWriters;
-        }
-
         std::cout << "Closing thread helpers for " << digitizer.name() << std::endl;
         delete threadHelpers[digitizer.name()];
 
-        if (digitizer.caenIsDPPFirmware()) {
-            if (digitizer.caenHasDPPWaveformsEnabled()) {
-                if (conf.channelDumpEnabled && conf.waveDumpEnabled) {
-                    std::cout << "Closing channel wave dump files for " << digitizer.name() << std::endl;
-                    channelWaveWriters = wave_writer_map[digitizer.name()];
-                    for (int channel=0; channel<MAX_CHANNELS; channel++) {
-                        channelWaveWriters[channel].close();
-                    }
-                    wave_writer_map.erase(digitizer.name());
-                    delete[] channelWaveWriters;
-                }
-                std::cout << "Free DPP waveforms buffer for " << digitizer.name() << std::endl;
-                digitizer.caenFreePrivDPPWaveforms();
-            }
-            std::cout << "Free DPP event buffer for " << digitizer.name() << std::endl;
-            digitizer.caenFreePrivDPPEvents();            
-        } else {
-            std::cout << "Free event buffer for " << digitizer.name() << std::endl;
-            digitizer.caenFreePrivEvent();
-        }
-        std::cout << "Free readout buffer for " << digitizer.name() << std::endl;
-        digitizer.caenFreePrivReadoutBuffer();
     }
 
     std::cout << "Acquisition complete - shutting down." << std::endl;

@@ -316,10 +316,43 @@ void Digitizer::set(FunctionID functionID, std::string value)
     return backOffRepeat<void>([this,&functionID,&value](){ return set_(digitizer,functionID,value); });
 }
 
+Digitizer::Digitizer(CAEN_DGTZ_ConnectionType linkType_, int linkNum_, int conetNode_, uint32_t VMEBaseAddress_)
+        : digitizer(caen::Digitizer::open(linkType_, linkNum_, conetNode_, VMEBaseAddress_))
+        , linkType(linkType_), linkNum(linkNum_), conetNode(conetNode_), VMEBaseAddress(VMEBaseAddress_)
+{
+    firmware = digitizer->getDPPFirmwareType();
+}
+
 Digitizer::~Digitizer()
 {
     DEBUG(std::cout << "Closing digitizer " << name() << std::endl;)
+    digitizer->freeEvent(plainEvent);
+    digitizer->freeDPPEvents(events_);
+    digitizer->freeDPPWaveforms(waveforms);
+    digitizer->freeReadoutBuffer(readoutBuffer_);
+
     delete digitizer;
+}
+
+void Digitizer::initialize()
+{
+    boardConfiguration = digitizer->getBoardConfiguration();
+
+    DEBUG(std::cout << "Prepare readout buffer for digitizer " << name() << std::endl;)
+    readoutBuffer_ = digitizer->mallocReadoutBuffer();
+
+    /* We need to allocate additional space for events
+     * format depends on firmware */
+    if (firmware == CAEN_DGTZ_NotDPPFirmware) {
+        plainEvent = digitizer->mallocEvent();
+    } else {
+        events_ = digitizer->mallocDPPEvents();
+        caen::EasyDPPBoardConfiguration boardConf(boardConfiguration);
+        waveformRecording = boardConf.getValue("waveformRecording") == 1;
+        if (waveformRecording) {
+            waveforms = digitizer->mallocDPPWaveforms();
+        }
+    }
 }
 
 void Digitizer::extractPlainEvents()
@@ -388,7 +421,7 @@ void Digitizer::extractDPPEvents()
 
             /* Only try to decode waveforms if digitizer is actually
              * configured to record them in the first place. */
-            if (caenHasDPPWaveformsEnabled()) {
+            if (waveformRecording) {
                 throw std::runtime_error("DPP Waveforms not suported.");
                 try {
                     caenDecodeDPPWaveforms(caenGetPrivDPPEvents(), channel, j, caenGetPrivDPPWaveforms());
@@ -406,7 +439,7 @@ void Digitizer::extractDPPEvents()
             commHelper->eventData->listEvents[eventIndex].adcValue = charge;
             commHelper->eventData->listEvents[eventIndex].channel = channel;
 
-            if (caenHasDPPWaveformsEnabled()) {
+            if (waveformRecording) {
                 basicDPPWaveforms = caenExtractBasicDPPWaveforms(caenGetPrivDPPWaveforms());
                 DEBUG(std::cout << "Filling event waveform from " << name() << " channel " << channel << " localtime " << timestamp << " samples " << basicDPPWaveforms.Ns << std::endl;)
                 commHelper->eventData->waveformEvents[eventIndex].localTime = timestamp;

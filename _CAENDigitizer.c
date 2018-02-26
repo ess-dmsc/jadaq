@@ -508,7 +508,7 @@ static CAEN_DGTZ_ErrorCode V1740DPP_QDC_DecodeDPPWaveforms(int handle, _CAEN_DGT
         return CAEN_DGTZ_EventNotFound;
     }
     if (WaveIn == NULL) {
-        printf("WARNING: decode loop found invalid pointer %x as wave input in V1740DPP_QDC_DecodeDPPWaveforms: Skipping!\n", WaveIn);
+        printf("WARNING: decode loop found invalid pointer %p as wave input in V1740DPP_QDC_DecodeDPPWaveforms: Skipping!\n", WaveIn);
         return CAEN_DGTZ_EventNotFound;
     }
 

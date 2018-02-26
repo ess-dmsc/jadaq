@@ -173,7 +173,9 @@ static void configure(Digitizer& digitizer, pt::ptree& conf, bool verbose)
     /* NOTE: it seems we need to force stop and reset for all
      * configuration settings to work. Most notably setDCOffset will
      * consitently fail with GenericError if we don't. */
-    /* Stop any acquisition first */
+    /* Stop any acquisition first
+     * TODO Why is Acquisition running before configuration??
+     * */
     digitizer.caenStopAcquisition();
     
     /* Reset Digitizer */
