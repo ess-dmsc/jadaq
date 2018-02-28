@@ -380,9 +380,9 @@ void Digitizer::extractPlainEvents()
                (basicEvent.count * sizeof(basicEvent.samples[0])));
         commHelper->eventData->waveformEvents[eventIndex].channel = basicEvent.channel;
     }
-    STAT(stats.eventsUnpacked += eventsUnpacked;)
-    STAT(stats.eventsDecoded += eventsDecoded;)
-    STAT(stats.eventsFound += numEvents;)
+    STAT(stats_.eventsUnpacked += eventsUnpacked;)
+    STAT(stats_.eventsDecoded += eventsDecoded;)
+    STAT(stats_.eventsFound += numEvents;)
 }
 
 void Digitizer::extractDPPEvents()
@@ -467,9 +467,9 @@ void Digitizer::extractDPPEvents()
     }
     commHelper->eventData->listEventsLength = eventsFound;
     commHelper->eventData->waveformEventsLength = 0;
-    STAT(stats.eventsDecoded += eventsDecoded;)
-    STAT(stats.eventsUnpacked += eventsFound;)
-    STAT(stats.eventsFound += eventsFound;)
+    STAT(stats_.eventsDecoded += eventsDecoded;)
+    STAT(stats_.eventsUnpacked += eventsFound;)
+    STAT(stats_.eventsFound += eventsFound;)
     DEBUG(STAT(std::cout << "Unpacked " << eventsUnpacked << " DPP events from all channels." << std::endl;))
 }
 

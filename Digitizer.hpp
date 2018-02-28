@@ -62,6 +62,15 @@ struct CommHelper {
 
 class Digitizer
 {
+public:
+    STAT(struct Stats {
+             uint32_t bytesRead = 0;
+             uint32_t eventsFound = 0;
+             uint32_t eventsUnpacked = 0;
+             uint32_t eventsDecoded = 0;
+             uint32_t eventsSent = 0;
+         };)
+
 private:
     caen::Digitizer* digitizer;
     CAEN_DGTZ_DPPFirmware_t firmware;
@@ -78,14 +87,7 @@ private:
     caen::DPPEvents events_;
     caen::DPPWaveforms waveforms;
 
-
-    STAT(struct Stats {
-        uint32_t bytesRead = 0;
-        uint32_t eventsFound = 0;
-        uint32_t eventsUnpacked = 0;
-        uint32_t eventsDecoded = 0;
-        uint32_t eventsSent = 0;
-    } stats;)
+    STAT(Stats stats_;)
 
     /* Per-digitizer communication helpers */
     void extractPlainEvents();
@@ -112,7 +114,7 @@ public:
     std::string get(FunctionID functionID, int index);
 
     void acquisition();
-
+    const Stats& stats() const {return stats_;}
     //Post setup, pre aquisition initialization
     void initialize();
 

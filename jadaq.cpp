@@ -238,7 +238,7 @@ int main(int argc, char **argv) {
         conf.configFileName = argv[optind];        
     }
 
-    /* Total acquisition stats */
+    /* Total acquisition stats_ */
     TotalStats totals;
     totals.bytesRead = 0;
     totals.eventsFound = 0;
@@ -360,18 +360,10 @@ int main(int argc, char **argv) {
          *   - optionally dump data on simple format
          *   - optionally pack and send out data on UDP
          */
-        runtimeMsecs = getTimeMsecs() - totals.runStartTime;
-        if (conf.stopAfterEvents > 0 && conf.stopAfterEvents <= totals.eventsFound ||
-            conf.stopAfterSeconds > 0 && conf.stopAfterSeconds * 1000 <= runtimeMsecs) {
-            std::cout << "Stop condition reached: ran for " << runtimeMsecs / 1000.0 << " seconds (target is " << conf.stopAfterSeconds << ") and handled " << totals.eventsFound << " events (target is " << conf.stopAfterEvents << ")." << std::endl;
-            keepRunning = false;
-            break;
-        } else if (conf.stopAfterEvents > 0) {
-            std::cout << "Handled " << totals.eventsFound << " out of " << conf.stopAfterEvents << " events allowed so far." << std::endl;            
-        }
         std::cout << "Read out data from " << digitizers.size() << " digitizer(s)." << std::endl;
         /* Read out acquired data for all digitizers */
         tasksEnqueued = 0;
+        totals.eventsFound = 0;
         for (Digitizer& digitizer: digitizers) {
             try {
                 ThreadHelper *digitizerThread = threadHelpers[digitizer.name()];
@@ -393,8 +385,15 @@ int main(int argc, char **argv) {
                 std::cerr << "ERROR: unexpected exception during acquisition: " << e.what() << std::endl;
                 throw;
             }
+            STAT(totals.eventsFound += digitizer.stats().eventsFound;)
         }
-
+        STAT(if (conf.stopAfterEvents > 0) {
+            DEBUG(std::cout << "Handled " << totals.eventsFound << " out of " << conf.stopAfterEvents << " events allowed so far." << std::endl;)
+            if (totals.eventsFound >= conf.stopAfterEvents)
+            {
+                break;
+            }
+        })
         now = getTimeMsecs();
         if (now % 1000 < IDLESLEEP) {
             showTotals(totals);
