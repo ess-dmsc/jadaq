@@ -323,7 +323,7 @@ Digitizer::Digitizer(CAEN_DGTZ_ConnectionType linkType_, int linkNum_, int conet
     firmware = digitizer->getDPPFirmwareType();
 }
 
-Digitizer::~Digitizer()
+Digitizer::close()
 {
     DEBUG(std::cout << "Closing digitizer " << name() << std::endl;)
     if (plainEvent != nullptr)

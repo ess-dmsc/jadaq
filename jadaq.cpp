@@ -436,6 +436,7 @@ int main(int argc, char **argv) {
     {
         std::cout << "Closing thread helpers for " << digitizer.name() << std::endl;
         delete threadHelpers[digitizer.name()];
+        digitizer.close();
 
     }
 

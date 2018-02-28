@@ -99,7 +99,8 @@ public:
     const uint32_t VMEBaseAddress;
 
     Digitizer(CAEN_DGTZ_ConnectionType linkType_, int linkNum_, int conetNode_, uint32_t VMEBaseAddress_);
-    ~Digitizer();
+    //~Digitizer();
+    void close();
     const std::string name() { return digitizer->modelName() + "_" + std::to_string(digitizer->serialNumber()); }
     const std::string model() { return digitizer->modelName(); }
     const std::string serial() { return std::to_string(digitizer->serialNumber()); }
