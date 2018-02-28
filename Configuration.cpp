@@ -259,9 +259,9 @@ void Configuration::apply()
         }
         try {
             if (optical >= 0) {
-                digitizers.emplace_back(Digitizer(CAEN_DGTZ_OpticalLink, optical, conet, vme));
+                digitizers.emplace_back(CAEN_DGTZ_OpticalLink, optical, conet, vme);
             } else {
-                digitizers.emplace_back(Digitizer(CAEN_DGTZ_USB, usb, conet, vme));
+                digitizers.emplace_back(CAEN_DGTZ_USB, usb, conet, vme);
             }
             digitizer = &*digitizers.rbegin();
         } catch (caen::Error& e)
