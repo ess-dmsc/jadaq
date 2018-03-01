@@ -392,7 +392,7 @@ void Digitizer::extractDPPEvents()
     caen::BasicDPPEvent basicDPPEvent;
     caen::BasicDPPWaveforms basicDPPWaveforms;
     uint32_t eventsFound = 0;
-    STAT(uint32_t eventsDecoded = 0; uint32_t eventsUnpacked = 0;)
+    STAT(uint32_t eventsDecoded = 0;)
     eventIndex = 0;
     /* TODO: additionally hand off decoding into per-channel threads? */
 
@@ -470,7 +470,7 @@ void Digitizer::extractDPPEvents()
     STAT(stats_.eventsDecoded += eventsDecoded;)
     STAT(stats_.eventsUnpacked += eventsFound;)
     STAT(stats_.eventsFound += eventsFound;)
-    DEBUG(STAT(std::cout << "Unpacked " << eventsUnpacked << " DPP events from all channels." << std::endl;))
+    DEBUG(STAT(std::cout << "Unpacked " << eventsFound << " DPP events from all channels." << std::endl;))
 }
 
 void Digitizer::acquisition() {

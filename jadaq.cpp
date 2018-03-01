@@ -373,6 +373,7 @@ int main(int argc, char **argv) {
 #ifdef NOTHREADS
                     /* Inline digitizerAcquisition without threading */
                     digitizer.acquisition();
+                    digitizerThread->ready = true;
 #else
                     /* Enqueue digitizerAcquisition for thread handling */
                     threadIOService.post(boost::bind(digitizer.acquisition));
@@ -385,6 +386,7 @@ int main(int argc, char **argv) {
                 std::cerr << "ERROR: unexpected exception during acquisition: " << e.what() << std::endl;
                 throw;
             }
+            
             STAT(totals.eventsFound += digitizer.stats().eventsFound;)
         }
         STAT(if (conf.stopAfterEvents > 0) {
