@@ -397,18 +397,17 @@ void Digitizer::extractDPPEvents()
     /* TODO: additionally hand off decoding into per-channel threads? */
 
     DEBUG(std::cout << "Unpack aggregated DPP events from " << name() << std::endl;)
-    caenGetDPPEvents(caenGetPrivReadoutBuffer(), caenGetPrivDPPEvents());
+    digitizer->getDPPEvents(readoutBuffer_, events_);
 
     for (channel = 0; channel < MAX_CHANNELS; channel++) {
-        uint32_t nEvents = caenGetPrivDPPEvents().nEvents[channel];
+        uint32_t nEvents = events_.nEvents[channel];
         eventsFound += nEvents;
         for (uint32_t j = 0; j < nEvents; j++) {
             /* NOTE: we don't want to muck with underlying
              * event type here, so we rely on the wrapped
              * extraction and pull out timestamp, charge,
              * etc from the resulting BasicDPPEvent. */
-
-            basicDPPEvent = caenExtractBasicDPPEvent(caenGetPrivDPPEvents(), channel, j);
+            basicDPPEvent = digitizer->extractBasicDPPEvent(events_, channel, j);
             /* We use the same 4 byte range for charge as CAEN sample */
             charge = basicDPPEvent.charge & 0xFFFF;
             /* TODO: include timestamp high bits from Extra field? */
@@ -425,9 +424,7 @@ void Digitizer::extractDPPEvents()
             if (waveformRecording) {
                 throw std::runtime_error("DPP Waveforms not suported.");
                 try {
-                    caenDecodeDPPWaveforms(caenGetPrivDPPEvents(), channel, j, caenGetPrivDPPWaveforms());
-
-                    DEBUG(std::cout << "Decoded " << caenDumpPrivDPPWaveforms() << " DPP event waveforms from event " << j << " on channel " << channel << " from " << name() << std::endl;)
+                    digitizer->decodeDPPWaveforms(events_, channel, j, waveforms);
                     STAT(eventsDecoded += 1;)
                 } catch(std::exception& e) {
                     std::cerr << "failed to decode waveforms for event " << j << " on channel " << channel << " from " << name() << " : " << e.what() << std::endl;
@@ -441,7 +438,7 @@ void Digitizer::extractDPPEvents()
             commHelper->eventData->listEvents[eventIndex].channel = channel;
 
             if (waveformRecording) {
-                basicDPPWaveforms = caenExtractBasicDPPWaveforms(caenGetPrivDPPWaveforms());
+                basicDPPWaveforms = digitizer->extractBasicDPPWaveforms(waveforms);
                 DEBUG(std::cout << "Filling event waveform from " << name() << " channel " << channel << " localtime " << timestamp << " samples " << basicDPPWaveforms.Ns << std::endl;)
                 commHelper->eventData->waveformEvents[eventIndex].localTime = timestamp;
                 commHelper->eventData->waveformEvents[eventIndex].extendTime = 0;
@@ -489,9 +486,10 @@ void Digitizer::acquisition() {
 
     /* TODO: reset readout buffer, events and waveforms every time? */
 
-    DEBUG(std::cout << "Read at most " << caenGetPrivReadoutBuffer().size << "b data from " << name() << std::endl;)
-    caenReadData(caenGetPrivReadoutBuffer());
-    bytesRead = caenGetPrivReadoutBuffer().dataSize;
+    DEBUG(std::cout << "Read at most " << readoutBuffer_.size << "b data from " << name() << std::endl;)
+    /* We use slave terminated mode like in the sample from CAEN Digitizer library docs. */
+    digitizer->readData(readoutBuffer_,CAEN_DGTZ_SLAVE_TERMINATED_READOUT_MBLT);
+    bytesRead = readoutBuffer_.dataSize;
     DEBUG(std::cout << "Read " << bytesRead << "b of acquired data" << std::endl;)
 
     /* NOTE: check and skip if there's no actual events to handle */
@@ -507,10 +505,26 @@ void Digitizer::acquisition() {
 
     commHelper->eventData = Data::setupEventData((void *)commHelper->sendBuf, MAXBUFSIZE, 0, 0);
 
-    if (caenIsDPPFirmware()) {
-        extractDPPEvents();
-    } else {
-        extractPlainEvents();
+    switch (firmware)
+    {
+        case CAEN_DGTZ_DPPFirmware_PHA:
+            throw std::runtime_error("PHA firmware not supported by Digitizer.");
+            break;
+        case CAEN_DGTZ_DPPFirmware_PSD:
+            throw std::runtime_error("PSD firmware not supported by Digitizer.");
+            break;
+        case CAEN_DGTZ_DPPFirmware_CI:
+            throw std::runtime_error("CI firmware not supported by Digitizer.");
+            break;
+        case CAEN_DGTZ_DPPFirmware_ZLE:
+            throw std::runtime_error("ZLE firmware not supported by Digitizer.");
+            break;
+        case CAEN_DGTZ_DPPFirmware_QDC:
+            extractDPPEvents();
+            break;
+        case CAEN_DGTZ_NotDPPFirmware:
+            extractPlainEvents();
+            break;
     }
 
     /* Pack and send out UDP */

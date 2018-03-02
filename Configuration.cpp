@@ -176,10 +176,10 @@ static void configure(Digitizer& digitizer, pt::ptree& conf, bool verbose)
     /* Stop any acquisition first
      * TODO Why is Acquisition running before configuration??
      * */
-    digitizer.caenStopAcquisition();
+    digitizer.stopAcquisition();
     
     /* Reset Digitizer */
-    digitizer.caenReset();        
+    digitizer.reset();
 
     for (auto& setting : conf)
     {

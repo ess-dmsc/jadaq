@@ -121,23 +121,10 @@ public:
     // TODO make CommHelper private
     CommHelper* commHelper;
 
-    /* Wrap the main CAEN acquisiton functions here for convenience */
-    bool caenIsDPPFirmware() { return digitizer->getDPPFirmwareType() == CAEN_DGTZ_DPPFirmware_QDC; }
-    caen::ReadoutBuffer& caenGetPrivReadoutBuffer() { return readoutBuffer_; }
-    /* Additional event buffers */
-    caen::DPPEvents& caenGetPrivDPPEvents() { return events_; }
-    caen::DPPWaveforms& caenGetPrivDPPWaveforms() { return waveforms; }
-    std::string caenDumpPrivDPPWaveforms() { return digitizer->dumpDPPWaveforms(waveforms); }
-    /* We default to slave terminated mode like in the sample from CAEN
-     * Digitizer library docs. */
-    caen::ReadoutBuffer& caenReadData(caen::ReadoutBuffer& buffer, int mode=(int)CAEN_DGTZ_SLAVE_TERMINATED_READOUT_MBLT) { return digitizer->readData(buffer, (CAEN_DGTZ_ReadMode_t)mode); }
-    caen::DPPEvents& caenGetDPPEvents(caen::ReadoutBuffer& buffer, caen::DPPEvents& events) { return digitizer->getDPPEvents(buffer, events); }
-    caen::BasicDPPEvent caenExtractBasicDPPEvent(caen::DPPEvents& events, uint32_t channel, uint32_t eventNo) { return digitizer->extractBasicDPPEvent(events, channel, eventNo); }
-    caen::DPPWaveforms& caenDecodeDPPWaveforms(caen::DPPEvents& events, uint32_t channel, uint32_t eventNo, caen::DPPWaveforms& waveforms) { return digitizer->decodeDPPWaveforms(events, channel, eventNo, waveforms); }
-    caen::BasicDPPWaveforms caenExtractBasicDPPWaveforms(caen::DPPWaveforms& waveforms) { return digitizer->extractBasicDPPWaveforms(waveforms); }
-    void caenStartAcquisition() { digitizer->startAcquisition(); }
-    void caenStopAcquisition() { digitizer->stopAcquisition(); }
-    void caenReset() { digitizer->reset(); }
+    // TODO Sould we do somthing different than expose there three function?
+    void startAcquisition() { digitizer->startAcquisition(); }
+    void stopAcquisition() { digitizer->stopAcquisition(); }
+    void reset() { digitizer->reset(); }
 };
 
 

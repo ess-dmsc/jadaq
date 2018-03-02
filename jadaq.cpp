@@ -330,7 +330,7 @@ int main(int argc, char **argv) {
     std::cout << "Start acquisition from " << digitizers.size() << " digitizer(s)." << std::endl;
     for (Digitizer& digitizer: digitizers) {
         std::cout << "Start acquisition on digitizer " << digitizer.name() << std::endl;
-        digitizer.caenStartAcquisition();
+        digitizer.startAcquisition();
     }
 
     /* Auto-detect available cores and create a thread for each if
@@ -417,7 +417,7 @@ int main(int argc, char **argv) {
     for (Digitizer& digitizer: digitizers)
     {
         std::cout << "Stop acquisition on digitizer " << digitizer.name() << std::endl;
-        digitizer.caenStopAcquisition();
+        digitizer.stopAcquisition();
     }
 
     acquisitionStopped = getTimeMsecs();

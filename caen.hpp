@@ -2846,6 +2846,7 @@ namespace caen {
         void stopAcquisition()
         { errorHandler(CAEN_DGTZ_SWStopAcquisition(handle_)); }
 
+        // TODO Do we really need to zero out buffer?
         ReadoutBuffer& readData(ReadoutBuffer& buffer,CAEN_DGTZ_ReadMode_t mode)
         { memset(buffer.data, 0, buffer.size); errorHandler(CAEN_DGTZ_ReadData(handle_, mode, buffer.data, &buffer.dataSize)); return buffer; }
 
@@ -3122,50 +3123,6 @@ namespace caen {
                 errorHandler(CAEN_DGTZ_FunctionNotAllowed);
             }
             return basic;
-        }
-        
-        std::string dumpDPPWaveforms(DPPWaveforms& waveforms)
-        { 
-            std::stringstream ss;
-            uint32_t allocatedSize = 0;
-            uint32_t wavesNs = 0;
-            allocatedSize = unsigned(waveforms.allocatedSize);
-            //std::cout << "dumpDPPWaveforms: allocated size is " << allocatedSize << std::endl;
-            ss << "allocatedSize="  << allocatedSize << " ";
-            switch(getDPPFirmwareType())
-            {
-                case CAEN_DGTZ_DPPFirmware_PHA:
-                    {
-                        CAEN_DGTZ_DPP_PHA_Waveforms_t *waves = (CAEN_DGTZ_DPP_PHA_Waveforms_t *)(waveforms.ptr);
-                        wavesNs = unsigned(waves->Ns);
-                        ss << "PHA:Ns=" << wavesNs;
-                        break;
-                    }
-                case CAEN_DGTZ_DPPFirmware_PSD:
-                    {
-                        CAEN_DGTZ_DPP_PSD_Waveforms_t *waves = (CAEN_DGTZ_DPP_PSD_Waveforms_t *)waveforms.ptr;
-                        wavesNs = unsigned(waves->Ns);
-                        ss << "PSD:Ns=" << wavesNs;
-                        break;
-                    }                    
-                case CAEN_DGTZ_DPPFirmware_CI:
-                    {
-                        CAEN_DGTZ_DPP_CI_Waveforms_t *waves = (CAEN_DGTZ_DPP_CI_Waveforms_t *)waveforms.ptr;
-                        wavesNs = unsigned(waves->Ns);
-                        ss << "CI:Ns=" << wavesNs;
-                        break;
-                        }
-                case CAEN_DGTZ_DPPFirmware_QDC:
-                    {
-                        _CAEN_DGTZ_DPP_QDC_Waveforms_t *waves = (_CAEN_DGTZ_DPP_QDC_Waveforms_t *)(waveforms.ptr);
-                        wavesNs = unsigned(waves->Ns);
-                        ss << "QDC:Ns=" << wavesNs;
-                        break;
-                    }
-            default:
-                ss << "UNKNOWN";
-            }
-            return ss.str();
         }
 
         /* Device configuration - i.e. getter and setters */
