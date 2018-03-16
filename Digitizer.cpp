@@ -475,16 +475,10 @@ void Digitizer::acquisition() {
     /* NOTE: these are per-digitizer local helpers */
     uint16_t listCount = 0, waveCount = 0;
     uint32_t channel = 0;
-    uint64_t globaltime = 0, runtimeMsecs = 0;
+    uint64_t runtimeMsecs = 0;
     uint32_t bytesRead = 0;
     uint32_t eventsFound = 0;
     STAT(uint32_t eventsUnpacked = 0; uint32_t eventsDecoded = 0; uint32_t eventsSent = 0;)
-
-    /* NOTE: use time since epoch with millisecond resolution to
-     * keep timestamps unique */
-    globaltime = getTimeMsecs();
-
-    /* TODO: reset readout buffer, events and waveforms every time? */
 
     DEBUG(std::cout << "Read at most " << readoutBuffer_.size << "b data from " << name() << std::endl;)
     /* We use slave terminated mode like in the sample from CAEN Digitizer library docs. */
@@ -498,8 +492,6 @@ void Digitizer::acquisition() {
         return;
     }
 
-    /* Reset send buffer each time to prevent any stale data */
-    memset(commHelper->sendBuf, 0, MAXBUFSIZE);
     /* TODO: add check to make sure sendBuf always fits eventData */
     /* NOTE: only set waveform count (last arg) if actually enabled */
 
@@ -528,12 +520,12 @@ void Digitizer::acquisition() {
     }
 
     /* Pack and send out UDP */
-    DEBUG(std::cout << "Packing events at " << globaltime << " from " << name() << std::endl;)
+    DEBUG(std::cout << "Packing events from " << name() << std::endl;)
     commHelper->packedEvents = Data::packEventData(commHelper->eventData);
     /* Send data to preconfigured receiver */
     DEBUG(std::cout << "Sending " << commHelper->eventData->listEventsLength << " list and " <<
               commHelper->eventData->waveformEventsLength << " waveform events packed into " <<
-              commHelper->packedEvents.dataSize << "b at " << globaltime << " from " << name() << std::endl;)
+              commHelper->packedEvents.dataSize << "b from " << name() << std::endl;)
     commHelper->socket->send_to(boost::asio::buffer((char*)(commHelper->packedEvents.data), commHelper->packedEvents.dataSize), commHelper->remoteEndpoint);
 
 }

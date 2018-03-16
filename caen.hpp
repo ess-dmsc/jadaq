@@ -2846,9 +2846,8 @@ namespace caen {
         void stopAcquisition()
         { errorHandler(CAEN_DGTZ_SWStopAcquisition(handle_)); }
 
-        // TODO Do we really need to zero out buffer?
         ReadoutBuffer& readData(ReadoutBuffer& buffer,CAEN_DGTZ_ReadMode_t mode)
-        { memset(buffer.data, 0, buffer.size); errorHandler(CAEN_DGTZ_ReadData(handle_, mode, buffer.data, &buffer.dataSize)); return buffer; }
+        { errorHandler(CAEN_DGTZ_ReadData(handle_, mode, buffer.data, &buffer.dataSize)); return buffer; }
 
         /* Interrupt control */
 

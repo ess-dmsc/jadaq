@@ -39,6 +39,8 @@ namespace caen {
      * @returns
      * Abstracted digitizer instance of the appropriate kind.
      */
+
+    // TODO get rid of "Raw" functions
     Digitizer *Digitizer::open(CAEN_DGTZ_ConnectionType linkType, int linkNum, int conetNode, uint32_t VMEBaseAddress) {
         int handle;
         CAEN_DGTZ_BoardInfo_t boardInfo;

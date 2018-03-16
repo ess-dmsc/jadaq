@@ -247,7 +247,7 @@ int main(int argc, char **argv) {
     totals.eventsSent = 0;    
 
     /* Singleton helpers */
-    uint64_t acquisitionStart = 0, acquisitionStopped = 0, now = 0;
+    uint64_t acquisitionStart = 0, acquisitionStopped = 0;
     uint64_t runtimeMsecs = 0;
     uint16_t tasksEnqueued = 0;
     boost::asio::io_service threadIOService;
@@ -396,10 +396,6 @@ int main(int argc, char **argv) {
                 break;
             }
         })
-        now = getTimeMsecs();
-        if (now % 1000 < IDLESLEEP) {
-            showTotals(totals);
-        }
         if (tasksEnqueued < 1) {
             //std::cout << "Digitizer loop idle - throttle down" << std::endl;
             /* NOTE: for running without hogging CPU if nothing to do */
