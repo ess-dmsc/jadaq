@@ -29,6 +29,7 @@
 #include <regex>
 #include <chrono>
 #include <thread>
+#include <iomanip>
 
 
 #define MAX_GROUPS 8
@@ -335,7 +336,7 @@ void Digitizer::close()
     delete digitizer;
 }
 
-void Digitizer::initialize()
+void Digitizer::initialize(bool dump_)
 {
     boardConfiguration = digitizer->getBoardConfiguration();
 
@@ -354,6 +355,17 @@ void Digitizer::initialize()
             waveforms = digitizer->mallocDPPWaveforms();
         }
     }
+    if (dump_)
+    {
+        dump = dump_;
+        dumpfile = new std::fstream("dump" + name() + ".txt",std::fstream::out);
+        if (!dumpfile->is_open())
+        {
+            throw std::runtime_error("Could not open data dump file");
+        }
+
+    }
+
 }
 
 void Digitizer::extractPlainEvents()
@@ -436,6 +448,11 @@ void Digitizer::extractDPPEvents()
             commHelper->eventData->listEvents[eventIndex].extendTime = 0;
             commHelper->eventData->listEvents[eventIndex].adcValue = charge;
             commHelper->eventData->listEvents[eventIndex].channel = channel;
+
+            if (dump)
+            {
+                *dumpfile << std::setw(16) << timestamp << " " << serial() << " " << std::setw(8) << channel << " " << std::setw(8) << charge << "\n";
+            }
 
             if (waveformRecording) {
                 basicDPPWaveforms = digitizer->extractBasicDPPWaveforms(waveforms);

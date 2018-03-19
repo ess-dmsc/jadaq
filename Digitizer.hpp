@@ -43,6 +43,7 @@
 #include <boost/asio/io_service.hpp>
 #include <boost/bind.hpp>
 #include <boost/thread/thread.hpp>
+#include <fstream>
 #include "trace.hpp"
 #include "DataFormat.hpp"
 
@@ -76,6 +77,8 @@ private:
     CAEN_DGTZ_DPPFirmware_t firmware;
     uint32_t boardConfiguration = 0;
     bool waveformRecording = false;
+    bool dump=false;
+    std::fstream* dumpfile = nullptr;
 
     uint32_t throttleDownMSecs = 0;
     /* We bind a ReadoutBuffer to each digitizer for ease of use */
@@ -116,7 +119,7 @@ public:
     void acquisition();
     const Stats& stats() const {return stats_;}
     //Post setup, pre aquisition initialization
-    void initialize();
+    void initialize(bool dump_=false);
 
     // TODO make CommHelper private
     CommHelper* commHelper;

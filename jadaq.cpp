@@ -322,7 +322,7 @@ int main(int argc, char **argv) {
         }
 
         /* Prepare buffers - must happen AFTER digitizer has been configured! */
-        digitizer.initialize();
+        digitizer.initialize(true);
     }
 
     acquisitionStart = getTimeMsecs();
