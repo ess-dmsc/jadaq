@@ -3042,9 +3042,9 @@ namespace caen {
                 break;
             case CAEN_DGTZ_DPPFirmware_QDC:
                 QDCEvent = ((_CAEN_DGTZ_DPP_QDC_Event_t **)events.ptr)[channel][eventNo];
-                basic.timestamp = QDCEvent.TimeTag;
-                basic.format = QDCEvent.Format;
-                basic.charge = QDCEvent.Charge;
+                    basic.timestamp = QDCEvent.TimeTag;
+                    basic.format = QDCEvent.Format;
+                    basic.charge = QDCEvent.Charge;
                 break;
             default:
                 errorHandler(CAEN_DGTZ_FunctionNotAllowed);

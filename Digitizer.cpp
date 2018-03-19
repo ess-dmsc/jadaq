@@ -400,8 +400,6 @@ void Digitizer::extractPlainEvents()
 void Digitizer::extractDPPEvents()
 {
     uint32_t eventIndex = 0;
-    uint32_t charge = 0, timestamp = 0, channel = 0;
-    caen::BasicDPPEvent basicDPPEvent;
     caen::BasicDPPWaveforms basicDPPWaveforms;
     uint32_t eventsFound = 0;
     STAT(uint32_t eventsDecoded = 0;)
@@ -411,23 +409,18 @@ void Digitizer::extractDPPEvents()
     DEBUG(std::cout << "Unpack aggregated DPP events from " << name() << std::endl;)
     digitizer->getDPPEvents(readoutBuffer_, events_);
 
-    for (channel = 0; channel < MAX_CHANNELS; channel++) {
+    for (uint32_t channel = 0; channel < MAX_CHANNELS; channel++) {
         uint32_t nEvents = events_.nEvents[channel];
         eventsFound += nEvents;
         for (uint32_t j = 0; j < nEvents; j++) {
-            /* NOTE: we don't want to muck with underlying
-             * event type here, so we rely on the wrapped
-             * extraction and pull out timestamp, charge,
-             * etc from the resulting BasicDPPEvent. */
-            basicDPPEvent = digitizer->extractBasicDPPEvent(events_, channel, j);
-            /* We use the same 4 byte range for charge as CAEN sample */
-            charge = basicDPPEvent.charge & 0xFFFF;
+            // TODO Take care of the different type of events
+            _CAEN_DGTZ_DPP_QDC_Event_t QDCEvent = ((_CAEN_DGTZ_DPP_QDC_Event_t **)events_.ptr)[channel][j];
+            uint32_t timestamp = QDCEvent.TimeTag & 0xFFFFFFFF;
+            uint32_t charge = QDCEvent.Charge & 0xFFFF;;
             /* TODO: include timestamp high bits from Extra field? */
             /* NOTE: timestamp is 64-bit for PHA events
              * but we just consistently clip to 32-bit
              * for now. */
-            timestamp = basicDPPEvent.timestamp & 0xFFFFFFFF;
-
             DEBUG(std::cout << name() << " channel " << channel << " event " << j << " charge " << charge << " with local time " << timestamp << std::endl;)
 
 
@@ -453,7 +446,7 @@ void Digitizer::extractDPPEvents()
             {
                 *dumpfile << std::setw(16) << timestamp << " " << serial() << " " << std::setw(8) << channel << " " << std::setw(8) << charge << "\n";
             }
-
+/*
             if (waveformRecording) {
                 basicDPPWaveforms = digitizer->extractBasicDPPWaveforms(waveforms);
                 DEBUG(std::cout << "Filling event waveform from " << name() << " channel " << channel << " localtime " << timestamp << " samples " << basicDPPWaveforms.Ns << std::endl;)
@@ -475,7 +468,7 @@ void Digitizer::extractDPPEvents()
                                 commHelper->eventData->waveformEvents[eventIndex].waveformSample1[0] << ", .. ," <<
                                 commHelper->eventData->waveformEvents[eventIndex].waveformSample1[basicDPPWaveforms.Ns-1] <<
                                 " ." << std::endl;)
-            }
+            }*/
             eventIndex += 1;
         }
     }
