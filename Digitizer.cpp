@@ -358,7 +358,7 @@ void Digitizer::initialize(bool dump_)
     if (dump_)
     {
         dump = dump_;
-        dumpfile = new std::fstream("dump" + name() + ".txt",std::fstream::out);
+        dumpfile = new std::fstream("dump-" + std::to_string(getTimeMsecs()) + "-" + name() + ".txt",std::fstream::out);
         if (!dumpfile->is_open())
         {
             throw std::runtime_error("Could not open data dump file");
