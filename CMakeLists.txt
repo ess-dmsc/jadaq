@@ -32,15 +32,15 @@ target_link_libraries(debugCAENComm dl)
 add_library(caen SHARED caen.hpp caen.cpp _CAENDigitizer.c _CAENDigitizer.h)
 target_link_libraries(caen dl)
 
-add_executable(jadaq jadaq.cpp caen.hpp Configuration.cpp Configuration.hpp Digitizer.cpp Digitizer.hpp FunctionID.hpp FunctionID.cpp ini_parser.hpp StringConversion.cpp StringConversion.hpp CAENConf.cpp CAENConf.hpp trace.hpp)
+add_executable(jadaq jadaq.cpp caen.hpp Configuration.cpp Configuration.hpp Digitizer.cpp Digitizer.hpp FunctionID.hpp FunctionID.cpp ini_parser.hpp StringConversion.cpp StringConversion.hpp CAENConf.cpp CAENConf.hpp trace.hpp DataHandler.cpp DataHandler.hpp)
 target_link_libraries(jadaq ${CAEN_LIB} caen ${Boost_FILESYSTEM_LIBRARY} ${Boost_ASIO_LIBRARY} ${Boost_SYSTEM_LIBRARY} ${Boost_THREAD_LIBRARY} pthread)
 
 # For hdf5writer
-find_package(HDF5 REQUIRED COMPONENTS C CXX)
-include_directories(${HDF5_INCLUDE_DIRS})
-add_executable(hdf5writer hdf5writer.cpp)
-target_link_libraries(hdf5writer ${HDF5_CXX_LIBRARIES} ${Boost_ASIO_LIBRARY} ${Boost_SYSTEM_LIBRARY} pthread)
+#find_package(HDF5 REQUIRED COMPONENTS C CXX)
+#include_directories(${HDF5_INCLUDE_DIRS})
+#add_executable(hdf5writer hdf5writer.cpp)
+#target_link_libraries(hdf5writer ${HDF5_CXX_LIBRARIES} ${Boost_ASIO_LIBRARY} ${Boost_SYSTEM_LIBRARY} pthread)
 
 # For eventgen
-add_executable(eventgen eventgen.cpp DataFormat.hpp)
-target_link_libraries(eventgen ${Boost_ASIO_LIBRARY} ${Boost_SYSTEM_LIBRARY} pthread)
+#add_executable(eventgen eventgen.cpp DataFormat.hpp)
+#target_link_libraries(eventgen ${Boost_ASIO_LIBRARY} ${Boost_SYSTEM_LIBRARY} pthread)
