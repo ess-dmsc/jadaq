@@ -35,31 +35,9 @@
 #include <unordered_map>
 #include <chrono>
 #include <thread>
-#include <boost/asio.hpp>
-#include <boost/asio/io_service.hpp>
-#include <boost/bind.hpp>
 #include <boost/thread/thread.hpp>
-#include <boost/asio.hpp>
-#include <boost/asio/io_service.hpp>
-#include <boost/bind.hpp>
-#include <boost/thread/thread.hpp>
-#include <fstream>
 #include "trace.hpp"
-#include "DataFormat.hpp"
-
-using boost::asio::ip::udp;
-
-struct CommHelper {
-    boost::asio::io_service sendIOService;
-    udp::endpoint remoteEndpoint;
-    udp::socket *socket = nullptr;
-    /* NOTE: use a static buffer of MAXBUFSIZE bytes for sending */
-    char sendBuf[MAXBUFSIZE];
-    Data::EventData *eventData = nullptr;
-    Data::Meta *metadata= nullptr;
-    Data::PackedEvents packedEvents;
-};
-
+#include "DataHandler.hpp"
 
 class Digitizer
 {
@@ -71,14 +49,41 @@ public:
              uint32_t eventsDecoded = 0;
              uint32_t eventsSent = 0;
          };)
+    /* Connection parameters */
+    const CAEN_DGTZ_ConnectionType linkType;
+    const int linkNum;
+    const int conetNode;
+    const uint32_t VMEBaseAddress;
+
+    Digitizer(CAEN_DGTZ_ConnectionType linkType_, int linkNum_, int conetNode_, uint32_t VMEBaseAddress_);
+
+    void close();
+    const std::string name() { return digitizer->modelName() + "_" + std::to_string(digitizer->serialNumber()); }
+    const std::string model() { return digitizer->modelName(); }
+    const std::string serial() { return std::to_string(digitizer->serialNumber()); }
+    uint32_t channels() {return digitizer->channels();}
+
+    void set(FunctionID functionID, std::string value);
+    void set(FunctionID functionID, int index, std::string value);
+    std::string get(FunctionID functionID);
+    std::string get(FunctionID functionID, int index);
+
+    void acquisition();
+    const Stats& stats() const {return stats_;}
+    //Post setup, pre aquisition initialization
+    void initialize(DataHandler* dataHandler_);
+
+    // TODO Sould we do somthing different than expose these three function?
+    void startAcquisition() { digitizer->startAcquisition(); }
+    void stopAcquisition() { digitizer->stopAcquisition(); }
+    void reset() { digitizer->reset(); }
 
 private:
     caen::Digitizer* digitizer;
+    DataHandler* dataHandler = nullptr;
     CAEN_DGTZ_DPPFirmware_t firmware;
     uint32_t boardConfiguration = 0;
     bool waveformRecording = false;
-    bool dump=false;
-    std::fstream* dumpfile = nullptr;
 
     uint32_t throttleDownMSecs = 0;
     /* We bind a ReadoutBuffer to each digitizer for ease of use */
@@ -95,39 +100,6 @@ private:
     /* Per-digitizer communication helpers */
     void extractPlainEvents();
     void extractDPPEvents();
-
-public:
-    /* Connection parameters */
-    const CAEN_DGTZ_ConnectionType linkType;
-    const int linkNum;
-    const int conetNode;
-    const uint32_t VMEBaseAddress;
-
-    Digitizer(CAEN_DGTZ_ConnectionType linkType_, int linkNum_, int conetNode_, uint32_t VMEBaseAddress_);
-    //~Digitizer();
-    void close();
-    const std::string name() { return digitizer->modelName() + "_" + std::to_string(digitizer->serialNumber()); }
-    const std::string model() { return digitizer->modelName(); }
-    const std::string serial() { return std::to_string(digitizer->serialNumber()); }
-    uint32_t channels() {return digitizer->channels();}
-
-    void set(FunctionID functionID, std::string value);
-    void set(FunctionID functionID, int index, std::string value);
-    std::string get(FunctionID functionID);
-    std::string get(FunctionID functionID, int index);
-
-    void acquisition();
-    const Stats& stats() const {return stats_;}
-    //Post setup, pre aquisition initialization
-    void initialize(bool dump_=false);
-
-    // TODO make CommHelper private
-    CommHelper* commHelper;
-
-    // TODO Sould we do somthing different than expose there three function?
-    void startAcquisition() { digitizer->startAcquisition(); }
-    void stopAcquisition() { digitizer->stopAcquisition(); }
-    void reset() { digitizer->reset(); }
 };
 
 

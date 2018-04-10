@@ -336,8 +336,9 @@ void Digitizer::close()
     delete digitizer;
 }
 
-void Digitizer::initialize(bool dump_)
+void Digitizer::initialize(DataHandler* dataHandler_)
 {
+    dataHandler = dataHandler_;
     boardConfiguration = digitizer->getBoardConfiguration();
 
     DEBUG(std::cout << "Prepare readout buffer for digitizer " << name() << std::endl;)
@@ -355,17 +356,6 @@ void Digitizer::initialize(bool dump_)
             waveforms = digitizer->mallocDPPWaveforms();
         }
     }
-    if (dump_)
-    {
-        dump = dump_;
-        dumpfile = new std::fstream("dump" + name() + ".txt",std::fstream::out);
-        if (!dumpfile->is_open())
-        {
-            throw std::runtime_error("Could not open data dump file");
-        }
-
-    }
-
 }
 
 void Digitizer::extractPlainEvents()

@@ -39,6 +39,7 @@
 #include <boost/filesystem.hpp>
 #include "trace.hpp"
 
+#define DEFAULT_DATA_PORT 12345
 
 #define NOTHREADS
 #define IDLESLEEP (10)
@@ -112,7 +113,7 @@ void usageHelp(char *name) {
     std::cout << "Usage: " << name << " [<options>] [<jadaq_config_file>]" << std::endl;
     std::cout << "Where <options> can be:" << std::endl;
     std::cout << "--address / -a ADDRESS     optional UDP network address to send to (unset by default)." << std::endl;
-    std::cout << "--port / -p PORT           optional UDP network port to send to (default is " << DEFAULT_UDP_PORT << ")." << std::endl;
+    std::cout << "--port / -p PORT           optional UDP network port to send to (default is " << DEFAULT_DATA_PORT << ")." << std::endl;
     std::cout << "--confoverride / -c FILE   optional conf overrides on CAEN format." << std::endl;
     std::cout << "--dumpprefix / -d PREFIX   optional prefix for output dump to file." << std::endl;
     std::cout << "--registerdump / -r FILE   optional file to save register dump in." << std::endl;
@@ -157,7 +158,7 @@ int main(int argc, char **argv) {
     /* Default conf values - file writes and UDP send disabled by default */
     RuntimeConf conf;
     conf.address = "";
-    conf.port = DEFAULT_UDP_PORT;
+    conf.port = DEFAULT_DATA_PORT;
     conf.configFileName = "";
     conf.overrideFileName = "";
     conf.channelDumpPrefix = "";
@@ -287,42 +288,19 @@ int main(int argc, char **argv) {
     std::cout << "Setup acquisition from " << digitizers.size() << " digitizer(s)." << std::endl;
     for (Digitizer& digitizer: digitizers)
     {
-        /* NOTE: apply overrides from provided CAEN config.
-         *       this can be used to mimic CAEN QDC sample.
-         *
-         *       TODO is this just legacy code???
-         */
-        /*
-        if (conf.overrideEnabled) {
-            std::cout << "Override " << digitizer.name() << " configuration with " << conf.overrideFileName << std::endl;
-            BoardParameters params;
-            if (setup_parameters(&params, (char *)conf.overrideFileName.c_str()) < 0) {
-                std::cerr << "Error in setup parameters from " << conf.overrideFileName << std::endl;
-            } else if (configure_digitizer(digitizer.caen()->handle(), digitizer.caen(), &params) < 0) {
-                std::cerr << "Error in configuring digitizer with overrides from " << conf.overrideFileName << std::endl;
-            }
-        }
-*/
-
         ThreadHelper *digitizerThread = new ThreadHelper();
         threadHelpers[digitizer.name()] = digitizerThread;
         digitizerThread->ready = true;
-
-        /* Setup worker done helper for this digitizer */
-        try {
-            digitizer.commHelper = new CommHelper();
-            udp::resolver resolver(digitizer.commHelper->sendIOService);
-            udp::resolver::query query(udp::v4(), conf.address.c_str(), conf.port.c_str());
-            digitizer.commHelper->remoteEndpoint = *resolver.resolve(query);
-            digitizer.commHelper->socket = new udp::socket(digitizer.commHelper->sendIOService);
-            digitizer.commHelper->socket->open(udp::v4());
-        } catch (std::exception& e) {
-            std::cerr << "ERROR in UDP connection setup to " << conf.address << " : " << e.what() << std::endl;
-            exit(1);
+        /* Prepare buffers - must happen AFTER digitizer has been configured! */
+        DataHandler* dataHandler;
+        if (conf.sendEventEnabled) {
+            dataHandler = new DataHandlerNetwork(conf.address, conf.port);
+        } else
+        {
+            dataHandler = new DataHandlerFile("dump" + digitizer.name() + ".txt");
         }
 
-        /* Prepare buffers - must happen AFTER digitizer has been configured! */
-        digitizer.initialize(true);
+        digitizer.initialize(dataHandler);
     }
 
     acquisitionStart = getTimeMsecs();

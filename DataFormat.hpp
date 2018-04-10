@@ -28,13 +28,6 @@
 #include <cstddef>
 #include <iostream>
 
-/* Default to jumbo frame sized buffer */
-#define MAXBUFSIZE (9000)
-
-#define UDP_LISTEN_ALL "*"
-#define DEFAULT_UDP_SEND_ADDRESS "127.0.0.1"
-#define DEFAULT_UDP_PORT "12345"
-
 /* A simple helper to get current time since epoch in milliseconds */
 #define getTimeMsecs() (std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count())
 
