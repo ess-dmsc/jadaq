@@ -18,16 +18,25 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  * @section DESCRIPTION
- * Interface for the data handlers
+ * Write data to HDF5 file
  *
  */
 
-#ifndef JADAQ_DATAHANDLER_HPP
-#define JADAQ_DATAHANDLER_HPP
+#ifndef JADAQ_DATAHANDLERHDF5_HPP
+#define JADAQ_DATAHANDLERHDF5_HPP
 
-class DataHandler {
+#include <string>
+#include <H5Cpp.h>
+#include "DataHandler.hpp"
+
+class DataHandlerHDF5: public DataHandler
+{
 public:
-    virtual void addEvent() = 0;
+    DataHandlerHDF5(std::string fileName);
+    ~DataHandlerHDF5();
+private:
+    H5::H5File* file = nullptr;
 };
 
-#endif //JADAQ_DATAHANDLER_HPP
+
+#endif //JADAQ_DATAHANDLERHDF5_HPP

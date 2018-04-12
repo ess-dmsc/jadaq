@@ -18,16 +18,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  * @section DESCRIPTION
- * Interface for the data handlers
+ * Write data to HDF5 file
  *
  */
 
-#ifndef JADAQ_DATAHANDLER_HPP
-#define JADAQ_DATAHANDLER_HPP
+#include "DataHandlerHDF5.hpp"
 
-class DataHandler {
-public:
-    virtual void addEvent() = 0;
-};
-
-#endif //JADAQ_DATAHANDLER_HPP

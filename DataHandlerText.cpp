@@ -18,16 +18,25 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  * @section DESCRIPTION
- * Interface for the data handlers
+ * Write data to plain text file
  *
  */
 
-#ifndef JADAQ_DATAHANDLER_HPP
-#define JADAQ_DATAHANDLER_HPP
+#include "DataHandlerText.hpp"
 
-class DataHandler {
-public:
-    virtual void addEvent() = 0;
-};
+DataHandlerText::DataHandlerText(std::string fileName)
+{
+    file = new std::fstream(fileName,std::fstream::out);
+    if (!file->is_open())
+    {
+        throw std::runtime_error("Could not open data dump file: \"" + fileName + "\"");
+    }
+}
 
-#endif //JADAQ_DATAHANDLER_HPP
+DataHandlerText::~DataHandlerText()
+{
+    if (file)
+    {
+        file->close();
+    }
+}

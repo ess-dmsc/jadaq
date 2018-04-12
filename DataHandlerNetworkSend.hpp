@@ -18,16 +18,33 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  * @section DESCRIPTION
- * Interface for the data handlers
+ * Send collected data over the network
  *
  */
 
-#ifndef JADAQ_DATAHANDLER_HPP
-#define JADAQ_DATAHANDLER_HPP
+#ifndef JADAQ_DATAHANDLERNETWORKSEND_HPP
+#define JADAQ_DATAHANDLERNETWORKSEND_HPP
 
-class DataHandler {
+
+/* Default to jumbo frame sized buffer */
+#include <boost/asio.hpp>
+#include <boost/asio/io_service.hpp>
+#include <boost/bind.hpp>
+#include "DataHandler.hpp"
+
+#define MAXBUFSIZE (9000)
+using boost::asio::ip::udp;
+class DataHandlerNetworkSend: public DataHandler
+{
 public:
-    virtual void addEvent() = 0;
+    DataHandlerNetworkSend(std::string address, std::string port);
+    ~DataHandlerNetworkSend();
+private:
+    boost::asio::io_service sendIOService;
+    udp::endpoint remoteEndpoint;
+    udp::socket *socket = nullptr;
+    char *sendBuf;
 };
 
-#endif //JADAQ_DATAHANDLER_HPP
+
+#endif //JADAQ_DATAHANDLERNETWORKSEND_HPP

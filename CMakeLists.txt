@@ -26,14 +26,18 @@ include_directories(${CAEN_INCLUDE_DIR})
 
 find_package(Boost COMPONENTS system filesystem thread REQUIRED)
 
+find_package(HDF5 REQUIRED COMPONENTS C CXX)
+include_directories(${HDF5_INCLUDE_DIRS})
+
+
 add_library(debugCAENComm SHARED debugCAENComm.c)
 target_link_libraries(debugCAENComm dl)
 
 add_library(caen SHARED caen.hpp caen.cpp _CAENDigitizer.c _CAENDigitizer.h)
 target_link_libraries(caen dl)
 
-add_executable(jadaq jadaq.cpp caen.hpp Configuration.cpp Configuration.hpp Digitizer.cpp Digitizer.hpp FunctionID.hpp FunctionID.cpp ini_parser.hpp StringConversion.cpp StringConversion.hpp CAENConf.cpp CAENConf.hpp trace.hpp DataHandler.cpp DataHandler.hpp)
-target_link_libraries(jadaq ${CAEN_LIB} caen ${Boost_FILESYSTEM_LIBRARY} ${Boost_ASIO_LIBRARY} ${Boost_SYSTEM_LIBRARY} ${Boost_THREAD_LIBRARY} pthread)
+add_executable(jadaq jadaq.cpp caen.hpp Configuration.cpp Configuration.hpp Digitizer.cpp Digitizer.hpp FunctionID.hpp FunctionID.cpp ini_parser.hpp StringConversion.cpp StringConversion.hpp CAENConf.cpp CAENConf.hpp trace.hpp DataHandler.cpp DataHandler.hpp DataFormat.hpp DataHandlerText.cpp DataHandlerText.hpp DataHandlerNetworkSend.cpp DataHandlerNetworkSend.hpp DataHandlerHDF5.cpp DataHandlerHDF5.hpp)
+target_link_libraries(jadaq ${CAEN_LIB} caen ${Boost_FILESYSTEM_LIBRARY} ${Boost_ASIO_LIBRARY} ${Boost_SYSTEM_LIBRARY} ${Boost_THREAD_LIBRARY} pthread ${HDF5_CXX_LIBRARIES})
 
 # For hdf5writer
 #find_package(HDF5 REQUIRED COMPONENTS C CXX)

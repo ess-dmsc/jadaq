@@ -18,16 +18,31 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  * @section DESCRIPTION
- * Interface for the data handlers
+ * Send collected data over the network
  *
  */
 
-#ifndef JADAQ_DATAHANDLER_HPP
-#define JADAQ_DATAHANDLER_HPP
+#include <iostream>
+#include "DataHandlerNetworkSend.hpp"
 
-class DataHandler {
-public:
-    virtual void addEvent() = 0;
-};
+DataHandlerNetworkSend::DataHandlerNetworkSend(std::string address, std::string port)
+{
+    try {
+        udp::resolver resolver(sendIOService);
+        udp::resolver::query query(udp::v4(), address.c_str(), port.c_str());
+        //TODO Handle result array properly
+        remoteEndpoint = *resolver.resolve(query);
+        socket = new udp::socket(sendIOService);
+        socket->open(udp::v4());
+        sendBuf = new char[MAXBUFSIZE];
+    } catch (std::exception& e) {
+        std::cerr << "ERROR in UDP connection setup to " << address << ":" << port << " : " << e.what() << std::endl;
+        throw;
+    }
 
-#endif //JADAQ_DATAHANDLER_HPP
+}
+
+DataHandlerNetworkSend::~DataHandlerNetworkSend()
+{
+    delete[] sendBuf;
+}
