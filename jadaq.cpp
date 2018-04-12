@@ -41,7 +41,7 @@
 #include "DataHandlerNetworkSend.hpp"
 #include "DataHandlerText.hpp"
 
-#define DEFAULT_DATA_PORT 12345
+#define DEFAULT_DATA_PORT "12345"
 
 #define NOTHREADS
 #define IDLESLEEP (10)
@@ -296,7 +296,8 @@ int main(int argc, char **argv) {
         /* Prepare buffers - must happen AFTER digitizer has been configured! */
         DataHandler* dataHandler;
         if (conf.sendEventEnabled) {
-            dataHandler = new DataHandlerNetworkSend(conf.address, conf.port);
+            throw std::runtime_error("Sending data over network not implemented yet");
+            //dataHandler = new DataHandlerNetworkSend(conf.address, conf.port);
         } else
         {
             dataHandler = new DataHandlerText("dump" + digitizer.name() + ".txt");

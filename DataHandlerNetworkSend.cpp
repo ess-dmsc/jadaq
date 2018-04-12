@@ -46,3 +46,14 @@ DataHandlerNetworkSend::~DataHandlerNetworkSend()
 {
     delete[] sendBuf;
 }
+
+/*
+// Pack and send out UDP
+DEBUG(std::cout << "Packing events from " << name() << std::endl;)
+commHelper->packedEvents = Data::packEventData(commHelper->eventData);
+// Send data to preconfigured receiver
+DEBUG(std::cout << "Sending " << commHelper->eventData->listEventsLength << " list and " <<
+commHelper->eventData->waveformEventsLength << " waveform events packed into " <<
+commHelper->packedEvents.dataSize << "b from " << name() << std::endl;)
+commHelper->socket->send_to(boost::asio::buffer((char*)(commHelper->packedEvents.data), commHelper->packedEvents.dataSize), commHelper->remoteEndpoint);
+*/
