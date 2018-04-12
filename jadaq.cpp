@@ -38,6 +38,8 @@
 #include "CAENConf.hpp"
 #include <boost/filesystem.hpp>
 #include "trace.hpp"
+#include "DataHandlerNetworkSend.hpp"
+#include "DataHandlerText.hpp"
 
 #define DEFAULT_DATA_PORT 12345
 

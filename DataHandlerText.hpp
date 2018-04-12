@@ -33,6 +33,7 @@ class DataHandlerText: public DataHandler
 public:
     DataHandlerText(std::string fileName);
     ~DataHandlerText();
+    void addEvent(Data::ListElement422 event);
 private:
     std::fstream* file = nullptr;
 };

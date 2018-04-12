@@ -25,9 +25,16 @@
 #ifndef JADAQ_DATAHANDLER_HPP
 #define JADAQ_DATAHANDLER_HPP
 
+#include "DataFormat.hpp"
+
 class DataHandler {
 public:
-    virtual void addEvent() = 0;
+    virtual void addEvent(Data::ListElement422 event) = 0;
 };
+
+/* A simple helper to get current time since epoch in milliseconds */
+static inline uint64_t getTimeMsecs() { return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count() ; }
+
+
 
 #endif //JADAQ_DATAHANDLER_HPP

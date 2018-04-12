@@ -40,3 +40,8 @@ DataHandlerText::~DataHandlerText()
         file->close();
     }
 }
+
+void DataHandlerText::addEvent(Data::ListElement422 event)
+{
+
+}

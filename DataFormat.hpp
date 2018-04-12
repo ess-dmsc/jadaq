@@ -28,9 +28,6 @@
 #include <cstddef>
 #include <iostream>
 
-/* A simple helper to get current time since epoch in milliseconds */
-#define getTimeMsecs() (std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count())
-
 namespace Data {
     enum ElementType: uint16_t
     {
