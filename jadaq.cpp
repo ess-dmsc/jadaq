@@ -40,6 +40,7 @@
 #include "trace.hpp"
 #include "DataHandlerNetworkSend.hpp"
 #include "DataHandlerText.hpp"
+#include "uuid.hpp"
 
 #define DEFAULT_DATA_PORT "12345"
 
@@ -249,6 +250,8 @@ int main(int argc, char **argv) {
     totals.eventsDecoded = 0;
     totals.eventsSent = 0;    
 
+    uuid runID;
+
     /* Singleton helpers */
     uint64_t acquisitionStart = 0, acquisitionStopped = 0;
     uint64_t runtimeMsecs = 0;
@@ -303,7 +306,7 @@ int main(int argc, char **argv) {
             dataHandler = new DataHandlerText("dump" + digitizer.name() + ".txt");
         }
 
-        digitizer.initialize(dataHandler);
+        digitizer.initialize(runID, dataHandler);
     }
 
     acquisitionStart = getTimeMsecs();

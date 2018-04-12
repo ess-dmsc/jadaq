@@ -22,6 +22,7 @@
  *
  */
 
+#include <iomanip>
 #include "DataHandlerText.hpp"
 
 DataHandlerText::DataHandlerText(std::string fileName)
@@ -41,7 +42,16 @@ DataHandlerText::~DataHandlerText()
     }
 }
 
+void DataHandlerText::initialize(uuid runID_, uint32_t digitizerID_)
+{
+    runID = runID_;
+    digitizerID = digitizerID_;
+    *file << "# runID: " << runID << std::endl <<
+          "# digitizerID: " << digitizerID << std::endl;
+}
+
 void DataHandlerText::addEvent(Data::ListElement422 event)
 {
-
+    *file << std::setw(16) << event.localTime << " " << digitizerID << " " << std::setw(8) << event.channel << " " << std::setw(8) << event.adcValue << "\n";
 }
+

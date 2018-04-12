@@ -38,6 +38,7 @@
 #include <boost/thread/thread.hpp>
 #include "trace.hpp"
 #include "DataHandler.hpp"
+#include "uuid.hpp"
 
 class Digitizer
 {
@@ -60,7 +61,7 @@ public:
     void close();
     const std::string name() { return digitizer->modelName() + "_" + std::to_string(digitizer->serialNumber()); }
     const std::string model() { return digitizer->modelName(); }
-    const std::string serial() { return std::to_string(digitizer->serialNumber()); }
+    const uint64_t serial() { return digitizer->serialNumber(); }
     uint32_t channels() {return digitizer->channels();}
 
     void set(FunctionID functionID, std::string value);
@@ -71,7 +72,7 @@ public:
     void acquisition();
     const Stats& stats() const {return stats_;}
     //Post setup, pre aquisition initialization
-    void initialize(DataHandler* dataHandler_);
+    void initialize(uuid runID, DataHandler* dataHandler_);
 
     // TODO Sould we do somthing different than expose these three function?
     void startAcquisition() { digitizer->startAcquisition(); }

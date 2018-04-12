@@ -26,9 +26,16 @@
 #define JADAQ_DATAHANDLER_HPP
 
 #include "DataFormat.hpp"
+#include "uuid.hpp"
 
-class DataHandler {
+class DataHandler
+{
+protected:
+    uuid runID;
+    uint32_t digitizerID;
+    DataHandler() : runID(0) , digitizerID(0) {}
 public:
+    virtual void initialize(uuid runID_, uint32_t digitizerID_) { runID = runID_; digitizerID = digitizerID_;}
     virtual void addEvent(Data::ListElement422 event) = 0;
 };
 

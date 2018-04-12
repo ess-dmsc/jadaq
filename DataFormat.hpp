@@ -35,14 +35,14 @@ namespace Data {
         Waweform
     };
     /* Shared meta data for the entire data package */
-    struct Header { // 24 bytes
+    struct Header { // 32 bytes
         uint64_t runID;
         uint64_t globalTime;
-        uint16_t digitizerID;
+        uint32_t digitizerID;
         uint16_t version;
         uint16_t elementType;
         uint16_t numElements;
-
+        uint8_t __pad[6];
     };
     struct ListElement422
     {

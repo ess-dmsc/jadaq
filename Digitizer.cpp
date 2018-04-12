@@ -336,7 +336,7 @@ void Digitizer::close()
     delete digitizer;
 }
 
-void Digitizer::initialize(DataHandler* dataHandler_)
+void Digitizer::initialize(uuid runID, DataHandler* dataHandler_)
 {
     dataHandler = dataHandler_;
     boardConfiguration = digitizer->getBoardConfiguration();
@@ -356,6 +356,7 @@ void Digitizer::initialize(DataHandler* dataHandler_)
             waveforms = digitizer->mallocDPPWaveforms();
         }
     }
+    dataHandler->initialize(runID, serial());
 }
 
 void Digitizer::extractPlainEvents()

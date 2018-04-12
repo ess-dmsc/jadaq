@@ -33,7 +33,8 @@ class DataHandlerText: public DataHandler
 public:
     DataHandlerText(std::string fileName);
     ~DataHandlerText();
-    void addEvent(Data::ListElement422 event);
+    void initialize(uuid runID, uint32_t digitizerID) override;
+    void addEvent(Data::ListElement422 event) override;
 private:
     std::fstream* file = nullptr;
 };
