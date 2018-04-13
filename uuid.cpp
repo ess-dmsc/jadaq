@@ -8,6 +8,6 @@ std::mt19937_64 uuid::gen(dev());
 std::string uuid::toString() const
 {
     std::stringstream ss;
-    ss << std::hex << std::setfill('0') << std::setw(16) << value;
+    ss << std::hex << std::setfill('0') << std::setw(16) << val;
     return ss.str();
 }

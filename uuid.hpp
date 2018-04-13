@@ -14,10 +14,19 @@ private:
     static std::random_device dev;
     static std::mt19937_64 gen;
     static std::uniform_int_distribution<uint64_t> dis;
-    uint64_t value;
+    uint64_t val;
 public:
-    uuid() : value(dis(gen)) {}
-    uuid(uint64_t v) : value(v) {}
+    uuid() : val(dis(gen)) {}
+    uuid(uint64_t v) : val(v) {}
+    uuid(const uuid& that) : val(that.value()) {}
+    uuid& operator=(const uuid& that) { val = that.value(); return *this; }
+    bool operator==(const uuid& that) const { return value() == that.value(); }
+    bool operator!=(const uuid& that) const { return !(*this == that); }
+    bool operator<(const uuid& that) const { return value() < that.value(); }
+    bool operator>(const uuid& that) const { return that < *this; }
+    bool operator<=(const uuid& that) const { return !(*this > that); }
+    bool operator>=(const uuid& that) const { return !(*this < that); }
+    uint64_t value() const { return val; }
     std::string toString() const;
 };
 
