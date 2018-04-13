@@ -30,7 +30,7 @@ DataHandlerText::DataHandlerText(std::string fileName)
     file = new std::fstream(fileName,std::fstream::out);
     if (!file->is_open())
     {
-        throw std::runtime_error("Could not open data dump file: \"" + fileName + "\"");
+        throw std::runtime_error("Could not open text data file: \"" + fileName + "\"");
     }
 }
 
