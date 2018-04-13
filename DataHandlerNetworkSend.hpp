@@ -39,6 +39,8 @@ class DataHandlerNetworkSend: public DataHandler
 public:
     DataHandlerNetworkSend(std::string address, std::string port);
     ~DataHandlerNetworkSend();
+    void initialize(uuid runID, uint32_t digitizerID) override;
+    void addEvent(Data::ListElement422 event) override;
 private:
     boost::asio::io_service sendIOService;
     udp::endpoint remoteEndpoint;

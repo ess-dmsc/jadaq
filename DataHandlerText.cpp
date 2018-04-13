@@ -55,3 +55,8 @@ void DataHandlerText::addEvent(Data::ListElement422 event)
     *file << std::setw(16) << event.localTime << " " << digitizerID << " " << std::setw(8) << event.channel << " " << std::setw(8) << event.adcValue << "\n";
 }
 
+void DataHandlerText::tick(uint64_t timeStamp)
+{
+    *file << "@ " << timeStamp << "\n";
+}
+

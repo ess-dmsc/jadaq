@@ -37,6 +37,7 @@ protected:
 public:
     virtual void initialize(uuid runID_, uint32_t digitizerID_) { runID = runID_; digitizerID = digitizerID_;}
     virtual void addEvent(Data::ListElement422 event) = 0;
+    virtual void tick(uint64_t timeStamp) = 0;
 };
 
 /* A simple helper to get current time since epoch in milliseconds */

@@ -35,6 +35,7 @@ public:
     ~DataHandlerText();
     void initialize(uuid runID, uint32_t digitizerID) override;
     void addEvent(Data::ListElement422 event) override;
+    void tick(uint64_t timeStamp) override;
 private:
     std::fstream* file = nullptr;
 };

@@ -47,6 +47,18 @@ DataHandlerNetworkSend::~DataHandlerNetworkSend()
     delete[] sendBuf;
 }
 
+void DataHandlerNetworkSend::initialize(uuid runID_, uint32_t digitizerID_)
+{
+    runID = runID_;
+    digitizerID = digitizerID_;
+    // TODO: This is where we will send the configuration over TCP
+}
+
+void DataHandlerNetworkSend::addEvent(Data::ListElement422 event)
+{
+
+    throw std::runtime_error("DataHandlerNetworkSend::addEvent not implemented.");
+}
 /*
 // Pack and send out UDP
 DEBUG(std::cout << "Packing events from " << name() << std::endl;)
