@@ -85,6 +85,7 @@ private:
     CAEN_DGTZ_DPPFirmware_t firmware;
     uint32_t boardConfiguration = 0;
     uint32_t numChannels;
+    uint32_t prevMaxLocalTime = 0;
     bool waveformRecording = false;
 
     uint32_t throttleDownMSecs = 0;

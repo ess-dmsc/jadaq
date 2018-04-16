@@ -396,7 +396,6 @@ void Digitizer::extractPlainEvents()
 
 void Digitizer::extractDPPEvents()
 {
-    static uint32_t prevMaxLocalTime = 0;
     uint32_t maxLocalTime = 0;
     std::vector<Data::ListElement422> buffer;
 
