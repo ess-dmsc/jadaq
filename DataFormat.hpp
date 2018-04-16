@@ -30,7 +30,12 @@
 
 #define VERSION {1,0}
 
-namespace Data {
+/* TODO: Take care of endianness: https://linux.die.net/man/3/endian
+ * We will use little endian for our network protocol since odds
+ * are that both ends will be running on intel hardware
+ */
+namespace Data
+{
     const uint16_t currentVersion = *(uint16_t*)(uint8_t[])VERSION;
     enum ElementType: uint16_t
     {
@@ -39,7 +44,8 @@ namespace Data {
         Waweform
     };
     /* Shared meta data for the entire data package */
-    struct Header { // 32 bytes
+    struct Header // 32 bytes
+    {
         uint64_t runID;
         uint64_t globalTime;
         uint32_t digitizerID;
