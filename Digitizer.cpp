@@ -470,6 +470,7 @@ void Digitizer::extractDPPEvents()
     }
     if (buffer.size() > 0)
     {
+        // TODO: Should every Digitizer ask for the time, or do we need a more sophisticated strategy?
         dataHandler->tick(getTimeMsecs());
         maxLocalTime = 0;
         for (const Data::ListElement422 &listElement: buffer)
