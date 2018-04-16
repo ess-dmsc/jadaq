@@ -52,7 +52,8 @@ void DataHandlerText::initialize(uuid runID_, uint32_t digitizerID_)
 
 void DataHandlerText::addEvent(Data::ListElement422 event)
 {
-    *file << std::setw(16) << event.localTime << " " << digitizerID << " " << std::setw(8) << event.channel << " " << std::setw(8) << event.adcValue << "\n";
+    *file << std::setw(10) << event.localTime << " " << std::setw(10) << digitizerID << " " <<
+          std::setw(10) << event.channel << " " << std::setw(10) << event.adcValue << "\n";
 }
 
 void DataHandlerText::tick(uint64_t timeStamp)
