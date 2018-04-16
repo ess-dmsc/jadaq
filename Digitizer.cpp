@@ -319,7 +319,11 @@ void Digitizer::set(FunctionID functionID, std::string value)
 
 Digitizer::Digitizer(CAEN_DGTZ_ConnectionType linkType_, int linkNum_, int conetNode_, uint32_t VMEBaseAddress_)
         : digitizer(caen::Digitizer::open(linkType_, linkNum_, conetNode_, VMEBaseAddress_))
-        , linkType(linkType_), linkNum(linkNum_), conetNode(conetNode_), VMEBaseAddress(VMEBaseAddress_)
+        , linkType(linkType_)
+        , linkNum(linkNum_)
+        , conetNode(conetNode_)
+        , VMEBaseAddress(VMEBaseAddress_)
+        , channels(digitizer->channels())
 {
     firmware = digitizer->getDPPFirmwareType();
 }
@@ -399,8 +403,7 @@ void Digitizer::extractDPPEvents()
     eventIndex = 0;
     DEBUG(std::cout << "Unpack aggregated DPP events from " << name() << std::endl;)
     digitizer->getDPPEvents(readoutBuffer_, events_);
-
-    for (uint16_t channel = 0; channel < MAX_CHANNELS; channel++) {
+    for (uint16_t channel = 0; channel < channels; channel++) {
         uint32_t nEvents = events_.nEvents[channel];
         eventsFound += nEvents;
         for (uint32_t j = 0; j < nEvents; j++) {

@@ -156,7 +156,7 @@ pt::ptree Configuration::readBack()
             }
             else
             {
-                pt::ptree fPtree = rangeNode(digitizer,id,0,digitizer.channels(), getVerbose());
+                pt::ptree fPtree = rangeNode(digitizer,id,0,digitizer.channels, getVerbose());
                 if (!fPtree.empty())
                 {
                     dPtree.put_child(to_string(id), fPtree);

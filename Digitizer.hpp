@@ -55,6 +55,7 @@ public:
     const int linkNum;
     const int conetNode;
     const uint32_t VMEBaseAddress;
+    const uint32_t channels;
 
     Digitizer(CAEN_DGTZ_ConnectionType linkType_, int linkNum_, int conetNode_, uint32_t VMEBaseAddress_);
 
@@ -62,7 +63,6 @@ public:
     const std::string name() { return digitizer->modelName() + "_" + std::to_string(digitizer->serialNumber()); }
     const std::string model() { return digitizer->modelName(); }
     const uint64_t serial() { return digitizer->serialNumber(); }
-    uint32_t channels() {return digitizer->channels();}
 
     void set(FunctionID functionID, std::string value);
     void set(FunctionID functionID, int index, std::string value);
