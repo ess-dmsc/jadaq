@@ -26,6 +26,8 @@
 #include "DataHandlerNetworkSend.hpp"
 
 DataHandlerNetworkSend::DataHandlerNetworkSend(std::string address, std::string port)
+        : numElements(0)
+        , elementType(Data::None)
 {
     try {
         udp::resolver resolver(sendIOService);
@@ -34,7 +36,7 @@ DataHandlerNetworkSend::DataHandlerNetworkSend(std::string address, std::string 
         remoteEndpoint = *resolver.resolve(query);
         socket = new udp::socket(sendIOService);
         socket->open(udp::v4());
-        sendBuf = new char[MAXBUFSIZE];
+        buffer = new char[bufferSize];
     } catch (std::exception& e) {
         std::cerr << "ERROR in UDP connection setup to " << address << ":" << port << " : " << e.what() << std::endl;
         throw;
@@ -44,7 +46,7 @@ DataHandlerNetworkSend::DataHandlerNetworkSend(std::string address, std::string 
 
 DataHandlerNetworkSend::~DataHandlerNetworkSend()
 {
-    delete[] sendBuf;
+    delete[] buffer;
 }
 
 void DataHandlerNetworkSend::initialize(uuid runID_, uint32_t digitizerID_)
@@ -56,23 +58,46 @@ void DataHandlerNetworkSend::initialize(uuid runID_, uint32_t digitizerID_)
 
 void DataHandlerNetworkSend::addEvent(Data::ListElement422 event)
 {
-
-    throw std::runtime_error("DataHandlerNetworkSend::addEvent not implemented.");
+    if (elementType != Data::List422)
+    {
+        send();
+        elementType = Data::List422;
+    }
+    Data::ListElement422* elementPtr = (Data::ListElement422*)(buffer + sizeof(Data::Header));
+    elementPtr += numElements;
+    *elementPtr = event;
+    numElements += 1;
+    if ((char*)(elementPtr + 2) > buffer + bufferSize) // would the next element overflow the buffer
+    {
+        send();
+    }
 }
 
 void DataHandlerNetworkSend::tick(uint64_t timeStamp)
 {
-    Data::Header* header = (Data::Header*)sendBuf;
-    header->numElements
-    globalTimeStamp = timeStamp;
+    if (timeStamp != globalTimeStamp)
+    {
+        send();
+        globalTimeStamp = timeStamp;
+    }
 }
-/*
-// Pack and send out UDP
-DEBUG(std::cout << "Packing events from " << name() << std::endl;)
-commHelper->packedEvents = Data::packEventData(commHelper->eventData);
-// Send data to preconfigured receiver
-DEBUG(std::cout << "Sending " << commHelper->eventData->listEventsLength << " list and " <<
-commHelper->eventData->waveformEventsLength << " waveform events packed into " <<
-commHelper->packedEvents.dataSize << "b from " << name() << std::endl;)
-commHelper->socket->send_to(boost::asio::buffer((char*)(commHelper->packedEvents.data), commHelper->packedEvents.dataSize), commHelper->remoteEndpoint);
-*/
+
+void DataHandlerNetworkSend::send()
+{
+    if (numElements > 0 and elementType != Data::None)
+    {
+        Data::Header *header = (Data::Header *) buffer;
+        header->runID = runID.value();
+        header->globalTime;
+        header->digitizerID = digitizerID;
+        header->version = Data::currentVersion;
+        header->elementType = elementType;
+        header->numElements = numElements;
+
+        size_t dataSize = sizeof(Data::Header) + Data::elementSize(elementType) * numElements;
+        socket->send_to(boost::asio::buffer(buffer, dataSize), remoteEndpoint);
+    }
+    numElements = 0;
+    elementType = Data::None;
+}
+

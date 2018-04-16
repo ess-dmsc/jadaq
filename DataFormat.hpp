@@ -28,9 +28,13 @@
 #include <cstddef>
 #include <iostream>
 
+#define VERSION {1,0}
+
 namespace Data {
+    const uint16_t currentVersion = *(uint16_t*)(uint8_t[])VERSION;
     enum ElementType: uint16_t
     {
+        None,
         List422,
         Waweform
     };
@@ -39,9 +43,9 @@ namespace Data {
         uint64_t runID;
         uint64_t globalTime;
         uint32_t digitizerID;
-        uint16_t version;
         uint16_t elementType;
         uint16_t numElements;
+        uint16_t version;
         uint8_t __pad[6];
     };
     struct ListElement422
@@ -50,5 +54,17 @@ namespace Data {
         uint16_t adcValue;
         uint16_t channel;
     };
+    inline size_t elementSize(ElementType elementType)
+    {
+        switch (elementType)
+        {
+            case None:
+                return 0;
+            case List422:
+                return sizeof(ListElement422);
+            default:
+                throw std::runtime_error("Unknown element type." );
+        }
+    }
 } // namespace Data
 #endif //JADAQ_DATAFORMAT_HPP

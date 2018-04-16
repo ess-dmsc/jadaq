@@ -32,7 +32,6 @@
 #include <boost/bind.hpp>
 #include "DataHandler.hpp"
 
-#define MAXBUFSIZE (9000)
 using boost::asio::ip::udp;
 class DataHandlerNetworkSend: public DataHandler
 {
@@ -46,9 +45,11 @@ private:
     boost::asio::io_service sendIOService;
     udp::endpoint remoteEndpoint;
     udp::socket *socket = nullptr;
-    char* sendBuf;
+    char* buffer;
+    const size_t bufferSize = 9000;
     uint16_t numElements;
-    void send(char* sendBuf);
+    Data::ElementType elementType;
+    void send();
 };
 
 
