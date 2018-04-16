@@ -396,6 +396,10 @@ void Digitizer::extractPlainEvents()
 
 void Digitizer::extractDPPEvents()
 {
+    static uint32_t prevMaxLocalTime = 0;
+    uint32_t maxLocalTime = 0;
+    std::vector<Data::ListElement422> buffer;
+
     uint32_t eventIndex = 0;
     caen::BasicDPPWaveforms basicDPPWaveforms;
     uint32_t eventsFound = 0;
@@ -416,7 +420,17 @@ void Digitizer::extractDPPEvents()
             listElement.channel = channel;
             DEBUG(std::cout << name() << " channel " << listElement.channel << " event " << j << " charge " <<
                             listElement.adcValue << " with local time " << listElement.localTime << std::endl;)
-            dataHandler->addEvent(listElement);
+            if (listElement.localTime > prevMaxLocalTime)
+            {
+                if (listElement.localTime > maxLocalTime)
+                {
+                    maxLocalTime = listElement.localTime;
+                }
+                dataHandler->addEvent(listElement);
+            } else
+            {
+                buffer.push_back(listElement);
+            }
 
             /* Only try to decode waveforms if digitizer is actually
              * configured to record them in the first place. */
@@ -455,6 +469,21 @@ void Digitizer::extractDPPEvents()
             eventIndex += 1;
         }
     }
+    if (buffer.size() > 0)
+    {
+        dataHandler->tick(getTimeMsecs());
+        maxLocalTime = 0;
+        for (const Data::ListElement422 &listElement: buffer)
+        {
+            if (listElement.localTime > maxLocalTime)
+            {
+                maxLocalTime = listElement.localTime;
+            }
+            dataHandler->addEvent(listElement);
+        }
+    }
+    prevMaxLocalTime = maxLocalTime;
+
     STAT(stats_.eventsDecoded += eventsDecoded;)
     STAT(stats_.eventsUnpacked += eventsFound;)
     STAT(stats_.eventsFound += eventsFound;)
