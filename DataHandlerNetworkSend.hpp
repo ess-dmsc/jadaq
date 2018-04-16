@@ -41,11 +41,14 @@ public:
     ~DataHandlerNetworkSend();
     void initialize(uuid runID, uint32_t digitizerID) override;
     void addEvent(Data::ListElement422 event) override;
+    void tick(uint64_t timeStamp) override;
 private:
     boost::asio::io_service sendIOService;
     udp::endpoint remoteEndpoint;
     udp::socket *socket = nullptr;
-    char *sendBuf;
+    char* sendBuf;
+    uint16_t numElements;
+    void send(char* sendBuf);
 };
 
 

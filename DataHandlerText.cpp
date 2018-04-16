@@ -57,6 +57,9 @@ void DataHandlerText::addEvent(Data::ListElement422 event)
 
 void DataHandlerText::tick(uint64_t timeStamp)
 {
-    *file << "@ " << timeStamp << "\n";
+    if (timeStamp != globalTimeStamp) {
+        *file << "@ " << timeStamp << "\n";
+        globalTimeStamp = timeStamp;
+    }
 }
 

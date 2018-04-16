@@ -59,6 +59,13 @@ void DataHandlerNetworkSend::addEvent(Data::ListElement422 event)
 
     throw std::runtime_error("DataHandlerNetworkSend::addEvent not implemented.");
 }
+
+void DataHandlerNetworkSend::tick(uint64_t timeStamp)
+{
+    Data::Header* header = (Data::Header*)sendBuf;
+    header->numElements
+    globalTimeStamp = timeStamp;
+}
 /*
 // Pack and send out UDP
 DEBUG(std::cout << "Packing events from " << name() << std::endl;)
