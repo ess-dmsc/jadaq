@@ -79,6 +79,7 @@ void NetworkReceive::start(int* keepRunning)
                 dataHandler = itr->second;
             } else {
                 dataHandler = new DataHandlerText("dump-" + runID.toString() + "-" + std::to_string(digitizerID) + ".txt");
+                dataHandler->initialize(runID, digitizerID);
                 dataHandlers.insert(std::make_pair(std::make_pair(runID,digitizerID),dataHandler));
             }
             if (header->version != Data::currentVersion)
