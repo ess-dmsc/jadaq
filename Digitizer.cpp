@@ -419,6 +419,7 @@ void Digitizer::extractDPPEvents()
             listElement.channel = channel;
             DEBUG(std::cout << name() << " channel " << listElement.channel << " event " << j << " charge " <<
                             listElement.adcValue << " with local time " << listElement.localTime << std::endl;)
+            //TODO: What if we have several resets within a single buffer???
             if (listElement.localTime > prevMaxLocalTime)
             {
                 if (listElement.localTime > maxLocalTime)
