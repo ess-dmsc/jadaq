@@ -88,7 +88,7 @@ void DataHandlerNetworkSend::send()
     {
         Data::Header *header = (Data::Header *) buffer;
         header->runID = runID.value();
-        header->globalTime;
+        header->globalTime = globalTimeStamp;
         header->digitizerID = digitizerID;
         header->version = Data::currentVersion;
         header->elementType = elementType;
