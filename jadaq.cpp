@@ -297,8 +297,7 @@ int main(int argc, char **argv) {
         /* Prepare buffers - must happen AFTER digitizer has been configured! */
         DataHandler* dataHandler;
         if (conf.sendEventEnabled) {
-            throw std::runtime_error("Sending data over network not implemented yet");
-            //dataHandler = new DataHandlerNetworkSend(conf.address, conf.port);
+            dataHandler = new DataHandlerNetworkSend(conf.address, conf.port);
         } else
         {
             dataHandler = new DataHandlerText("dump" + digitizer.name() + ".txt");
