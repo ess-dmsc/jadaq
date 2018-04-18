@@ -24,20 +24,27 @@ find_library(CAEN_LIB NAMES CAENDigitizer
         HINTS   $ENV{HOME}/lib)
 include_directories(${CAEN_INCLUDE_DIR})
 
-find_package(Boost COMPONENTS system filesystem thread REQUIRED)
+find_package(Boost COMPONENTS system filesystem thread program_options REQUIRED)
 
 find_package(HDF5 REQUIRED COMPONENTS C CXX)
 include_directories(${HDF5_INCLUDE_DIRS})
 
-
 add_library(debugCAENComm SHARED debugCAENComm.c)
 target_link_libraries(debugCAENComm dl)
+
+file(GLOB DataHandlerHEADERS DataFormat.hpp DataHandler*.hpp uuid.hpp)
+file(GLOB DataHandlerSOURCES DataFormat.cpp DataHandler*.cpp uuid.cpp)
+add_library(DataHandler ${DataHandlerHEADERS} ${DataHandlerSOURCES})
 
 add_library(caen SHARED caen.hpp caen.cpp _CAENDigitizer.c _CAENDigitizer.h)
 target_link_libraries(caen dl)
 
-add_executable(jadaq jadaq.cpp caen.hpp Configuration.cpp Configuration.hpp Digitizer.cpp Digitizer.hpp FunctionID.hpp FunctionID.cpp ini_parser.hpp StringConversion.cpp StringConversion.hpp CAENConf.cpp CAENConf.hpp trace.hpp DataHandler.hpp DataFormat.hpp DataHandlerText.cpp DataHandlerText.hpp DataHandlerNetworkSend.cpp DataHandlerNetworkSend.hpp DataHandlerHDF5.cpp DataHandlerHDF5.hpp uuid.cpp uuid.hpp)
-target_link_libraries(jadaq ${CAEN_LIB} caen ${Boost_FILESYSTEM_LIBRARY} ${Boost_ASIO_LIBRARY} ${Boost_SYSTEM_LIBRARY} ${Boost_THREAD_LIBRARY} pthread ${HDF5_CXX_LIBRARIES})
+add_executable(jadaq ${DataHandlerHEADERS} jadaq.cpp caen.hpp Configuration.cpp Configuration.hpp Digitizer.cpp Digitizer.hpp FunctionID.hpp FunctionID.cpp ini_parser.hpp StringConversion.cpp StringConversion.hpp CAENConf.cpp CAENConf.hpp trace.hpp)
+target_link_libraries(jadaq ${CAEN_LIB} caen DataHandler ${Boost_FILESYSTEM_LIBRARY} ${Boost_ASIO_LIBRARY} ${Boost_SYSTEM_LIBRARY} ${Boost_THREAD_LIBRARY} pthread ${HDF5_CXX_LIBRARIES})
+
+# For jadaq-ds
+add_executable(jadaq-ds jadaq-ds.cpp ${DataHandlerHEADERS} NetworkReceive.cpp NetworkReceive.hpp)
+target_link_libraries(jadaq-ds DataHandler ${HDF5_CXX_LIBRARIES} ${Boost_LIBRARIES} pthread)
 
 # For hdf5writer
 #find_package(HDF5 REQUIRED COMPONENTS C CXX)

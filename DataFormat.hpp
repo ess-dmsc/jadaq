@@ -60,7 +60,7 @@ namespace Data
         uint16_t adcValue;
         uint16_t channel;
     };
-    inline size_t elementSize(ElementType elementType)
+    static inline size_t elementSize(ElementType elementType)
     {
         switch (elementType)
         {
