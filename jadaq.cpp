@@ -42,8 +42,6 @@
 #include "DataHandlerText.hpp"
 #include "uuid.hpp"
 
-#define DEFAULT_DATA_PORT "12345"
-
 #define NOTHREADS
 #define IDLESLEEP (10)
 
@@ -102,7 +100,7 @@ static void setup_interrupt_handler() {
 }
 
 void showTotals(TotalStats &totals) {
-    STAT(uint64_t runtimeMsecs = getTimeMsecs() - totals.runStartTime;)
+    STAT(uint64_t runtimeMsecs = DataHandler::getTimeMsecs() - totals.runStartTime;)
     STAT(std::cout << "= Accumulated Stats =" << std::endl;)
     STAT(std::cout << "Runtime in seconds: " << runtimeMsecs / 1000.0 << std::endl;)
     STAT(std::cout << "Bytes read: " << totals.bytesRead << std::endl;)
@@ -116,7 +114,7 @@ void usageHelp(char *name) {
     std::cout << "Usage: " << name << " [<options>] [<jadaq_config_file>]" << std::endl;
     std::cout << "Where <options> can be:" << std::endl;
     std::cout << "--address / -a ADDRESS     optional UDP network address to send to (unset by default)." << std::endl;
-    std::cout << "--port / -p PORT           optional UDP network port to send to (default is " << DEFAULT_DATA_PORT << ")." << std::endl;
+    std::cout << "--port / -p PORT           optional UDP network port to send to (default is " << DataHandler::defaultDataPort << ")." << std::endl;
     std::cout << "--confoverride / -c FILE   optional conf overrides on CAEN format." << std::endl;
     std::cout << "--dumpprefix / -d PREFIX   optional prefix for output dump to file." << std::endl;
     std::cout << "--registerdump / -r FILE   optional file to save register dump in." << std::endl;
@@ -161,7 +159,7 @@ int main(int argc, char **argv) {
     /* Default conf values - file writes and UDP send disabled by default */
     RuntimeConf conf;
     conf.address = "";
-    conf.port = DEFAULT_DATA_PORT;
+    conf.port = DataHandler::defaultDataPort;
     conf.configFileName = "";
     conf.overrideFileName = "";
     conf.channelDumpPrefix = "";
@@ -309,7 +307,7 @@ int main(int argc, char **argv) {
         digitizer.initialize(runID, dataHandler);
     }
 
-    acquisitionStart = getTimeMsecs();
+    acquisitionStart = DataHandler::getTimeMsecs();
     totals.runStartTime = acquisitionStart;
     std::cout << "Start acquisition from " << digitizers.size() << " digitizer(s)." << std::endl;
     for (Digitizer& digitizer: digitizers) {
@@ -400,7 +398,7 @@ int main(int argc, char **argv) {
         digitizer.stopAcquisition();
     }
 
-    acquisitionStopped = getTimeMsecs();
+    acquisitionStopped = DataHandler::getTimeMsecs();
     std::cout << "Acquisition loop ran for " << (acquisitionStopped - acquisitionStart) / 1000.0 << "s." << std::endl;
 
     /* Stop and wait for thread pool to complete */

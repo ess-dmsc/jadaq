@@ -42,11 +42,11 @@ public:
     void addEvent(Data::ListElement422 event) override;
     void tick(uint64_t timeStamp) override;
 private:
-    boost::asio::io_service sendIOService;
+    boost::asio::io_service ioService;
     udp::endpoint remoteEndpoint;
     udp::socket *socket = nullptr;
     char* buffer;
-    const size_t bufferSize = 9000;
+    const size_t bufferSize = DataHandler::maxBufferSize;
     uint16_t numElements;
     Data::ElementType elementType;
     void send();

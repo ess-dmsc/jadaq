@@ -30,11 +30,11 @@ DataHandlerNetworkSend::DataHandlerNetworkSend(std::string address, std::string 
         , elementType(Data::None)
 {
     try {
-        udp::resolver resolver(sendIOService);
+        udp::resolver resolver(ioService);
         udp::resolver::query query(udp::v4(), address.c_str(), port.c_str());
         //TODO Handle result array properly
         remoteEndpoint = *resolver.resolve(query);
-        socket = new udp::socket(sendIOService);
+        socket = new udp::socket(ioService);
         socket->open(udp::v4());
         buffer = new char[bufferSize];
     } catch (std::exception& e) {
