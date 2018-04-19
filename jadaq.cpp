@@ -341,7 +341,7 @@ int main(int argc, char **argv) {
          *   - optionally dump data on simple format
          *   - optionally pack and send out data on UDP
          */
-        std::cout << "Read out data from " << digitizers.size() << " digitizer(s)." << std::endl;
+        DEBUG(std::cout << "Read out data from " << digitizers.size() << " digitizer(s)." << std::endl;)
         /* Read out acquired data for all digitizers */
         tasksEnqueued = 0;
         totals.eventsFound = 0;
@@ -350,7 +350,7 @@ int main(int argc, char **argv) {
                 ThreadHelper *digitizerThread = threadHelpers[digitizer.name()];
                 if (digitizerThread->ready) {
                     digitizerThread->ready = false;
-                    std::cout << "Enqueuing new digitizer acquisition for " << digitizer.name() << std::endl;
+                    DEBUG(std::cout << "Enqueuing new digitizer acquisition for " << digitizer.name() << std::endl;)
 #ifdef NOTHREADS
                     /* Inline digitizerAcquisition without threading */
                     digitizer.acquisition();
@@ -361,7 +361,7 @@ int main(int argc, char **argv) {
 #endif
                     tasksEnqueued++;
                 } else {
-                    std::cout << "Acquisition still active for digitizer " << digitizer.name() << std::endl;
+                    DEBUG(std::cout << "Acquisition still active for digitizer " << digitizer.name() << std::endl;)
                 }
             } catch(std::exception& e) {
                 std::cerr << "ERROR: unexpected exception during acquisition: " << e.what() << std::endl;
