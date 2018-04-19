@@ -34,6 +34,10 @@ class DataHandlerHDF5: public DataHandler
 public:
     DataHandlerHDF5(std::string fileName);
     ~DataHandlerHDF5();
+    void initialize(uuid runID, uint32_t digitizerID) override;
+    void addEvent(Data::ListElement422 event) override;
+    void tick(uint64_t timeStamp) override;
+
 private:
     H5::H5File* file = nullptr;
 };

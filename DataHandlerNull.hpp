@@ -30,7 +30,6 @@
 class DataHandlerNull: public DataHandler
 {
 public:
-    void initialize(uuid runID, uint32_t digitizerID) override {}
     void addEvent(Data::ListElement422 event) override {}
     void tick(uint64_t timeStamp) override {}
 };
