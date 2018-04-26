@@ -29,18 +29,21 @@
 
 #include <CAENDigitizer.h>
 
-#define MAX_CHANNELS 64
-#define MAX_GROUPS    8
 
 #define MAX_AGGR_NUM_PER_BLOCK_TRANSFER   1023
 
-#define V1740_DPP_QDC_CODE    (0x87)
-#define CAEN_DGTZ_DPPFirmware_QDC (CAEN_DGTZ_DPPFirmware_ZLE+1)
-#define MAX_V1740_DPP_GROUP_SIZE   (8)                         // Number of groups - poorly named
-#define MAX_DPP_QDC_CHANNEL_SIZE (MAX_V1740_DPP_GROUP_SIZE)
-#define V1740_MAX_CHANNELS                        64
-#define MAX_EVENT_QUEUE_DEPTH                   512
-#define MAX_ALLOCATED_MEM_PER_GROUP    (18*1024*1024)
+#define V1740_DPP_QDC_CODE          (0x87)
+#define CAEN_DGTZ_DPPFirmware_QDC   (CAEN_DGTZ_DPPFirmware_ZLE+1)
+#define MAX_V1740_DPP_GROUP_SIZE    (8)                         // Number of groups - poorly named
+#define MAX_V1740_CHANNEL_SIZE      (64)
+#define MAX_EVENT_QUEUE_DEPTH       (512)
+#define MAX_ALLOCATED_MEM_PER_GROUP (18*1024*1024)
+#define MAX_DPP_QDC_CHANNEL_SIZE    (MAX_V1740_CHANNEL_SIZE)
+
+#ifdef MAX_DPP_CHANNEL_SIZE
+#undef MAX_DPP_CHANNEL_SIZE
+#endif
+#define MAX_DPP_CHANNEL_SIZE        (MAX_DPP_QDC_CHANNEL_SIZE)
 
 #ifdef __cplusplus
 extern "C" {

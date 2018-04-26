@@ -93,8 +93,9 @@ private:
     /* Standard firmware uses eventInfo and Event while DPP firmware
      * keeps it all in a DPPEvents structure. */
     caen::EventInfo eventInfo_;
-    void *plainEvent = nullptr;
-    caen::DPPEvents events_;
+    caen::DPPEvents_t*  dppEvents;
+    void* plainEvent;
+
     caen::DPPWaveforms waveforms;
 
     STAT(Stats stats_;)

@@ -30,6 +30,10 @@
 #include <CAENDigitizer.h>
 #include "_CAENDigitizer.h"
 
+#define MAX_CHANNELS  (MAX_V1740_CHANNEL_SIZE)
+#define MAX_GROUPS    (MAX_V1740_DPP_GROUP_SIZE)
+
+
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
 
 #define QDC_FUNCTION(F_NAME,HANDLE,...)                                         \
@@ -108,7 +112,7 @@ static CAEN_DGTZ_ErrorCode V1740DPP_QDC_MallocDPPEvents(int handle, void **event
     //for(int i=0; i<MAX_V1740_DPP_GROUP_SIZE ; i++) {
     for(i=0; i<MAX_CHANNELS ; i++) {
         /* NOTE: changed to ptr+i*elems instead of the following original constant assignment!?! */
-        //events[i] = ptr+V1740_MAX_CHANNELS*MAX_EVENT_QUEUE_DEPTH;
+        //events[i] = ptr+MAX_V1740_CHANNEL_SIZE*MAX_EVENT_QUEUE_DEPTH;
         events[i] = ptr+i*elems;
     }
     *allocatedSize = size;
@@ -290,14 +294,14 @@ static inline uint32_t channelTriggerAddress(uint32_t channel)
 
 static CAEN_DGTZ_ErrorCode V1740DPP_QDC_SetChannelTriggerThreshold(int handle, uint32_t channel, uint32_t Tvalue)
 {
-    if (channel > V1740_MAX_CHANNELS)
+    if (channel > MAX_V1740_CHANNEL_SIZE)
         return CAEN_DGTZ_InvalidChannelNumber;
     return CAEN_DGTZ_WriteRegister(handle, channelTriggerAddress(channel), Tvalue);
 }
 
 static CAEN_DGTZ_ErrorCode V1740DPP_QDC_GetChannelTriggerThreshold(int handle, uint32_t channel, uint32_t* Tvalue)
 {
-    if (channel > V1740_MAX_CHANNELS)
+    if (channel > MAX_V1740_CHANNEL_SIZE)
         return CAEN_DGTZ_InvalidChannelNumber;
     return CAEN_DGTZ_ReadRegister(handle, channelTriggerAddress(channel), Tvalue);
 }

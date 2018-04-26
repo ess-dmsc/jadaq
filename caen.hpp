@@ -338,12 +338,22 @@ namespace caen {
      * @var DPPEvents::elemSize
      * The size in bytes of each element in the events list
      */
-    struct DPPEvents
+
+    struct DPPEvents_t
     {
-        void** ptr = nullptr;             // CAEN_DGTZ_DPP_XXX_Event_t* ptr[MAX_DPP_XXX_CHANNEL_SIZE]
-        uint32_t* nEvents = nullptr;      // Number of events pr channel
+        virtual void** data() = 0;
+        uint32_t nEvents[MAX_DPP_CHANNEL_SIZE];// Number of events pr channel
         uint32_t allocatedSize = 0;
-        uint32_t elemSize = 0;
+    };
+
+    template <typename T>
+    struct DPPEvents: public DPPEvents_t
+    {
+        typedef std::iterator<std::forward_iterator_tag, T > iterator;
+        T* ptr[MAX_DPP_CHANNEL_SIZE];
+        void** data() override { return (void**)ptr;}
+        iterator begin() { return &ptr[0][0]; }
+        //iterator end()   { return &ptr[0][0]; }
     };
 
     /**
@@ -2719,30 +2729,40 @@ namespace caen {
     class Digitizer
     {
     private:
-        Digitizer() {}
-        Digitizer(int handle) : handle_(handle) { boardInfo_ = getRawDigitizerBoardInfo(handle_); }
+        Digitizer()
+        {}
+
+        Digitizer(int handle) : handle_(handle)
+        { boardInfo_ = getRawDigitizerBoardInfo(handle_); }
 
     protected:
         int handle_;
         CAEN_DGTZ_BoardInfo_t boardInfo_;
-        Digitizer(int handle, CAEN_DGTZ_BoardInfo_t boardInfo) : handle_(handle) { boardInfo_ = boardInfo; }
+
+        Digitizer(int handle, CAEN_DGTZ_BoardInfo_t boardInfo) : handle_(handle)
+        { boardInfo_ = boardInfo; }
+
         virtual uint32_t filterBoardConfigurationSetMask(uint32_t mask)
         { return mask; }
+
         virtual uint32_t filterBoardConfigurationUnsetMask(uint32_t mask)
         { return mask; }
 
     public:
-        public:
+    public:
 
         /* Digitizer creation */
-        static Digitizer* open(CAEN_DGTZ_ConnectionType linkType, int linkNum, int conetNode, uint32_t VMEBaseAddress);
+        static Digitizer *open(CAEN_DGTZ_ConnectionType linkType, int linkNum, int conetNode, uint32_t VMEBaseAddress);
+
         /**
          * @brief Instantiate Digitizer from USB device.
          * @param linkNum: device index on the bus
          * @returns
          * Abstracted digitizer instance for the device.
          */
-        static Digitizer* USB(int linkNum) { return open(CAEN_DGTZ_USB,linkNum,0,0); }
+        static Digitizer *USB(int linkNum)
+        { return open(CAEN_DGTZ_USB, linkNum, 0, 0); }
+
         /**
          * @brief Instantiate Digitizer from USB device.
          * @param linkNum: device index on the bus
@@ -2750,7 +2770,9 @@ namespace caen {
          * @returns
          * Abstracted digitizer instance for the device.
          */
-        static Digitizer* USB(int linkNum, uint32_t VMEBaseAddress) { return open(CAEN_DGTZ_USB,linkNum,0,VMEBaseAddress);}
+        static Digitizer *USB(int linkNum, uint32_t VMEBaseAddress)
+        { return open(CAEN_DGTZ_USB, linkNum, 0, VMEBaseAddress); }
+
         /**
          * @brief Instantiate Digitizer from Optical connection.
          * @param linkNum: device index on the bus
@@ -2758,56 +2780,104 @@ namespace caen {
          * @returns
          * Abstracted digitizer instance for the device.
          */
-        static Digitizer* Optical(int linkNum, int conetNode) { return open(CAEN_DGTZ_OpticalLink,linkNum,conetNode,0);}
+        static Digitizer *Optical(int linkNum, int conetNode)
+        { return open(CAEN_DGTZ_OpticalLink, linkNum, conetNode, 0); }
 
         /* Destruction */
         /**
          * @brief close Digitizer instance.
          * @param handle: low-level device handle
          */
-        static void close(int handle) { closeRawDigitizer(handle); }
+        static void close(int handle)
+        { closeRawDigitizer(handle); }
+
         /**
          * @brief Destroy Digitizer instance.
          */
-        ~Digitizer() { close(handle_); }
+        ~Digitizer()
+        { close(handle_); }
 
         /* Information functions */
-        const std::string modelName() const {return std::string(boardInfo_.ModelName);}
-        uint32_t modelNo() const {return boardInfo_.Model; }
-        virtual uint32_t channels() const { return boardInfo_.Channels; }
-        // by default groups do not exists. I.e. one channel pr. group
-        virtual uint32_t groups() const { return boardInfo_.Channels; }
-        virtual uint32_t channelsPerGroup() const { return 1; }
-        uint32_t formFactor() const { return  boardInfo_.FormFactor; }
-        uint32_t familyCode() const { return boardInfo_.FamilyCode; }
-        const std::string ROCfirmwareRel() const { return std::string(boardInfo_.ROC_FirmwareRel); }
-        const std::string AMCfirmwareRel() const { return std::string(boardInfo_.AMC_FirmwareRel); }
-        uint32_t serialNumber() const { return boardInfo_.SerialNumber; }
-        uint32_t PCBrevision() const { return boardInfo_.PCB_Revision; }
-        uint32_t ADCbits() const { return boardInfo_.ADC_NBits; }
-        int commHandle() const { return boardInfo_.CommHandle; }
-        int VMEhandle() const { return boardInfo_.VMEHandle; }
-        const std::string license() const { return std::string(boardInfo_.License); }
+        const std::string modelName() const
+        { return std::string(boardInfo_.ModelName); }
 
-        int handle() { return handle_; }
+        uint32_t modelNo() const
+        { return boardInfo_.Model; }
+
+        virtual uint32_t channels() const
+        { return boardInfo_.Channels; }
+
+        // by default groups do not exists. I.e. one channel pr. group
+        virtual uint32_t groups() const
+        { return boardInfo_.Channels; }
+
+        virtual uint32_t channelsPerGroup() const
+        { return 1; }
+
+        uint32_t formFactor() const
+        { return boardInfo_.FormFactor; }
+
+        uint32_t familyCode() const
+        { return boardInfo_.FamilyCode; }
+
+        const std::string ROCfirmwareRel() const
+        { return std::string(boardInfo_.ROC_FirmwareRel); }
+
+        const std::string AMCfirmwareRel() const
+        { return std::string(boardInfo_.AMC_FirmwareRel); }
+
+        uint32_t serialNumber() const
+        { return boardInfo_.SerialNumber; }
+
+        uint32_t PCBrevision() const
+        { return boardInfo_.PCB_Revision; }
+
+        uint32_t ADCbits() const
+        { return boardInfo_.ADC_NBits; }
+
+        int commHandle() const
+        { return boardInfo_.CommHandle; }
+
+        int VMEhandle() const
+        { return boardInfo_.VMEHandle; }
+
+        const std::string license() const
+        { return std::string(boardInfo_.License); }
+
+        int handle()
+        { return handle_; }
 
         CAEN_DGTZ_DPPFirmware_t getDPPFirmwareType()
-        { CAEN_DGTZ_DPPFirmware_t firmware = CAEN_DGTZ_NotDPPFirmware; errorHandler(_CAEN_DGTZ_GetDPPFirmwareType(handle_, &firmware)); return firmware; }
+        {
+            CAEN_DGTZ_DPPFirmware_t firmware = CAEN_DGTZ_NotDPPFirmware;
+            errorHandler(_CAEN_DGTZ_GetDPPFirmwareType(handle_, &firmware));
+            return firmware;
+        }
 
         /* Raw register read/write functions */
         void writeRegister(uint32_t address, uint32_t value)
         { errorHandler(CAEN_DGTZ_WriteRegister(handle_, address, value)); }
+
         uint32_t readRegister(uint32_t address)
-        { uint32_t value; errorHandler(CAEN_DGTZ_ReadRegister(handle_, address, &value)); return value; }
+        {
+            uint32_t value;
+            errorHandler(CAEN_DGTZ_ReadRegister(handle_, address, &value));
+            return value;
+        }
 
         /* Utility functions */
-        void reset() { errorHandler(CAEN_DGTZ_Reset(handle_)); }
+        void reset()
+        { errorHandler(CAEN_DGTZ_Reset(handle_)); }
 
         void calibrate()
         { errorHandler(CAEN_DGTZ_Calibrate(handle_)); }
 
         uint32_t readTemperature(int32_t ch)
-        {uint32_t temp; errorHandler(CAEN_DGTZ_ReadTemperature(handle_, ch, &temp)); return temp; }
+        {
+            uint32_t temp;
+            errorHandler(CAEN_DGTZ_ReadTemperature(handle_, ch, &temp));
+            return temp;
+        }
 
         /* Note: to be used only with x742 series. */
         void loadDRS4CorrectionData(CAEN_DGTZ_DRS4Frequency_t frequency)
@@ -2824,12 +2894,17 @@ namespace caen {
          */
         void enableDRS4Correction()
         { errorHandler(CAEN_DGTZ_EnableDRS4Correction(handle_)); }
+
         void disableDRS4Correction()
         { errorHandler(CAEN_DGTZ_DisableDRS4Correction(handle_)); }
 
         /* Note: to be used only with 742 digitizer series. */
         CAEN_DGTZ_DRS4Correction_t getCorrectionTables(int frequency)
-        { CAEN_DGTZ_DRS4Correction_t ctable; errorHandler(CAEN_DGTZ_GetCorrectionTables(handle_, frequency, &ctable)); return ctable; }
+        {
+            CAEN_DGTZ_DRS4Correction_t ctable;
+            errorHandler(CAEN_DGTZ_GetCorrectionTables(handle_, frequency, &ctable));
+            return ctable;
+        }
 
         void clearData()
         { errorHandler(CAEN_DGTZ_ClearData(handle_)); }
@@ -2846,8 +2921,11 @@ namespace caen {
         void stopAcquisition()
         { errorHandler(CAEN_DGTZ_SWStopAcquisition(handle_)); }
 
-        ReadoutBuffer& readData(ReadoutBuffer& buffer,CAEN_DGTZ_ReadMode_t mode)
-        { errorHandler(CAEN_DGTZ_ReadData(handle_, mode, buffer.data, &buffer.dataSize)); return buffer; }
+        ReadoutBuffer &readData(ReadoutBuffer &buffer, CAEN_DGTZ_ReadMode_t mode)
+        {
+            errorHandler(CAEN_DGTZ_ReadData(handle_, mode, buffer.data, &buffer.dataSize));
+            return buffer;
+        }
 
         /* Interrupt control */
 
@@ -2855,10 +2933,21 @@ namespace caen {
          * USB (either directly or through V1718 and VME)
          */
 
-        InterruptConfig getInterruptConfig ()
-        { InterruptConfig conf; errorHandler(CAEN_DGTZ_GetInterruptConfig(handle_, &conf.state, &conf.level, &conf.status_id, &conf.event_number, &conf.mode)); return conf; }
-        void setInterruptConfig (InterruptConfig conf)
-        { errorHandler(CAEN_DGTZ_SetInterruptConfig(handle_, conf.state, conf.level, conf.status_id, conf.event_number, conf.mode)); }
+        InterruptConfig getInterruptConfig()
+        {
+            InterruptConfig conf;
+            errorHandler(
+                    CAEN_DGTZ_GetInterruptConfig(handle_, &conf.state, &conf.level, &conf.status_id, &conf.event_number,
+                                                 &conf.mode));
+            return conf;
+        }
+
+        void setInterruptConfig(InterruptConfig conf)
+        {
+            errorHandler(
+                    CAEN_DGTZ_SetInterruptConfig(handle_, conf.state, conf.level, conf.status_id, conf.event_number,
+                                                 conf.mode));
+        }
 
         void doIRQWait(uint32_t timeout)
         { errorHandler(CAEN_DGTZ_IRQWait(handle_, timeout)); }
@@ -2866,85 +2955,89 @@ namespace caen {
         /* NOTE: VME* calls are for VME bus interrupts and work on a
          * separate VME handle. Not sure if they are needed. 
          */
-        int doVMEIRQWait(CAEN_DGTZ_ConnectionType LinkType, int LinkNum, int ConetNode, uint8_t IRQMask,uint32_t timeout)
-        { int vmehandle; errorHandler(CAEN_DGTZ_VMEIRQWait(LinkType, LinkNum, ConetNode, IRQMask, timeout, &vmehandle)); return vmehandle; }
+        int
+        doVMEIRQWait(CAEN_DGTZ_ConnectionType LinkType, int LinkNum, int ConetNode, uint8_t IRQMask, uint32_t timeout)
+        {
+            int vmehandle;
+            errorHandler(CAEN_DGTZ_VMEIRQWait(LinkType, LinkNum, ConetNode, IRQMask, timeout, &vmehandle));
+            return vmehandle;
+        }
 
         uint8_t doVMEIRQCheck(int vmehandle)
-        { uint8_t mask; errorHandler(CAEN_DGTZ_VMEIRQCheck(vmehandle, &mask)); return mask; }
+        {
+            uint8_t mask;
+            errorHandler(CAEN_DGTZ_VMEIRQCheck(vmehandle, &mask));
+            return mask;
+        }
 
         int32_t doVMEIACKCycle(int vmehandle, uint8_t level)
-        { int32_t board_id; errorHandler(CAEN_DGTZ_VMEIACKCycle(vmehandle, level, &board_id)); return board_id; }
+        {
+            int32_t board_id;
+            errorHandler(CAEN_DGTZ_VMEIACKCycle(vmehandle, level, &board_id));
+            return board_id;
+        }
 
         void rearmInterrupt()
         { errorHandler(CAEN_DGTZ_RearmInterrupt(handle_)); }
 
         /* Memory management */
         ReadoutBuffer mallocReadoutBuffer()
-        { ReadoutBuffer buffer; errorHandler(_CAEN_DGTZ_MallocReadoutBuffer(handle_, &buffer.data, &buffer.size)); return buffer; }
-        void freeReadoutBuffer(ReadoutBuffer buffer) {
-            if (buffer.data != nullptr) {
+        {
+            ReadoutBuffer buffer;
+            errorHandler(_CAEN_DGTZ_MallocReadoutBuffer(handle_, &buffer.data, &buffer.size));
+            return buffer;
+        }
+
+        void freeReadoutBuffer(ReadoutBuffer buffer)
+        {
+            if (buffer.data != nullptr)
+            {
                 errorHandler(CAEN_DGTZ_FreeReadoutBuffer(&buffer.data));
                 buffer.size = 0;
             }
         }
-        // TODO Think of an intelligent way to handle events not using void pointers
-        void* mallocEvent()
-        { void* event; errorHandler(CAEN_DGTZ_AllocateEvent(handle_, &event)); return event; }
-        void freeEvent(void* event)
-        { errorHandler(CAEN_DGTZ_FreeEvent(handle_, (void**)&event)); }
 
-        DPPEvents mallocDPPEvents()
+        // TODO Think of an intelligent way to handle events not using void pointers
+        void *mallocEvent()
         {
-            DPPEvents events;
-            /* MallocDPPEvents docs specify that event matrix always
-             *  must have MAX_CHANNELS entries. We use nEvents for
-             *  internal accounting so it must be same length. */
-            // TODO use coorect number of max channels - this uses MAX_CHANNELS from QDC
-            events.ptr = new void*[MAX_CHANNELS];
-            events.nEvents = new uint32_t[MAX_CHANNELS];
-            for (int i = 0; i < MAX_CHANNELS; i++) {
-                events.ptr[i] = nullptr;
-                events.nEvents[i] = 0;
-            }
-            switch(getDPPFirmwareType())
+            void *event;
+            errorHandler(CAEN_DGTZ_AllocateEvent(handle_, &event));
+            return event;
+        }
+
+        void freeEvent(void *event)
+        { errorHandler(CAEN_DGTZ_FreeEvent(handle_, (void **) &event)); }
+
+        DPPEvents_t *mallocDPPEvents(CAEN_DGTZ_DPPFirmware_t firmware)
+        {
+            DPPEvents_t *events;
+            switch (firmware)
             {
                 case CAEN_DGTZ_DPPFirmware_PHA:
-                    events.elemSize = sizeof(CAEN_DGTZ_DPP_PHA_Event_t);
+                    events = new DPPEvents <CAEN_DGTZ_DPP_PHA_Event_t>{};
                     break;
                 case CAEN_DGTZ_DPPFirmware_PSD:
-                    events.elemSize = sizeof(CAEN_DGTZ_DPP_PSD_Event_t);
+                    events = new DPPEvents <CAEN_DGTZ_DPP_PSD_Event_t>{};
                     break;
                 case CAEN_DGTZ_DPPFirmware_CI:
-                    events.elemSize = sizeof(CAEN_DGTZ_DPP_CI_Event_t);
+                    events = new DPPEvents <CAEN_DGTZ_DPP_CI_Event_t>{};
                     break;
+                case CAEN_DGTZ_DPPFirmware_ZLE:
+                    throw std::runtime_error("ZLE Firmware not supported by DPPEvents_t.");
                 case CAEN_DGTZ_DPPFirmware_QDC:
-                    events.elemSize = sizeof(_CAEN_DGTZ_DPP_QDC_Event_t);
-                    break;
+                    events = new DPPEvents <_CAEN_DGTZ_DPP_QDC_Event_t>{};
+                case CAEN_DGTZ_NotDPPFirmware:
+                    throw std::runtime_error("Non DPP firmware not supported by DPPEvents_t.");
                 default:
-                    errorHandler(CAEN_DGTZ_FunctionNotAllowed);
+                    throw std::runtime_error("Unknown firmware type. Not supported by Digitizer.");
             }
-            try
-            {
-                errorHandler(_CAEN_DGTZ_MallocDPPEvents(handle_, events.ptr, &events.allocatedSize));
-            } catch (...) {
-                delete[] events.ptr;
-                delete[] events.nEvents;
-                events.ptr = nullptr;
-                events.nEvents = nullptr;
-                throw;
-            }
+            errorHandler(_CAEN_DGTZ_MallocDPPEvents(handle_, events->data(), &(events->allocatedSize)));
             return events;
         }
-        void freeDPPEvents(DPPEvents events)
-        { if (events.ptr != nullptr)
-            {
-                errorHandler(_CAEN_DGTZ_FreeDPPEvents(handle_, events.ptr));
-                delete[](events.ptr);
-                delete[](events.nEvents);
-                events.ptr = nullptr;
-                events.nEvents = nullptr;
-            }
-        }
+        virtual DPPEvents_t *mallocDPPEvents() { return mallocDPPEvents(getDPPFirmwareType()); }
+
+        void freeDPPEvents(DPPEvents_t* events)
+        { if (events->allocatedSize < 0) errorHandler(_CAEN_DGTZ_FreeDPPEvents(handle_, events->data())); events->allocatedSize = 0; }
 
         DPPWaveforms mallocDPPWaveforms()
         { DPPWaveforms waveforms; errorHandler(_CAEN_DGTZ_MallocDPPWaveforms(handle_, &waveforms.ptr, &waveforms.allocatedSize)); return waveforms; }
@@ -2987,142 +3080,22 @@ namespace caen {
             return basic;
         }
 
-        DPPEvents& getDPPEvents(ReadoutBuffer buffer, DPPEvents& events)
-        { errorHandler(_CAEN_DGTZ_GetDPPEvents(handle_, buffer.data, buffer.dataSize, events.ptr, events.nEvents)); return events; }
+        void getDPPEvents(ReadoutBuffer buffer, DPPEvents_t* events)
+        { errorHandler(_CAEN_DGTZ_GetDPPEvents(handle_, buffer.data, buffer.dataSize, events->data(), events->nEvents)); }
 
-        void *extractDPPEvent(DPPEvents& events, uint32_t channel, uint32_t eventNo) { 
-            void *event = NULL;
-            switch(getDPPFirmwareType())
-            {
-            case CAEN_DGTZ_DPPFirmware_PHA:
-                event = &(((CAEN_DGTZ_DPP_PHA_Event_t **)events.ptr)[channel][eventNo]);
-                break;
-            case CAEN_DGTZ_DPPFirmware_PSD:
-                event = &(((CAEN_DGTZ_DPP_PSD_Event_t **)events.ptr)[channel][eventNo]);
-                break;
-            case CAEN_DGTZ_DPPFirmware_CI:
-                event = &(((CAEN_DGTZ_DPP_CI_Event_t **)events.ptr)[channel][eventNo]);
-                break;
-            case CAEN_DGTZ_DPPFirmware_QDC:
-                event = &(((_CAEN_DGTZ_DPP_QDC_Event_t **)events.ptr)[channel][eventNo]);
-                break;
-            default:
-                errorHandler(CAEN_DGTZ_FunctionNotAllowed);
-            }
-            return event;
-        }
-
-        BasicDPPEvent extractBasicDPPEvent(DPPEvents& events, uint32_t channel, uint32_t eventNo) { 
-            BasicDPPEvent basic;
-            CAEN_DGTZ_DPP_PHA_Event_t PHAEvent;
-            CAEN_DGTZ_DPP_PSD_Event_t PSDEvent;
-            CAEN_DGTZ_DPP_CI_Event_t CIEvent;
-            _CAEN_DGTZ_DPP_QDC_Event_t QDCEvent;
-            switch(getDPPFirmwareType())
-            {
-            case CAEN_DGTZ_DPPFirmware_PHA:
-                PHAEvent = ((CAEN_DGTZ_DPP_PHA_Event_t **)events.ptr)[channel][eventNo];
-                basic.timestamp = PHAEvent.TimeTag;
-                basic.format = PHAEvent.Format;
-                /*NOTE: PHA does not contain Charge, pass Energy instead */
-                basic.charge = PHAEvent.Energy;
-                break;
-            case CAEN_DGTZ_DPPFirmware_PSD:
-                PSDEvent = ((CAEN_DGTZ_DPP_PSD_Event_t **)events.ptr)[channel][eventNo];
-                basic.timestamp = PSDEvent.TimeTag;
-                basic.format = PSDEvent.Format;
-                /*NOTE: PSD contains two half-size Charge values - pack them */
-                basic.charge = PSDEvent.ChargeLong << 16 | PSDEvent.ChargeShort;
-                break;
-            case CAEN_DGTZ_DPPFirmware_CI:
-                CIEvent = ((CAEN_DGTZ_DPP_CI_Event_t **)events.ptr)[channel][eventNo];
-                basic.timestamp = CIEvent.TimeTag;
-                basic.format = CIEvent.Format;
-                basic.charge = CIEvent.Charge;
-                break;
-            case CAEN_DGTZ_DPPFirmware_QDC:
-                QDCEvent = ((_CAEN_DGTZ_DPP_QDC_Event_t **)events.ptr)[channel][eventNo];
-                    basic.timestamp = QDCEvent.TimeTag;
-                    basic.format = QDCEvent.Format;
-                    basic.charge = QDCEvent.Charge;
-                break;
-            default:
-                errorHandler(CAEN_DGTZ_FunctionNotAllowed);
-            }
-            return basic;
-        }
-        
-        /* NOTE: the backend function takes a single event from the
-         * acquired event matrix and decodes it to waveforms. We expose
-         * the direct call as well as the helper to extract the
-         * waveforms for a given channel and event number element in the
-         * events matrix. */
         DPPWaveforms& decodeDPPWaveforms(void *event, DPPWaveforms& waveforms)
         {
-            errorHandler(_CAEN_DGTZ_DecodeDPPWaveforms(handle_, event, waveforms.ptr)); 
-            return waveforms; }
+            errorHandler(_CAEN_DGTZ_DecodeDPPWaveforms(handle_, event, waveforms.ptr));
+            return waveforms;
+        }
+        /*
         DPPWaveforms& decodeDPPWaveforms(DPPEvents& events, uint32_t channel, uint32_t eventNo, DPPWaveforms& waveforms)
         {
             void *event = extractDPPEvent(events, channel, eventNo);
-            return decodeDPPWaveforms(event, waveforms); 
-        }
+            return decodeDPPWaveforms(event, waveforms);
+        }*/
 
-        BasicDPPWaveforms extractBasicDPPWaveforms(DPPWaveforms& waveforms) { 
-            BasicDPPWaveforms basic;
-            CAEN_DGTZ_DPP_PHA_Waveforms_t *PHAWaveforms;
-            CAEN_DGTZ_DPP_PSD_Waveforms_t *PSDWaveforms;
-            CAEN_DGTZ_DPP_CI_Waveforms_t *CIWaveforms;
-            _CAEN_DGTZ_DPP_QDC_Waveforms_t *QDCWaveforms;
-            switch(getDPPFirmwareType())
-            {
-            case CAEN_DGTZ_DPPFirmware_PHA:
-                PHAWaveforms = (CAEN_DGTZ_DPP_PHA_Waveforms_t *)waveforms.ptr;
-                basic.Ns = PHAWaveforms->Ns;
-                /* NOTE: for whatever reason PHA uses int instead of
-                   uint for Trace1 and Trace2. Fake uint for now. */
-                std::cout << "WARNING: using uint16_t for Trace1 and Trace2 arrays in BasicDPPWaveforms - you may need to manually cast!" << std::endl;    
-                basic.Sample1 = (uint16_t*)PHAWaveforms->Trace1;
-                basic.Sample2 = (uint16_t*)PHAWaveforms->Trace2;
-                basic.DSample1 = PHAWaveforms->DTrace1;
-                basic.DSample2 = PHAWaveforms->DTrace2;
-                basic.DSample3 = NULL;
-                basic.DSample4 = NULL;
-                break;
-            case CAEN_DGTZ_DPPFirmware_PSD:
-                PSDWaveforms = (CAEN_DGTZ_DPP_PSD_Waveforms_t *)waveforms.ptr;
-                basic.Ns = PSDWaveforms->Ns;
-                basic.Sample1 = PSDWaveforms->Trace1;
-                basic.Sample2 = PSDWaveforms->Trace2;
-                basic.DSample1 = PSDWaveforms->DTrace1;
-                basic.DSample2 = PSDWaveforms->DTrace2;
-                basic.DSample3 = PSDWaveforms->DTrace3;
-                basic.DSample4 = PSDWaveforms->DTrace4;
-                break;
-            case CAEN_DGTZ_DPPFirmware_CI:
-                CIWaveforms = (CAEN_DGTZ_DPP_CI_Waveforms_t *)waveforms.ptr;
-                basic.Ns = CIWaveforms->Ns;
-                basic.Sample1 = CIWaveforms->Trace1;
-                basic.Sample2 = CIWaveforms->Trace2;
-                basic.DSample1 = CIWaveforms->DTrace1;
-                basic.DSample2 = CIWaveforms->DTrace2;
-                basic.DSample3 = CIWaveforms->DTrace3;
-                basic.DSample4 = CIWaveforms->DTrace4;
-                break;
-            case CAEN_DGTZ_DPPFirmware_QDC:
-                QDCWaveforms = (_CAEN_DGTZ_DPP_QDC_Waveforms_t *)waveforms.ptr;
-                basic.Ns = QDCWaveforms->Ns;
-                basic.Sample1 = QDCWaveforms->Trace1;
-                basic.Sample2 = QDCWaveforms->Trace2;
-                basic.DSample1 = QDCWaveforms->DTrace1;
-                basic.DSample2 = QDCWaveforms->DTrace2;
-                basic.DSample3 = QDCWaveforms->DTrace3;
-                basic.DSample4 = QDCWaveforms->DTrace4;
-                break;
-            default:
-                errorHandler(CAEN_DGTZ_FunctionNotAllowed);
-            }
-            return basic;
-        }
+
 
         /* Device configuration - i.e. getter and setters */
         uint32_t getRecordLength(int channel=-1) // Default channel -1 == all
@@ -3200,6 +3173,7 @@ namespace caen {
             //std::cout << "in getGroupDCOffset broadcast" << std::endl;
             uint32_t offset; errorHandler(CAEN_DGTZ_ReadRegister(handle_, 0x8098, &offset)); return offset; 
         }
+
         virtual uint32_t getGroupDCOffset(uint32_t group)
         {
             //std::cout << "in getGroupDCOffset " << group << std::endl;
