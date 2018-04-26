@@ -3024,10 +3024,13 @@ namespace caen {
                     break;
                 case CAEN_DGTZ_DPPFirmware_ZLE:
                     throw std::runtime_error("ZLE Firmware not supported by DPPEvents_t.");
+                    break;
                 case CAEN_DGTZ_DPPFirmware_QDC:
                     events = new DPPEvents <_CAEN_DGTZ_DPP_QDC_Event_t>{};
+                    break;
                 case CAEN_DGTZ_NotDPPFirmware:
                     throw std::runtime_error("Non DPP firmware not supported by DPPEvents_t.");
+                    break;
                 default:
                     throw std::runtime_error("Unknown firmware type. Not supported by Digitizer.");
             }
