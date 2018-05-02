@@ -349,11 +349,8 @@ namespace caen {
     template <typename T>
     struct DPPEvents: public DPPEvents_t
     {
-        typedef std::iterator<std::forward_iterator_tag, T > iterator;
         T* ptr[MAX_DPP_CHANNEL_SIZE];
         void** data() override { return (void**)ptr;}
-        iterator begin() { return &ptr[0][0]; }
-        //iterator end()   { return &ptr[0][0]; }
     };
 
     /**

@@ -31,11 +31,9 @@
 class DataHandlerText: public DataHandler
 {
 public:
-    DataHandlerText(std::string fileName);
+    DataHandlerText(uuid runID);
     ~DataHandlerText();
-    void initialize(uuid runID, uint32_t digitizerID) override;
-    void addEvent(Data::ListElement422 event) override;
-    void tick(uint64_t timeStamp) override;
+    size_t handle(DPPEventLE422Accessor& accessor, uint32_t digitizerID) override;
 private:
     std::fstream* file = nullptr;
 };

@@ -24,36 +24,23 @@
 
 #include "DataHandlerHDF5.hpp"
 
-DataHandlerHDF5::DataHandlerHDF5(std::string fileName)
+DataHandlerHDF5::DataHandlerHDF5(uuid runID)
+        : DataHandler(runID)
 {
+    std::string filename = "jadaq-run-" + runID.toString() + ".md5";
     try
     {
         //TODO: Handle existing file
-        file = new H5::H5File(fileName, H5F_ACC_TRUNC);
+        file = new H5::H5File(filename, H5F_ACC_TRUNC);
     } catch (H5::Exception& e)
     {
-        std::cerr << "ERROR: could not open/create HDF5-file \"" << fileName <<  "\":" << e.getDetailMsg() << std::endl;
+        std::cerr << "ERROR: could not open/create HDF5-file \"" << filename <<  "\":" << e.getDetailMsg() << std::endl;
         throw;
     }
 
 }
 
 DataHandlerHDF5::~DataHandlerHDF5()
-{
-
-}
-
-void DataHandlerHDF5::initialize(uuid runID, uint32_t digitizerID)
-{
-
-}
-
-void DataHandlerHDF5::addEvent(Data::ListElement422 event)
-{
-
-}
-
-void DataHandlerHDF5::tick(uint64_t timeStamp)
 {
 
 }

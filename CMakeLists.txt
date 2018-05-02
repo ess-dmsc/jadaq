@@ -34,7 +34,7 @@ target_link_libraries(debugCAENComm dl)
 
 file(GLOB DataHandlerHEADERS DataFormat.hpp DataHandler*.hpp uuid.hpp)
 file(GLOB DataHandlerSOURCES DataFormat.cpp DataHandler*.cpp uuid.cpp)
-add_library(DataHandler ${DataHandlerHEADERS} ${DataHandlerSOURCES})
+add_library(DataHandler ${DataHandlerHEADERS} ${DataHandlerSOURCES} EventAccessor.hpp)
 
 add_library(caen SHARED caen.hpp caen.cpp _CAENDigitizer.c _CAENDigitizer.h)
 target_link_libraries(caen dl)

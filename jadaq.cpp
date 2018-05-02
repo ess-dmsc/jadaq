@@ -297,10 +297,10 @@ int main(int argc, char **argv) {
         /* Prepare buffers - must happen AFTER digitizer has been configured! */
         DataHandler* dataHandler;
         if (conf.sendEventEnabled) {
-            dataHandler = new DataHandlerNetworkSend(conf.address, conf.port);
+            dataHandler = new DataHandlerNetworkSend(conf.address, conf.port, runID);
         } else
         {
-            dataHandler = new DataHandlerText("dump" + digitizer.name() + ".txt");
+            dataHandler = new DataHandlerText(runID);
         }
 
         digitizer.initialize(runID, dataHandler);

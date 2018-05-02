@@ -36,11 +36,9 @@ using boost::asio::ip::udp;
 class DataHandlerNetworkSend: public DataHandler
 {
 public:
-    DataHandlerNetworkSend(std::string address, std::string port);
+    DataHandlerNetworkSend(std::string address, std::string port, uuid runID);
     ~DataHandlerNetworkSend();
-    void initialize(uuid runID, uint32_t digitizerID) override;
-    void addEvent(Data::ListElement422 event) override;
-    void tick(uint64_t timeStamp) override;
+    size_t handle(DPPEventLE422Accessor& accessor, uint32_t digitizerID) override;
 private:
     boost::asio::io_service ioService;
     udp::endpoint remoteEndpoint;

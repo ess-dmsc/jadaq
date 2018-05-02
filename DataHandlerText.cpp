@@ -25,13 +25,16 @@
 #include <iomanip>
 #include "DataHandlerText.hpp"
 
-DataHandlerText::DataHandlerText(std::string fileName)
+DataHandlerText::DataHandlerText(uuid runID)
+        : DataHandler(runID)
 {
-    file = new std::fstream(fileName,std::fstream::out);
+    std::string filename = "jadaq-run-" + runID.toString() + ".txt";
+    file = new std::fstream(filename,std::fstream::out);
     if (!file->is_open())
     {
-        throw std::runtime_error("Could not open text data file: \"" + fileName + "\"");
+        throw std::runtime_error("Could not open text data file: \"" + filename + "\"");
     }
+    *file << "# runID: " << runID << std::endl;
 }
 
 DataHandlerText::~DataHandlerText()
@@ -42,26 +45,19 @@ DataHandlerText::~DataHandlerText()
     }
 }
 
-void DataHandlerText::initialize(uuid runID_, uint32_t digitizerID_)
+size_t DataHandlerText::handle(DPPEventLE422Accessor& accessor, uint32_t digitizerID)
 {
-    runID = runID_;
-    digitizerID = digitizerID_;
-    *file << "# runID: " << runID << std::endl <<
-          "# digitizerID: " << digitizerID << std::endl;
-}
-
-void DataHandlerText::addEvent(Data::ListElement422 event)
-{
-    *file << std::setw(10) << event.localTime << " " << std::setw(10) << digitizerID << " " <<
-          std::setw(10) << event.channel << " " << std::setw(10) << event.adcValue << "\n";
-}
-
-void DataHandlerText::tick(uint64_t timeStamp)
-{
-    if (timeStamp != globalTimeStamp)
+    size_t events = 0;
+    for (uint16_t channel = 0; channel < accessor.channels(); channel++)
     {
-        *file << "@ " << timeStamp << "\n";
-        globalTimeStamp = timeStamp;
+        for (uint32_t i = 0; i < accessor.events(channel); ++i)
+        {
+            Data::ListElement422 event = accessor.listElement422(channel,i);
+            *file << std::setw(10) << event.localTime << " " << std::setw(10) << digitizerID << " " <<
+                  std::setw(10) << event.channel << " " << std::setw(10) << event.adcValue << "\n";
+            events += 1;
+        }
     }
+    return events;
 }
 

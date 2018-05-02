@@ -50,8 +50,6 @@ NetworkReceive::~NetworkReceive()
     delete[] buffer;
 }
 
-
-
 void NetworkReceive::start(int* keepRunning)
 {
     while(keepRunning)

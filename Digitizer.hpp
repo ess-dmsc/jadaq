@@ -61,7 +61,7 @@ public:
     void close(); //TODO: Why do we need close() in stead of using a destructor
     const std::string name() { return digitizer->modelName() + "_" + std::to_string(digitizer->serialNumber()); }
     const std::string model() { return digitizer->modelName(); }
-    const uint64_t serial() { return digitizer->serialNumber(); }
+    const uint32_t serial() { return digitizer->serialNumber(); }
     uint32_t channels() { return numChannels; }
 
     void set(FunctionID functionID, std::string value);
@@ -85,7 +85,7 @@ private:
     CAEN_DGTZ_DPPFirmware_t firmware;
     uint32_t boardConfiguration = 0;
     uint32_t numChannels;
-    uint32_t prevMaxLocalTime = 0;
+    uint32_t id;
     bool waveformRecording = false;
 
     /* We bind a ReadoutBuffer to each digitizer for ease of use */
@@ -101,7 +101,6 @@ private:
     STAT(Stats stats_;)
 
     void extractPlainEvents();
-    void extractDPPEvents();
 };
 
 

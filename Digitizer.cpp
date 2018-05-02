@@ -327,6 +327,7 @@ Digitizer::Digitizer(CAEN_DGTZ_ConnectionType linkType_, int linkNum_, int conet
 {
     firmware = digitizer->getDPPFirmwareType();
     numChannels = digitizer->channels();
+    id = digitizer->serialNumber();
 }
 
 void Digitizer::close()
@@ -361,7 +362,6 @@ void Digitizer::initialize(uuid runID, DataHandler* dataHandler_)
     {
         plainEvent = digitizer->mallocEvent();
     }
-    dataHandler->initialize(runID, serial());
 }
 
 void Digitizer::extractPlainEvents()
@@ -395,102 +395,6 @@ void Digitizer::extractPlainEvents()
     STAT(stats_.eventsFound += numEvents;)
 }
 
-void Digitizer::extractDPPEvents()
-{
-    uint32_t maxLocalTime = 0;
-    std::vector<Data::ListElement422> buffer;
-
-    uint32_t eventIndex = 0;
-    caen::BasicDPPWaveforms basicDPPWaveforms;
-    uint32_t eventsFound = 0;
-    STAT(uint32_t eventsDecoded = 0;)
-    eventIndex = 0;
-    DEBUG(std::cout << "Unpack aggregated DPP events from " << name() << std::endl;)
-    digitizer->getDPPEvents(readoutBuffer_, dppEvents);
-    for (uint16_t channel = 0; channel < numChannels; channel++) {
-        uint32_t nEvents = dppEvents->nEvents[channel];
-        eventsFound += nEvents;
-        for (uint32_t j = 0; j < nEvents; j++) {
-            // TODO Take care of the different type of events
-            /* TODO: Take care of Extra fields e.g. timestamp high bits? */
-            _CAEN_DGTZ_DPP_QDC_Event_t QDCEvent = static_cast<caen::DPPEvents<_CAEN_DGTZ_DPP_QDC_Event_t>* >(dppEvents)->ptr[channel][j];
-            Data::ListElement422 listElement;
-            listElement.localTime = QDCEvent.TimeTag & 0xFFFFFFFF;
-            listElement.adcValue = QDCEvent.Charge & 0xFFFF;
-            listElement.channel = channel;
-            DEBUG(std::cout << name() << " channel " << listElement.channel << " event " << j << " charge " <<
-                            listElement.adcValue << " with local time " << listElement.localTime << std::endl;)
-            //TODO: What if we have several resets within a single buffer???
-            if (listElement.localTime > prevMaxLocalTime)
-            {
-                if (listElement.localTime > maxLocalTime)
-                {
-                    maxLocalTime = listElement.localTime;
-                }
-                dataHandler->addEvent(listElement);
-            } else
-            {
-                buffer.push_back(listElement);
-            }
-
-            /* Only try to decode waveforms if digitizer is actually
-             * configured to record them in the first place. */
-            if (waveformRecording) {
-                throw std::runtime_error("DPP Waveforms not suported.");
-/*                try {
-                    digitizer->decodeDPPWaveforms(dppEvents, channel, j, waveforms);
-                    STAT(eventsDecoded += 1;)
-                } catch(std::exception& e) {
-                    std::cerr << "failed to decode waveforms for event " << j << " on channel " << channel << " from " << name() << " : " << e.what() << std::endl;
-                }
-
-                basicDPPWaveforms = digitizer->extractBasicDPPWaveforms(waveforms);
-                DEBUG(std::cout << "Filling event waveform from " << name() << " channel " << channel << " localtime " << timestamp << " samples " << basicDPPWaveforms.Ns << std::endl;)
-                commHelper->eventData->waveformEvents[eventIndex].localTime = timestamp;
-                commHelper->eventData->waveformEvents[eventIndex].extendTime = 0;
-                commHelper->eventData->waveformEvents[eventIndex].channel = channel;
-                commHelper->eventData->waveformEvents[eventIndex].waveformLength = basicDPPWaveforms.Ns;
-                memcpy(commHelper->eventData->waveformEvents[eventIndex].waveformSample1, basicDPPWaveforms.Sample1, basicDPPWaveforms.Ns*sizeof(basicDPPWaveforms.Sample1[0]));
-#ifdef INCLUDE_SAMPLE2
-                memcpy(commHelper->eventData->waveformEvents[eventIndex].waveformSample2, basicDPPWaveforms.Sample2, basicDPPWaveforms.Ns*sizeof(basicDPPWaveforms.Sample2[0]));
-#endif
-#ifdef INCLUDE_DSAMPLE
-                memcpy(commHelper->eventData->waveformEvents[eventIndex].waveformDSample1, basicDPPWaveforms.DSample1, basicDPPWaveforms.Ns*sizeof(basicDPPWaveforms.DSample1[0]));
-                memcpy(commHelper->eventData->waveformEvents[eventIndex].waveformDSample2, basicDPPWaveforms.DSample2, basicDPPWaveforms.Ns*sizeof(basicDPPWaveforms.DSample2[0]));
-                memcpy(commHelper->eventData->waveformEvents[eventIndex].waveformDSample3, basicDPPWaveforms.DSample3, basicDPPWaveforms.Ns*sizeof(basicDPPWaveforms.DSample3[0]));
-                memcpy(commHelper->eventData->waveformEvents[eventIndex].waveformDSample4, basicDPPWaveforms.DSample4, basicDPPWaveforms.Ns*sizeof(basicDPPWaveforms.DSample4[0]));
-#endif
-                DEBUG(std::cout << "Filled event waveform with " <<
-                                commHelper->eventData->waveformEvents[eventIndex].waveformSample1[0] << ", .. ," <<
-                                commHelper->eventData->waveformEvents[eventIndex].waveformSample1[basicDPPWaveforms.Ns-1] <<
-                                " ." << std::endl;)
-*/
-            }
-
-            eventIndex += 1;
-        }
-    }
-    if (buffer.size() > 0)
-    {
-        // TODO: Should every Digitizer ask for the time, or do we need a more sophisticated strategy?
-        dataHandler->tick(DataHandler::getTimeMsecs());
-        maxLocalTime = 0;
-        for (const Data::ListElement422 &listElement: buffer)
-        {
-            if (listElement.localTime > maxLocalTime)
-            {
-                maxLocalTime = listElement.localTime;
-            }
-            dataHandler->addEvent(listElement);
-        }
-    }
-    prevMaxLocalTime = maxLocalTime;
-
-    STAT(stats_.eventsDecoded += eventsDecoded;)
-    STAT(stats_.eventsUnpacked += eventsFound;)
-    STAT(stats_.eventsFound += eventsFound;)
-    DEBUG(STAT(std::cout << "Unpacked " << eventsFound << " DPP events from all channels." << std::endl;))
-}
 
 void Digitizer::acquisition() {
 
@@ -529,8 +433,15 @@ void Digitizer::acquisition() {
             throw std::runtime_error("ZLE firmware not supported by Digitizer.");
             break;
         case CAEN_DGTZ_DPPFirmware_QDC:
-            extractDPPEvents();
+        {
+            digitizer->getDPPEvents(readoutBuffer_, dppEvents);
+            // TODO: Move constructor??
+            DPPQDCEventAccessor accessor{*static_cast<caen::DPPEvents<_CAEN_DGTZ_DPP_QDC_Event_t> * >(dppEvents),
+                                         (uint16_t) numChannels};
+            size_t events = dataHandler->handle(accessor, id);
+            stats_.eventsFound += events;
             break;
+        }
         case CAEN_DGTZ_NotDPPFirmware:
             extractPlainEvents();
             break;

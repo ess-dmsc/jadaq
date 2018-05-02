@@ -25,8 +25,9 @@
 #include <iostream>
 #include "DataHandlerNetworkSend.hpp"
 
-DataHandlerNetworkSend::DataHandlerNetworkSend(std::string address, std::string port)
-        : numElements(0)
+DataHandlerNetworkSend::DataHandlerNetworkSend(std::string address, std::string port, uuid runID)
+        : DataHandler(runID)
+        , numElements(0)
         , elementType(Data::None)
 {
     try {
@@ -48,7 +49,7 @@ DataHandlerNetworkSend::~DataHandlerNetworkSend()
 {
     delete[] buffer;
 }
-
+/*
 void DataHandlerNetworkSend::initialize(uuid runID_, uint32_t digitizerID_)
 {
     runID = runID_;
@@ -101,3 +102,4 @@ void DataHandlerNetworkSend::send()
     elementType = Data::None;
 }
 
+*/

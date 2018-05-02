@@ -27,18 +27,17 @@
 
 #include "DataFormat.hpp"
 #include "uuid.hpp"
+#include "EventAccessor.hpp"
 
 class DataHandler
 {
+private:
+    DataHandler() {}
 protected:
     uuid runID;
-    uint32_t digitizerID;
-    uint64_t globalTimeStamp;
-    DataHandler() : runID(0) , digitizerID(0), globalTimeStamp(0) {}
+    DataHandler(uuid runID_) : runID(runID_) {}
 public:
-    virtual void initialize(uuid runID_, uint32_t digitizerID_) { runID = runID_; digitizerID = digitizerID_;}
-    virtual void addEvent(Data::ListElement422 event) = 0;
-    virtual void tick(uint64_t timeStamp) = 0;
+    virtual size_t handle(DPPEventLE422Accessor& accessor, uint32_t digitizerID) = 0;
     static uint64_t getTimeMsecs() { return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count() ; }
     static constexpr const char* defaultDataPort = "12345";
     static constexpr const size_t maxBufferSize = 9000;

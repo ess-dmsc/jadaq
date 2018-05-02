@@ -30,8 +30,7 @@
 class DataHandlerNull: public DataHandler
 {
 public:
-    void addEvent(Data::ListElement422 event) override {}
-    void tick(uint64_t timeStamp) override {}
+    virtual void handle(DPPEventLE422Accessor accessor, uint32_t digitizerID) override {};
 };
 
 
