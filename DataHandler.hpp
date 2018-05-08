@@ -32,10 +32,67 @@
 class DataHandler
 {
 private:
+    uint64_t globalTimeStamp = 0;
+    uint64_t prevMaxLocalTime = 0;
     DataHandler() {}
 protected:
     uuid runID;
     DataHandler(uuid runID_) : runID(runID_) {}
+    template <typename C, typename F>
+    void handle(const DPPEventLE422Accessor& accessor, C& current, C& next, F write)
+    {
+        /*
+        if (elementType != accessor.elementType())
+        {
+            send();
+            elementType = accessor.elementType();
+        }*/
+        uint64_t currentMaxLocalTime = 0;
+        uint64_t nextMaxLocalTime = 0;
+        for (uint16_t channel = 0; channel < accessor.channels(); channel++)
+        {
+            for (uint32_t i = 0; i < accessor.events(channel); ++i)
+            {
+                Data::ListElement422 listElement = accessor.listElement422(channel,i);
+                if (listElement.localTime > prevMaxLocalTime)
+                {
+                    if (listElement.localTime > currentMaxLocalTime)
+                        currentMaxLocalTime = listElement.localTime;
+                    try {
+                        current.push_back(listElement);
+                    } catch (std::length_error&)
+                    {
+                        write(current);
+                        current.clear();
+                    }
+                } else {
+                    if (listElement.localTime > nextMaxLocalTime)
+                        nextMaxLocalTime = listElement.localTime;
+                    try {
+                        next.push_back(listElement);
+                    } catch (std::length_error&)
+                    {
+                        write(next);
+                        next.clear();
+                    }
+                }
+            }
+        }
+        if (!next.empty())
+        {
+            write(current);
+            current.clear();
+            globalTimeStamp = getTimeMsecs(); //TODO can we get this earlier and what is the cost
+            C& temp = next;
+            next = current;
+            current = temp;
+            currentMaxLocalTime = nextMaxLocalTime;
+        }
+        // NOTE: We assume that the smallest time in the next acquisition must be larger than the largest time in the
+        //       current acquisition UNLESS there has been a clock reset
+        prevMaxLocalTime = currentMaxLocalTime;
+    }
+
 public:
     virtual void addDigitizer(uint32_t digitizerID) {}
     virtual size_t handle(DPPEventLE422Accessor& accessor, uint32_t digitizerID) = 0;
