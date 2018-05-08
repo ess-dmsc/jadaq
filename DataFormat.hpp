@@ -59,6 +59,7 @@ namespace Data
         uint32_t localTime;
         uint16_t adcValue;
         uint16_t channel;
+        static ElementType type() { return List422; }
     };
     static inline size_t elementSize(ElementType elementType)
     {

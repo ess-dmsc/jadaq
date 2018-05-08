@@ -76,8 +76,8 @@ void NetworkReceive::start(int* keepRunning)
             {
                 dataHandler = itr->second;
             } else {
-                dataHandler = new DataHandlerText("dump-" + runID.toString() + "-" + std::to_string(digitizerID) + ".txt");
-                dataHandler->initialize(runID, digitizerID);
+                dataHandler = new DataHandlerText(runID);
+                dataHandler->addDigitizer(digitizerID);
                 dataHandlers.insert(std::make_pair(std::make_pair(runID,digitizerID),dataHandler));
             }
             if (header->version != Data::currentVersion)
@@ -89,12 +89,12 @@ void NetworkReceive::start(int* keepRunning)
             {
                 std::cerr << "ERROR UDP element type unsupported: " << std::endl;
             }
-            dataHandler->tick(header->globalTime);
+            //dataHandler->tick(header->globalTime);
             Data::ListElement422* listElement = (Data::ListElement422*)(buffer + sizeof(Data::Header));
             uint16_t numElements = header->numElements;
             for (uint16_t i = 0; i < numElements; ++i)
             {
-                dataHandler->addEvent(listElement[i]);
+                //dataHandler->addEvent(listElement[i]);
             }
 
         } else {

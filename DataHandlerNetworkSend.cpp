@@ -29,6 +29,7 @@ DataHandlerNetworkSend::DataHandlerNetworkSend(std::string address, std::string 
         : DataHandler(runID)
         , numElements(0)
         , elementType(Data::None)
+        , digitizerID(0)
 {
     try {
         udp::resolver resolver(ioService);
@@ -49,38 +50,47 @@ DataHandlerNetworkSend::~DataHandlerNetworkSend()
 {
     delete[] buffer;
 }
-/*
-void DataHandlerNetworkSend::initialize(uuid runID_, uint32_t digitizerID_)
+
+void DataHandlerNetworkSend::addDigitizer(uint32_t digitizerID_)
 {
-    runID = runID_;
-    digitizerID = digitizerID_;
     // TODO: This is where we will send the configuration over TCP
+    if (digitizerID == 0)
+    {
+        digitizerID = digitizerID_;
+    } else {
+        throw std::runtime_error{"Error in DataHandlerNetworkSend::addDigitizer: Only one digitizer supported. Already set."};
+    }
+
 }
 
-void DataHandlerNetworkSend::addEvent(Data::ListElement422 event)
+// TODO Template this function?
+size_t DataHandlerNetworkSend::handle(DPPEventLE422Accessor& accessor, uint32_t digitizerID)
 {
-    if (elementType != Data::List422)
+    if (elementType != accessor.elementType())
     {
         send();
-        elementType = Data::List422;
+        elementType = accessor.elementType();
     }
     Data::ListElement422* elementPtr = (Data::ListElement422*)(buffer + sizeof(Data::Header));
     elementPtr += numElements;
-    *elementPtr = event;
-    numElements += 1;
-    if ((char*)(elementPtr + 2) > buffer + bufferSize) // would the next element overflow the buffer
+    size_t events = 0;
+    for (uint16_t channel = 0; channel < accessor.channels(); channel++)
     {
-        send();
-    }
-}
+        for (uint32_t i = 0; i < accessor.events(channel); ++i)
+        {
+            *elementPtr = accessor.listElement422(channel,i);
+            numElements += 1;
+            elementPtr += 1;
+            events += 1;
+            if ((char*)(elementPtr + 1) > buffer + bufferSize) // would the next element overflow the buffer
+            {
+                send();
+            }
 
-void DataHandlerNetworkSend::tick(uint64_t timeStamp)
-{
-    if (timeStamp != globalTimeStamp)
-    {
-        send();
-        globalTimeStamp = timeStamp;
+        }
     }
+
+    return events;
 }
 
 void DataHandlerNetworkSend::send()
@@ -89,7 +99,7 @@ void DataHandlerNetworkSend::send()
     {
         Data::Header *header = (Data::Header *) buffer;
         header->runID = runID.value();
-        header->globalTime = globalTimeStamp;
+        header->globalTime = 0; // TODO
         header->digitizerID = digitizerID;
         header->version = Data::currentVersion;
         header->elementType = elementType;
@@ -101,5 +111,3 @@ void DataHandlerNetworkSend::send()
     numElements = 0;
     elementType = Data::None;
 }
-
-*/

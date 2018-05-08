@@ -34,12 +34,14 @@ class DPPEventAccessor
 public:
     virtual uint16_t channels() const = 0;
     virtual uint32_t events(uint16_t channel) const = 0;
+    virtual Data::ElementType elementType() const = 0;
 };
 
 class DPPEventLE422Accessor : public DPPEventAccessor
 {
 public:
     virtual Data::ListElement422 listElement422(uint16_t channel, size_t i) const = 0;
+    Data::ElementType elementType() const final { return Data::List422;}
 };
 
 class DPPQDCEventAccessor : public DPPEventLE422Accessor

@@ -37,8 +37,9 @@ protected:
     uuid runID;
     DataHandler(uuid runID_) : runID(runID_) {}
 public:
+    virtual void addDigitizer(uint32_t digitizerID) {}
     virtual size_t handle(DPPEventLE422Accessor& accessor, uint32_t digitizerID) = 0;
-    static uint64_t getTimeMsecs() { return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count() ; }
+    static uint64_t getTimeMsecs() { return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count(); }
     static constexpr const char* defaultDataPort = "12345";
     static constexpr const size_t maxBufferSize = 9000;
 };

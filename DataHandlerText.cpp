@@ -45,6 +45,11 @@ DataHandlerText::~DataHandlerText()
     }
 }
 
+void DataHandlerText::addDigitizer(uint32_t digitizerID)
+{
+    *file << "# digitizerID: " << digitizerID << std::endl;
+}
+
 size_t DataHandlerText::handle(DPPEventLE422Accessor& accessor, uint32_t digitizerID)
 {
     size_t events = 0;

@@ -32,26 +32,17 @@ include_directories(${HDF5_INCLUDE_DIRS})
 add_library(debugCAENComm SHARED debugCAENComm.c)
 target_link_libraries(debugCAENComm dl)
 
-file(GLOB DataHandlerHEADERS DataFormat.hpp DataHandler*.hpp uuid.hpp)
-file(GLOB DataHandlerSOURCES DataFormat.cpp DataHandler*.cpp uuid.cpp)
-add_library(DataHandler ${DataHandlerHEADERS} ${DataHandlerSOURCES} EventAccessor.hpp)
-
 add_library(caen SHARED caen.hpp caen.cpp _CAENDigitizer.c _CAENDigitizer.h)
 target_link_libraries(caen dl)
+
+file(GLOB DataHandlerHEADERS DataFormat.hpp DataHandler*.hpp uuid.hpp EventAccessor.hpp)
+file(GLOB DataHandlerSOURCES DataFormat.cpp DataHandler*.cpp uuid.cpp)
+add_library(DataHandler ${DataHandlerHEADERS} ${DataHandlerSOURCES})
 
 add_executable(jadaq ${DataHandlerHEADERS} jadaq.cpp caen.hpp Configuration.cpp Configuration.hpp Digitizer.cpp Digitizer.hpp FunctionID.hpp FunctionID.cpp ini_parser.hpp StringConversion.cpp StringConversion.hpp CAENConf.cpp CAENConf.hpp trace.hpp)
 target_link_libraries(jadaq ${CAEN_LIB} caen DataHandler ${Boost_FILESYSTEM_LIBRARY} ${Boost_ASIO_LIBRARY} ${Boost_SYSTEM_LIBRARY} ${Boost_THREAD_LIBRARY} pthread ${HDF5_CXX_LIBRARIES})
 
 # For jadaq-ds
+# jadaq-ds now depends on caen and CAEN_LIB because of EventAccessor. Can we get rid of this dependency
 add_executable(jadaq-ds jadaq-ds.cpp ${DataHandlerHEADERS} NetworkReceive.cpp NetworkReceive.hpp)
-target_link_libraries(jadaq-ds DataHandler ${HDF5_CXX_LIBRARIES} ${Boost_LIBRARIES} pthread)
-
-# For hdf5writer
-#find_package(HDF5 REQUIRED COMPONENTS C CXX)
-#include_directories(${HDF5_INCLUDE_DIRS})
-#add_executable(hdf5writer hdf5writer.cpp)
-#target_link_libraries(hdf5writer ${HDF5_CXX_LIBRARIES} ${Boost_ASIO_LIBRARY} ${Boost_SYSTEM_LIBRARY} pthread)
-
-# For eventgen
-#add_executable(eventgen eventgen.cpp DataFormat.hpp)
-#target_link_libraries(eventgen ${Boost_ASIO_LIBRARY} ${Boost_SYSTEM_LIBRARY} pthread)
+target_link_libraries(jadaq-ds ${CAEN_LIB} caen DataHandler ${HDF5_CXX_LIBRARIES} ${Boost_LIBRARIES} pthread)

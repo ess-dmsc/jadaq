@@ -33,6 +33,7 @@ class DataHandlerText: public DataHandler
 public:
     DataHandlerText(uuid runID);
     ~DataHandlerText();
+    void addDigitizer(uint32_t digitizerID) override;
     size_t handle(DPPEventLE422Accessor& accessor, uint32_t digitizerID) override;
 private:
     std::fstream* file = nullptr;
