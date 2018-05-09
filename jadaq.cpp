@@ -300,7 +300,7 @@ int main(int argc, char **argv) {
             dataHandler = new DataHandlerNetworkSend(conf.address, conf.port, runID);
         } else
         {
-            dataHandler = new DataHandlerText(runID);
+            dataHandler = new DataHandlerText<std::vector,Data::ListElement422>(runID);
         }
 
         digitizer.initialize(runID, dataHandler);

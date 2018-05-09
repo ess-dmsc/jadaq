@@ -76,7 +76,7 @@ void NetworkReceive::start(int* keepRunning)
             {
                 dataHandler = itr->second;
             } else {
-                dataHandler = new DataHandlerText(runID);
+                dataHandler = new DataHandlerText<std::vector,Data::ListElement422>(runID);
 //                dataHandler->addDigitizer(digitizerID);
                 dataHandlers.insert(std::make_pair(std::make_pair(runID,digitizerID),dataHandler));
             }
