@@ -55,7 +55,7 @@ DataHandlerText::~DataHandlerText()
 size_t DataHandlerText::handle(const DPPEventLE422Accessor& accessor, uint32_t digitizerID)
 {
     using namespace std::placeholders;
-    DataHandler::ContainerPair<std::vector<Data::ListElement422> >* myBuffers;
+    DataHandler::ContainerPair<std::vector, Data::ListElement422>* myBuffers;
     auto itr = bufferMap.find(digitizerID);
     if (itr == bufferMap.end())
     {

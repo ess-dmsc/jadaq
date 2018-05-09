@@ -37,15 +37,15 @@ public:
     static constexpr const char* defaultDataPort = "12345";
     static constexpr const size_t maxBufferSize = 9000;
 
-    template <typename C>
+    template <template<typename...> typename C, typename E>
     struct ContainerPair
     {
-        C* current;
-        C* next;
+        C<E>* current;
+        C<E>* next;
         ContainerPair()
         {
-            current = new C();
-            next = new C();
+            current = new C<E>();
+            next = new C<E>();
         }
         ~ContainerPair()
         {
@@ -60,14 +60,14 @@ protected:
     uuid runID;
     uint64_t globalTimeStamp = 0;
     DataHandler(uuid runID_) : runID(runID_) {}
-    template <typename C, typename F>
-    size_t handle_(const DPPEventLE422Accessor& accessor, ContainerPair<C>* buffers, F write)
+    template <template<typename...> typename C, typename E, typename F>
+    size_t handle_(const DPPEventLE422Accessor& accessor, ContainerPair<C,E>* buffers, F write)
     {
         uint64_t currentMaxLocalTime = 0;
         uint64_t nextMaxLocalTime = 0;
         size_t events = 0;
-        C* current = buffers->current;
-        C* next = buffers->next;
+        C<E>* current = buffers->current;
+        C<E>* next = buffers->next;
         for (uint16_t channel = 0; channel < accessor.channels(); channel++)
         {
             for (uint32_t i = 0; i < accessor.events(channel); ++i)
