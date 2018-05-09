@@ -32,27 +32,23 @@
 class DataHandler
 {
 private:
-    uint64_t globalTimeStamp = 0;
     uint64_t prevMaxLocalTime = 0;
     DataHandler() {}
 protected:
     uuid runID;
+    uint64_t globalTimeStamp = 0;
     DataHandler(uuid runID_) : runID(runID_) {}
     template <typename C, typename F>
-    void handle(const DPPEventLE422Accessor& accessor, C& current, C& next, F write)
+    size_t handle_(const DPPEventLE422Accessor& accessor, C& current, C& next, F write)
     {
-        /*
-        if (elementType != accessor.elementType())
-        {
-            send();
-            elementType = accessor.elementType();
-        }*/
         uint64_t currentMaxLocalTime = 0;
         uint64_t nextMaxLocalTime = 0;
+        size_t events = 0;
         for (uint16_t channel = 0; channel < accessor.channels(); channel++)
         {
             for (uint32_t i = 0; i < accessor.events(channel); ++i)
             {
+                events += 1;
                 Data::ListElement422 listElement = accessor.listElement422(channel,i);
                 if (listElement.localTime > prevMaxLocalTime)
                 {
@@ -93,11 +89,12 @@ protected:
         // NOTE: We assume that the smallest time in the next acquisition must be larger than the largest time in the
         //       current acquisition UNLESS there has been a clock reset
         prevMaxLocalTime = currentMaxLocalTime;
+        return events;
     }
 
 public:
     virtual void addDigitizer(uint32_t digitizerID) {}
-    virtual size_t handle(DPPEventLE422Accessor& accessor, uint32_t digitizerID) = 0;
+    virtual size_t handle(const DPPEventLE422Accessor& accessor, uint32_t digitizerID) = 0;
     static uint64_t getTimeMsecs() { return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count(); }
     static constexpr const char* defaultDataPort = "12345";
     static constexpr const size_t maxBufferSize = 9000;

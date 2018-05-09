@@ -23,6 +23,7 @@
  */
 
 #include <iomanip>
+#include <functional>
 #include "DataHandlerText.hpp"
 
 DataHandlerText::DataHandlerText(uuid runID)
@@ -47,22 +48,24 @@ DataHandlerText::~DataHandlerText()
 
 void DataHandlerText::addDigitizer(uint32_t digitizerID)
 {
+    buffers[digitizerID];
     *file << "# digitizerID: " << digitizerID << std::endl;
 }
 
-size_t DataHandlerText::handle(DPPEventLE422Accessor& accessor, uint32_t digitizerID)
+size_t DataHandlerText::handle(const DPPEventLE422Accessor& accessor, uint32_t digitizerID)
 {
-    size_t events = 0;
-    for (uint16_t channel = 0; channel < accessor.channels(); channel++)
-    {
-        for (uint32_t i = 0; i < accessor.events(channel); ++i)
-        {
-            Data::ListElement422 event = accessor.listElement422(channel,i);
-            *file << std::setw(10) << event.localTime << " " << std::setw(10) << digitizerID << " " <<
-                  std::setw(10) << event.channel << " " << std::setw(10) << event.adcValue << "\n";
-            events += 1;
-        }
-    }
-    return events;
+    using namespace std::placeholders;
+    auto buf = buffers[digitizerID];
+    return handle_(accessor, buf.first, buf.second, std::bind(&DataHandlerText::write,this,_1,digitizerID));
 }
+
+void DataHandlerText::write(const std::vector<Data::ListElement422>& buffer, uint32_t digitizerID)
+{
+    *file << "@" << globalTimeStamp << std::endl;
+    for(const Data::ListElement422& element: buffer)
+    *file << std::setw(10) << element.localTime << " " << std::setw(10) << digitizerID << " " <<
+          std::setw(10) << element.channel << " " << std::setw(10) << element.adcValue << "\n";
+
+}
+
 

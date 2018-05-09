@@ -64,7 +64,7 @@ void DataHandlerNetworkSend::addDigitizer(uint32_t digitizerID_)
 }
 
 // TODO Template this function?
-size_t DataHandlerNetworkSend::handle(DPPEventLE422Accessor& accessor, uint32_t digitizerID)
+size_t DataHandlerNetworkSend::handle(const DPPEventLE422Accessor& accessor, uint32_t digitizerID)
 {
     if (elementType != accessor.elementType())
     {

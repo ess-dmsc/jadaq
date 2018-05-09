@@ -34,7 +34,7 @@ class DataHandlerHDF5: public DataHandler
 public:
     DataHandlerHDF5(uuid runID);
     ~DataHandlerHDF5();
-    size_t handle(DPPEventLE422Accessor& accessor, uint32_t digitizerID) override;
+    size_t handle(const DPPEventLE422Accessor& accessor, uint32_t digitizerID) override;
 private:
     H5::H5File* file = nullptr;
 };

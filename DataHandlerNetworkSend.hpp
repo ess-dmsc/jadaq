@@ -39,7 +39,7 @@ public:
     DataHandlerNetworkSend(std::string address, std::string port, uuid runID);
     ~DataHandlerNetworkSend();
     void addDigitizer(uint32_t digitizerID) override;
-    size_t handle(DPPEventLE422Accessor& accessor, uint32_t digitizerID) override;
+    size_t handle(const DPPEventLE422Accessor& accessor, uint32_t digitizerID) override;
 private:
     uint32_t digitizerID;
     boost::asio::io_service ioService;
