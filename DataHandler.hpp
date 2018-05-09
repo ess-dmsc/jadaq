@@ -64,6 +64,7 @@ protected:
                     {
                         write(current);
                         current.clear();
+                        current.push_back(listElement);
                     }
                 } else {
                     if (listElement.localTime > nextMaxLocalTime)
@@ -74,6 +75,7 @@ protected:
                     {
                         write(next);
                         next.clear();
+                        next.push_back(listElement);
                     }
                 }
             }
