@@ -47,6 +47,11 @@ public:
             current = new C();
             next = new C();
         }
+        ~ContainerPair()
+        {
+            delete[] current;
+            delete[] next;
+        }
     };
 private:
     uint64_t prevMaxLocalTime = 0;

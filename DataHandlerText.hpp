@@ -40,13 +40,13 @@ public:
     void write(const std::vector<Data::ListElement422>* buffer, uint32_t digitizerID);
 private:
     std::fstream* file = nullptr;
-    std::map<uint32_t, DataHandler::ContainerPair<std::vector<Data::ListElement422> >* > buffers;
+    std::map<uint32_t, DataHandler::ContainerPair<std::vector<Data::ListElement422> >* > bufferMap;
     DataHandler::ContainerPair<std::vector<Data::ListElement422> >* addDigitizer_(uint32_t digitizerID)
     {
         *file << "# digitizerID: " << digitizerID << std::endl;
-        DataHandler::ContainerPair<std::vector<Data::ListElement422> >* bufPair = new DataHandler::ContainerPair<std::vector<Data::ListElement422> >();
-        buffers[digitizerID] = bufPair;
-        return bufPair;
+        DataHandler::ContainerPair<std::vector<Data::ListElement422> >* buffers = new DataHandler::ContainerPair<std::vector<Data::ListElement422> >();
+        bufferMap[digitizerID] = buffers;
+        return buffers;
     }
 
 };

@@ -42,6 +42,12 @@ DataHandlerText::~DataHandlerText()
 {
     if (file)
     {
+        for(auto itr: bufferMap)
+        {
+            write(itr.second->current, itr.first);
+            assert(itr.second->next->empty());
+            delete itr.second;
+        }
         file->close();
     }
 }
@@ -50,14 +56,16 @@ size_t DataHandlerText::handle(const DPPEventLE422Accessor& accessor, uint32_t d
 {
     using namespace std::placeholders;
     DataHandler::ContainerPair<std::vector<Data::ListElement422> >* myBuffers;
-    auto itr = buffers.find(digitizerID);
-    if (itr == buffers.end())
+    auto itr = bufferMap.find(digitizerID);
+    if (itr == bufferMap.end())
     {
         myBuffers = addDigitizer_(digitizerID);
     } else {
         myBuffers = itr->second;
     }
-    return handle_(accessor, myBuffers, std::bind(&DataHandlerText::write,this,_1,digitizerID));
+    size_t events = handle_(accessor, myBuffers, std::bind(&DataHandlerText::write,this,_1,digitizerID));
+    assert(myBuffers->next->empty());
+    return events;
 }
 
 void DataHandlerText::write(const std::vector<Data::ListElement422>* buffer, uint32_t digitizerID)
