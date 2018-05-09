@@ -66,11 +66,6 @@ void DataHandlerNetworkSend::addDigitizer(uint32_t digitizerID_)
 // TODO Template this function?
 size_t DataHandlerNetworkSend::handle(const DPPEventLE422Accessor& accessor, uint32_t digitizerID)
 {
-    if (elementType != accessor.elementType())
-    {
-        send();
-        elementType = accessor.elementType();
-    }
     Data::ListElement422* elementPtr = (Data::ListElement422*)(buffer + sizeof(Data::Header));
     elementPtr += numElements;
     size_t events = 0;
