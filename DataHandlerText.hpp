@@ -35,12 +35,20 @@ class DataHandlerText: public DataHandler
 public:
     DataHandlerText(uuid runID);
     ~DataHandlerText();
-    void addDigitizer(uint32_t digitizerID) override;
+    void addDigitizer(uint32_t digitizerID) { addDigitizer_(digitizerID); }
     size_t handle(const DPPEventLE422Accessor& accessor, uint32_t digitizerID) override;
-    void write(const std::vector<Data::ListElement422>& buffer, uint32_t digitizerID);
+    void write(const std::vector<Data::ListElement422>* buffer, uint32_t digitizerID);
 private:
     std::fstream* file = nullptr;
-    std::map<uint32_t, std::pair<std::vector<Data::ListElement422>, std::vector<Data::ListElement422> > > buffers;
+    std::map<uint32_t, DataHandler::ContainerPair<std::vector<Data::ListElement422> >* > buffers;
+    DataHandler::ContainerPair<std::vector<Data::ListElement422> >* addDigitizer_(uint32_t digitizerID)
+    {
+        *file << "# digitizerID: " << digitizerID << std::endl;
+        DataHandler::ContainerPair<std::vector<Data::ListElement422> >* bufPair = new DataHandler::ContainerPair<std::vector<Data::ListElement422> >();
+        buffers[digitizerID] = bufPair;
+        return bufPair;
+    }
+
 };
 
 #endif //JADAQ_DATAHANDLERTEXT_HPP

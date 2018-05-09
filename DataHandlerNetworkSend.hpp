@@ -38,7 +38,7 @@ class DataHandlerNetworkSend: public DataHandler
 public:
     DataHandlerNetworkSend(std::string address, std::string port, uuid runID);
     ~DataHandlerNetworkSend();
-    void addDigitizer(uint32_t digitizerID) override;
+    void addDigitizer(uint32_t digitizerID);
     size_t handle(const DPPEventLE422Accessor& accessor, uint32_t digitizerID) override;
 private:
     uint32_t digitizerID;

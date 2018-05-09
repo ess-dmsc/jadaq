@@ -31,6 +31,23 @@
 
 class DataHandler
 {
+public:
+    virtual size_t handle(const DPPEventLE422Accessor& accessor, uint32_t digitizerID) = 0;
+    static uint64_t getTimeMsecs() { return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count(); }
+    static constexpr const char* defaultDataPort = "12345";
+    static constexpr const size_t maxBufferSize = 9000;
+
+    template <typename C>
+    struct ContainerPair
+    {
+        C* current;
+        C* next;
+        ContainerPair()
+        {
+            current = new C();
+            next = new C();
+        }
+    };
 private:
     uint64_t prevMaxLocalTime = 0;
     DataHandler() {}
@@ -39,11 +56,13 @@ protected:
     uint64_t globalTimeStamp = 0;
     DataHandler(uuid runID_) : runID(runID_) {}
     template <typename C, typename F>
-    size_t handle_(const DPPEventLE422Accessor& accessor, C& current, C& next, F write)
+    size_t handle_(const DPPEventLE422Accessor& accessor, ContainerPair<C>* buffers, F write)
     {
         uint64_t currentMaxLocalTime = 0;
         uint64_t nextMaxLocalTime = 0;
         size_t events = 0;
+        C* current = buffers->current;
+        C* next = buffers->next;
         for (uint16_t channel = 0; channel < accessor.channels(); channel++)
         {
             for (uint32_t i = 0; i < accessor.events(channel); ++i)
@@ -55,35 +74,34 @@ protected:
                     if (listElement.localTime > currentMaxLocalTime)
                         currentMaxLocalTime = listElement.localTime;
                     try {
-                        current.push_back(listElement);
+                        current->push_back(listElement);
                     } catch (std::length_error&)
                     {
                         write(current);
-                        current.clear();
-                        current.push_back(listElement);
+                        current->clear();
+                        current->push_back(listElement);
                     }
                 } else {
                     if (listElement.localTime > nextMaxLocalTime)
                         nextMaxLocalTime = listElement.localTime;
                     try {
-                        next.push_back(listElement);
+                        next->push_back(listElement);
                     } catch (std::length_error&)
                     {
                         write(next);
-                        next.clear();
-                        next.push_back(listElement);
+                        next->clear();
+                        next->push_back(listElement);
                     }
                 }
             }
         }
-        if (!next.empty())
+        if (!next->empty())
         {
             write(current);
-            current.clear();
+            current->clear();
+            buffers->current = next;
+            buffers->next = current;
             globalTimeStamp = getTimeMsecs(); //TODO can we get this earlier and what is the cost
-            C& temp = next;
-            next = current;
-            current = temp;
             currentMaxLocalTime = nextMaxLocalTime;
         }
         // NOTE: We assume that the smallest time in the next acquisition must be larger than the largest time in the
@@ -91,13 +109,6 @@ protected:
         prevMaxLocalTime = currentMaxLocalTime;
         return events;
     }
-
-public:
-    virtual void addDigitizer(uint32_t digitizerID) {}
-    virtual size_t handle(const DPPEventLE422Accessor& accessor, uint32_t digitizerID) = 0;
-    static uint64_t getTimeMsecs() { return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count(); }
-    static constexpr const char* defaultDataPort = "12345";
-    static constexpr const size_t maxBufferSize = 9000;
 };
 
 /* A simple helper to get current time since epoch in milliseconds */

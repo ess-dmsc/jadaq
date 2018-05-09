@@ -46,25 +46,28 @@ DataHandlerText::~DataHandlerText()
     }
 }
 
-void DataHandlerText::addDigitizer(uint32_t digitizerID)
-{
-    buffers[digitizerID];
-    *file << "# digitizerID: " << digitizerID << std::endl;
-}
-
 size_t DataHandlerText::handle(const DPPEventLE422Accessor& accessor, uint32_t digitizerID)
 {
     using namespace std::placeholders;
-    auto buf = buffers[digitizerID];
-    return handle_(accessor, buf.first, buf.second, std::bind(&DataHandlerText::write,this,_1,digitizerID));
+    DataHandler::ContainerPair<std::vector<Data::ListElement422> >* myBuffers;
+    auto itr = buffers.find(digitizerID);
+    if (itr == buffers.end())
+    {
+        myBuffers = addDigitizer_(digitizerID);
+    } else {
+        myBuffers = itr->second;
+    }
+    return handle_(accessor, myBuffers, std::bind(&DataHandlerText::write,this,_1,digitizerID));
 }
 
-void DataHandlerText::write(const std::vector<Data::ListElement422>& buffer, uint32_t digitizerID)
+void DataHandlerText::write(const std::vector<Data::ListElement422>* buffer, uint32_t digitizerID)
 {
     *file << "@" << globalTimeStamp << std::endl;
-    for(const Data::ListElement422& element: buffer)
-    *file << std::setw(10) << element.localTime << " " << std::setw(10) << digitizerID << " " <<
-          std::setw(10) << element.channel << " " << std::setw(10) << element.adcValue << "\n";
+    for(const Data::ListElement422& element: *buffer)
+    {
+        *file << std::setw(10) << element.localTime << " " << std::setw(10) << digitizerID << " " <<
+              std::setw(10) << element.channel << " " << std::setw(10) << element.adcValue << "\n";
+    }
 
 }
 

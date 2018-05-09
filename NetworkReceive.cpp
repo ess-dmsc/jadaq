@@ -77,7 +77,7 @@ void NetworkReceive::start(int* keepRunning)
                 dataHandler = itr->second;
             } else {
                 dataHandler = new DataHandlerText(runID);
-                dataHandler->addDigitizer(digitizerID);
+//                dataHandler->addDigitizer(digitizerID);
                 dataHandlers.insert(std::make_pair(std::make_pair(runID,digitizerID),dataHandler));
             }
             if (header->version != Data::currentVersion)
