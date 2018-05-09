@@ -60,7 +60,7 @@ public:
         file->close();
     }
 
-    void addDigitizer(uint32_t digitizerID) { addDigitizer_(digitizerID); }
+    void addDigitizer(uint32_t digitizerID) override { addDigitizer_(digitizerID); }
     size_t handle(const DPPEventLE422Accessor& accessor, uint32_t digitizerID) override
     {
         namespace ph = std::placeholders;

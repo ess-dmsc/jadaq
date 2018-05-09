@@ -32,6 +32,7 @@
 class DataHandler
 {
 public:
+    virtual void addDigitizer(uint32_t digitizerID) = 0;
     virtual size_t handle(const DPPEventLE422Accessor& accessor, uint32_t digitizerID) = 0;
     static uint64_t getTimeMsecs() { return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count(); }
     static constexpr const char* defaultDataPort = "12345";
