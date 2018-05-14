@@ -47,7 +47,7 @@ private:
 public:
     DPPQDCEventAccessor(const caen::DPPEvents<_CAEN_DGTZ_DPP_QDC_Event_t>& events, uint16_t channels)
             : container(events)
-            , numChannels(channels){}
+            , numChannels(channels) {}
     uint16_t channels() const override { return numChannels; }
     uint32_t events(uint16_t channel) const override { return container.nEvents[channel]; }
     E element(uint16_t channel, size_t i) const override;

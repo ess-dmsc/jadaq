@@ -97,23 +97,23 @@ protected:
                     if (element.localTime > currentMaxLocalTime)
                         currentMaxLocalTime = element.localTime;
                     try {
-                        current->push_back(element);
+                        current->insert(element);
                     } catch (std::length_error&)
                     {
                         write(current);
                         current->clear();
-                        current->push_back(element);
+                        current->insert(element);
                     }
                 } else {
                     if (element.localTime > nextMaxLocalTime)
                         nextMaxLocalTime = element.localTime;
                     try {
-                        next->push_back(element);
+                        next->insert(element);
                     } catch (std::length_error&)
                     {
                         write(next);
                         next->clear();
-                        next->push_back(element);
+                        next->insert(element);
                     }
                 }
             }
@@ -134,4 +134,17 @@ protected:
     }
 };
 
+namespace jadaq
+{
+    template<typename T>
+    class vector : public std::vector<T>
+    {
+    public:
+        void insert(const T &v)
+        { this->push_back(v); }
+
+        void insert(const T &&v)
+        { this->push_back(v); }
+    };
+}
 #endif //JADAQ_DATAHANDLER_HPP

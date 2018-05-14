@@ -301,7 +301,7 @@ int main(int argc, char **argv) {
             ;//dataHandler = new DataHandlerNetworkSend<Data::ListElement422>(conf.address, conf.port, runID);
         } else
         {
-            dataHandler = new DataHandlerText<std::vector,Data::ListElement422>(runID);
+            dataHandler = new DataHandlerText<jadaq::vector,Data::ListElement422>(runID);
         }
 
         digitizer.initialize(dataHandler);
