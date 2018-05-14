@@ -35,8 +35,10 @@ target_link_libraries(debugCAENComm dl)
 add_library(caen SHARED caen.hpp caen.cpp _CAENDigitizer.c _CAENDigitizer.h)
 target_link_libraries(caen dl)
 
-file(GLOB DataHandlerHEADERS DataFormat.hpp DataHandler*.hpp uuid.hpp EventAccessor.hpp)
-file(GLOB DataHandlerSOURCES DataFormat.cpp DataHandler*.cpp uuid.cpp)
+#file(GLOB DataHandlerHEADERS DataFormat.hpp DataHandler*.hpp uuid.hpp EventAccessor.hpp)
+file(GLOB DataHandlerHEADERS DataFormat.hpp DataHandler.hpp DataHandlerText.hpp DataHandlerNull.hpp uuid.hpp EventAccessor.hpp)
+#file(GLOB DataHandlerSOURCES DataHandler*.cpp uuid.cpp)
+file(GLOB DataHandlerSOURCES uuid.cpp)
 add_library(DataHandler ${DataHandlerHEADERS} ${DataHandlerSOURCES})
 
 add_executable(jadaq ${DataHandlerHEADERS} jadaq.cpp caen.hpp Configuration.cpp Configuration.hpp Digitizer.cpp Digitizer.hpp FunctionID.hpp FunctionID.cpp ini_parser.hpp StringConversion.cpp StringConversion.hpp CAENConf.cpp CAENConf.hpp trace.hpp)
@@ -44,5 +46,5 @@ target_link_libraries(jadaq ${CAEN_LIB} caen DataHandler ${Boost_FILESYSTEM_LIBR
 
 # For jadaq-ds
 # jadaq-ds now depends on caen and CAEN_LIB because of EventAccessor. Can we get rid of this dependency
-add_executable(jadaq-ds jadaq-ds.cpp ${DataHandlerHEADERS} NetworkReceive.cpp NetworkReceive.hpp)
-target_link_libraries(jadaq-ds ${CAEN_LIB} caen DataHandler ${HDF5_CXX_LIBRARIES} ${Boost_LIBRARIES} pthread)
+#add_executable(jadaq-ds jadaq-ds.cpp ${DataHandlerHEADERS} NetworkReceive.cpp NetworkReceive.hpp)
+#target_link_libraries(jadaq-ds ${CAEN_LIB} caen DataHandler ${HDF5_CXX_LIBRARIES} ${Boost_LIBRARIES} pthread)

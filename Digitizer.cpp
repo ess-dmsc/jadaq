@@ -342,7 +342,7 @@ void Digitizer::close()
     delete digitizer;
 }
 
-void Digitizer::initialize(uuid runID, DataHandler* dataHandler_)
+void Digitizer::initialize(DataHandlerGeneric* dataHandler_)
 {
     dataHandler = dataHandler_;
     boardConfiguration = digitizer->getBoardConfiguration();
@@ -436,8 +436,8 @@ void Digitizer::acquisition() {
         {
             digitizer->getDPPEvents(readoutBuffer_, dppEvents);
             // TODO: Move constructor??
-            DPPQDCEventAccessor accessor{*static_cast<caen::DPPEvents<_CAEN_DGTZ_DPP_QDC_Event_t> * >(dppEvents),
-                                         (uint16_t) numChannels};
+            DPPQDCEventAccessor<Data::ListElement422> accessor{*static_cast<caen::DPPEvents<_CAEN_DGTZ_DPP_QDC_Event_t> * >(dppEvents),
+                                                               (uint16_t) numChannels};
             size_t events = dataHandler->handle(accessor, id);
             stats_.eventsFound += events;
             break;

@@ -33,20 +33,22 @@
 #include "DataHandler.hpp"
 
 using boost::asio::ip::udp;
-class DataHandlerNetworkSend: public DataHandler
+
+template <typename E>
+class DataHandlerNetworkSend: public DataHandler<E>
 {
 public:
     DataHandlerNetworkSend(std::string address, std::string port, uuid runID);
     ~DataHandlerNetworkSend();
     void addDigitizer(uint32_t digitizerID);
-    size_t handle(const DPPEventLE422Accessor& accessor, uint32_t digitizerID) override;
+    size_t handle(const DPPEventAccessor<E>& accessor, uint32_t digitizerID) override;
 private:
     uint32_t digitizerID;
     boost::asio::io_service ioService;
     udp::endpoint remoteEndpoint;
     udp::socket *socket = nullptr;
     char* buffer;
-    const size_t bufferSize = DataHandler::maxBufferSize;
+    const size_t bufferSize = Data::maxBufferSize;
     uint16_t numElements;
     Data::ElementType elementType;
     void send();

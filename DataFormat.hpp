@@ -73,5 +73,9 @@ namespace Data
                 throw std::runtime_error("Unknown element type." );
         }
     }
+
+    static constexpr const char* defaultDataPort = "12345";
+    static constexpr const size_t maxBufferSize = 9000;
+
 } // namespace Data
 #endif //JADAQ_DATAFORMAT_HPP

@@ -29,16 +29,34 @@
 #include "uuid.hpp"
 #include "EventAccessor.hpp"
 
-class DataHandler
+template <typename E> class DataHandler;
+
+class DataHandlerGeneric
 {
 public:
     virtual void addDigitizer(uint32_t digitizerID) = 0;
-    virtual size_t handle(const DPPEventLE422Accessor& accessor, uint32_t digitizerID) = 0;
-    static uint64_t getTimeMsecs() { return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count(); }
-    static constexpr const char* defaultDataPort = "12345";
-    static constexpr const size_t maxBufferSize = 9000;
 
-    template <template<typename...> typename C, typename E>
+    template<typename E>
+    size_t handle(const DPPEventAccessor<E> &accessor, uint32_t digitizerID)
+    {
+        return static_cast<DataHandler<E>* >(this)->handle(accessor,digitizerID);
+    }
+
+    static int64_t getTimeMsecs()
+    {
+        return std::chrono::duration_cast<std::chrono::milliseconds>(
+                std::chrono::system_clock::now().time_since_epoch()).count();
+    }
+
+};
+
+template <typename E>
+class DataHandler : public DataHandlerGeneric
+{
+public:
+    virtual size_t handle(const DPPEventAccessor<E>& accessor, uint32_t digitizerID) = 0;
+
+    template <template<typename...> typename C>
     struct ContainerPair
     {
         C<E>* current;
@@ -56,13 +74,12 @@ public:
     };
 private:
     uint64_t prevMaxLocalTime = 0;
-    DataHandler() {}
 protected:
     uuid runID;
     uint64_t globalTimeStamp = 0;
     DataHandler(uuid runID_) : runID(runID_) {}
-    template <template<typename...> typename C, typename E, typename F>
-    size_t handle_(const DPPEventLE422Accessor& accessor, ContainerPair<C,E>* buffers, F write)
+    template <template<typename...> typename C, typename F>
+    size_t handle_(const DPPEventAccessor<E>& accessor, ContainerPair<C>* buffers, F write)
     {
         uint64_t currentMaxLocalTime = 0;
         uint64_t nextMaxLocalTime = 0;
@@ -74,29 +91,29 @@ protected:
             for (uint32_t i = 0; i < accessor.events(channel); ++i)
             {
                 events += 1;
-                Data::ListElement422 listElement = accessor.listElement422(channel,i);
-                if (listElement.localTime > prevMaxLocalTime)
+                E element = accessor.element(channel,i);
+                if (element.localTime > prevMaxLocalTime)
                 {
-                    if (listElement.localTime > currentMaxLocalTime)
-                        currentMaxLocalTime = listElement.localTime;
+                    if (element.localTime > currentMaxLocalTime)
+                        currentMaxLocalTime = element.localTime;
                     try {
-                        current->push_back(listElement);
+                        current->push_back(element);
                     } catch (std::length_error&)
                     {
                         write(current);
                         current->clear();
-                        current->push_back(listElement);
+                        current->push_back(element);
                     }
                 } else {
-                    if (listElement.localTime > nextMaxLocalTime)
-                        nextMaxLocalTime = listElement.localTime;
+                    if (element.localTime > nextMaxLocalTime)
+                        nextMaxLocalTime = element.localTime;
                     try {
-                        next->push_back(listElement);
+                        next->push_back(element);
                     } catch (std::length_error&)
                     {
                         write(next);
                         next->clear();
-                        next->push_back(listElement);
+                        next->push_back(element);
                     }
                 }
             }
@@ -116,7 +133,5 @@ protected:
         return events;
     }
 };
-
-/* A simple helper to get current time since epoch in milliseconds */
 
 #endif //JADAQ_DATAHANDLER_HPP

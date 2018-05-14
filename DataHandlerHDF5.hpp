@@ -29,15 +29,29 @@
 #include <H5Cpp.h>
 #include "DataHandler.hpp"
 
-class DataHandlerHDF5: public DataHandler
+template <template <typename...> typename C, typename E>
+class DataHandlerHDF5: public DataHandler<E>
 {
 public:
-    DataHandlerHDF5(uuid runID);
+    DataHandlerHDF5(uuid runID)
+            : DataHandler<E>(runID)
+    {
+        std::string filename = "jadaq-run-" + runID.toString() + ".md5";
+        try
+        {
+            //TODO: Handle existing file
+            file = new H5::H5File(filename, H5F_ACC_TRUNC);
+        } catch (H5::Exception& e)
+        {
+            std::cerr << "ERROR: could not open/create HDF5-file \"" << filename <<  "\":" << e.getDetailMsg() << std::endl;
+            throw;
+        }
+    }
+
     ~DataHandlerHDF5();
-    size_t handle(const DPPEventLE422Accessor& accessor, uint32_t digitizerID) override;
+    size_t handle(const DPPEventAccessor<E>& accessor, uint32_t digitizerID) override;
 private:
     H5::H5File* file = nullptr;
 };
-
 
 #endif //JADAQ_DATAHANDLERHDF5_HPP

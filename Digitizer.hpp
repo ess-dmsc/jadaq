@@ -72,7 +72,7 @@ public:
     void acquisition();
     const Stats& stats() const {return stats_;}
     //Post setup, pre aquisition initialization
-    void initialize(uuid runID, DataHandler* dataHandler_);
+    void initialize(DataHandlerGeneric* dataHandler_);
 
     // TODO: Sould we do somthing different than expose these three function?
     void startAcquisition() { digitizer->startAcquisition(); }
@@ -81,7 +81,7 @@ public:
 
 private:
     caen::Digitizer* digitizer;
-    DataHandler* dataHandler = nullptr;
+    DataHandlerGeneric* dataHandler = nullptr;
     CAEN_DGTZ_DPPFirmware_t firmware;
     uint32_t boardConfiguration = 0;
     uint32_t numChannels;

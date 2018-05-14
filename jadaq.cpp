@@ -100,7 +100,7 @@ static void setup_interrupt_handler() {
 }
 
 void showTotals(TotalStats &totals) {
-    STAT(uint64_t runtimeMsecs = DataHandler::getTimeMsecs() - totals.runStartTime;)
+    STAT(uint64_t runtimeMsecs = DataHandlerGeneric::getTimeMsecs() - totals.runStartTime;)
     STAT(std::cout << "= Accumulated Stats =" << std::endl;)
     STAT(std::cout << "Runtime in seconds: " << runtimeMsecs / 1000.0 << std::endl;)
     STAT(std::cout << "Bytes read: " << totals.bytesRead << std::endl;)
@@ -114,7 +114,7 @@ void usageHelp(char *name) {
     std::cout << "Usage: " << name << " [<options>] [<jadaq_config_file>]" << std::endl;
     std::cout << "Where <options> can be:" << std::endl;
     std::cout << "--address / -a ADDRESS     optional UDP network address to send to (unset by default)." << std::endl;
-    std::cout << "--port / -p PORT           optional UDP network port to send to (default is " << DataHandler::defaultDataPort << ")." << std::endl;
+    std::cout << "--port / -p PORT           optional UDP network port to send to (default is " << Data::defaultDataPort << ")." << std::endl;
     std::cout << "--confoverride / -c FILE   optional conf overrides on CAEN format." << std::endl;
     std::cout << "--dumpprefix / -d PREFIX   optional prefix for output dump to file." << std::endl;
     std::cout << "--registerdump / -r FILE   optional file to save register dump in." << std::endl;
@@ -159,7 +159,7 @@ int main(int argc, char **argv) {
     /* Default conf values - file writes and UDP send disabled by default */
     RuntimeConf conf;
     conf.address = "";
-    conf.port = DataHandler::defaultDataPort;
+    conf.port = Data::defaultDataPort;
     conf.configFileName = "";
     conf.overrideFileName = "";
     conf.channelDumpPrefix = "";
@@ -295,18 +295,19 @@ int main(int argc, char **argv) {
         threadHelpers[digitizer.name()] = digitizerThread;
         digitizerThread->ready = true;
         /* Prepare buffers - must happen AFTER digitizer has been configured! */
-        DataHandler* dataHandler;
-        if (conf.sendEventEnabled) {
-            dataHandler = new DataHandlerNetworkSend(conf.address, conf.port, runID);
+        DataHandler<Data::ListElement422>* dataHandler;
+        if (conf.sendEventEnabled)
+        {
+            ;//dataHandler = new DataHandlerNetworkSend<Data::ListElement422>(conf.address, conf.port, runID);
         } else
         {
             dataHandler = new DataHandlerText<std::vector,Data::ListElement422>(runID);
         }
 
-        digitizer.initialize(runID, dataHandler);
+        digitizer.initialize(dataHandler);
     }
 
-    acquisitionStart = DataHandler::getTimeMsecs();
+    acquisitionStart = DataHandlerGeneric::getTimeMsecs();
     totals.runStartTime = acquisitionStart;
     std::cout << "Start acquisition from " << digitizers.size() << " digitizer(s)." << std::endl;
     for (Digitizer& digitizer: digitizers) {
@@ -397,7 +398,7 @@ int main(int argc, char **argv) {
         digitizer.stopAcquisition();
     }
 
-    acquisitionStopped = DataHandler::getTimeMsecs();
+    acquisitionStopped = DataHandlerGeneric::getTimeMsecs();
     std::cout << "Acquisition loop ran for " << (acquisitionStopped - acquisitionStart) / 1000.0 << "s." << std::endl;
 
     /* Stop and wait for thread pool to complete */

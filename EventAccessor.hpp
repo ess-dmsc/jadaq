@@ -29,22 +29,17 @@
 #include "caen.hpp"
 #include "DataFormat.hpp"
 
+template <typename E>
 class DPPEventAccessor
 {
 public:
     virtual uint16_t channels() const = 0;
     virtual uint32_t events(uint16_t channel) const = 0;
-    virtual Data::ElementType elementType() const = 0;
+    virtual E element(uint16_t channel, size_t i) const = 0;
 };
 
-class DPPEventLE422Accessor : public DPPEventAccessor
-{
-public:
-    virtual Data::ListElement422 listElement422(uint16_t channel, size_t i) const = 0;
-    Data::ElementType elementType() const final { return Data::List422;}
-};
-
-class DPPQDCEventAccessor : public DPPEventLE422Accessor
+template <typename E>
+class DPPQDCEventAccessor : public DPPEventAccessor<E>
 {
 private:
     const caen::DPPEvents<_CAEN_DGTZ_DPP_QDC_Event_t>& container;
@@ -55,15 +50,18 @@ public:
             , numChannels(channels){}
     uint16_t channels() const override { return numChannels; }
     uint32_t events(uint16_t channel) const override { return container.nEvents[channel]; }
-    Data::ListElement422 listElement422(uint16_t channel, size_t i) const override
-    {
-        Data::ListElement422 res;
-        res.localTime = container.ptr[channel][i].TimeTag;
-        res.adcValue = container.ptr[channel][i].Charge;
-        res.channel = channel;
-        return res;
-    }
-
+    E element(uint16_t channel, size_t i) const override;
 };
+
+template <>
+inline Data::ListElement422 DPPQDCEventAccessor<Data::ListElement422>::element(uint16_t channel, size_t i) const
+{
+    Data::ListElement422 res;
+    res.localTime = container.ptr[channel][i].TimeTag;
+    res.adcValue = container.ptr[channel][i].Charge;
+    res.channel = channel;
+    return res;
+}
+
 
 #endif //JADAQ_ACCESSOR_HPP

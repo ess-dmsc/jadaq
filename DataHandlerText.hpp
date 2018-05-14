@@ -33,11 +33,22 @@
 #include "DataHandler.hpp"
 
 template <template <typename...> typename C, typename E>
-class DataHandlerText: public DataHandler
+class DataHandlerText: public DataHandler<E>
 {
+private:
+    std::fstream* file = nullptr;
+    std::map<uint32_t, typename DataHandler<E>::template ContainerPair<C>* > bufferMap;
+    typename DataHandler<E>::template ContainerPair<C>* addDigitizer_(uint32_t digitizerID)
+    {
+        *file << "# digitizerID: " << digitizerID << std::endl;
+        typename DataHandler<E>::template ContainerPair<C>* buffers = new typename DataHandler<E>::template ContainerPair<C>();
+        bufferMap[digitizerID] = buffers;
+        return buffers;
+    }
+
 public:
     DataHandlerText(uuid runID)
-            : DataHandler(runID)
+            : DataHandler<E>(runID)
     {
         std::string filename = "jadaq-run-" + runID.toString() + ".txt";
         file = new std::fstream(filename,std::fstream::out);
@@ -61,10 +72,11 @@ public:
     }
 
     void addDigitizer(uint32_t digitizerID) override { addDigitizer_(digitizerID); }
-    size_t handle(const DPPEventLE422Accessor& accessor, uint32_t digitizerID) override
+
+    size_t handle(const DPPEventAccessor<E>& accessor, uint32_t digitizerID) override
     {
         namespace ph = std::placeholders;
-        DataHandler::ContainerPair<std::vector, Data::ListElement422>* myBuffers;
+        typename DataHandler<E>::template ContainerPair<C>* myBuffers;
         auto itr = bufferMap.find(digitizerID);
         if (itr == bufferMap.end())
         {
@@ -72,30 +84,19 @@ public:
         } else {
             myBuffers = itr->second;
         }
-        size_t events = handle_(accessor, myBuffers, std::bind(&DataHandlerText::write,this,ph::_1,digitizerID));
+        size_t events = this->handle_(accessor, myBuffers, std::bind(&DataHandlerText::write,this,ph::_1,digitizerID));
         assert(myBuffers->next->empty());
         return events;
     }
 
-    void write(const std::vector<Data::ListElement422>* buffer, uint32_t digitizerID){
-        *file << "@" << globalTimeStamp << std::endl;
+    void write(const C<E>* buffer, uint32_t digitizerID){
+        *file << "@" << this->globalTimeStamp << std::endl;
         for(const Data::ListElement422& element: *buffer)
         {
             *file << std::setw(10) << element.localTime << " " << std::setw(10) << digitizerID << " " <<
                   std::setw(10) << element.channel << " " << std::setw(10) << element.adcValue << "\n";
         }
 
-    }
-
-private:
-    std::fstream* file = nullptr;
-    std::map<uint32_t, DataHandler::ContainerPair<C, Data::ListElement422>* > bufferMap;
-    DataHandler::ContainerPair<C,E>* addDigitizer_(uint32_t digitizerID)
-    {
-        *file << "# digitizerID: " << digitizerID << std::endl;
-        DataHandler::ContainerPair<C,E>* buffers = new DataHandler::ContainerPair<C,E>();
-        bufferMap[digitizerID] = buffers;
-        return buffers;
     }
 
 };
