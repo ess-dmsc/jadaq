@@ -35,7 +35,7 @@ class DPPEventAccessor
 public:
     virtual uint16_t channels() const = 0;
     virtual uint32_t events(uint16_t channel) const = 0;
-    virtual E element(uint16_t channel, size_t i) const = 0;
+    virtual E operator()(uint16_t channel, size_t i) const = 0;
 };
 
 template <typename E>
@@ -50,11 +50,11 @@ public:
             , numChannels(channels) {}
     uint16_t channels() const override { return numChannels; }
     uint32_t events(uint16_t channel) const override { return container.nEvents[channel]; }
-    E element(uint16_t channel, size_t i) const override;
+    E operator()(uint16_t channel, size_t i) const override;
 };
 
 template <>
-inline Data::ListElement422 DPPQDCEventAccessor<Data::ListElement422>::element(uint16_t channel, size_t i) const
+inline Data::ListElement422 DPPQDCEventAccessor<Data::ListElement422>::operator()(uint16_t channel, size_t i) const
 {
     Data::ListElement422 res;
     res.localTime = container.ptr[channel][i].TimeTag;

@@ -91,7 +91,7 @@ protected:
             for (uint32_t i = 0; i < accessor.events(channel); ++i)
             {
                 events += 1;
-                E element = accessor.element(channel,i);
+                E element = accessor(channel,i);
                 if (element.localTime > prevMaxLocalTime)
                 {
                     if (element.localTime > currentMaxLocalTime)
