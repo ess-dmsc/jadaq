@@ -53,6 +53,7 @@ public:
 template <typename E>
 class DataHandler : public DataHandlerGeneric
 {
+    static_assert(std::is_pod<E>::value, "E must be POD");
 public:
     virtual size_t handle(const DPPEventAccessor<E>& accessor, uint32_t digitizerID) = 0;
 
