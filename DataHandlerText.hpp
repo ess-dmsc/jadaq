@@ -42,7 +42,7 @@ private:
     ContainerPair* addDigitizer_(uint32_t digitizerID)
     {
         *file << "# digitizerID: " << digitizerID << std::endl;
-        typename DataHandler<E>::template ContainerPair<C>* buffers = new typename DataHandler<E>::template ContainerPair<C>();
+        ContainerPair* buffers = new ContainerPair{};
         bufferMap[digitizerID] = buffers;
         return buffers;
     }
