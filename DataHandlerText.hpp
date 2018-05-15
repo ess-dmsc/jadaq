@@ -36,9 +36,10 @@ template <template <typename...> typename C, typename E>
 class DataHandlerText: public DataHandler<E>
 {
 private:
+    typedef typename DataHandler<E>::template ContainerPair<C> ContainerPair;
     std::fstream* file = nullptr;
-    std::map<uint32_t, typename DataHandler<E>::template ContainerPair<C>* > bufferMap;
-    typename DataHandler<E>::template ContainerPair<C>* addDigitizer_(uint32_t digitizerID)
+    std::map<uint32_t, ContainerPair* > bufferMap;
+    ContainerPair* addDigitizer_(uint32_t digitizerID)
     {
         *file << "# digitizerID: " << digitizerID << std::endl;
         typename DataHandler<E>::template ContainerPair<C>* buffers = new typename DataHandler<E>::template ContainerPair<C>();
