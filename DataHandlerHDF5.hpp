@@ -32,6 +32,20 @@
 template <template <typename...> typename C, typename E>
 class DataHandlerHDF5: public DataHandler<E>
 {
+private:
+    typedef typename DataHandler<E>::template ContainerPair<C> ContainerPair;
+    H5::H5File* file = nullptr;
+    H5::Group* root = nullptr;
+    std::map<uint32_t, std::pair<H5::Group*, ContainerPair*> > containerMap;
+    std::pair<H5::Group*, ContainerPair*> addDigitizer_(uint32_t digitizerID)
+    {
+        H5::Group* digitizer = new H5::Group(file->createGroup(std::to_string(digitizerID)));
+        ContainerPair* buffers = new ContainerPair{};
+        auto res = std::make_pair(digitizer,buffers);
+        containerMap[digitizerID] = res;
+        return res;
+    }
+
 public:
     DataHandlerHDF5(uuid runID)
             : DataHandler<E>(runID)
@@ -39,8 +53,8 @@ public:
         std::string filename = "jadaq-run-" + runID.toString() + ".md5";
         try
         {
-            //TODO: Handle existing file
             file = new H5::H5File(filename, H5F_ACC_TRUNC);
+            root = new H5::Group(file->openGroup("/"));
         } catch (H5::Exception& e)
         {
             std::cerr << "ERROR: could not open/create HDF5-file \"" << filename <<  "\":" << e.getDetailMsg() << std::endl;
@@ -48,10 +62,49 @@ public:
         }
     }
 
-    ~DataHandlerHDF5();
-    size_t handle(const DPPEventAccessor<E>& accessor, uint32_t digitizerID) override;
-private:
-    H5::H5File* file = nullptr;
+    ~DataHandlerHDF5()
+    {
+        assert(file);
+        for(auto itr: containerMap)
+        {
+            write(itr.second->current, itr.first);
+            assert(itr.second->next->empty());
+            delete itr.second;
+        }
+        root->close();
+        delete root;
+        file->close();
+        delete file;
+    }
+    void addDigitizer(uint32_t digitizerID) override { addDigitizer_(digitizerID); }
+
+    size_t handle(const DPPEventAccessor<E>& accessor, uint32_t digitizerID) override
+    {
+        namespace ph = std::placeholders;
+        std::pair<H5::Group*, ContainerPair*> containers;
+
+        auto itr = containerMap.find(digitizerID);
+        if (itr == containerMap.end())
+        {
+            containers = addDigitizer_(digitizerID);
+        } else {
+            containers= itr->second;
+        }
+        size_t events = this->handle_(accessor, containers.second, std::bind(&DataHandlerHDF5::write,this,ph::_1,containers.first));
+        assert(containers.second->next->empty());
+        return events;
+    }
+
+    void write(const C<E>* buffer, H5::Group* digitizer)
+    {
+        const hsize_t size[1] = {buffer->size()};
+        H5::DataSpace dataspace(1, size);
+        H5::DataSet dataset = digitizer->createDataSet(std::to_string(this->globalTimeStamp), E::h5type(), dataspace );
+        dataset.createAttribute("globalTimeStamp", H5::PredType::NATIVE_UINT64, this->globalTimeStamp);
+        dataset.write(buffer->data(), E::h5type());
+    }
+
+
 };
 
 #endif //JADAQ_DATAHANDLERHDF5_HPP

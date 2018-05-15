@@ -27,6 +27,7 @@
 #include <cstdint>
 #include <cstddef>
 #include <iostream>
+#include <H5Cpp.h>
 
 #define VERSION {1,0}
 
@@ -64,6 +65,13 @@ namespace Data
             return localTime < rhs.localTime || localTime == rhs.localTime && channel < rhs.channel;
         };
         static ElementType type() { return List422; }
+        static H5::DataType h5type()
+        {
+            H5::CompType datatype(sizeof(ListElement422));
+            datatype.insertMember("localTime", HOFFSET(ListElement422, localTime), H5::PredType::NATIVE_UINT32);
+            datatype.insertMember("adcValue", HOFFSET(ListElement422, adcValue), H5::PredType::NATIVE_UINT16);
+            datatype.insertMember("channel", HOFFSET(ListElement422, channel), H5::PredType::NATIVE_UINT16);
+        }
     };
     static inline size_t elementSize(ElementType elementType)
     {

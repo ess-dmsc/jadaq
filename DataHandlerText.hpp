@@ -77,7 +77,7 @@ public:
     size_t handle(const DPPEventAccessor<E>& accessor, uint32_t digitizerID) override
     {
         namespace ph = std::placeholders;
-        typename DataHandler<E>::template ContainerPair<C>* myBuffers;
+        ContainerPair* myBuffers;
         auto itr = bufferMap.find(digitizerID);
         if (itr == bufferMap.end())
         {

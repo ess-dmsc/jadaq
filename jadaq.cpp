@@ -40,6 +40,7 @@
 #include "trace.hpp"
 #include "DataHandlerNetworkSend.hpp"
 #include "DataHandlerText.hpp"
+#include "DataHandlerHDF5.hpp"
 #include "uuid.hpp"
 
 #define NOTHREADS
@@ -301,7 +302,7 @@ int main(int argc, char **argv) {
             ;//dataHandler = new DataHandlerNetworkSend<Data::ListElement422>(conf.address, conf.port, runID);
         } else
         {
-            dataHandler = new DataHandlerText<jadaq::vector,Data::ListElement422>(runID);
+            dataHandler = new DataHandlerHDF5<jadaq::vector,Data::ListElement422>(runID);
         }
 
         digitizer.initialize(dataHandler);
