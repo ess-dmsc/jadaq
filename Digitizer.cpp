@@ -363,38 +363,6 @@ void Digitizer::initialize(DataHandlerGeneric* dataHandler_)
     }
 }
 
-void Digitizer::extractPlainEvents()
-{
-    throw std::runtime_error("Plain Waveforms not suported.");
-    STAT(int eventsUnpacked = 0; int eventsDecoded = 0;)
-    // TODO test - I think it was never tested. channel never gets updated!
-    uint32_t numEvents = digitizer->getNumEvents(readoutBuffer_);
-    uint32_t channel = 0;
-    for (uint32_t eventIndex = 0; eventIndex < numEvents; eventIndex++) {
-        caen::EventInfo eventinfo = digitizer->getEventInfo(readoutBuffer_, eventIndex);
-        DEBUG(std::cout << "Unpacked event " << eventinfo.EventCounter << "  of " << numEvents
-                        << " events from " << name() << std::endl;)
-        STAT(eventsUnpacked += 1;)
-        digitizer->decodeEvent(eventinfo, plainEvent);
-        DEBUG(std::cout << "Decoded event " << eventinfo.EventCounter << "  of " << numEvents
-                        << " events from " << name() << std::endl;)
-        STAT(eventsDecoded += 1;)
-        caen::BasicEvent basicEvent = digitizer->extractBasicEvent(eventinfo, plainEvent, channel, eventIndex);
-        /*
-        commHelper->eventData->waveformEvents[eventIndex].localTime = basicEvent.timestamp;
-        commHelper->eventData->waveformEvents[eventIndex].waveformLength = basicEvent.count;
-        // NOTE: only one sample array here so just use Sample1
-        memcpy(commHelper->eventData->waveformEvents[eventIndex].waveformSample1, basicEvent.samples,
-               (basicEvent.count * sizeof(basicEvent.samples[0])));
-        commHelper->eventData->waveformEvents[eventIndex].channel = basicEvent.channel;
-        */
-    }
-    STAT(stats_.eventsUnpacked += eventsUnpacked;)
-    STAT(stats_.eventsDecoded += eventsDecoded;)
-    STAT(stats_.eventsFound += numEvents;)
-}
-
-
 void Digitizer::acquisition() {
 
     /* NOTE: these are per-digitizer local helpers */
@@ -443,7 +411,7 @@ void Digitizer::acquisition() {
             break;
         }
         case CAEN_DGTZ_NotDPPFirmware:
-            extractPlainEvents();
+            throw std::runtime_error("Non DPP firmware not supported by Digitizer.");
             break;
         default:
             throw std::runtime_error("Unknown firmware type. Not supported by Digitizer.");

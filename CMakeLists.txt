@@ -10,7 +10,7 @@ project(jadaq)
 # valgrind --leak-check=full --track-origins=yes ./jadaq [CONFFILE]
 #
 set(CMAKE_CXX_STANDARD 11)
-set(ACCEPED_WARNINGS "-Wno-unused-function -Wno-unused-variable -Wno-unused-but-set-variable")
+set(ACCEPED_WARNINGS "-Wno-unused-function -Wno-unused-variable")
 set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -Wall ${ACCEPED_WARNINGS} -Werror" )
 set(CMAKE_C_STANDARD 99)
 if (CMAKE_COMPILER_IS_GNUCXX AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 5.3)
