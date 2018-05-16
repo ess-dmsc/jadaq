@@ -50,7 +50,12 @@ public:
     bool operator<=(const uuid& that) const { return !(*this > that); }
     bool operator>=(const uuid& that) const { return !(*this < that); }
     uint64_t value() const { return val; }
-    std::string toString() const;
+    std::string toString() const
+    {
+        std::stringstream ss;
+        ss << std::hex << std::setfill('0') << std::setw(16) << val;
+        return ss.str();
+    }
 };
 
 static inline std::string to_string(const uuid &id) { return id.toString(); }
