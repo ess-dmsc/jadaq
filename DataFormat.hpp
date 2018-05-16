@@ -70,12 +70,13 @@ namespace Data
             os << std::setw(10) << channel << " " << std::setw(10) << localTime << " " << std::setw(10) << adcValue;
         }
         static ElementType type() { return List422; }
-        static H5::DataType h5type()
+        static H5::CompType h5type()
         {
             H5::CompType datatype(sizeof(ListElement422));
             datatype.insertMember("localTime", HOFFSET(ListElement422, localTime), H5::PredType::NATIVE_UINT32);
             datatype.insertMember("adcValue", HOFFSET(ListElement422, adcValue), H5::PredType::NATIVE_UINT16);
             datatype.insertMember("channel", HOFFSET(ListElement422, channel), H5::PredType::NATIVE_UINT16);
+            return datatype;
         }
     };
     static inline size_t elementSize(ElementType elementType)
