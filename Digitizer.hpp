@@ -42,43 +42,6 @@
 
 class Digitizer
 {
-public:
-    STAT(struct Stats {
-             uint32_t bytesRead = 0;
-             uint32_t eventsFound = 0;
-             uint32_t eventsUnpacked = 0;
-             uint32_t eventsDecoded = 0;
-             uint32_t eventsSent = 0;
-         };)
-    /* Connection parameters */
-    const CAEN_DGTZ_ConnectionType linkType;
-    const int linkNum;
-    const int conetNode;
-    const uint32_t VMEBaseAddress;
-
-    Digitizer(CAEN_DGTZ_ConnectionType linkType_, int linkNum_, int conetNode_, uint32_t VMEBaseAddress_);
-
-    void close(); //TODO: Why do we need close() in stead of using a destructor
-    const std::string name() { return digitizer->modelName() + "_" + std::to_string(digitizer->serialNumber()); }
-    const std::string model() { return digitizer->modelName(); }
-    const uint32_t serial() { return digitizer->serialNumber(); }
-    uint32_t channels() { return numChannels; }
-
-    void set(FunctionID functionID, std::string value);
-    void set(FunctionID functionID, int index, std::string value);
-    std::string get(FunctionID functionID);
-    std::string get(FunctionID functionID, int index);
-
-    void acquisition();
-    const Stats& stats() const {return stats_;}
-    //Post setup, pre aquisition initialization
-    void initialize(DataHandlerGeneric* dataHandler_);
-
-    // TODO: Sould we do somthing different than expose these three function?
-    void startAcquisition() { digitizer->startAcquisition(); }
-    void stopAcquisition() { digitizer->stopAcquisition(); }
-    void reset() { digitizer->reset(); }
-
 private:
     caen::Digitizer* digitizer = nullptr;
     DataHandlerGeneric* dataHandler = nullptr;
@@ -87,7 +50,38 @@ private:
     uint32_t numChannels;
     uint32_t id;
     bool waveformRecording = false;
-
+public:
+    /* Connection parameters */
+    const CAEN_DGTZ_ConnectionType linkType;
+    const int linkNum;
+    const int conetNode;
+    const uint32_t VMEBaseAddress;
+    STAT(struct Stats {
+             uint32_t bytesRead = 0;
+             uint32_t eventsFound = 0;
+             uint32_t eventsUnpacked = 0;
+             uint32_t eventsDecoded = 0;
+             uint32_t eventsSent = 0;
+         };)
+    Digitizer(CAEN_DGTZ_ConnectionType linkType_, int linkNum_, int conetNode_, uint32_t VMEBaseAddress_);
+    const std::string name() { return digitizer->modelName() + "_" + std::to_string(digitizer->serialNumber()); }
+    const std::string model() { return digitizer->modelName(); }
+    const uint32_t serial() { return digitizer->serialNumber(); }
+    uint32_t channels() { return numChannels; }
+    void close(); //TODO: Why do we need close() in stead of using a destructor
+    void set(FunctionID functionID, std::string value);
+    void set(FunctionID functionID, int index, std::string value);
+    std::string get(FunctionID functionID);
+    std::string get(FunctionID functionID, int index);
+    void acquisition();
+    const Stats& stats() const {return stats_;}
+    //Post setup, pre aquisition initialization
+    void initialize(DataHandlerGeneric* dataHandler_);
+    // TODO: Sould we do somthing different than expose these three function?
+    void startAcquisition() { digitizer->startAcquisition(); }
+    void stopAcquisition() { digitizer->stopAcquisition(); }
+    void reset() { digitizer->reset(); }
+private:
     /* We bind a ReadoutBuffer to each digitizer for ease of use */
     caen::ReadoutBuffer readoutBuffer_;
     /* Standard firmware uses eventInfo and Event while DPP firmware
