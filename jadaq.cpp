@@ -253,7 +253,7 @@ int main(int argc, char **argv) {
 
     /* Singleton helpers */
     uint64_t acquisitionStart = 0, acquisitionStopped = 0;
-    uint64_t runtimeMsecs = 0;
+    //uint64_t runtimeMsecs = 0;
     uint16_t tasksEnqueued = 0;
     boost::asio::io_service threadIOService;
     boost::thread_group threadPool;
@@ -320,7 +320,7 @@ int main(int argc, char **argv) {
     std::cout << "Start thread pool of " << conf.workerThreads << " worker(s)." << std::endl;
     /* Use a work wrapper to allow waiting for all pending tasks on exit */
     boost::asio::io_service::work *work = new boost::asio::io_service::work(threadIOService);
-    for (int i=0; i<conf.workerThreads; i++) {
+    for (int i=0; i<(int)conf.workerThreads; i++) {
         std::cout << "Create thread " << i << " for thread pool." << std::endl;
         threadPool.create_thread(boost::bind(&boost::asio::io_service::run, &threadIOService));
     }

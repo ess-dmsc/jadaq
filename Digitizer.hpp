@@ -80,7 +80,7 @@ public:
     void reset() { digitizer->reset(); }
 
 private:
-    caen::Digitizer* digitizer;
+    caen::Digitizer* digitizer = nullptr;
     DataHandlerGeneric* dataHandler = nullptr;
     CAEN_DGTZ_DPPFirmware_t firmware;
     uint32_t boardConfiguration = 0;

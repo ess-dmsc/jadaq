@@ -10,7 +10,7 @@ project(jadaq)
 # valgrind --leak-check=full --track-origins=yes ./jadaq [CONFFILE]
 #
 set(CMAKE_CXX_STANDARD 11)
-set( CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -Wall -Werror" )
+set( CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -Wall -Wno-unused-function -Werror" )
 set(CMAKE_C_STANDARD 99)
 if (CMAKE_COMPILER_IS_GNUCXX AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 5.3)
     message(FATAL_ERROR "Require at least g++-5.3: On CentOS-7 use Devtoolset-4")

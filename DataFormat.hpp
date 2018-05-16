@@ -63,7 +63,7 @@ namespace Data
         uint16_t channel;
         bool operator< (const ListElement422& rhs) const
         {
-            return localTime < rhs.localTime || localTime == rhs.localTime && channel < rhs.channel;
+            return localTime < rhs.localTime || (localTime == rhs.localTime && channel < rhs.channel) ;
         };
         void printOn(std::ostream& os) const
         {
