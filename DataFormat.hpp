@@ -28,6 +28,7 @@
 #include <cstddef>
 #include <iostream>
 #include <H5Cpp.h>
+#include <iomanip>
 
 #define VERSION {1,0}
 
@@ -64,6 +65,10 @@ namespace Data
         {
             return localTime < rhs.localTime || localTime == rhs.localTime && channel < rhs.channel;
         };
+        void printOn(std::ostream& os) const
+        {
+            os << std::setw(10) << channel << " " << std::setw(10) << localTime << " " << std::setw(10) << adcValue;
+        }
         static ElementType type() { return List422; }
         static H5::DataType h5type()
         {
@@ -90,4 +95,8 @@ namespace Data
     static constexpr const size_t maxBufferSize = 9000;
 
 } // namespace Data
+
+template <typename E>
+static inline std::ostream& operator<< (std::ostream& os, const typename E::printOn& e)
+{ e.printOn(os); return os; }
 #endif //JADAQ_DATAFORMAT_HPP

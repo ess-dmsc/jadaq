@@ -95,8 +95,7 @@ public:
         *file << "@" << this->globalTimeStamp << std::endl;
         for(const E& element: *buffer)
         {
-            *file << std::setw(10) << element.localTime << " " << std::setw(10) << digitizerID << " " <<
-                  std::setw(10) << element.channel << " " << std::setw(10) << element.adcValue << "\n";
+            *file << std::setw(10) << digitizerID << " " << element << "\n";
         }
     }
 
