@@ -338,7 +338,6 @@ void Digitizer::close()
     digitizer->freeDPPEvents(dppEvents);
     digitizer->freeDPPWaveforms(waveforms);
     digitizer->freeReadoutBuffer(readoutBuffer_);
-
     delete digitizer;
 }
 

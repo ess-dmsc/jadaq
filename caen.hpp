@@ -2791,7 +2791,7 @@ namespace caen {
         /**
          * @brief Destroy Digitizer instance.
          */
-        ~Digitizer()
+        virtual ~Digitizer()
         { close(handle_); }
 
         /* Information functions */
