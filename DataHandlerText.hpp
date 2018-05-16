@@ -98,7 +98,6 @@ public:
             *file << std::setw(10) << digitizerID << " " << element << "\n";
         }
     }
-
 };
 
 #endif //JADAQ_DATAHANDLERTEXT_HPP

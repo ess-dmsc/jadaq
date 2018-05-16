@@ -96,7 +96,7 @@ namespace Data
 
 } // namespace Data
 
-template <typename E>
-static inline std::ostream& operator<< (std::ostream& os, const typename E::printOn& e)
+//TODO: template for all Data::Element types
+static inline std::ostream& operator<< (std::ostream& os, const Data::ListElement422& e)
 { e.printOn(os); return os; }
 #endif //JADAQ_DATAFORMAT_HPP
