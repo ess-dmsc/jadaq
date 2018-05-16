@@ -290,20 +290,15 @@ int main(int argc, char **argv) {
 
     /* Prepare and start acquisition for all digitizers */
     std::cout << "Setup acquisition from " << digitizers.size() << " digitizer(s)." << std::endl;
+    DataHandler<Data::ListElement422>* dataHandler;
+    dataHandler = new DataHandlerHDF5<jadaq::vector,Data::ListElement422>(runID);
     for (Digitizer& digitizer: digitizers)
     {
         ThreadHelper *digitizerThread = new ThreadHelper();
         threadHelpers[digitizer.name()] = digitizerThread;
         digitizerThread->ready = true;
         /* Prepare buffers - must happen AFTER digitizer has been configured! */
-        DataHandler<Data::ListElement422>* dataHandler;
-        if (conf.sendEventEnabled)
-        {
-            ;//dataHandler = new DataHandlerNetworkSend<Data::ListElement422>(conf.address, conf.port, runID);
-        } else
-        {
-            dataHandler = new DataHandlerHDF5<jadaq::vector,Data::ListElement422>(runID);
-        }
+        
 
         digitizer.initialize(dataHandler);
     }
