@@ -3008,7 +3008,7 @@ namespace caen {
         DPPEvents_t *mallocDPPEvents(CAEN_DGTZ_DPPFirmware_t firmware)
         {
             DPPEvents_t *events;
-            switch (firmware)
+            switch ((int)firmware) //Cast to int as long as CAEN_DGTZ_DPPFirmware_QDC is not part of the enumeration
             {
                 case CAEN_DGTZ_DPPFirmware_PHA:
                     events = new DPPEvents <CAEN_DGTZ_DPP_PHA_Event_t>{};
@@ -3429,9 +3429,9 @@ namespace caen {
         void setEventPackaging(CAEN_DGTZ_EnaDis_t mode)
         { errorHandler(CAEN_DGTZ_SetEventPackaging(handle_, mode));}
 
-        virtual uint32_t getDPPPreTriggerSize(int channel=-1) // Default channel -1 == all
+        virtual uint32_t getDPPPreTriggerSize(uint32_t channel=-1) // Default channel -1 == all
         { uint32_t samples; errorHandler(CAEN_DGTZ_GetDPPPreTriggerSize(handle_, channel, &samples)); return samples; }
-        virtual void setDPPPreTriggerSize(int channel, uint32_t samples)
+        virtual void setDPPPreTriggerSize(uint32_t channel, uint32_t samples)
         { errorHandler(CAEN_DGTZ_SetDPPPreTriggerSize(handle_, channel, samples)); }
         virtual void setDPPPreTriggerSize(uint32_t samples) // Default channel -1 == all
         { errorHandler(CAEN_DGTZ_SetDPPPreTriggerSize(handle_, -1, samples)); }
@@ -3525,17 +3525,29 @@ namespace caen {
         { errorHandler(CAEN_DGTZ_SetSAMAcquisitionMode(handle_, mode)); }
 
         ChannelPairTriggerLogicParams getChannelPairTriggerLogic(uint32_t channelA, uint32_t channelB)
-        { ChannelPairTriggerLogicParams params; errorHandler(CAEN_DGTZ_GetChannelPairTriggerLogic(handle_, channelA, channelB, &params.logic, &params.coincidenceWindow)); }
+        {
+            ChannelPairTriggerLogicParams params;
+            errorHandler(CAEN_DGTZ_GetChannelPairTriggerLogic(handle_, channelA, channelB, &params.logic, &params.coincidenceWindow));
+            return params;
+        }
         void setChannelPairTriggerLogic(uint32_t channelA, uint32_t channelB, ChannelPairTriggerLogicParams params)
         { errorHandler(CAEN_DGTZ_SetChannelPairTriggerLogic(handle_, channelA, channelB, params.logic, params.coincidenceWindow)); }
 
         TriggerLogicParams getTriggerLogic()
-        { TriggerLogicParams params; errorHandler(CAEN_DGTZ_GetTriggerLogic(handle_, &params.logic, &params.majorityLevel)); }
+        {
+            TriggerLogicParams params;
+            errorHandler(CAEN_DGTZ_GetTriggerLogic(handle_, &params.logic, &params.majorityLevel));
+            return params;
+        }
         void setTriggerLogic(TriggerLogicParams params)
         { errorHandler(CAEN_DGTZ_SetTriggerLogic(handle_, params.logic, params.majorityLevel)); }
 
         SAMTriggerCountVetoParams getSAMTriggerCountVetoParam(int channel)
-        { SAMTriggerCountVetoParams params; errorHandler(CAEN_DGTZ_GetSAMTriggerCountVetoParam(handle_, channel, &params.enable, &params.vetoWindow)); }
+        {
+            SAMTriggerCountVetoParams params;
+            errorHandler(CAEN_DGTZ_GetSAMTriggerCountVetoParam(handle_, channel, &params.enable, &params.vetoWindow));
+            return params;
+        }
         void setSAMTriggerCountVetoParam(int channel, SAMTriggerCountVetoParams params)
         { errorHandler(CAEN_DGTZ_SetSAMTriggerCountVetoParam(handle_, channel, params.enable, params.vetoWindow)); }
 
@@ -3584,125 +3596,125 @@ namespace caen {
         void setDPPParameters(uint32_t channelmask, void *params)
         { errorHandler(CAEN_DGTZ_SetDPPParameters(handle_, channelmask, params)); }
 
-        virtual uint32_t getAMCFirmwareRevision(uint32_t group) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
-        virtual EasyAMCFirmwareRevision getEasyAMCFirmwareRevision(uint32_t group) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
-        virtual EasyDPPAMCFirmwareRevision getEasyDPPAMCFirmwareRevision(uint32_t group) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual uint32_t getAMCFirmwareRevision(uint32_t group) { throw Error(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual EasyAMCFirmwareRevision getEasyAMCFirmwareRevision(uint32_t group) { throw Error(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual EasyDPPAMCFirmwareRevision getEasyDPPAMCFirmwareRevision(uint32_t group) { throw Error(CAEN_DGTZ_FunctionNotAllowed); }
 
-        virtual uint32_t getRunDelay() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
-        virtual void setRunDelay(uint32_t delay) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual uint32_t getRunDelay() { throw Error(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual void setRunDelay(uint32_t delay) { throw Error(CAEN_DGTZ_FunctionNotAllowed); }
 
-        virtual uint32_t getDPPGateWidth(uint32_t group) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
-        virtual void setDPPGateWidth(uint32_t group, uint32_t value) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
-        virtual void setDPPGateWidth(uint32_t value) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual uint32_t getDPPGateWidth(uint32_t group) { throw Error(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual void setDPPGateWidth(uint32_t group, uint32_t value) { throw Error(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual void setDPPGateWidth(uint32_t value) { throw Error(CAEN_DGTZ_FunctionNotAllowed); }
 
-        virtual uint32_t getDPPGateOffset(uint32_t group) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
-        virtual void setDPPGateOffset(uint32_t group, uint32_t value) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
-        virtual void setDPPGateOffset(uint32_t value) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual uint32_t getDPPGateOffset(uint32_t group) { throw Error(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual void setDPPGateOffset(uint32_t group, uint32_t value) { throw Error(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual void setDPPGateOffset(uint32_t value) { throw Error(CAEN_DGTZ_FunctionNotAllowed); }
 
-        virtual uint32_t getDPPFixedBaseline(uint32_t group) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
-        virtual void setDPPFixedBaseline(uint32_t group, uint32_t value) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
-        virtual void setDPPFixedBaseline(uint32_t value) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual uint32_t getDPPFixedBaseline(uint32_t group) { throw Error(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual void setDPPFixedBaseline(uint32_t group, uint32_t value) { throw Error(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual void setDPPFixedBaseline(uint32_t value) { throw Error(CAEN_DGTZ_FunctionNotAllowed); }
 
-        virtual uint32_t getDPPTriggerHoldOffWidth(uint32_t group) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
-        virtual uint32_t getDPPTriggerHoldOffWidth() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
-        virtual void setDPPTriggerHoldOffWidth(uint32_t group, uint32_t value) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
-        virtual void setDPPTriggerHoldOffWidth(uint32_t value) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual uint32_t getDPPTriggerHoldOffWidth(uint32_t group) { throw Error(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual uint32_t getDPPTriggerHoldOffWidth() { throw Error(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual void setDPPTriggerHoldOffWidth(uint32_t group, uint32_t value) { throw Error(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual void setDPPTriggerHoldOffWidth(uint32_t value) { throw Error(CAEN_DGTZ_FunctionNotAllowed); }
 
-        virtual uint32_t getDPPAlgorithmControl(uint32_t group) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
-        virtual void setDPPAlgorithmControl(uint32_t group, uint32_t value) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
-        virtual void setDPPAlgorithmControl(uint32_t value) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
-        virtual EasyDPPAlgorithmControl getEasyDPPAlgorithmControl(uint32_t group) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
-        virtual void setEasyDPPAlgorithmControl(uint32_t group, EasyDPPAlgorithmControl settings) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
-        virtual void setEasyDPPAlgorithmControl(EasyDPPAlgorithmControl settings) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual uint32_t getDPPAlgorithmControl(uint32_t group) { throw Error(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual void setDPPAlgorithmControl(uint32_t group, uint32_t value) { throw Error(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual void setDPPAlgorithmControl(uint32_t value) { throw Error(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual EasyDPPAlgorithmControl getEasyDPPAlgorithmControl(uint32_t group) { throw Error(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual void setEasyDPPAlgorithmControl(uint32_t group, EasyDPPAlgorithmControl settings) { throw Error(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual void setEasyDPPAlgorithmControl(EasyDPPAlgorithmControl settings) { throw Error(CAEN_DGTZ_FunctionNotAllowed); }
 
-        virtual uint32_t getDPPShapedTriggerWidth(uint32_t group) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
-        virtual uint32_t getDPPShapedTriggerWidth() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
-        virtual void setDPPShapedTriggerWidth(uint32_t group, uint32_t value) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
-        virtual void setDPPShapedTriggerWidth(uint32_t value) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual uint32_t getDPPShapedTriggerWidth(uint32_t group) { throw Error(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual uint32_t getDPPShapedTriggerWidth() { throw Error(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual void setDPPShapedTriggerWidth(uint32_t group, uint32_t value) { throw Error(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual void setDPPShapedTriggerWidth(uint32_t value) { throw Error(CAEN_DGTZ_FunctionNotAllowed); }
 
-        virtual uint32_t getBoardConfiguration() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
-        virtual void setBoardConfiguration(uint32_t value) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
-        virtual void unsetBoardConfiguration(uint32_t value) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
-        virtual EasyBoardConfiguration getEasyBoardConfiguration() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
-        virtual void setEasyBoardConfiguration(EasyBoardConfiguration settings) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
-        virtual EasyDPPBoardConfiguration getEasyDPPBoardConfiguration() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
-        virtual void setEasyDPPBoardConfiguration(EasyDPPBoardConfiguration settings) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual uint32_t getBoardConfiguration() { throw Error(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual void setBoardConfiguration(uint32_t value) { throw Error(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual void unsetBoardConfiguration(uint32_t value) { throw Error(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual EasyBoardConfiguration getEasyBoardConfiguration() { throw Error(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual void setEasyBoardConfiguration(EasyBoardConfiguration settings) { throw Error(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual EasyDPPBoardConfiguration getEasyDPPBoardConfiguration() { throw Error(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual void setEasyDPPBoardConfiguration(EasyDPPBoardConfiguration settings) { throw Error(CAEN_DGTZ_FunctionNotAllowed); }
 
-        virtual uint32_t getDPPAggregateOrganization() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
-        virtual void setDPPAggregateOrganization(uint32_t value) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual uint32_t getDPPAggregateOrganization() { throw Error(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual void setDPPAggregateOrganization(uint32_t value) { throw Error(CAEN_DGTZ_FunctionNotAllowed); }
 
-        virtual uint32_t getAcquisitionControl() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
-        virtual void setAcquisitionControl(uint32_t value) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
-        virtual EasyAcquisitionControl getEasyAcquisitionControl() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
-        virtual void setEasyAcquisitionControl(EasyAcquisitionControl settings) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
-        virtual EasyDPPAcquisitionControl getEasyDPPAcquisitionControl() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
-        virtual void setEasyDPPAcquisitionControl(EasyDPPAcquisitionControl settings) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual uint32_t getAcquisitionControl() { throw Error(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual void setAcquisitionControl(uint32_t value) { throw Error(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual EasyAcquisitionControl getEasyAcquisitionControl() { throw Error(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual void setEasyAcquisitionControl(EasyAcquisitionControl settings) { throw Error(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual EasyDPPAcquisitionControl getEasyDPPAcquisitionControl() { throw Error(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual void setEasyDPPAcquisitionControl(EasyDPPAcquisitionControl settings) { throw Error(CAEN_DGTZ_FunctionNotAllowed); }
 
-        virtual uint32_t getAcquisitionStatus() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
-        virtual uint32_t getDPPAcquisitionStatus() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
-        virtual EasyAcquisitionStatus getEasyAcquisitionStatus() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
-        virtual EasyDPPAcquisitionStatus getEasyDPPAcquisitionStatus() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual uint32_t getAcquisitionStatus() { throw Error(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual uint32_t getDPPAcquisitionStatus() { throw Error(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual EasyAcquisitionStatus getEasyAcquisitionStatus() { throw Error(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual EasyDPPAcquisitionStatus getEasyDPPAcquisitionStatus() { throw Error(CAEN_DGTZ_FunctionNotAllowed); }
 
-        virtual uint32_t getGlobalTriggerMask() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
-        virtual void setGlobalTriggerMask(uint32_t value) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
-        virtual EasyGlobalTriggerMask getEasyGlobalTriggerMask() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
-        virtual void setEasyGlobalTriggerMask(EasyGlobalTriggerMask settings) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
-        virtual EasyDPPGlobalTriggerMask getEasyDPPGlobalTriggerMask() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
-        virtual void setEasyDPPGlobalTriggerMask(EasyDPPGlobalTriggerMask settings) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual uint32_t getGlobalTriggerMask() { throw Error(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual void setGlobalTriggerMask(uint32_t value) { throw Error(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual EasyGlobalTriggerMask getEasyGlobalTriggerMask() { throw Error(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual void setEasyGlobalTriggerMask(EasyGlobalTriggerMask settings) { throw Error(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual EasyDPPGlobalTriggerMask getEasyDPPGlobalTriggerMask() { throw Error(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual void setEasyDPPGlobalTriggerMask(EasyDPPGlobalTriggerMask settings) { throw Error(CAEN_DGTZ_FunctionNotAllowed); }
 
-        virtual uint32_t getFrontPanelTRGOUTEnableMask() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
-        virtual void setFrontPanelTRGOUTEnableMask(uint32_t value) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
-        virtual EasyFrontPanelTRGOUTEnableMask getEasyFrontPanelTRGOUTEnableMask() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
-        virtual void setEasyFrontPanelTRGOUTEnableMask(EasyFrontPanelTRGOUTEnableMask settings) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
-        virtual EasyDPPFrontPanelTRGOUTEnableMask getEasyDPPFrontPanelTRGOUTEnableMask() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
-        virtual void setEasyDPPFrontPanelTRGOUTEnableMask(EasyDPPFrontPanelTRGOUTEnableMask settings) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual uint32_t getFrontPanelTRGOUTEnableMask() { throw Error(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual void setFrontPanelTRGOUTEnableMask(uint32_t value) { throw Error(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual EasyFrontPanelTRGOUTEnableMask getEasyFrontPanelTRGOUTEnableMask() { throw Error(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual void setEasyFrontPanelTRGOUTEnableMask(EasyFrontPanelTRGOUTEnableMask settings) { throw Error(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual EasyDPPFrontPanelTRGOUTEnableMask getEasyDPPFrontPanelTRGOUTEnableMask() { throw Error(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual void setEasyDPPFrontPanelTRGOUTEnableMask(EasyDPPFrontPanelTRGOUTEnableMask settings) { throw Error(CAEN_DGTZ_FunctionNotAllowed); }
 
-        virtual uint32_t getFrontPanelIOControl() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
-        virtual void setFrontPanelIOControl(uint32_t value) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
-        virtual EasyFrontPanelIOControl getEasyFrontPanelIOControl() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
-        virtual void setEasyFrontPanelIOControl(EasyFrontPanelIOControl settings) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
-        virtual EasyDPPFrontPanelIOControl getEasyDPPFrontPanelIOControl() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
-        virtual void setEasyDPPFrontPanelIOControl(EasyDPPFrontPanelIOControl settings) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual uint32_t getFrontPanelIOControl() { throw Error(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual void setFrontPanelIOControl(uint32_t value) { throw Error(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual EasyFrontPanelIOControl getEasyFrontPanelIOControl() { throw Error(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual void setEasyFrontPanelIOControl(EasyFrontPanelIOControl settings) { throw Error(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual EasyDPPFrontPanelIOControl getEasyDPPFrontPanelIOControl() { throw Error(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual void setEasyDPPFrontPanelIOControl(EasyDPPFrontPanelIOControl settings) { throw Error(CAEN_DGTZ_FunctionNotAllowed); }
 
-        virtual uint32_t getROCFPGAFirmwareRevision() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
-        virtual EasyROCFPGAFirmwareRevision getEasyROCFPGAFirmwareRevision() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
-        virtual EasyDPPROCFPGAFirmwareRevision getEasyDPPROCFPGAFirmwareRevision() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual uint32_t getROCFPGAFirmwareRevision() { throw Error(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual EasyROCFPGAFirmwareRevision getEasyROCFPGAFirmwareRevision() { throw Error(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual EasyDPPROCFPGAFirmwareRevision getEasyDPPROCFPGAFirmwareRevision() { throw Error(CAEN_DGTZ_FunctionNotAllowed); }
 
-        virtual uint32_t getEventSize() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual uint32_t getEventSize() { throw Error(CAEN_DGTZ_FunctionNotAllowed); }
 
-        virtual uint32_t getFanSpeedControl() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
-        virtual void setFanSpeedControl(uint32_t value) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
-        virtual EasyFanSpeedControl getEasyFanSpeedControl() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
-        virtual void setEasyFanSpeedControl(EasyFanSpeedControl settings) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
-        virtual EasyDPPFanSpeedControl getEasyDPPFanSpeedControl() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
-        virtual void setEasyDPPFanSpeedControl(EasyDPPFanSpeedControl settings) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual uint32_t getFanSpeedControl() { throw Error(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual void setFanSpeedControl(uint32_t value) { throw Error(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual EasyFanSpeedControl getEasyFanSpeedControl() { throw Error(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual void setEasyFanSpeedControl(EasyFanSpeedControl settings) { throw Error(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual EasyDPPFanSpeedControl getEasyDPPFanSpeedControl() { throw Error(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual void setEasyDPPFanSpeedControl(EasyDPPFanSpeedControl settings) { throw Error(CAEN_DGTZ_FunctionNotAllowed); }
 
-        virtual uint32_t getDPPDisableExternalTrigger() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
-        virtual void setDPPDisableExternalTrigger(uint32_t value) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual uint32_t getDPPDisableExternalTrigger() { throw Error(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual void setDPPDisableExternalTrigger(uint32_t value) { throw Error(CAEN_DGTZ_FunctionNotAllowed); }
 
-        virtual uint32_t getRunStartStopDelay() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
-        virtual void setRunStartStopDelay(uint32_t value) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual uint32_t getRunStartStopDelay() { throw Error(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual void setRunStartStopDelay(uint32_t value) { throw Error(CAEN_DGTZ_FunctionNotAllowed); }
 
-        virtual uint32_t getReadoutControl() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
-        virtual void setReadoutControl(uint32_t value) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
-        virtual EasyReadoutControl getEasyReadoutControl() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
-        virtual void setEasyReadoutControl(EasyReadoutControl settings) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
-        virtual EasyDPPReadoutControl getEasyDPPReadoutControl() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
-        virtual void setEasyDPPReadoutControl(EasyDPPReadoutControl settings) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual uint32_t getReadoutControl() { throw Error(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual void setReadoutControl(uint32_t value) { throw Error(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual EasyReadoutControl getEasyReadoutControl() { throw Error(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual void setEasyReadoutControl(EasyReadoutControl settings) { throw Error(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual EasyDPPReadoutControl getEasyDPPReadoutControl() { throw Error(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual void setEasyDPPReadoutControl(EasyDPPReadoutControl settings) { throw Error(CAEN_DGTZ_FunctionNotAllowed); }
 
-        virtual uint32_t getReadoutStatus() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
-        virtual EasyReadoutStatus getEasyReadoutStatus() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
-        virtual EasyDPPReadoutStatus getEasyDPPReadoutStatus() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual uint32_t getReadoutStatus() { throw Error(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual EasyReadoutStatus getEasyReadoutStatus() { throw Error(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual EasyDPPReadoutStatus getEasyDPPReadoutStatus() { throw Error(CAEN_DGTZ_FunctionNotAllowed); }
 
-        virtual uint32_t getScratch() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
-        virtual void setScratch(uint32_t value) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
-        virtual EasyScratch getEasyScratch() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
-        virtual void setEasyScratch(EasyScratch settings) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
-        virtual EasyDPPScratch getEasyDPPScratch() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
-        virtual void setEasyDPPScratch(EasyDPPScratch settings) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual uint32_t getScratch() { throw Error(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual void setScratch(uint32_t value) { throw Error(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual EasyScratch getEasyScratch() { throw Error(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual void setEasyScratch(EasyScratch settings) { throw Error(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual EasyDPPScratch getEasyDPPScratch() { throw Error(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual void setEasyDPPScratch(EasyDPPScratch settings) { throw Error(CAEN_DGTZ_FunctionNotAllowed); }
 
-        virtual uint32_t getDPPAggregateNumberPerBLT() { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
-        virtual void setDPPAggregateNumberPerBLT(uint32_t value) { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual uint32_t getDPPAggregateNumberPerBLT() { throw Error(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual void setDPPAggregateNumberPerBLT(uint32_t value) { throw Error(CAEN_DGTZ_FunctionNotAllowed); }
 
         /* TODO: implement remaining register wrappers as virtual:NotImpemented? */
 
@@ -3725,14 +3737,14 @@ namespace caen {
         /* NOTE: disable inherited 740 ChannelDCOffset since we can only
          *       allow group version here.
          */
-        virtual uint32_t getChannelDCOffset(uint32_t channel) override { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
-        virtual void setChannelDCOffset(uint32_t channel, uint32_t offset) override { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual uint32_t getChannelDCOffset(uint32_t channel) override { throw Error(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual void setChannelDCOffset(uint32_t channel, uint32_t offset) override { throw Error(CAEN_DGTZ_FunctionNotAllowed); }
 
         /* NOTE: disable inherited 740 GroupDCOffset for specific group
          *       since it randomly fails.
          */
-        virtual uint32_t getGroupDCOffset(uint32_t group) override { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
-        virtual void setGroupDCOffset(uint32_t group, uint32_t offset) override { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual uint32_t getGroupDCOffset(uint32_t group) override { throw Error(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual void setGroupDCOffset(uint32_t group, uint32_t offset) override { throw Error(CAEN_DGTZ_FunctionNotAllowed); }
 
         /* NOTE: BoardConfiguration differs in forced ones and zeros
          * between generic and DPP version. Use a class-specific mask.
@@ -4846,7 +4858,7 @@ namespace caen {
          * NOTE: the Pre Trigger value must be greater than the Gate
          * Offset value by at least 112 ns.
          */
-        uint32_t getDPPPreTriggerSize(int group) override
+        uint32_t getDPPPreTriggerSize(uint32_t group) override
         {
             if (group >= groups() || group < 0)
                 errorHandler(CAEN_DGTZ_InvalidChannelNumber);
@@ -4868,7 +4880,7 @@ namespace caen {
          * NOTE: the Pre Trigger value must be greater than the Gate
          * Offset value by at least 112 ns.
          */
-        void setDPPPreTriggerSize(int group, uint32_t samples) override
+        void setDPPPreTriggerSize(uint32_t group, uint32_t samples) override
         {
             if (group >= groups() || group < 0)
                 errorHandler(CAEN_DGTZ_InvalidChannelNumber);
@@ -5109,7 +5121,7 @@ namespace caen {
         /**
          * @brief use getEasyDPPX version instead
          */
-        virtual EasyAMCFirmwareRevision getEasyAMCFirmwareRevision(uint32_t group) override { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual EasyAMCFirmwareRevision getEasyAMCFirmwareRevision(uint32_t group) override { throw Error(CAEN_DGTZ_FunctionNotAllowed); }
         /**
          * @brief Easy Get DPP AMCFirmwareRevision
          *
@@ -5147,11 +5159,11 @@ namespace caen {
         /**
          * @brief use getEasyDPPX version instead
          */
-        virtual EasyBoardConfiguration getEasyBoardConfiguration() override { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual EasyBoardConfiguration getEasyBoardConfiguration() override { throw Error(CAEN_DGTZ_FunctionNotAllowed); }
         /**
          * @brief use setEasyDPPX version instead
          */
-        virtual void setEasyBoardConfiguration(EasyBoardConfiguration settings) override { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual void setEasyBoardConfiguration(EasyBoardConfiguration settings) override { throw Error(CAEN_DGTZ_FunctionNotAllowed); }
         /**
          * @brief Easy Get DPP BoardConfiguration
          *
@@ -5317,11 +5329,11 @@ namespace caen {
         /**
          * @brief use getEasyDPPX version instead
          */
-        virtual EasyAcquisitionControl getEasyAcquisitionControl() override { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual EasyAcquisitionControl getEasyAcquisitionControl() override { throw Error(CAEN_DGTZ_FunctionNotAllowed); }
         /**
          * @brief use setEasyDPPX version instead
          */
-        virtual void setEasyAcquisitionControl(EasyAcquisitionControl settings) override { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual void setEasyAcquisitionControl(EasyAcquisitionControl settings) override { throw Error(CAEN_DGTZ_FunctionNotAllowed); }
         /**
          * @brief Easy Get DPP AcquisitionControl
          *
@@ -5364,7 +5376,7 @@ namespace caen {
         /**
          * @brief use getEasyDPPX version instead
          */
-        virtual EasyAcquisitionStatus getEasyAcquisitionStatus() override { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual EasyAcquisitionStatus getEasyAcquisitionStatus() override { throw Error(CAEN_DGTZ_FunctionNotAllowed); }
         /**
          * @brief Easy Get DPP AcquisitionStatus
          *
@@ -5392,11 +5404,11 @@ namespace caen {
         /**
          * @brief use getEasyDPPX version instead
          */
-        virtual EasyGlobalTriggerMask getEasyGlobalTriggerMask() override { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual EasyGlobalTriggerMask getEasyGlobalTriggerMask() override { throw Error(CAEN_DGTZ_FunctionNotAllowed); }
         /**
          * @brief use setEasyDPPX version instead
          */
-        virtual void setEasyGlobalTriggerMask(EasyGlobalTriggerMask settings) override { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual void setEasyGlobalTriggerMask(EasyGlobalTriggerMask settings) override { throw Error(CAEN_DGTZ_FunctionNotAllowed); }
         /**
          * @brief Easy Get DPP GlobalTriggerMask
          *
@@ -5439,11 +5451,11 @@ namespace caen {
         /**
          * @brief use getEasyDPPX version instead
          */
-        virtual EasyFrontPanelTRGOUTEnableMask getEasyFrontPanelTRGOUTEnableMask() override { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual EasyFrontPanelTRGOUTEnableMask getEasyFrontPanelTRGOUTEnableMask() override { throw Error(CAEN_DGTZ_FunctionNotAllowed); }
         /**
          * @brief use setEasyDPPX version instead
          */
-        virtual void setEasyFrontPanelTRGOUTEnableMask(EasyFrontPanelTRGOUTEnableMask settings) override { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual void setEasyFrontPanelTRGOUTEnableMask(EasyFrontPanelTRGOUTEnableMask settings) override { throw Error(CAEN_DGTZ_FunctionNotAllowed); }
         /**
          * @brief Easy Get DPP FrontPanelTRGOUTEnableMask
          *
@@ -5491,11 +5503,11 @@ namespace caen {
         /**
          * @brief use getEasyDPPX version instead
          */
-        virtual EasyFrontPanelIOControl getEasyFrontPanelIOControl() override { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual EasyFrontPanelIOControl getEasyFrontPanelIOControl() override { throw Error(CAEN_DGTZ_FunctionNotAllowed); }
         /**
          * @brief use setEasyDPPX version instead
          */
-        virtual void setEasyFrontPanelIOControl(EasyFrontPanelIOControl settings) override { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual void setEasyFrontPanelIOControl(EasyFrontPanelIOControl settings) override { throw Error(CAEN_DGTZ_FunctionNotAllowed); }
         /**
          * @brief Easy Get DPP FrontPanelIOControl
          *
@@ -5538,7 +5550,7 @@ namespace caen {
         /**
          * @brief use getEasyDPPX version instead
          */
-        virtual EasyROCFPGAFirmwareRevision getEasyROCFPGAFirmwareRevision() override { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual EasyROCFPGAFirmwareRevision getEasyROCFPGAFirmwareRevision() override { throw Error(CAEN_DGTZ_FunctionNotAllowed); }
         /**
          * @brief Easy Get DPP ROCFPGAFirmwareRevision
          *
@@ -5571,11 +5583,11 @@ namespace caen {
         /**
          * @brief use getEasyDPPX version instead
          */
-        virtual EasyFanSpeedControl getEasyFanSpeedControl() override { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual EasyFanSpeedControl getEasyFanSpeedControl() override { throw Error(CAEN_DGTZ_FunctionNotAllowed); }
         /**
          * @brief use setEasyDPPX version instead
          */
-        virtual void setEasyFanSpeedControl(EasyFanSpeedControl settings) override { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual void setEasyFanSpeedControl(EasyFanSpeedControl settings) override { throw Error(CAEN_DGTZ_FunctionNotAllowed); }
         /**
          * @brief Easy Get FanSpeedControl
          *
@@ -5618,11 +5630,11 @@ namespace caen {
         /**
          * @brief use getEasyDPPX version instead
          */
-        virtual EasyReadoutControl getEasyReadoutControl() override { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual EasyReadoutControl getEasyReadoutControl() override { throw Error(CAEN_DGTZ_FunctionNotAllowed); }
         /**
          * @brief use setEasyDPPX version instead
          */
-        virtual void setEasyReadoutControl(EasyReadoutControl settings) override { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual void setEasyReadoutControl(EasyReadoutControl settings) override { throw Error(CAEN_DGTZ_FunctionNotAllowed); }
         /**
          * @brief Easy Get DPP ReadoutControl
          *
@@ -5665,7 +5677,7 @@ namespace caen {
         /**
          * @brief use getEasyDPPX version instead
          */
-        virtual EasyReadoutStatus getEasyReadoutStatus() override { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual EasyReadoutStatus getEasyReadoutStatus() override { throw Error(CAEN_DGTZ_FunctionNotAllowed); }
         /**
          * @brief Easy Get DPP ReadoutStatus
          *
@@ -5691,11 +5703,11 @@ namespace caen {
         /**
          * @brief use getEasyDPPX version instead
          */
-        virtual EasyScratch getEasyScratch() override { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual EasyScratch getEasyScratch() override { throw Error(CAEN_DGTZ_FunctionNotAllowed); }
         /**
          * @brief use setEasyDPPX version instead
          */
-        virtual void setEasyScratch(EasyScratch settings) override { errorHandler(CAEN_DGTZ_FunctionNotAllowed); }
+        virtual void setEasyScratch(EasyScratch settings) override { throw Error(CAEN_DGTZ_FunctionNotAllowed); }
         /**
          * @brief Easy Get DPP Scratch
          *
