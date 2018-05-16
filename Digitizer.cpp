@@ -418,7 +418,7 @@ void Digitizer::acquisition() {
         return;
     }
 
-    switch (firmware)
+    switch ((int)firmware) //Cast to int as long as CAEN_DGTZ_DPPFirmware_QDC is not part of the enumeration
     {
         case CAEN_DGTZ_DPPFirmware_PHA:
             throw std::runtime_error("PHA firmware not supported by Digitizer.");
@@ -449,5 +449,4 @@ void Digitizer::acquisition() {
         default:
             throw std::runtime_error("Unknown firmware type. Not supported by Digitizer.");
     }
-
 }

@@ -204,7 +204,7 @@ int configure_digitizer(int handle, caen::Digitizer *digitizer, BoardParameters 
         gEquippedChannels = gBoardInfo.Channels * 8; 
         gEquippedGroups = gEquippedChannels/8;
 
-        for(i=0; i<gEquippedGroups; i++) {
+        for(i=0; i<(int)gEquippedGroups; i++) {
             uint8_t mask = (params->ChannelTriggerMask>>(i*8)) & 0xFF;
             ret |= _CAEN_DGTZ_SetChannelGroupMask(handle, i, mask);
             //printf("conf: gr.%d  mask: %d\n",i,mask);
@@ -281,7 +281,7 @@ int configure_digitizer(int handle, caen::Digitizer *digitizer, BoardParameters 
             printf("Errors during Digitizer Configuration20.\n");
 
         /* Set Gate Width (in samples) */
-        for(i=0; i<gEquippedGroups; i++) {
+        for(i=0; i<(int)gEquippedGroups; i++) {
     	    ret |= CAEN_DGTZ_WriteRegister(handle, 0x1030 + 0x100*i, params->GateWidth[i]);
         }
 
