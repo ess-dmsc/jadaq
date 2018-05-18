@@ -50,9 +50,9 @@ NetworkReceive::~NetworkReceive()
     delete[] buffer;
 }
 
-void NetworkReceive::start(int* keepRunning)
+void NetworkReceive::start(int interrupt)
 {
-    while(keepRunning)
+    while(!interrupt)
     {
         size_t receivedBytes;
         udp::endpoint remoteEndpoint;

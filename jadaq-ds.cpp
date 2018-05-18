@@ -27,24 +27,9 @@
 #include <iostream>
 #include "DataHandler.hpp"
 #include "NetworkReceive.hpp"
+#include "interrupt.hpp"
 
 namespace po = boost::program_options;
-
-/* Keep running marker and interrupt signal handler */
-static int keepRunning = 1;
-static void interrupt_handler(int s)
-{
-    keepRunning = 0;
-}
-static void setup_interrupt_handler()
-{
-    struct sigaction sigIntHandler;
-    sigIntHandler.sa_handler = interrupt_handler;
-    sigemptyset(&sigIntHandler.sa_mask);
-    sigIntHandler.sa_flags = 0;
-    sigaction(SIGINT, &sigIntHandler, NULL);
-    sigaction(SIGTERM, &sigIntHandler, NULL);
-}
 
 int main(int argc, const char *argv[])
 {
@@ -81,6 +66,6 @@ int main(int argc, const char *argv[])
     /* Set up interrupt handler and start handling acquired data */
     setup_interrupt_handler();
     std::cout << "Running file writer loop - Ctrl-C to interrupt" << std::endl;
-    networkReceive.start(&keepRunning);
+    networkReceive.start(&interrupt);
     std::cout << "caught interrupt - stop file writer and clean up." << std::endl;
 }
