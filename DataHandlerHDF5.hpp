@@ -56,7 +56,7 @@ public:
     DataHandlerHDF5(uuid runID)
             : DataHandler<E>(runID)
     {
-        std::string filename = "jadaq-run-" + runID.toString() + ".md5";
+        std::string filename = "jadaq-run-" + runID.toString() + ".h5";
         try
         {
             file = new H5::H5File(filename, H5F_ACC_TRUNC);
