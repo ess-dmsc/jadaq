@@ -45,6 +45,12 @@ private:
         containerMap[digitizerID] = res;
         return res;
     }
+    void writeAttribute(H5::DataSet& dataset, const H5::PredType& type, const void* data) const
+    {
+        H5::Attribute a = dataset.createAttribute("globalTimeStamp", type, H5::DataSpace(H5S_SCALAR));
+        a.write(type,data);
+        a.close();
+    }
 
 public:
     DataHandlerHDF5(uuid runID)
@@ -100,9 +106,7 @@ public:
         const hsize_t size[1] = {buffer->size()};
         H5::DataSpace dataspace(1, size);
         H5::DataSet dataset = digitizer->createDataSet(std::to_string(this->globalTimeStamp), E::h5type(), dataspace );
-        H5::Attribute a = dataset.createAttribute("globalTimeStamp", H5::PredType::NATIVE_UINT64, H5::DataSpace(H5S_SCALAR));
-        a.write(H5::PredType::NATIVE_UINT64,&this->globalTimeStamp);
-        a.close();
+        writeAttribute(dataset,H5::PredType::NATIVE_UINT64,&this->globalTimeStamp);
         dataset.write(buffer->data(), E::h5type());
     }
 
