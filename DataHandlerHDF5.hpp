@@ -100,7 +100,9 @@ public:
         const hsize_t size[1] = {buffer->size()};
         H5::DataSpace dataspace(1, size);
         H5::DataSet dataset = digitizer->createDataSet(std::to_string(this->globalTimeStamp), E::h5type(), dataspace );
-        dataset.createAttribute("globalTimeStamp", H5::PredType::NATIVE_UINT64, this->globalTimeStamp);
+        H5::Attribute a = dataset.createAttribute("globalTimeStamp", H5::PredType::NATIVE_UINT64, H5::DataSpace(H5S_SCALAR));
+        a.write(H5::PredType::NATIVE_UINT64,&this->globalTimeStamp);
+        a.close();
         dataset.write(buffer->data(), E::h5type());
     }
 
