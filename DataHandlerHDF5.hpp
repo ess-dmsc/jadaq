@@ -101,7 +101,10 @@ public:
         return events;
     }
 
-    void write(const C<E>* buffer, H5::Group* digitizer)
+    /* TODO: Can we get back to prototype: void write(const C<E>* buffer, H5::Group* digitizer)
+     * by specialization and maybe get rid of the use of jadaq::set???
+     */
+    void write(C<E>* buffer, H5::Group* digitizer)
     {
         const hsize_t size[1] = {buffer->size()};
         H5::DataSpace dataspace(1, size);
@@ -109,8 +112,6 @@ public:
         writeAttribute(dataset,H5::PredType::NATIVE_UINT64,&this->globalTimeStamp);
         dataset.write(buffer->data(), E::h5type());
     }
-
-
 };
 
 #endif //JADAQ_DATAHANDLERHDF5_HPP

@@ -28,6 +28,7 @@
 #include "DataFormat.hpp"
 #include "uuid.hpp"
 #include "EventAccessor.hpp"
+#include "container.hpp"
 
 template <typename E> class DataHandler;
 
@@ -134,18 +135,4 @@ protected:
         return events;
     }
 };
-
-namespace jadaq
-{
-    template<typename T>
-    class vector : public std::vector<T>
-    {
-    public:
-        void insert(const T &v)
-        { this->push_back(v); }
-
-        void insert(const T &&v)
-        { this->push_back(v); }
-    };
-}
 #endif //JADAQ_DATAHANDLER_HPP

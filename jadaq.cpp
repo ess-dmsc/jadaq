@@ -37,10 +37,11 @@ namespace po = boost::program_options;
 
 struct
 {
-    bool  outtext = false;
-    bool  outhdf5 = false;
-    bool  outnull = false;
-    int   verbose =  0;
+    bool  textout = false;
+    bool  hdf5out = false;
+    bool  nullout = false;
+    bool  sort    = false;
+    int   verbose =  1;
     int   events  = -1;
     float time    = -1.0;
     std::string* outConfigFile = nullptr;
@@ -58,8 +59,9 @@ int main(int argc, const char *argv[])
                 ("verbose,v", po::value<int>()->value_name("<level>")->default_value(conf.verbose), "Set program verbosity level.")
                 ("events,e", po::value<int>()->value_name("<count>")->default_value(conf.events), "Stop acquisition after collecting <count> events")
                 ("time,t", po::value<float>()->value_name("<seconds>")->default_value(conf.time), "Stop acquisition after <seconds> seconds")
-                ("text,T", po::bool_switch(&conf.outtext), "Output to text file.")
-                ("hdf5,H", po::bool_switch(&conf.outhdf5), "Output to hdf5 file.")
+                ("sort,s", po::bool_switch(&conf.sort), "Sort output before writing to file (only valid for file output).")
+                ("text,T", po::bool_switch(&conf.textout), "Output to text file.")
+                ("hdf5,H", po::bool_switch(&conf.hdf5out), "Output to hdf5 file.")
                 ("config_out", po::value<std::string>()->value_name("<file>"), "Read back device(s) configuration and write to <file>")
                 ("config", po::value<std::vector<std::string> >(), "Configuration file");
         po::positional_options_description pos;
@@ -95,7 +97,7 @@ int main(int argc, const char *argv[])
         conf.time   = vm["time"].as<float>();
 
         // We will use the Null data handlere if no other is selected
-        conf.outnull = (!conf.outtext && !conf.outhdf5);
+        conf.nullout = (!conf.textout && !conf.hdf5out);
     }
     catch (const po::error &error)
     {
@@ -145,14 +147,22 @@ int main(int argc, const char *argv[])
             std::cout << "\t" << digitizer.name() << std::endl;
         }
     }
+
+    // TODO: move DataHandler creation to factory method in DataHandlerGeneric
     DataHandler<Data::ListElement422>* dataHandler;
-    if (conf.outhdf5)
+    if (conf.hdf5out)
     {
-        dataHandler = new DataHandlerHDF5<jadaq::vector, Data::ListElement422>(runID);
+        if (conf.sort)
+            dataHandler = new DataHandlerHDF5<jadaq::set, Data::ListElement422>(runID);
+        else
+            dataHandler = new DataHandlerHDF5<jadaq::vector, Data::ListElement422>(runID);
     }
-    else if (conf.outtext)
+    else if (conf.textout)
     {
-        dataHandler = new DataHandlerText<jadaq::vector, Data::ListElement422>(runID);
+        if (conf.sort)
+            dataHandler = new DataHandlerText<jadaq::set, Data::ListElement422>(runID);
+        else
+            dataHandler = new DataHandlerText<jadaq::vector, Data::ListElement422>(runID);
     }
     else
     {

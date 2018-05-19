@@ -43,7 +43,7 @@ file(GLOB DataHandlerHEADERS DataFormat.hpp DataHandler.hpp DataHandlerHDF5.hpp 
 file(GLOB DataHandlerSOURCES uuid.cpp)
 add_library(DataHandler ${DataHandlerHEADERS} ${DataHandlerSOURCES})
 
-add_executable(jadaq ${DataHandlerHEADERS} jadaq.cpp caen.hpp Configuration.cpp Configuration.hpp Digitizer.cpp Digitizer.hpp FunctionID.hpp FunctionID.cpp ini_parser.hpp StringConversion.cpp StringConversion.hpp CAENConf.cpp CAENConf.hpp trace.hpp interrupt.hpp)
+add_executable(jadaq ${DataHandlerHEADERS} jadaq.cpp caen.hpp Configuration.cpp Configuration.hpp Digitizer.cpp Digitizer.hpp FunctionID.hpp FunctionID.cpp ini_parser.hpp StringConversion.cpp StringConversion.hpp CAENConf.cpp CAENConf.hpp trace.hpp interrupt.hpp container.hpp)
 target_link_libraries(jadaq ${CAEN_LIB} caen DataHandler ${Boost_LIBRARIES} pthread ${HDF5_CXX_LIBRARIES})
 
 # For jadaq-ds

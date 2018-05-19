@@ -94,7 +94,6 @@ private:
 
     STAT(Stats stats_;)
 
-    void extractPlainEvents();
 };
 
 
