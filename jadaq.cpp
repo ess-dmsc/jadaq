@@ -63,7 +63,7 @@ int main(int argc, const char *argv[])
                 ("text,T", po::bool_switch(&conf.textout), "Output to text file.")
                 ("hdf5,H", po::bool_switch(&conf.hdf5out), "Output to hdf5 file.")
                 ("config_out", po::value<std::string>()->value_name("<file>"), "Read back device(s) configuration and write to <file>")
-                ("config", po::value<std::vector<std::string> >(), "Configuration file");
+                ("config", po::value<std::vector<std::string> >()->value_name("<file>"), "Configuration file");
         po::positional_options_description pos;
         pos.add("config", -1);
         po::variables_map vm;
