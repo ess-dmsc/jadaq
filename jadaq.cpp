@@ -259,7 +259,7 @@ int main(int argc, const char *argv[])
         double runtime = (acquisitionStop - acquisitionStart) / 1000.0;
         std::cout << "Acquisition ran for " << runtime << " seconds." << std::endl;
         std::cout << "Collecting " << eventsFound << " events." << std::endl;
-        std::cout << "Resulting in a collection rate of " << eventsFound/runtime/1000.0 << "kHz." << std::endl;
+        std::cout << "Resulting in a collection rate of " << eventsFound/runtime/1000.0 << " kHz." << std::endl;
     }
     return 0;
 }
