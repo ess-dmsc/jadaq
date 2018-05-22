@@ -46,12 +46,14 @@ struct
     bool  hdf5out = false;
     bool  nullout = false;
     bool  sort    = false;
-    int   verbose =  1;
-    int   events  = -1;
+    long  events  = -1;
     float time    = -1.0f;
+    int   verbose =  1;
     std::string* outConfigFile = nullptr;
     std::vector<std::string> configFile;
 } conf;
+
+std::atomic<long> eventsFound{0};
 
 int main(int argc, const char *argv[])
 {
@@ -198,16 +200,18 @@ int main(int argc, const char *argv[])
                           { timeout = true; });
         timerthread = new std::thread{[&timerservice](){ timerservice.run(); }};
     }
-
     if (conf.verbose)
     {
         std::cout << "Running acquisition loop - Ctrl-C to interrupt" << std::endl;
     }
+    long acquisitionStart = DataHandlerGeneric::getTimeMsecs();
     while(true)
     {
         for (Digitizer& digitizer: digitizers) {
             try {
                 digitizer.acquisition();
+                eventsFound += digitizer.stats().eventsFound;
+
             } catch(std::exception& e) {
                 std::cerr << "ERROR: unexpected exception during acquisition: " << e.what() << std::endl;
                 throw;
@@ -224,7 +228,13 @@ int main(int argc, const char *argv[])
             timerthread->join();
             break;
         }
+        if (conf.events > 0 && eventsFound > conf.events)
+        {
+            std::cout << "Collected requested events - stop acquisition and clean up." << std::endl;
+            break;
+        }
     }
+    long acquisitionStop = DataHandlerGeneric::getTimeMsecs();
     for (Digitizer& digitizer: digitizers)
     {
         if (conf.verbose)
@@ -242,6 +252,13 @@ int main(int argc, const char *argv[])
     if (conf.verbose)
     {
         std::cout << "Acquisition complete - shutting down." << std::endl;
+    }
+    if (conf.verbose)
+    {
+        double runtime = (acquisitionStop - acquisitionStart) / 1000.0;
+        std::cout << "Acquisition ran for " << runtime << " seconds." << std::endl;
+        std::cout << "Collecting " << eventsFound << " events." << std::endl;
+        std::cout << "Resulting in a collection rate of " << eventsFound/runtime/1000.0 << "kHz." << std::endl;
     }
     return 0;
 }
