@@ -207,6 +207,7 @@ int main(int argc, const char *argv[])
     long acquisitionStart = DataHandlerGeneric::getTimeMsecs();
     while(true)
     {
+        eventsFound = 0;
         for (Digitizer& digitizer: digitizers) {
             try {
                 digitizer.acquisition();
