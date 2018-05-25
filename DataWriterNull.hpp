@@ -22,16 +22,19 @@
  *
  */
 
-#ifndef JADAQ_DATAHANDLERNULL_HPP
-#define JADAQ_DATAHANDLERNULL_HPP
+#ifndef JADAQ_DATAWRITERNULL_HPP
+#define JADAQ_DATAWRITERNULL_HPP
 
-#include "DataHandler.hpp"
 
-class DataHandlerNull: public DataHandler
+#include <cstdint>
+
+class DataWriterNull
 {
 public:
-    virtual void handle(DPPEventLE422Accessor accessor, uint32_t digitizerID) override {};
+    void addDigitizer(uint32_t digitizerID) {}
+    template <typename E, template<typename...> typename C>
+    void write(const C<E>* buffer, uint32_t digitizerID, uint64_t globalTimeStamp) {}
 };
 
 
-#endif //JADAQ_DATAHANDLERNULL_HPP
+#endif //JADAQ_DATAWRITERNULL_HPP

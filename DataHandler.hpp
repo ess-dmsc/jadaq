@@ -25,6 +25,7 @@
 #ifndef JADAQ_DATAHANDLER_HPP
 #define JADAQ_DATAHANDLER_HPP
 
+#include <functional>
 #include "DataFormat.hpp"
 #include "uuid.hpp"
 #include "EventAccessor.hpp"
@@ -35,14 +36,11 @@ template <typename E> class DataHandler;
 class DataHandlerGeneric
 {
 public:
-    virtual void addDigitizer(uint32_t digitizerID) = 0;
-
-    template<typename E>
+    template<typename E, template<typename...> typename C>
     size_t handle(const DPPEventAccessor<E> &accessor, uint32_t digitizerID)
     {
-        return static_cast<DataHandler<E>* >(this)->handle(accessor,digitizerID);
+        return static_cast<DataHandler<E,C>* >(this)->handle(accessor);
     }
-
     static int64_t getTimeMsecs()
     {
         return std::chrono::duration_cast<std::chrono::milliseconds>(
@@ -51,43 +49,27 @@ public:
 
 };
 
-template <typename E>
+template <typename E, template<typename...> typename C>
 class DataHandler : public DataHandlerGeneric
 {
     static_assert(std::is_pod<E>::value, "E must be POD");
-public:
-    virtual size_t handle(const DPPEventAccessor<E>& accessor, uint32_t digitizerID) = 0;
-
-    template <template<typename...> typename C>
-    struct ContainerPair
-    {
-        C<E>* current;
-        C<E>* next;
-        ContainerPair()
-        {
-            current = new C<E>();
-            next = new C<E>();
-        }
-        ~ContainerPair()
-        {
-            delete[] current;
-            delete[] next;
-        }
-    };
 private:
-    uint64_t prevMaxLocalTime = 0;
-protected:
-    uuid runID;
+    uint32_t digitizerID;
+    C<E>* current; // event buffer for current global timestamp
+    C<E>* next;    // event buffer for next global timestamp
+
+    uint64_t prevMaxLocalTime[]; // Array containing MaxLocalTime from the previous insertion needed to detect reset
     uint64_t globalTimeStamp = 0;
-    DataHandler(uuid runID_) : runID(runID_) {}
-    template <template<typename...> typename C, typename F>
-    size_t handle_(const DPPEventAccessor<E>& accessor, ContainerPair<C>* buffers, F write)
+    std::function<void(const C<E>*, uint32_t, uint64_t)> write;
+public:
+    DataHandler(uint32_t digID, std::function<void(const C<E>*, uint32_t, uint64_t)> w)
+            : digitizerID(digID)
+            , write(w) {}
+    size_t operator()(const DPPEventAccessor<E>& accessor)
     {
         uint64_t currentMaxLocalTime = 0;
         uint64_t nextMaxLocalTime = 0;
         size_t events = 0;
-        C<E>* current = buffers->current;
-        C<E>* next = buffers->next;
         for (uint16_t channel = 0; channel < accessor.channels(); channel++)
         {
             for (uint32_t i = 0; i < accessor.events(channel); ++i)
@@ -102,7 +84,7 @@ protected:
                         current->insert(element);
                     } catch (std::length_error&)
                     {
-                        write(current);
+                        write(current,digitizerID,globalTimeStamp);
                         current->clear();
                         current->insert(element);
                     }
@@ -113,7 +95,7 @@ protected:
                         next->insert(element);
                     } catch (std::length_error&)
                     {
-                        write(next);
+                        write(next,digitizerID,globalTimeStamp);
                         next->clear();
                         next->insert(element);
                     }
@@ -122,10 +104,11 @@ protected:
         }
         if (!next->empty())
         {
-            write(current);
+            write(current,digitizerID,globalTimeStamp);
             current->clear();
-            buffers->current = next;
-            buffers->next = current;
+            C<E>* temp = current;
+            current = next;
+            next = temp;
             globalTimeStamp = getTimeMsecs(); //TODO can we get this earlier and what is the cost
             currentMaxLocalTime = nextMaxLocalTime;
         }

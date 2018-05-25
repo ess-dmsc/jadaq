@@ -26,30 +26,18 @@
 #define JADAQ_DATAHANDLERTEXT_HPP
 
 #include <fstream>
-#include <vector>
-#include <map>
 #include <iomanip>
-#include <functional>
-#include "DataHandler.hpp"
+#include <mutex>
+#include <cassert>
+#include "uuid.hpp"
 
-template <template <typename...> typename C, typename E>
-class DataHandlerText: public DataHandler<E>
+class DataWriterText
 {
 private:
-    typedef typename DataHandler<E>::template ContainerPair<C> ContainerPair;
     std::fstream* file = nullptr;
-    std::map<uint32_t, ContainerPair* > bufferMap;
-    ContainerPair* addDigitizer_(uint32_t digitizerID)
-    {
-        *file << "# digitizerID: " << digitizerID << std::endl;
-        ContainerPair* buffers = new ContainerPair{};
-        bufferMap[digitizerID] = buffers;
-        return buffers;
-    }
-
+    std::mutex mutex;
 public:
-    DataHandlerText(uuid runID)
-            : DataHandler<E>(runID)
+    DataWriterText(uuid runID)
     {
         std::string filename = "jadaq-run-" + runID.toString() + ".txt";
         file = new std::fstream(filename,std::fstream::out);
@@ -60,43 +48,31 @@ public:
         *file << "# runID: " << runID << std::endl;
     }
 
-    ~DataHandlerText()
+    ~DataWriterText()
     {
         assert(file);
-        for(auto itr: bufferMap)
-        {
-            write(itr.second->current, itr.first);
-            assert(itr.second->next->empty());
-            delete itr.second;
-        }
+        mutex.lock(); // Wait if someone is still writing data
         file->close();
+        mutex.unlock();
     }
 
-    void addDigitizer(uint32_t digitizerID) override { addDigitizer_(digitizerID); }
-
-    size_t handle(const DPPEventAccessor<E>& accessor, uint32_t digitizerID) override
+    void addDigitizer(uint32_t digitizerID)
     {
-        namespace ph = std::placeholders;
-        ContainerPair* myBuffers;
-        auto itr = bufferMap.find(digitizerID);
-        if (itr == bufferMap.end())
-        {
-            myBuffers = addDigitizer_(digitizerID);
-        } else {
-            myBuffers = itr->second;
-        }
-        size_t events = this->handle_(accessor, myBuffers, std::bind(&DataHandlerText::write,this,ph::_1,digitizerID));
-        assert(myBuffers->next->empty());
-        return events;
+        mutex.lock();
+        *file << "# digitizerID: " << digitizerID << std::endl;
+        mutex.unlock();
     }
 
-    void write(const C<E>* buffer, uint32_t digitizerID)
+    template <typename E, template<typename...> typename C>
+    void operator()(const C<E>* buffer, uint32_t digitizerID, uint64_t globalTimeStamp)
     {
-        *file << "@" << this->globalTimeStamp << std::endl;
+        mutex.lock();
+        *file << "@" << globalTimeStamp << std::endl;
         for(const E& element: *buffer)
         {
             *file << std::setw(10) << digitizerID << " " << element << "\n";
         }
+        mutex.unlock();
     }
 };
 
