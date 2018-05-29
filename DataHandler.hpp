@@ -62,7 +62,9 @@ private:
         {
             buffer->clear();
             for (size_t i = 0; i < numChannels; ++i)
+            {
                 maxLocalTime[i] = 0;
+            }
             globalTimeStamp = 0;
         }
     } current, next;
@@ -91,7 +93,9 @@ public:
                 if (element.localTime > current.maxLocalTime[channel])
                 {
                     if (element.localTime > currentMaxLocalTime)
+                    {
                         currentMaxLocalTime = element.localTime;
+                    }
                     try {
                         current.buffer->insert(element);
                     } catch (std::length_error&)
@@ -101,13 +105,13 @@ public:
                         current.buffer->insert(element);
                     }
                 } else {
-                    if (element.localTime > nextMaxLocalTime)
-                    {
-                        nextMaxLocalTime = element.localTime;
-                    }
                     if (next.globalTimeStamp == 0)
                     {
                         next.globalTimeStamp = DataHandlerGeneric::getTimeMsecs();
+                    }
+                    if (element.localTime > nextMaxLocalTime)
+                    {
+                        nextMaxLocalTime = element.localTime;
                     }
                     try {
                         next.buffer->insert(element);
