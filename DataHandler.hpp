@@ -60,6 +60,8 @@ private:
 public:
     DataHandler(uint32_t digID, DataWriter* dw)
             : digitizerID(digID)
+            , current (new C<E>())
+            , next (new C<E>())
             , dataWriter(dw) {}
     size_t operator()(const DPPEventAccessor<E>& accessor)
     {
