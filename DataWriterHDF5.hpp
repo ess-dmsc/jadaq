@@ -33,9 +33,11 @@
 #include <cassert>
 #include "uuid.hpp"
 #include <H5Cpp.h>
-#include "DataWriterNull.hpp"
+#include "DataWriter.hpp"
+#include "DataFormat.hpp"
+#include "container.hpp"
 
-class DataWriterHDF5
+class DataWriterHDF5: public DataWriter
 {
 private:
     H5::H5File* file = nullptr;
@@ -101,21 +103,19 @@ public:
         delete file;
         mutex.unlock();
     }
-    void addDigitizer(uint32_t digitizerID)
+    void addDigitizer(uint32_t digitizerID) override
     {
         mutex.lock();
         addDigitizer_(digitizerID);
         mutex.unlock();
     }
 
-    template <typename E>
-    void operator()(const std::vector<E>* buffer, uint32_t digitizerID, uint64_t globalTimeStamp)
+    void operator()(const jadaq::vector<Data::ListElement422>* buffer, uint32_t digitizerID, uint64_t globalTimeStamp) override
     { write(buffer,digitizerID,globalTimeStamp); }
 
-    template <typename E>
-    void operator()(const std::set<E>* buffer, uint32_t digitizerID, uint64_t globalTimeStamp)
+    void operator()(const std::set<Data::ListElement422>* buffer, uint32_t digitizerID, uint64_t globalTimeStamp) override
     {
-        std::vector<E> v(buffer->begin(), buffer->end());
+        std::vector<Data::ListElement422> v(buffer->begin(), buffer->end());
         write(&v,digitizerID,globalTimeStamp);
     }
 

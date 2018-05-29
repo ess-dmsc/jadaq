@@ -27,13 +27,24 @@
 
 
 #include <cstdint>
+#include "DataFormat.hpp"
+#include "container.hpp"
 
-class DataWriterNull
+class DataWriter
 {
 public:
-    void addDigitizer(uint32_t digitizerID) {}
-    template <typename E, template<typename...> typename C>
-    void write(const C<E>* buffer, uint32_t digitizerID, uint64_t globalTimeStamp) {}
+    virtual void addDigitizer(uint32_t digitizerID) = 0;
+    virtual void operator()(const jadaq::vector<Data::ListElement422>* buffer, uint32_t digitizerID, uint64_t globalTimeStamp) = 0;
+    virtual void operator()(const std::set<Data::ListElement422>* buffer, uint32_t digitizerID, uint64_t globalTimeStamp) = 0;
+};
+
+class DataWriterNull: public DataWriter
+{
+public:
+    DataWriterNull(uuid runID) {}
+    void addDigitizer(uint32_t digitizerID) override {}
+    void operator()(const jadaq::vector<Data::ListElement422>* buffer, uint32_t digitizerID, uint64_t globalTimeStamp) override {}
+    void operator()(const std::set<Data::ListElement422>* buffer, uint32_t digitizerID, uint64_t globalTimeStamp) override {}
 };
 
 

@@ -30,17 +30,12 @@
 #include "uuid.hpp"
 #include "EventAccessor.hpp"
 #include "container.hpp"
+#include "DataWriter.hpp"
 
-template <typename E> class DataHandler;
 
 class DataHandlerGeneric
 {
 public:
-    template<typename E, template<typename...> typename C>
-    size_t handle(const DPPEventAccessor<E> &accessor, uint32_t digitizerID)
-    {
-        return static_cast<DataHandler<E,C>* >(this)->handle(accessor);
-    }
     static int64_t getTimeMsecs()
     {
         return std::chrono::duration_cast<std::chrono::milliseconds>(
@@ -49,8 +44,9 @@ public:
 
 };
 
+
 template <typename E, template<typename...> typename C>
-class DataHandler : public DataHandlerGeneric
+class DataHandler //: public DataHandlerGeneric
 {
     static_assert(std::is_pod<E>::value, "E must be POD");
 private:
@@ -58,13 +54,13 @@ private:
     C<E>* current; // event buffer for current global timestamp
     C<E>* next;    // event buffer for next global timestamp
 
-    uint64_t prevMaxLocalTime[]; // Array containing MaxLocalTime from the previous insertion needed to detect reset
+    uint64_t prevMaxLocalTime = 0;//[]; // Array containing MaxLocalTime from the previous insertion needed to detect reset
     uint64_t globalTimeStamp = 0;
-    std::function<void(const C<E>*, uint32_t, uint64_t)> write;
+    DataWriter* dataWriter;
 public:
-    DataHandler(uint32_t digID, std::function<void(const C<E>*, uint32_t, uint64_t)> w)
+    DataHandler(uint32_t digID, DataWriter* dw)
             : digitizerID(digID)
-            , write(w) {}
+            , dataWriter(dw) {}
     size_t operator()(const DPPEventAccessor<E>& accessor)
     {
         uint64_t currentMaxLocalTime = 0;
@@ -84,7 +80,7 @@ public:
                         current->insert(element);
                     } catch (std::length_error&)
                     {
-                        write(current,digitizerID,globalTimeStamp);
+                        (*dataWriter)(current,digitizerID,globalTimeStamp);
                         current->clear();
                         current->insert(element);
                     }
@@ -95,7 +91,7 @@ public:
                         next->insert(element);
                     } catch (std::length_error&)
                     {
-                        write(next,digitizerID,globalTimeStamp);
+                        (*dataWriter)(next,digitizerID,globalTimeStamp);
                         next->clear();
                         next->insert(element);
                     }
@@ -104,12 +100,12 @@ public:
         }
         if (!next->empty())
         {
-            write(current,digitizerID,globalTimeStamp);
+            (*dataWriter)(current,digitizerID,globalTimeStamp);
             current->clear();
             C<E>* temp = current;
             current = next;
             next = temp;
-            globalTimeStamp = getTimeMsecs(); //TODO can we get this earlier and what is the cost
+            globalTimeStamp = DataHandlerGeneric::getTimeMsecs(); //TODO can we get this earlier and what is the cost
             currentMaxLocalTime = nextMaxLocalTime;
         }
         // NOTE: We assume that the smallest time in the next acquisition must be larger than the largest time in the

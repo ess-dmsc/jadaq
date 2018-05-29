@@ -30,12 +30,27 @@
 #include <mutex>
 #include <cassert>
 #include "uuid.hpp"
+#include "DataFormat.hpp"
+#include "container.hpp"
+#include "DataWriter.hpp"
 
-class DataWriterText
+class DataWriterText: public DataWriter
 {
 private:
     std::fstream* file = nullptr;
     std::mutex mutex;
+    template <typename E, template<typename...> typename C>
+    void write(const C<E>* buffer, uint32_t digitizerID, uint64_t globalTimeStamp)
+    {
+        mutex.lock();
+        *file << "@" << globalTimeStamp << std::endl;
+        for(const E& element: *buffer)
+        {
+            *file << std::setw(10) << digitizerID << " " << element << "\n";
+        }
+        mutex.unlock();
+    }
+
 public:
     DataWriterText(uuid runID)
     {
@@ -56,24 +71,20 @@ public:
         mutex.unlock();
     }
 
-    void addDigitizer(uint32_t digitizerID)
+    void addDigitizer(uint32_t digitizerID) override
     {
         mutex.lock();
         *file << "# digitizerID: " << digitizerID << std::endl;
         mutex.unlock();
     }
 
-    template <typename E, template<typename...> typename C>
-    void operator()(const C<E>* buffer, uint32_t digitizerID, uint64_t globalTimeStamp)
-    {
-        mutex.lock();
-        *file << "@" << globalTimeStamp << std::endl;
-        for(const E& element: *buffer)
-        {
-            *file << std::setw(10) << digitizerID << " " << element << "\n";
-        }
-        mutex.unlock();
-    }
+    void operator()(const jadaq::vector<Data::ListElement422>* buffer, uint32_t digitizerID, uint64_t globalTimeStamp) override
+    { write(buffer,digitizerID,globalTimeStamp); }
+
+    void operator()(const std::set<Data::ListElement422>* buffer, uint32_t digitizerID, uint64_t globalTimeStamp) override
+    { write(buffer,digitizerID,globalTimeStamp); }
+
+
 };
 
 #endif //JADAQ_DATAHANDLERTEXT_HPP

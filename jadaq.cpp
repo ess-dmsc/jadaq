@@ -34,8 +34,9 @@
 #include "Digitizer.hpp"
 #include "Configuration.hpp"
 #include "DataHandler.hpp"
-#include "DataHandlerHDF5.hpp"
-#include "DataHandlerText.hpp"
+#include "DataWriter.hpp"
+#include "DataWriterHDF5.hpp"
+#include "DataWriterText.hpp"
 
 namespace po = boost::program_options;
 namespace asio = boost::asio;
@@ -156,24 +157,22 @@ int main(int argc, const char *argv[])
     }
 
     // TODO: move DataHandler creation to factory method in DataHandlerGeneric
-    DataHandler<Data::ListElement422>* dataHandler;
+    DataWriter* dataWriter;
     if (conf.hdf5out)
     {
-        if (conf.sort)
-            dataHandler = new DataHandlerHDF5<jadaq::set, Data::ListElement422>(runID);
-        else
-            dataHandler = new DataHandlerHDF5<jadaq::vector, Data::ListElement422>(runID);
+        dataWriter = new DataWriterHDF5(runID);
     }
     else if (conf.textout)
     {
-        if (conf.sort)
-            dataHandler = new DataHandlerText<jadaq::set, Data::ListElement422>(runID);
-        else
-            dataHandler = new DataHandlerText<jadaq::vector, Data::ListElement422>(runID);
+        dataWriter = new DataWriterText(runID);
+    }
+    else if (conf.nullout)
+    {
+        dataWriter = new DataWriterNull(runID);
     }
     else
     {
-        std::cerr << "No valid data handler specified." << std::endl;
+        std::cerr << "No valid data handler." << std::endl;
         return -1;
     }
     for (Digitizer& digitizer: digitizers) {
@@ -181,7 +180,14 @@ int main(int argc, const char *argv[])
         {
             std::cout << "Start acquisition on digitizer " << digitizer.name() << std::endl;
         }
-        digitizer.initialize(dataHandler);
+        digitizer.initialize();
+        if (conf.sort)
+        {
+            digitizer.setDataWriter<std::set>(dataWriter);
+        } else
+        {
+            digitizer.setDataWriter<jadaq::vector>(dataWriter);
+        }
         digitizer.startAcquisition();
     }
 

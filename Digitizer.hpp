@@ -39,17 +39,18 @@
 #include "trace.hpp"
 #include "DataHandler.hpp"
 #include "uuid.hpp"
+#include "DataWriter.hpp"
 
 class Digitizer
 {
 private:
     caen::Digitizer* digitizer = nullptr;
-    DataHandlerGeneric* dataHandler = nullptr;
     CAEN_DGTZ_DPPFirmware_t firmware;
     uint32_t boardConfiguration = 0;
     uint32_t numChannels;
     uint32_t id;
     bool waveformRecording = false;
+    std::function<size_t(const DPPEventAccessor<Data::ListElement422>&)> dataHandler;
 public:
     /* Connection parameters */
     const CAEN_DGTZ_ConnectionType linkType;
@@ -76,11 +77,17 @@ public:
     void acquisition();
     const Stats& stats() const {return stats_;}
     //Post setup, pre aquisition initialization
-    void initialize(DataHandlerGeneric* dataHandler_);
+    void initialize();
     // TODO: Sould we do somthing different than expose these three function?
     void startAcquisition() { digitizer->startAcquisition(); }
     void stopAcquisition() { digitizer->stopAcquisition(); }
     void reset() { digitizer->reset(); }
+    template <template<typename...> typename C>
+    void setDataWriter(DataWriter* dataWriter)
+    {
+        DataHandler<Data::ListElement422,C> dh{serial(),dataWriter};
+        dataHandler = dh;
+    }
 private:
     /* We bind a ReadoutBuffer to each digitizer for ease of use */
     caen::ReadoutBuffer readoutBuffer_;
