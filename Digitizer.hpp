@@ -85,7 +85,7 @@ public:
     template <template<typename...> typename C>
     void setDataWriter(DataWriter* dataWriter)
     {
-        DataHandler<Data::ListElement422,C> dh{serial(),dataWriter};
+        DataHandler<Data::ListElement422,C,uint32_t> dh{dataWriter,serial(),channels()};
         dataHandler = dh;
     }
 private:

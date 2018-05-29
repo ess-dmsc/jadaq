@@ -45,74 +45,92 @@ public:
 };
 
 
-template <typename E, template<typename...> typename C>
+template <typename E, template<typename...> typename C, typename T>
 class DataHandler //: public DataHandlerGeneric
 {
     static_assert(std::is_pod<E>::value, "E must be POD");
 private:
-    uint32_t digitizerID;
-    C<E>* current; // event buffer for current global timestamp
-    C<E>* next;    // event buffer for next global timestamp
-
-    uint64_t prevMaxLocalTime = 0;//[]; // Array containing MaxLocalTime from the previous insertion needed to detect reset
-    uint64_t globalTimeStamp = 0;
     DataWriter* dataWriter;
+    uint32_t digitizerID;
+    size_t numChannels;
+    struct Buffer
+    {
+        C<E>* buffer;
+        T* maxLocalTime; // Array containing MaxLocalTime from the previous insertion needed to detect reset
+        uint64_t globalTimeStamp = 0;
+        void clear(size_t numChannels)
+        {
+            buffer->clear();
+            for (size_t i = 0; i < numChannels; ++i)
+                maxLocalTime[i] = 0;
+            globalTimeStamp = 0;
+        }
+    } current, next;
 public:
-    DataHandler(uint32_t digID, DataWriter* dw)
-            : digitizerID(digID)
-            , current (new C<E>())
-            , next (new C<E>())
-            , dataWriter(dw) {}
+    DataHandler( DataWriter* dw, uint32_t digID, size_t channels)
+            : dataWriter(dw)
+            , digitizerID(digID)
+            , numChannels(channels)
+    {
+        current.buffer = new C<E>();
+        current.maxLocalTime = new T[numChannels];
+        next.buffer = new C<E>();
+        next.maxLocalTime = new T[numChannels];
+    }
     size_t operator()(const DPPEventAccessor<E>& accessor)
     {
-        uint64_t currentMaxLocalTime = 0;
-        uint64_t nextMaxLocalTime = 0;
         size_t events = 0;
         for (uint16_t channel = 0; channel < accessor.channels(); channel++)
         {
+            uint64_t currentMaxLocalTime = 0;
+            uint64_t nextMaxLocalTime = 0;
             for (uint32_t i = 0; i < accessor.events(channel); ++i)
             {
                 events += 1;
                 E element = accessor(channel,i);
-                if (element.localTime > prevMaxLocalTime)
+                if (element.localTime > current.maxLocalTime[channel])
                 {
                     if (element.localTime > currentMaxLocalTime)
                         currentMaxLocalTime = element.localTime;
                     try {
-                        current->insert(element);
+                        current.buffer->insert(element);
                     } catch (std::length_error&)
                     {
-                        (*dataWriter)(current,digitizerID,globalTimeStamp);
-                        current->clear();
-                        current->insert(element);
+                        (*dataWriter)(current.buffer,digitizerID,current.globalTimeStamp);
+                        current.buffer->clear();
+                        current.buffer->insert(element);
                     }
                 } else {
                     if (element.localTime > nextMaxLocalTime)
+                    {
                         nextMaxLocalTime = element.localTime;
+                    }
+                    if (next.globalTimeStamp == 0)
+                    {
+                        next.globalTimeStamp = DataHandlerGeneric::getTimeMsecs();
+                    }
                     try {
-                        next->insert(element);
+                        next.buffer->insert(element);
                     } catch (std::length_error&)
                     {
-                        (*dataWriter)(next,digitizerID,globalTimeStamp);
-                        next->clear();
-                        next->insert(element);
+                        (*dataWriter)(next.buffer,digitizerID,next.globalTimeStamp);
+                        next.buffer->clear();
+                        next.buffer->insert(element);
                     }
                 }
             }
+            current.maxLocalTime[channel] = currentMaxLocalTime;
+            next.maxLocalTime[channel] = nextMaxLocalTime;
         }
-        if (!next->empty())
+        if (!next.buffer->empty())
         {
-            (*dataWriter)(current,digitizerID,globalTimeStamp);
-            current->clear();
-            C<E>* temp = current;
+            (*dataWriter)(current.buffer,digitizerID,current.globalTimeStamp);
+            current.clear(numChannels);
+            Buffer temp = current;
             current = next;
             next = temp;
-            globalTimeStamp = DataHandlerGeneric::getTimeMsecs(); //TODO can we get this earlier and what is the cost
-            currentMaxLocalTime = nextMaxLocalTime;
+
         }
-        // NOTE: We assume that the smallest time in the next acquisition must be larger than the largest time in the
-        //       current acquisition UNLESS there has been a clock reset
-        prevMaxLocalTime = currentMaxLocalTime;
         return events;
     }
 };
