@@ -74,6 +74,9 @@ namespace jadaq
                 throw std::runtime_error("buffer creation error: buffer too small");
             }
         }
+        ~buffer()
+        { delete[] data; }
+        
         void insert(const T&& v)
         {
             check_length();
