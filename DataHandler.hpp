@@ -79,8 +79,9 @@ public:
         next.buffer = new C<E>();
         next.maxLocalTime = new T[numChannels];
     }
-    size_t operator()(const DPPEventAccessor<E>& accessor)
+    size_t operator()(const AnyDPPEventAccessor& a)
     {
+        DPPEventAccessor<E>& accessor = a.base<E>();
         size_t events = 0;
         for (uint16_t channel = 0; channel < accessor.channels(); channel++)
         {

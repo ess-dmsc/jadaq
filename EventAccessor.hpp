@@ -38,6 +38,33 @@ public:
     virtual E operator()(uint16_t channel, size_t i) const = 0;
 };
 
+struct AnyDPPEventAccessor
+{
+private:
+    void* ptr;
+
+public:
+    template <typename T>
+    AnyDPPEventAccessor(DPPEventAccessor<T>& b): ptr(&b) {}
+    template<typename T>
+    AnyDPPEventAccessor& operator=(DPPEventAccessor<T>& b)
+    {
+        ptr = &b;
+        return *this;
+    }
+    template<typename T>
+    DPPEventAccessor<T>& base() const
+    {
+        return *static_cast<DPPEventAccessor<T>*>(ptr);
+    }
+    template<typename T>
+    T operator()(uint16_t channel, size_t i) const
+    {
+        return base<T>().operator()(channel,i);
+    }
+};
+
+
 template <typename E>
 class DPPQDCEventAccessor : public DPPEventAccessor<E>
 {

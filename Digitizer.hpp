@@ -50,7 +50,7 @@ private:
     uint32_t numChannels;
     uint32_t id;
     bool waveformRecording = false;
-    std::function<size_t(const DPPEventAccessor<Data::ListElement422>&)> dataHandler;
+    std::function<size_t(const AnyDPPEventAccessor&)> dataHandler;
 public:
     /* Connection parameters */
     const CAEN_DGTZ_ConnectionType linkType;
