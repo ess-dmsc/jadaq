@@ -55,6 +55,13 @@ namespace jadaq
         size_t header;
         char* data;
         T* next;
+        void check_length()
+        {
+            if (next+1 > data+size)
+            {
+                throw std::length_error("Out of storage space.");
+            }
+        }
     public:
         buffer(size_t total_size, size_t header_size)
                 : size(total_size)
@@ -67,12 +74,14 @@ namespace jadaq
                 throw std::runtime_error("buffer creation error: buffer too small");
             }
         }
-        void insert(const T &&v)
+        void insert(const T&& v)
         {
-            if (next+1 > data+size)
-            {
-                throw std::length_error("Out of storage space.");
-            }
+            check_length();
+            *next = std::move(v);
+        }
+        void insert(const T& v)
+        {
+            check_length();
             *next = v;
         }
         void clear()
