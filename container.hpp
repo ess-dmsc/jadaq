@@ -45,22 +45,47 @@ namespace jadaq
     };
 
     template<typename T>
-    class set : public std::set<T>
+    class set : public std::set<T> {};
+
+    template<typename T>
+    class buffer
     {
     private:
-        std::vector<T> v;
+        size_t size;
+        size_t header;
+        char* data;
+        T* next;
     public:
-        const T* data()
+        buffer(size_t total_size, size_t header_size)
+                : size(total_size)
+                , header(header_size)
         {
-            assert(v.size() == 0);
-            v.insert(v.begin(),this->begin(),this->end());
-            return v.data();
+            data = new char[size];
+            next = (T*)(data + header);
+            if (next+1 > data+size)
+            {
+                throw std::runtime_error("buffer creation error: buffer too small");
+            }
         }
-        void clear() noexcept
+        void insert(const T &&v)
         {
-            v.clear();
-            std::set<T>::clear();
+            if (next+1 > data+size)
+            {
+                throw std::length_error("Out of storage space.");
+            }
+            *next = v;
         }
+        void clear()
+        { next = (T*)(data + header); }
+        T* begin()
+        { return (T*)(data+header); }
+        const T* begin() const
+        { return (const T*)(data+header); }
+        T* end()
+        { return next; }
+        const T* end() const
+        { return next; }
+
     };
 }
 #endif //JADAQ_CONTAINER_HPP

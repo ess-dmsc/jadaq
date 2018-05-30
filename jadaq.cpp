@@ -183,7 +183,7 @@ int main(int argc, const char *argv[])
         digitizer.initialize();
         if (conf.sort)
         {
-            digitizer.setDataWriter<std::set>(dataWriter);
+            digitizer.setDataWriter<jadaq::set>(dataWriter);
         } else
         {
             digitizer.setDataWriter<jadaq::vector>(dataWriter);
