@@ -83,6 +83,11 @@ private:
             std::cerr << "Error while writing to HDF5 file: " << e.getDetailMsg() <<
                       "\n\t " << "HDF5::write( " << digitizerID << ", " << globalTimeStamp <<
                               ", " << buffer->size() << " )" << std::endl;
+            for(const E& element: *buffer)
+            {
+                std::cerr << element << "\n";
+            }
+
         }
         mutex.unlock();
     }
