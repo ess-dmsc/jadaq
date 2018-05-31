@@ -71,10 +71,19 @@ private:
             digitizerGroup = addDigitizer_(digitizerID);
         }
         const hsize_t size[1] = {buffer->size()};
-        H5::DataSpace dataspace(1, size);
-        H5::DataSet dataset = digitizerGroup->createDataSet(std::to_string(globalTimeStamp), E::h5type(), dataspace );
-        writeAttribute("globalTimestamp", dataset,H5::PredType::NATIVE_UINT64,&globalTimeStamp);
-        dataset.write(buffer->data(), E::h5type());
+        try
+        {
+            H5::DataSpace dataspace(1, size);
+            H5::DataSet dataset = digitizerGroup->createDataSet(std::to_string(globalTimeStamp), E::h5type(),
+                                                                dataspace);
+            writeAttribute("globalTimestamp", dataset, H5::PredType::NATIVE_UINT64, &globalTimeStamp);
+            dataset.write(buffer->data(), E::h5type());
+        } catch (H5::Exception& e)
+        {
+            std::cerr << "Error while writing to HDF5 file: " << e.getDetailMsg() <<
+                      "\n\t " << "HDF5::write( " << digitizerID << ", " << globalTimeStamp <<
+                              ", " << buffer->size() << " )" << std::endl;
+        }
         mutex.unlock();
     }
 
