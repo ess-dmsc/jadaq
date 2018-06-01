@@ -50,26 +50,26 @@ namespace jadaq
     template<typename T>
     class buffer
     {
+        friend class DataWriterNetwork;
     private:
-        size_t size;
-        size_t header;
+        size_t max_size;
+        const size_t header_size = sizeof(Data::Header);
         char* data;
         T* next;
-        void check_length()
+        void check_length() const
         {
-            if (next+1 > data+size)
+            if (next+1 > data+max_size)
             {
                 throw std::length_error("Out of storage space.");
             }
         }
     public:
-        buffer(size_t total_size, size_t header_size)
-                : size(total_size)
-                , header(header_size)
+        buffer(size_t size)
+                : max_size(max_size)
         {
             data = new char[size];
-            next = (T*)(data + header);
-            if (next+1 > data+size)
+            next = (T*)(data + header_size);
+            if (next+1 > data+max_size)
             {
                 throw std::runtime_error("buffer creation error: buffer too small");
             }
@@ -88,15 +88,23 @@ namespace jadaq
             *next = v;
         }
         void clear()
-        { next = (T*)(data + header); }
+        { next = (T*)(data + header_size); }
         T* begin()
-        { return (T*)(data+header); }
+        { return (T*)(data+header_size); }
         const T* begin() const
-        { return (const T*)(data+header); }
+        { return (const T*)(data+header_size); }
         T* end()
         { return next; }
         const T* end() const
         { return next; }
+        size_t size() const
+        {
+            return (end()-begin());
+        }
+        size_t data_size() const
+        {
+            return ((char*)next-data);
+        }
 
     };
 }
