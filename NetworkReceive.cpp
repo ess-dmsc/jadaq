@@ -115,6 +115,8 @@ void NetworkReceive::run(volatile sig_atomic_t* interrupt)
             else if (header->globalTime > currentTimestamp)
             {
                 newTimeStamp(header->globalTime);
+                uint32_t digitizerID = header->digitizerID;
+                dataBuffers[digitizerID].insert(receiveBuffer.begin(),receiveBuffer.end());
             }
             else
             {

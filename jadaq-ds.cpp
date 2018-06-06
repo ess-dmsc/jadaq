@@ -56,7 +56,6 @@ int main(int argc, const char *argv[])
                 ("sort,s", po::bool_switch(&conf.sort), "Sort output before writing to file (only valid for file output).")
                 ("text,T", po::bool_switch(&conf.textout), "Output to text file.")
                 ("hdf5,H", po::bool_switch(&conf.hdf5out), "Output to hdf5 file.")
-
                 ("backend,b", po::value<std::string>()->value_name("<file type>")->default_value("text"), "Storage back end. [text,hdf5]");
 
         po::variables_map vm;
