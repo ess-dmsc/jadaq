@@ -31,6 +31,8 @@
 #ifndef JADAQ_CONTAINER_HPP
 #define JADAQ_CONTAINER_HPP
 
+class DataWriterNetwork;
+
 namespace jadaq
 {
     template<typename T>
@@ -50,7 +52,7 @@ namespace jadaq
     template<typename T>
     class buffer
     {
-        friend class DataWriterNetwork;
+        friend class ::DataWriterNetwork;
     private:
         size_t max_size;
         const size_t header_size = sizeof(Data::Header);

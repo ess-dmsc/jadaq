@@ -48,20 +48,20 @@ private:
     template <typename E>
     void write(const jadaq::buffer<E>* buffer, uint32_t digitizerID, uint64_t globalTimeStamp)
     {
-        Data::Header *header = buffer->data;
+        Data::Header* header = (Data::Header*)buffer->data;
         header->runID = runID.value();
         header->globalTime = globalTimeStamp;
         header->digitizerID = digitizerID;
         header->version = Data::currentVersion;
         header->elementType = E::type();
-        header->numElements = buffer->size();
+        header->numElements = (uint16_t)buffer->size();
 
         socket->send_to(boost::asio::buffer(buffer->data, buffer->data_size()), remoteEndpoint);
 
     }
 
 public:
-    DataWriterNetwork(std::string address, std::string port, uuid runID_)
+    DataWriterNetwork(const std::string& address, const std::string& port, uuid runID_)
             : runID(runID_)
     {
         try {

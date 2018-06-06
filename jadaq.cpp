@@ -37,6 +37,7 @@
 #include "DataWriter.hpp"
 #include "DataWriterHDF5.hpp"
 #include "DataWriterText.hpp"
+#include "DataWriterNetwork.hpp"
 
 namespace po = boost::program_options;
 namespace asio = boost::asio;
@@ -50,6 +51,8 @@ struct
     long  events  = -1;
     float time    = -1.0f;
     int   verbose =  1;
+    std::string* network = nullptr;
+    std::string* port = nullptr;
     std::string* outConfigFile = nullptr;
     std::vector<std::string> configFile;
 } conf;
@@ -70,6 +73,8 @@ int main(int argc, const char *argv[])
                 ("sort,s", po::bool_switch(&conf.sort), "Sort output before writing to file (only valid for file output).")
                 ("text,T", po::bool_switch(&conf.textout), "Output to text file.")
                 ("hdf5,H", po::bool_switch(&conf.hdf5out), "Output to hdf5 file.")
+                ("network,N", po::value<std::string>()->value_name("<address>"), "Send data over network - address to bind to.")
+                ("port,P", po::value<std::string>()->value_name("<port>")->default_value(Data::defaultDataPort), "Network port to bind to if sending over network")
                 ("config_out", po::value<std::string>()->value_name("<file>"), "Read back device(s) configuration and write to <file>")
                 ("config", po::value<std::vector<std::string> >()->value_name("<file>"), "Configuration file");
         po::positional_options_description pos;
@@ -103,7 +108,11 @@ int main(int argc, const char *argv[])
         }
         conf.events = vm["events"].as<int>();
         conf.time   = vm["time"].as<float>();
-
+        if (vm.count("network"))
+        {
+            conf.network = new std::string(vm["network"].as<std::string>());
+            conf.port = new std::string(vm["port"].as<std::string>());
+        }
         // We will use the Null data handlere if no other is selected
         conf.nullout = (!conf.textout && !conf.hdf5out);
     }
@@ -169,6 +178,10 @@ int main(int argc, const char *argv[])
     else if (conf.nullout)
     {
         dataWriter = new DataWriterNull(runID);
+    }
+    else if(conf.network != nullptr)
+    {
+        dataWriter = new DataWriterNetwork(*conf.network,*conf.port,runID);
     }
     else
     {
