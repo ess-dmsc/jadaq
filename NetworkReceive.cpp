@@ -85,7 +85,7 @@ void NetworkReceive::run(volatile sig_atomic_t* interrupt)
         catch (boost::system::system_error& error)
         {
             std::cerr << "ERROR receiving UDP package: " << error.what() << std::endl;
-            throw;
+            break;
         }
         if (receivedBytes >= sizeof(Data::Header))
         {
