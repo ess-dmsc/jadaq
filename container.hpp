@@ -88,12 +88,12 @@ namespace jadaq
         void insert(const T&& v)
         {
             check_length();
-            *next = std::move(v);
+            *next++ = std::move(v);
         }
         void insert(const T& v)
         {
             check_length();
-            *next = v;
+            *next++ = v;
         }
         void clear()
         { next = (T*)(data + sizeof(Data::Header)); }
@@ -118,8 +118,6 @@ namespace jadaq
         {
             return (char*)next == data + sizeof(Data::Header);
         }
-
-
     };
 }
 #endif //JADAQ_CONTAINER_HPP
