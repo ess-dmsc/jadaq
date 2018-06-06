@@ -31,6 +31,16 @@
 
 namespace po = boost::program_options;
 
+struct
+{
+    bool  textout = false;
+    bool  hdf5out = false;
+    bool  nullout = false;
+    bool  sort    = false;
+    int   verbose =  1;
+} conf;
+
+
 int main(int argc, const char *argv[])
 {
     std::string address;
@@ -41,7 +51,12 @@ int main(int argc, const char *argv[])
         desc.add_options()
                 ("help,h", "Display help information")
                 ("address,a", po::value<std::string>()->default_value(NetworkReceive::listenAll)->value_name("<address>"), "Address to bind to. Defaults all network interfaces")
-                ("port,p", po::value<std::string>()->value_name("<port>")->default_value(DataHandler::defaultDataPort), "Network port to bind to")
+                ("port,p", po::value<std::string>()->value_name("<port>")->default_value(Data::defaultDataPort), "Network port to bind to")
+                ("verbose,v", po::value<int>()->value_name("<level>")->default_value(conf.verbose), "Set program verbosity level.")
+                ("sort,s", po::bool_switch(&conf.sort), "Sort output before writing to file (only valid for file output).")
+                ("text,T", po::bool_switch(&conf.textout), "Output to text file.")
+                ("hdf5,H", po::bool_switch(&conf.hdf5out), "Output to hdf5 file.")
+
                 ("backend,b", po::value<std::string>()->value_name("<file type>")->default_value("text"), "Storage back end. [text,hdf5]");
 
         po::variables_map vm;
@@ -66,6 +81,6 @@ int main(int argc, const char *argv[])
     /* Set up interrupt handler and start handling acquired data */
     setup_interrupt_handler();
     std::cout << "Running file writer loop - Ctrl-C to interrupt" << std::endl;
-    networkReceive.start(&interrupt);
+    networkReceive.run(&interrupt);
     std::cout << "caught interrupt - stop file writer and clean up." << std::endl;
 }

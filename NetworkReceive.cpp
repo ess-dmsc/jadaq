@@ -23,7 +23,7 @@
  */
 
 #include "NetworkReceive.hpp"
-#include "DataHandlerText.hpp"
+#include "DataWriterText.hpp"
 
 NetworkReceive::NetworkReceive(std::string address, std::string port)
 {
@@ -42,23 +42,51 @@ NetworkReceive::NetworkReceive(std::string address, std::string port)
         std::cerr << "ERROR in UDP connection setup to " << address << ":" << port << " : " << e.what() << std::endl;
         throw;
     }
-    buffer = new char[bufferSize];
+    receiveBuffer = new char[bufferSize];
 }
 
 NetworkReceive::~NetworkReceive()
 {
-    delete[] buffer;
+    delete[] receiveBuffer;
 }
 
-void NetworkReceive::start(int interrupt)
+void NetworkReceive::newDataWriter(uuid newID)
 {
-    while(!interrupt)
+    for (auto& db: dataBuffers)
+    {
+        uint32_t digitizerID = db.first;
+        jadaq::vector<Data::ListElement422>& buffer = db.second;
+        (*dataWriter)(&buffer,digitizerID,currentTimestamp);
+    }
+    dataBuffers.clear();
+    delete dataWriter;
+    runID = newID;
+    dataWriter = new DataWriterText(runID);
+
+}
+
+void NetworkReceive::newTimeStamp(uint64_t timeStamp)
+{
+    for (auto& db: dataBuffers)
+    {
+        uint32_t digitizerID = db.first;
+        jadaq::vector<Data::ListElement422>& buffer = db.second;
+        (*dataWriter)(&buffer,digitizerID,currentTimestamp);
+        buffer.clear();
+    }
+    currentTimestamp = timeStamp;
+}
+
+
+void NetworkReceive::run(volatile sig_atomic_t* interrupt)
+{
+    while(true)
     {
         size_t receivedBytes;
         udp::endpoint remoteEndpoint;
         try
         {
-            receivedBytes = socket->receive_from(boost::asio::buffer((buffer), DataHandler::maxBufferSize), remoteEndpoint);
+            receivedBytes = socket->receive_from(boost::asio::buffer((receiveBuffer), Data::maxBufferSize), remoteEndpoint);
         }
         catch (boost::system::system_error& error)
         {
@@ -67,38 +95,45 @@ void NetworkReceive::start(int interrupt)
         }
         if (receivedBytes >= sizeof(Data::Header))
         {
-            Data::Header* header = (Data::Header*) buffer;
-            uuid runID(header->runID);
-            uint32_t digitizerID = header->digitizerID;
-            auto itr = dataHandlers.find(std::make_pair(runID,digitizerID));
-            DataHandler* dataHandler;
-            if (itr != dataHandlers.end())
-            {
-                dataHandler = itr->second;
-            } else {
-                dataHandler = new DataHandlerText<std::vector,Data::ListElement422>(runID);
-//                dataHandler->addDigitizer(digitizerID);
-                dataHandlers.insert(std::make_pair(std::make_pair(runID,digitizerID),dataHandler));
-            }
+            Data::Header* header = (Data::Header*) receiveBuffer;
             if (header->version != Data::currentVersion)
             {
                 uint8_t* version = (uint8_t*)&(header->version);
                 std::cerr << "ERROR UDP data version unsupported: " << version[0] << "," << version[1] << std::endl;
+                continue;
             }
             if (header->elementType != Data::List422)
             {
                 std::cerr << "ERROR UDP element type unsupported: " << std::endl;
+                continue;
             }
-            //dataHandler->tick(header->globalTime);
-            Data::ListElement422* listElement = (Data::ListElement422*)(buffer + sizeof(Data::Header));
-            uint16_t numElements = header->numElements;
-            for (uint16_t i = 0; i < numElements; ++i)
+            jadaq::buffer<Data::ListElement422> jadaqBuffer{header};
+            uuid id(header->runID);
+            if (id != runID)
             {
-                //dataHandler->addEvent(listElement[i]);
+                newDataWriter(id);
+            }
+            if (header->globalTime == currentTimestamp)
+            {
+                uint32_t digitizerID = header->digitizerID;
+                dataBuffers[digitizerID].insert(jadaqBuffer.begin(),jadaqBuffer.end());
+            }
+            else if (header->globalTime > currentTimestamp)
+            {
+                newTimeStamp(header->globalTime);
+            }
+            else
+            {
+                std::cerr << "Warning: skipping old timestamp." << std::endl;
             }
 
         } else {
             std::cerr << "ERROR receiving UDP package: package too small" << std::endl;
+        }
+        if(*interrupt)
+        {
+            std::cout << "Caught interrupt - stop data server and clean up." << std::endl;
+            break;
         }
     }
 }

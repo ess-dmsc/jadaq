@@ -63,7 +63,7 @@ public:
         *file << "# runID: " << runID << std::endl;
     }
 
-    ~DataWriterText()
+    ~DataWriterText() override
     {
         assert(file);
         mutex.lock(); // Wait if someone is still writing data

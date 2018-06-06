@@ -27,6 +27,7 @@
 #include <vector>
 #include <set>
 #include <cassert>
+#include "DataFormat.hpp"
 
 #ifndef JADAQ_CONTAINER_HPP
 #define JADAQ_CONTAINER_HPP
@@ -40,10 +41,14 @@ namespace jadaq
     {
     public:
         void insert(const T &v)
-        { this->push_back(v); }
+        { std::vector<T>::push_back(v); }
 
         void insert(const T &&v)
-        { this->push_back(v); }
+        { std::vector<T>::push_back(v); }
+
+        template< class InputIt >
+        void insert(InputIt first, InputIt last)
+        { std::vector<T>::insert(this->end(),first,last); }
     };
 
     template<typename T>
@@ -58,6 +63,7 @@ namespace jadaq
         const size_t header_size = sizeof(Data::Header);
         char* data;
         T* next;
+        bool newData = false;
         void check_length() const
         {
             if (next+1 > data+max_size)
@@ -70,14 +76,26 @@ namespace jadaq
                 : max_size(max_size)
         {
             data = new char[size];
+            newData = true;
             next = (T*)(data + header_size);
             if (next+1 > data+max_size)
             {
                 throw std::runtime_error("buffer creation error: buffer too small");
             }
         }
+        buffer(Data::Header* header)
+        {
+            data = (char*)header;
+            next = (T*)(data + header_size) + header->numElements;
+
+        }
         ~buffer()
-        { delete[] data; }
+        {
+            if (newData)
+            {
+                delete[] data;
+            }
+        }
         
         void insert(const T&& v)
         {

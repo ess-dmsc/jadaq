@@ -38,16 +38,20 @@ class NetworkReceive
 public:
     NetworkReceive(std::string address, std::string port);
     ~NetworkReceive();
-    void start(int* keepRunning);
-    void stop();
+    void run(volatile sig_atomic_t* interrupt);
     static constexpr const char* listenAll = "*";
 private:
     boost::asio::io_service ioService;
     udp::endpoint endpoint;
     udp::socket *socket = nullptr;
-    char* buffer;
-    const size_t bufferSize = DataHandler::maxBufferSize;
-    std::map<std::pair<uuid, uint32_t >, DataHandler* > dataHandlers;
+    char* receiveBuffer;
+    const size_t bufferSize = Data::maxBufferSize;
+    uuid runID{0};
+    uint64_t currentTimestamp = 0;
+    DataWriter* dataWriter = nullptr;
+    std::map<uint32_t ,jadaq::vector<Data::ListElement422> > dataBuffers;
+    void newDataWriter(uuid newID);
+    void newTimeStamp(uint64_t timeStamp);
 };
 
 

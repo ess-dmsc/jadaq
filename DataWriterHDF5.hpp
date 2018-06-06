@@ -107,7 +107,7 @@ public:
         }
     }
 
-    ~DataWriterHDF5()
+    ~DataWriterHDF5() override
     {
         assert(file);
         mutex.lock(); // Wait if someone is still writing data

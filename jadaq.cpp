@@ -114,7 +114,7 @@ int main(int argc, const char *argv[])
             conf.port = new std::string(vm["port"].as<std::string>());
         }
         // We will use the Null data handlere if no other is selected
-        conf.nullout = (!conf.textout && !conf.hdf5out);
+        conf.nullout = (!conf.textout && !conf.hdf5out && (conf.network == nullptr));
     }
     catch (const po::error &error)
     {
@@ -175,13 +175,13 @@ int main(int argc, const char *argv[])
     {
         dataWriter = new DataWriterText(runID);
     }
-    else if (conf.nullout)
-    {
-        dataWriter = new DataWriterNull(runID);
-    }
     else if(conf.network != nullptr)
     {
         dataWriter = new DataWriterNetwork(*conf.network,*conf.port,runID);
+    }
+    else if (conf.nullout)
+    {
+        dataWriter = new DataWriterNull(runID);
     }
     else
     {

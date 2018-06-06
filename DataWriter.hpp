@@ -33,6 +33,7 @@
 class DataWriter
 {
 public:
+    virtual ~DataWriter() = default;
     virtual void addDigitizer(uint32_t digitizerID) = 0;
     virtual void operator()(const jadaq::vector<Data::ListElement422>* buffer, uint32_t digitizerID, uint64_t globalTimeStamp) = 0;
     virtual void operator()(const jadaq::set<Data::ListElement422>* buffer, uint32_t digitizerID, uint64_t globalTimeStamp) = 0;
