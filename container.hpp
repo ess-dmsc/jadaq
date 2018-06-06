@@ -70,6 +70,11 @@ namespace jadaq
                 throw std::length_error("Out of storage space.");
             }
         }
+        void setElements(uint16_t n)
+        {
+            next = (T*)(data + sizeof(Data::Header));
+            next += n;
+        }
     public:
         buffer()
         {

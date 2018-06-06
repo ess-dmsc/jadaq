@@ -101,6 +101,7 @@ void NetworkReceive::run(volatile sig_atomic_t* interrupt)
                 std::cerr << "ERROR UDP element type unsupported: " << std::endl;
                 continue;
             }
+            receiveBuffer.setElements(header->numElements);
             uuid id(header->runID);
             if (id != runID)
             {
