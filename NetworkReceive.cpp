@@ -42,12 +42,6 @@ NetworkReceive::NetworkReceive(std::string address, std::string port)
         std::cerr << "ERROR in UDP connection setup to " << address << ":" << port << " : " << e.what() << std::endl;
         throw;
     }
-    receiveBuffer = new char[bufferSize];
-}
-
-NetworkReceive::~NetworkReceive()
-{
-    delete[] receiveBuffer;
 }
 
 void NetworkReceive::newDataWriter(uuid newID)
@@ -86,7 +80,7 @@ void NetworkReceive::run(volatile sig_atomic_t* interrupt)
         udp::endpoint remoteEndpoint;
         try
         {
-            receivedBytes = socket->receive_from(boost::asio::buffer((receiveBuffer), Data::maxBufferSize), remoteEndpoint);
+            receivedBytes = socket->receive_from(boost::asio::buffer((receiveBuffer.data), Data::maxBufferSize), remoteEndpoint);
         }
         catch (boost::system::system_error& error)
         {
@@ -95,7 +89,7 @@ void NetworkReceive::run(volatile sig_atomic_t* interrupt)
         }
         if (receivedBytes >= sizeof(Data::Header))
         {
-            Data::Header* header = (Data::Header*) receiveBuffer;
+            Data::Header* header = (Data::Header*) receiveBuffer.data;
             if (header->version != Data::currentVersion)
             {
                 uint8_t* version = (uint8_t*)&(header->version);
@@ -107,7 +101,6 @@ void NetworkReceive::run(volatile sig_atomic_t* interrupt)
                 std::cerr << "ERROR UDP element type unsupported: " << std::endl;
                 continue;
             }
-            jadaq::buffer<Data::ListElement422> jadaqBuffer{header};
             uuid id(header->runID);
             if (id != runID)
             {
@@ -116,7 +109,7 @@ void NetworkReceive::run(volatile sig_atomic_t* interrupt)
             if (header->globalTime == currentTimestamp)
             {
                 uint32_t digitizerID = header->digitizerID;
-                dataBuffers[digitizerID].insert(jadaqBuffer.begin(),jadaqBuffer.end());
+                dataBuffers[digitizerID].insert(receiveBuffer.begin(),receiveBuffer.end());
             }
             else if (header->globalTime > currentTimestamp)
             {

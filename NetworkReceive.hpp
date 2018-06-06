@@ -37,14 +37,14 @@ class NetworkReceive
 {
 public:
     NetworkReceive(std::string address, std::string port);
-    ~NetworkReceive();
+    ~NetworkReceive() = default;
     void run(volatile sig_atomic_t* interrupt);
     static constexpr const char* listenAll = "*";
 private:
     boost::asio::io_service ioService;
     udp::endpoint endpoint;
     udp::socket *socket = nullptr;
-    char* receiveBuffer;
+    jadaq::buffer<Data::ListElement422> receiveBuffer;
     const size_t bufferSize = Data::maxBufferSize;
     uuid runID{0};
     uint64_t currentTimestamp = 0;

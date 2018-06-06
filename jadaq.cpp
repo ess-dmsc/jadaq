@@ -194,7 +194,11 @@ int main(int argc, const char *argv[])
             std::cout << "Start acquisition on digitizer " << digitizer.name() << std::endl;
         }
         digitizer.initialize();
-        if (conf.sort)
+        if (conf.network != nullptr)
+        {
+            digitizer.setDataWriter<jadaq::buffer>(dataWriter);
+        }
+        else if (conf.sort)
         {
             digitizer.setDataWriter<jadaq::set>(dataWriter);
         } else

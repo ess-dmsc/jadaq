@@ -33,6 +33,7 @@
 #define JADAQ_CONTAINER_HPP
 
 class DataWriterNetwork;
+class NetworkReceive;
 
 namespace jadaq
 {
@@ -58,43 +59,30 @@ namespace jadaq
     class buffer
     {
         friend class ::DataWriterNetwork;
+        friend class ::NetworkReceive;
     private:
-        size_t max_size;
-        const size_t header_size = sizeof(Data::Header);
         char* data;
         T* next;
-        bool newData = false;
         void check_length() const
         {
-            if (next+1 > data+max_size)
+            if ((char*)(next+1) > data + Data::maxBufferSize)
             {
                 throw std::length_error("Out of storage space.");
             }
         }
     public:
-        buffer(size_t size)
-                : max_size(max_size)
+        buffer()
         {
-            data = new char[size];
-            newData = true;
-            next = (T*)(data + header_size);
-            if (next+1 > data+max_size)
+            data = new char[Data::maxBufferSize];
+            next = (T*)(data + sizeof(Data::Header));
+            if ((char*)(next+1) > data + Data::maxBufferSize)
             {
                 throw std::runtime_error("buffer creation error: buffer too small");
             }
         }
-        buffer(Data::Header* header)
-        {
-            data = (char*)header;
-            next = (T*)(data + header_size) + header->numElements;
-
-        }
         ~buffer()
         {
-            if (newData)
-            {
-                delete[] data;
-            }
+            delete[] data;
         }
         
         void insert(const T&& v)
@@ -108,11 +96,11 @@ namespace jadaq
             *next = v;
         }
         void clear()
-        { next = (T*)(data + header_size); }
+        { next = (T*)(data + sizeof(Data::Header)); }
         T* begin()
-        { return (T*)(data+header_size); }
+        { return (T*)(data + sizeof(Data::Header)); }
         const T* begin() const
-        { return (const T*)(data+header_size); }
+        { return (const T*)(data + sizeof(Data::Header)); }
         T* end()
         { return next; }
         const T* end() const
@@ -125,6 +113,12 @@ namespace jadaq
         {
             return ((char*)next-data);
         }
+
+        bool empty() const noexcept
+        {
+            return (char*)next == data + sizeof(Data::Header);
+        }
+
 
     };
 }
