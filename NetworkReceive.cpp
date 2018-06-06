@@ -130,4 +130,5 @@ void NetworkReceive::run(volatile sig_atomic_t* interrupt)
             break;
         }
     }
+    newTimeStamp(-1);
 }
