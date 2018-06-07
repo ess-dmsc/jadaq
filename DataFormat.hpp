@@ -32,6 +32,10 @@
 
 #define VERSION {1,0}
 
+#define JUMBO_PAYLOAD 9000
+#define IP_HEADER       20
+#define UDP_HEADER       8
+
 /* TODO: Take care of endianness: https://linux.die.net/man/3/endian
  * We will use little endian for our network protocol since odds
  * are that both ends will be running on intel hardware
@@ -93,7 +97,7 @@ namespace Data
     }
 
     static constexpr const char* defaultDataPort = "12345";
-    static constexpr const size_t maxBufferSize = 9000;
+    static constexpr const size_t maxBufferSize = JUMBO_PAYLOAD-(UDP_HEADER+IP_HEADER);
 
 } // namespace Data
 
