@@ -47,6 +47,7 @@ namespace Data
     {
         None,
         List422,
+        List822,
         Waweform
     };
     /* Shared meta data for the entire data package */
@@ -83,6 +84,29 @@ namespace Data
             return datatype;
         }
     };
+    struct __attribute__ ((__packed__)) ListElement822
+    {
+        uint64_t localTime;
+        uint16_t adcValue;
+        uint16_t channel;
+        bool operator< (const ListElement822& rhs) const
+        {
+            return localTime < rhs.localTime || (localTime == rhs.localTime && channel < rhs.channel) ;
+        };
+        void printOn(std::ostream& os) const
+        {
+            os << std::setw(10) << channel << " " << std::setw(10) << localTime << " " << std::setw(10) << adcValue;
+        }
+        static ElementType type() { return List822; }
+        static H5::CompType h5type()
+        {
+            H5::CompType datatype(sizeof(ListElement822));
+            datatype.insertMember("localTime", HOFFSET(ListElement822, localTime), H5::PredType::NATIVE_UINT64);
+            datatype.insertMember("adcValue", HOFFSET(ListElement822, adcValue), H5::PredType::NATIVE_UINT16);
+            datatype.insertMember("channel", HOFFSET(ListElement822, channel), H5::PredType::NATIVE_UINT16);
+            return datatype;
+        }
+    };
     static inline size_t elementSize(ElementType elementType)
     {
         switch (elementType)
@@ -91,6 +115,8 @@ namespace Data
                 return 0;
             case List422:
                 return sizeof(ListElement422);
+            case List822:
+                return sizeof(ListElement822);
             default:
                 throw std::runtime_error("Unknown element type." );
         }
@@ -102,6 +128,8 @@ namespace Data
 } // namespace Data
 
 static inline std::ostream& operator<< (std::ostream& os, const Data::ListElement422& e)
+{ e.printOn(os); return os; }
+static inline std::ostream& operator<< (std::ostream& os, const Data::ListElement822& e)
 { e.printOn(os); return os; }
 
 #endif //JADAQ_DATAFORMAT_HPP
