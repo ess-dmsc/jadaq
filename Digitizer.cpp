@@ -270,7 +270,7 @@ std::string Digitizer::get(FunctionID functionID, int index)
     }
     catch (...)
     {
-        std::cerr << "ERROR: calling get" << to_string(id) << "(" << index << ")" << std::endl;
+        std::cerr << "ERROR: calling get" << to_string(functionID) << "(" << index << ")" << std::endl;
         throw;
     }
     return res;
@@ -285,7 +285,7 @@ std::string Digitizer::get(FunctionID functionID)
     }
     catch (...)
     {
-        std::cerr << "ERROR: calling get" << to_string(id) << "()" << std::endl;
+        std::cerr << "ERROR: calling get" << to_string(functionID) << "()" << std::endl;
         throw;
     }
     return res;
@@ -301,13 +301,13 @@ void Digitizer::set(FunctionID functionID, int index, std::string value)
     {
         if(functionID != Register)
         {
-            std::cerr << "ERROR: calling set" << to_string(id) << "(" << index << ", " << value << ")" << std::endl;
+            std::cerr << "ERROR: calling set" << to_string(functionID) << "(" << index << ", " << value << ")" << std::endl;
             throw;
         }
     }
     catch (...)
     {
-        std::cerr << "ERROR: calling set" << to_string(id) << "(" << index << ", " << value << ")" << std::endl;
+        std::cerr << "ERROR: calling set" << to_string(functionID) << "(" << index << ", " << value << ")" << std::endl;
         throw;
     }
     if (functionID == Register)
@@ -324,7 +324,7 @@ void Digitizer::set(FunctionID functionID, std::string value)
     }
     catch (...)
     {
-        std::cerr << "ERROR: calling set" << to_string(id) << "(" << value << ")" << std::endl;
+        std::cerr << "ERROR: calling set" << to_string(functionID) << "(" << value << ")" << std::endl;
         throw;
     }
 
