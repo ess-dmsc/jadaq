@@ -114,6 +114,9 @@ static void set_(caen::Digitizer* digitizer, FunctionID functionID, const std::s
 
 static void set_(caen::Digitizer* digitizer, FunctionID functionID, int index, const std::string& value) {
     switch (functionID) {
+        case Register:
+            digitizer->writeRegister(index,s2ui(value));
+            break;
         SET_ICASE(digitizer,ChannelDCOffset,index,s2ui(value))
         SET_ICASE(digitizer,GroupDCOffset,index,s2ui(value))
         SET_ICASE(digitizer,ChannelSelfTrigger,index,s2tm(value))
@@ -208,6 +211,8 @@ static std::string get_(caen::Digitizer* digitizer, FunctionID functionID, int i
 {
 
     switch (functionID) {
+        case Register:
+            return to_string(digitizer->readRegister(index));
         GET_ICASE(digitizer,ChannelDCOffset,index,to_string)
         GET_ICASE(digitizer,GroupDCOffset,index,to_string)
         GET_ICASE(digitizer,AMCFirmwareRevision,index,to_string)

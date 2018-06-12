@@ -31,6 +31,7 @@
 #define MAP_ENTRY(F) {#F,(F)}
 static std::unordered_map<std::string,FunctionID > functionMap =
         {
+                MAP_ENTRY(Register),
                 MAP_ENTRY(MaxNumEventsBLT),
                 MAP_ENTRY(ChannelEnableMask),
                 MAP_ENTRY(GroupEnableMask),
@@ -104,6 +105,7 @@ static std::unordered_map<std::string,FunctionID > functionMap =
 
 const std::string to_string(FunctionID id) {
     switch (id) {
+        CASE_TO_STR(Register)
         CASE_TO_STR(MaxNumEventsBLT)
         CASE_TO_STR(ChannelEnableMask)
         CASE_TO_STR(GroupEnableMask)
@@ -175,11 +177,6 @@ const std::string to_string(FunctionID id) {
             throw std::invalid_argument{"Unknown function ID"};
     }
 }
-
-FunctionID functionIDbegin() { return (FunctionID)0; }
-FunctionID functionIDend() { return (FunctionID)functionMap.size(); }
-
-
 
 FunctionID functionID(std::string s)
 {

@@ -29,7 +29,13 @@
 
 #include <string>
 
+
+/*
+ * NOTE: Do not change the ordering  in FunctionID unless you absolutely know what you are doing.
+ */
 enum FunctionID {
+    // Special functions - will be skipped by the begin to end iterater
+    Register,
     // Global i.e. no channel/group
     MaxNumEventsBLT,
     ChannelEnableMask,
@@ -73,7 +79,17 @@ enum FunctionID {
     ReadoutStatus,
     Scratch,
     DPPAggregateNumberPerBLT,
-    // Channel/group setting
+    // Channel/group optional
+    DPPPreTriggerSize,
+    RecordLength,
+    NumEventsPerAggregate,
+    DPPGateWidth,
+    DPPGateOffset,
+    DPPFixedBaseline,
+    DPPAlgorithmControl,
+    DPPTriggerHoldOffWidth,
+    DPPShapedTriggerWidth,
+    // Channel/group mandatory
     ChannelDCOffset,
     GroupDCOffset,
     AMCFirmwareRevision,
@@ -89,21 +105,14 @@ enum FunctionID {
     ChannelZSParams,
     SAMPostTriggerSize,
     SAMTriggerCountVetoParam,
-    // Channel/group optional
-    DPPPreTriggerSize,
-    RecordLength,
-    NumEventsPerAggregate,
-    DPPGateWidth,
-    DPPGateOffset,
-    DPPFixedBaseline,
-    DPPAlgorithmControl,
-    DPPTriggerHoldOffWidth,
-    DPPShapedTriggerWidth,
+    FunctionID_SIZE // This MUST be the last FunctionID
 };
 
+static inline bool takeIndex(FunctionID id) { return id >= DPPPreTriggerSize; }
 static inline bool needIndex(FunctionID id) { return id >= ChannelDCOffset; }
-FunctionID functionIDbegin();
-FunctionID functionIDend();
+static inline FunctionID functionIDbegin() { return MaxNumEventsBLT; }
+static inline FunctionID functionIDend() { return FunctionID_SIZE; }
+
 static inline FunctionID& operator++(FunctionID& id)
 {
     id = (FunctionID)((int)id+1);

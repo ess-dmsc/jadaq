@@ -136,7 +136,7 @@ pt::ptree Configuration::readBack()
 
         for (FunctionID id = functionIDbegin(); id < functionIDend(); ++id)
         {
-            if (!needIndex(id))
+            if (!takeIndex(id))
             {
                 try {
                     dPtree.put(to_string(id), digitizer.get(id));
