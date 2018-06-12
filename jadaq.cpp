@@ -252,7 +252,7 @@ int main(int argc, const char *argv[])
             timerthread->join();
             break;
         }
-        if (conf.events > 0 && eventsFound > conf.events)
+        if (conf.events >= 0 && eventsFound >= conf.events)
         {
             std::cout << "Collected requested events - stop acquisition and clean up." << std::endl;
             break;
