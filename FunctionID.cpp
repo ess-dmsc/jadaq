@@ -58,48 +58,24 @@ static std::unordered_map<std::string,FunctionID > functionMap =
                 MAP_ENTRY(SAMAcquisitionMode),
                 MAP_ENTRY(TriggerLogic),
                 MAP_ENTRY(BoardConfiguration),
-                MAP_ENTRY(EasyBoardConfiguration),
-                MAP_ENTRY(EasyDPPBoardConfiguration),
                 MAP_ENTRY(DPPAggregateOrganization),
                 MAP_ENTRY(AcquisitionControl),
-                MAP_ENTRY(EasyAcquisitionControl),
-                MAP_ENTRY(EasyDPPAcquisitionControl),
                 MAP_ENTRY(AcquisitionStatus),
-                MAP_ENTRY(EasyAcquisitionStatus),
-                MAP_ENTRY(EasyDPPAcquisitionStatus),
                 MAP_ENTRY(GlobalTriggerMask),
-                MAP_ENTRY(EasyGlobalTriggerMask),
-                MAP_ENTRY(EasyDPPGlobalTriggerMask),
                 MAP_ENTRY(FrontPanelTRGOUTEnableMask),
-                MAP_ENTRY(EasyFrontPanelTRGOUTEnableMask),
-                MAP_ENTRY(EasyDPPFrontPanelTRGOUTEnableMask),
                 MAP_ENTRY(FrontPanelIOControl),
-                MAP_ENTRY(EasyFrontPanelIOControl),
-                MAP_ENTRY(EasyDPPFrontPanelIOControl),
                 MAP_ENTRY(ROCFPGAFirmwareRevision),
-                MAP_ENTRY(EasyROCFPGAFirmwareRevision),
-                MAP_ENTRY(EasyDPPROCFPGAFirmwareRevision),
                 MAP_ENTRY(EventSize),
                 MAP_ENTRY(FanSpeedControl),
-                MAP_ENTRY(EasyFanSpeedControl),
-                MAP_ENTRY(EasyDPPFanSpeedControl),
                 MAP_ENTRY(DPPDisableExternalTrigger),
                 MAP_ENTRY(RunStartStopDelay),
                 MAP_ENTRY(ReadoutControl),
-                MAP_ENTRY(EasyReadoutControl),
-                MAP_ENTRY(EasyDPPReadoutControl),
                 MAP_ENTRY(ReadoutStatus),
-                MAP_ENTRY(EasyReadoutStatus),
-                MAP_ENTRY(EasyDPPReadoutStatus),
                 MAP_ENTRY(Scratch),
-                MAP_ENTRY(EasyScratch),
-                MAP_ENTRY(EasyDPPScratch),
                 MAP_ENTRY(DPPAggregateNumberPerBLT),
                 MAP_ENTRY(ChannelDCOffset),
                 MAP_ENTRY(GroupDCOffset),
                 MAP_ENTRY(AMCFirmwareRevision),
-                MAP_ENTRY(EasyAMCFirmwareRevision),
-                MAP_ENTRY(EasyDPPAMCFirmwareRevision),
                 MAP_ENTRY(ChannelSelfTrigger),
                 MAP_ENTRY(GroupSelfTrigger),
                 MAP_ENTRY(ChannelTriggerThreshold),
@@ -119,7 +95,6 @@ static std::unordered_map<std::string,FunctionID > functionMap =
                 MAP_ENTRY(DPPGateOffset),
                 MAP_ENTRY(DPPFixedBaseline),
                 MAP_ENTRY(DPPAlgorithmControl),
-                MAP_ENTRY(EasyDPPAlgorithmControl),
                 MAP_ENTRY(DPPTriggerHoldOffWidth),
                 MAP_ENTRY(DPPShapedTriggerWidth),
         };
@@ -156,48 +131,24 @@ const std::string to_string(FunctionID id) {
         CASE_TO_STR(SAMAcquisitionMode)
         CASE_TO_STR(TriggerLogic)
         CASE_TO_STR(BoardConfiguration)
-        CASE_TO_STR(EasyBoardConfiguration)
-        CASE_TO_STR(EasyDPPBoardConfiguration)
         CASE_TO_STR(DPPAggregateOrganization)
         CASE_TO_STR(AcquisitionControl)
-        CASE_TO_STR(EasyAcquisitionControl)
-        CASE_TO_STR(EasyDPPAcquisitionControl)
         CASE_TO_STR(AcquisitionStatus)
-        CASE_TO_STR(EasyAcquisitionStatus)
-        CASE_TO_STR(EasyDPPAcquisitionStatus)
         CASE_TO_STR(GlobalTriggerMask)
-        CASE_TO_STR(EasyGlobalTriggerMask)
-        CASE_TO_STR(EasyDPPGlobalTriggerMask)
         CASE_TO_STR(FrontPanelTRGOUTEnableMask)
-        CASE_TO_STR(EasyFrontPanelTRGOUTEnableMask)
-        CASE_TO_STR(EasyDPPFrontPanelTRGOUTEnableMask)
         CASE_TO_STR(FrontPanelIOControl)
-        CASE_TO_STR(EasyFrontPanelIOControl)
-        CASE_TO_STR(EasyDPPFrontPanelIOControl)
         CASE_TO_STR(ROCFPGAFirmwareRevision)
-        CASE_TO_STR(EasyROCFPGAFirmwareRevision)
-        CASE_TO_STR(EasyDPPROCFPGAFirmwareRevision)
         CASE_TO_STR(EventSize)
         CASE_TO_STR(FanSpeedControl)
-        CASE_TO_STR(EasyFanSpeedControl)
-        CASE_TO_STR(EasyDPPFanSpeedControl)
         CASE_TO_STR(DPPDisableExternalTrigger)
         CASE_TO_STR(RunStartStopDelay)
         CASE_TO_STR(ReadoutControl)
-        CASE_TO_STR(EasyReadoutControl)
-        CASE_TO_STR(EasyDPPReadoutControl)
         CASE_TO_STR(ReadoutStatus)
-        CASE_TO_STR(EasyReadoutStatus)
-        CASE_TO_STR(EasyDPPReadoutStatus)
         CASE_TO_STR(Scratch)
-        CASE_TO_STR(EasyScratch)
-        CASE_TO_STR(EasyDPPScratch)
         CASE_TO_STR(DPPAggregateNumberPerBLT)
         CASE_TO_STR(ChannelDCOffset)
         CASE_TO_STR(GroupDCOffset)
         CASE_TO_STR(AMCFirmwareRevision)
-        CASE_TO_STR(EasyAMCFirmwareRevision)
-        CASE_TO_STR(EasyDPPAMCFirmwareRevision)
         CASE_TO_STR(ChannelSelfTrigger)
         CASE_TO_STR(GroupSelfTrigger)
         CASE_TO_STR(ChannelTriggerThreshold)
@@ -217,7 +168,6 @@ const std::string to_string(FunctionID id) {
         CASE_TO_STR(DPPGateOffset)
         CASE_TO_STR(DPPFixedBaseline)
         CASE_TO_STR(DPPAlgorithmControl)
-        CASE_TO_STR(EasyDPPAlgorithmControl)
         CASE_TO_STR(DPPTriggerHoldOffWidth)
         CASE_TO_STR(DPPShapedTriggerWidth)
         default :
