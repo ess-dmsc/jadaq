@@ -263,32 +263,12 @@ static R backOffRepeat(F fun, int retry=3,  std::chrono::milliseconds grace=std:
 
 std::string Digitizer::get(FunctionID functionID, int index)
 {
-    std::string res;
-    try
-    {
-        res = backOffRepeat<std::string>([this,&functionID,&index](){ return get_(digitizer,functionID,index); });
-    }
-    catch (...)
-    {
-        std::cerr << "ERROR: calling get" << to_string(functionID) << "(" << index << ")" << std::endl;
-        throw;
-    }
-    return res;
+        return backOffRepeat<std::string>([this,&functionID,&index](){ return get_(digitizer,functionID,index); });
 }
 
 std::string Digitizer::get(FunctionID functionID)
 {
-    std::string res;
-    try
-    {
-        res = backOffRepeat<std::string>([this, &functionID]() { return get_(digitizer, functionID); });
-    }
-    catch (...)
-    {
-        std::cerr << "ERROR: calling get" << to_string(functionID) << "()" << std::endl;
-        throw;
-    }
-    return res;
+    return backOffRepeat<std::string>([this, &functionID]() { return get_(digitizer, functionID); });
 }
 
 void Digitizer::set(FunctionID functionID, int index, std::string value)
@@ -300,15 +280,7 @@ void Digitizer::set(FunctionID functionID, int index, std::string value)
     catch (std::invalid_argument& e)
     {
         if(functionID != Register)
-        {
-            std::cerr << "ERROR: calling set" << to_string(functionID) << "(" << index << ", " << value << ")" << std::endl;
             throw;
-        }
-    }
-    catch (...)
-    {
-        std::cerr << "ERROR: calling set" << to_string(functionID) << "(" << index << ", " << value << ")" << std::endl;
-        throw;
     }
     if (functionID == Register)
     {
@@ -318,16 +290,7 @@ void Digitizer::set(FunctionID functionID, int index, std::string value)
 
 void Digitizer::set(FunctionID functionID, std::string value)
 {
-    try
-    {
         backOffRepeat<void>([this, &functionID, &value]() { return set_(digitizer, functionID, value); });
-    }
-    catch (...)
-    {
-        std::cerr << "ERROR: calling set" << to_string(functionID) << "(" << value << ")" << std::endl;
-        throw;
-    }
-
 }
 
 Digitizer::Digitizer(CAEN_DGTZ_ConnectionType linkType_, int linkNum_, int conetNode_, uint32_t VMEBaseAddress_)
