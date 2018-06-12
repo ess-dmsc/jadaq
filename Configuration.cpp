@@ -273,16 +273,33 @@ void Configuration::apply()
     }
 }
 
-Configuration::Range::Range(std::string s) {
+Configuration::Range::Range(std::string s)
+{
     std::regex single("^(\\d+)$");
+    std::regex hexsingle("^0[xX]([a-fA-F0-9]+)$");
     std::regex range("^(\\d+)-(\\d+)$");
+    std::regex hexrange("^0[xX]([a-fA-F0-9]+)-0[xX]([a-fA-F0-9]+)$");
     std::smatch match;
-    if (std::regex_search(s, match, single)) {
+    if (std::regex_search(s, match, single))
+    {
         first = last = std::stoi(match[1]);
-    } else if (std::regex_search(s, match, range)) {
+    }
+    else if (std::regex_search(s, match, hexsingle))
+    {
+        first = last = s2ui(match[1]);
+    }
+    else if (std::regex_search(s, match, range))
+    {
         first = std::stoi(match[1]);
         last = std::stoi(match[2]);
-    } else {
+    }
+    else if (std::regex_search(s, match, hexrange))
+    {
+        first = s2ui(match[1]);
+        last = s2ui(match[2]);
+    }
+    else
+        {
         std::cerr << "Range helper found invalid range: " << s << std::endl;
         throw std::invalid_argument{"Not a valid range"};
     }
