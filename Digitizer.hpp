@@ -51,6 +51,7 @@ private:
     uint32_t id;
     bool waveformRecording = false;
     std::function<size_t(const AnyDPPEventAccessor&)> dataHandler;
+    std::set<uint32_t> manipulatedRegisters;
 public:
     /* Connection parameters */
     const CAEN_DGTZ_ConnectionType linkType;
@@ -76,6 +77,7 @@ public:
     std::string get(FunctionID functionID, int index);
     void acquisition();
     const Stats& stats() const {return stats_;}
+    const std::set<uint32_t>& getRegisters() { return manipulatedRegisters; }
     //Post setup, pre aquisition initialization
     void initialize();
     // TODO: Sould we do somthing different than expose these three function?

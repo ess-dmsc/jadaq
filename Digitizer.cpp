@@ -113,39 +113,40 @@ static void set_(caen::Digitizer* digitizer, FunctionID functionID, const std::s
 }
 
 static void set_(caen::Digitizer* digitizer, FunctionID functionID, int index, const std::string& value) {
-    switch (functionID) {
+    switch (functionID)
+    {
         case Register:
-            digitizer->writeRegister(index,s2ui(value));
+            digitizer->writeRegister(index, s2ui(value));
             break;
-        SET_ICASE(digitizer,ChannelDCOffset,index,s2ui(value))
-        SET_ICASE(digitizer,GroupDCOffset,index,s2ui(value))
-        SET_ICASE(digitizer,ChannelSelfTrigger,index,s2tm(value))
-        SET_ICASE(digitizer,GroupSelfTrigger,index,s2tm(value))
-        SET_ICASE(digitizer,ChannelTriggerThreshold,index,s2ui(value))
-        SET_ICASE(digitizer,GroupTriggerThreshold,index,s2ui(value))
-        SET_ICASE(digitizer,ChannelGroupMask,index,s2ui(value))
-        SET_ICASE(digitizer,TriggerPolarity,index,s2tp(value))
-        SET_ICASE(digitizer,GroupFastTriggerThreshold,index,s2ui(value))
-        SET_ICASE(digitizer,GroupFastTriggerDCOffset,index,s2ui(value))
-        SET_ICASE(digitizer,ChannelZSParams,index,s2zsp(value))
-        SET_ICASE(digitizer,SAMPostTriggerSize,index,s2i(value))
-        SET_ICASE(digitizer,SAMTriggerCountVetoParam,index,s2samtcvp(value))
-        SET_ICASE(digitizer,DPPPreTriggerSize,index,s2ui(value))
-        SET_ICASE(digitizer,ChannelPulsePolarity,index,s2pp(value))
-        SET_ICASE(digitizer,RecordLength,index,s2ui(value))
-        SET_ICASE(digitizer,NumEventsPerAggregate,index,s2ui(value))
-        SET_ICASE(digitizer,DPPGateWidth,index,s2ui(value))
-        SET_ICASE(digitizer,DPPGateOffset,index,s2ui(value))
-        SET_ICASE(digitizer,DPPFixedBaseline,index,s2ui(value))
-        SET_ICASE(digitizer,DPPAlgorithmControl,index,s2ui(value))
-        SET_ICASE(digitizer,DPPTriggerHoldOffWidth,index,s2ui(value))
-        SET_ICASE(digitizer,DPPShapedTriggerWidth,index,s2ui(value))
+        SET_ICASE(digitizer, ChannelDCOffset, index, s2ui(value))
+        SET_ICASE(digitizer, GroupDCOffset, index, s2ui(value))
+        SET_ICASE(digitizer, ChannelSelfTrigger, index, s2tm(value))
+        SET_ICASE(digitizer, GroupSelfTrigger, index, s2tm(value))
+        SET_ICASE(digitizer, ChannelTriggerThreshold, index, s2ui(value))
+        SET_ICASE(digitizer, GroupTriggerThreshold, index, s2ui(value))
+        SET_ICASE(digitizer, ChannelGroupMask, index, s2ui(value))
+        SET_ICASE(digitizer, TriggerPolarity, index, s2tp(value))
+        SET_ICASE(digitizer, GroupFastTriggerThreshold, index, s2ui(value))
+        SET_ICASE(digitizer, GroupFastTriggerDCOffset, index, s2ui(value))
+        SET_ICASE(digitizer, ChannelZSParams, index, s2zsp(value))
+        SET_ICASE(digitizer, SAMPostTriggerSize, index, s2i(value))
+        SET_ICASE(digitizer, SAMTriggerCountVetoParam, index, s2samtcvp(value))
+        SET_ICASE(digitizer, DPPPreTriggerSize, index, s2ui(value))
+        SET_ICASE(digitizer, ChannelPulsePolarity, index, s2pp(value))
+        SET_ICASE(digitizer, RecordLength, index, s2ui(value))
+        SET_ICASE(digitizer, NumEventsPerAggregate, index, s2ui(value))
+        SET_ICASE(digitizer, DPPGateWidth, index, s2ui(value))
+        SET_ICASE(digitizer, DPPGateOffset, index, s2ui(value))
+        SET_ICASE(digitizer, DPPFixedBaseline, index, s2ui(value))
+        SET_ICASE(digitizer, DPPAlgorithmControl, index, s2ui(value))
+        SET_ICASE(digitizer, DPPTriggerHoldOffWidth, index, s2ui(value))
+        SET_ICASE(digitizer, DPPShapedTriggerWidth, index, s2ui(value))
         default:
-        /* lookup function name to determine if it is missing or just
-         * read-only. Automatically throws invalid_argument exception
-         * if ID is missing. */
-        std::string name = to_string(functionID);
-        throw std::runtime_error{"Cannot set read-only variables"};
+            /* lookup function name to determine if it is missing or just
+             * read-only. Automatically throws invalid_argument exception
+             * if ID is missing. */
+            std::string name = to_string(functionID);
+            throw std::runtime_error{"Cannot set read-only variables"};
     }
 }
 
@@ -250,7 +251,8 @@ static R backOffRepeat(F fun, int retry=3,  std::chrono::milliseconds grace=std:
         try {
             return fun();
         }
-        catch (caen::Error &e) {
+        catch (caen::Error &e)
+        {
             if (e.code() == CAEN_DGTZ_CommError && retry-- > 0) {
                 std::this_thread::sleep_for(grace);
                 grace *= 10;
@@ -271,7 +273,18 @@ std::string Digitizer::get(FunctionID functionID)
 
 void Digitizer::set(FunctionID functionID, int index, std::string value)
 {
-    return backOffRepeat<void>([this,&functionID,&index,&value](){ return set_(digitizer,functionID,index,value); });
+    try
+    {
+        backOffRepeat<void>([this,&functionID,&index,&value](){ return set_(digitizer,functionID,index,value); });
+    } catch (std::invalid_argument& e)
+    {
+        if(functionID != Register)
+            throw;
+    }
+    if (functionID == Register)
+    {
+        manipulatedRegisters.insert(index);
+    }
 }
 
 void Digitizer::set(FunctionID functionID, std::string value)
