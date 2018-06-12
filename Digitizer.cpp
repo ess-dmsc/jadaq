@@ -213,7 +213,7 @@ static std::string get_(caen::Digitizer* digitizer, FunctionID functionID, int i
 
     switch (functionID) {
         case Register:
-            return to_string(digitizer->readRegister(index));
+            return hex_string(digitizer->readRegister(index));
         GET_ICASE(digitizer,ChannelDCOffset,index,to_string)
         GET_ICASE(digitizer,GroupDCOffset,index,to_string)
         GET_ICASE(digitizer,AMCFirmwareRevision,index,to_string)

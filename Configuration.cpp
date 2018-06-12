@@ -165,7 +165,7 @@ pt::ptree Configuration::readBack()
         }
         for (uint32_t reg: digitizer.getRegisters())
         {
-            dPtree.put(to_string(Register) + "[" + hex_string(reg) + "]", hex_string(digitizer.get(Register,reg)));
+            dPtree.put(to_string(Register) + "[" + hex_string(reg) + "]", digitizer.get(Register,reg));
         }
         out.put_child(digitizer.name(),dPtree);
     }
