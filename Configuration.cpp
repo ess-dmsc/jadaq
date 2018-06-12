@@ -275,6 +275,7 @@ void Configuration::apply()
 
 Configuration::Range::Range(std::string s)
 {
+
     std::regex single("^(\\d+)$");
     std::regex hexsingle("^0[xX]([a-fA-F0-9]+)$");
     std::regex range("^(\\d+)-(\\d+)$");
@@ -286,7 +287,7 @@ Configuration::Range::Range(std::string s)
     }
     else if (std::regex_search(s, match, hexsingle))
     {
-        first = last = s2ui(match[1]);
+        first = last = stou(match[1],0,16);
     }
     else if (std::regex_search(s, match, range))
     {
@@ -295,8 +296,8 @@ Configuration::Range::Range(std::string s)
     }
     else if (std::regex_search(s, match, hexrange))
     {
-        first = s2ui(match[1]);
-        last = s2ui(match[2]);
+        first = stou(match[1],0,16);
+        last = stou(match[2],0,16);
     }
     else
         {
