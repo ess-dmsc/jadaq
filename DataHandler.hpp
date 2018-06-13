@@ -85,18 +85,15 @@ public:
         size_t events = 0;
         for (uint16_t channel = 0; channel < accessor.channels(); channel++)
         {
-            uint64_t currentMaxLocalTime = 0;
-            uint64_t nextMaxLocalTime = 0;
+            uint64_t currentMaxLocalTime = current.maxLocalTime[channel];
+            uint64_t nextMaxLocalTime = next.maxLocalTime[channel];
             for (uint32_t i = 0; i < accessor.events(channel); ++i)
             {
                 events += 1;
                 E element = accessor(channel,i);
-                if (element.localTime > current.maxLocalTime[channel])
+                if (element.localTime > currentMaxLocalTime)
                 {
-                    if (element.localTime > currentMaxLocalTime)
-                    {
-                        currentMaxLocalTime = element.localTime;
-                    }
+                    currentMaxLocalTime = element.localTime;
                     try {
                         current.buffer->insert(element);
                     } catch (std::length_error&)
@@ -106,13 +103,10 @@ public:
                         current.buffer->insert(element);
                     }
                 } else {
+                    nextMaxLocalTime = element.localTime;
                     if (next.globalTimeStamp == 0)
                     {
                         next.globalTimeStamp = DataHandlerGeneric::getTimeMsecs();
-                    }
-                    if (element.localTime > nextMaxLocalTime)
-                    {
-                        nextMaxLocalTime = element.localTime;
                     }
                     try {
                         next.buffer->insert(element);
@@ -134,7 +128,6 @@ public:
             Buffer temp = current;
             current = next;
             next = temp;
-
         }
         return events;
     }
