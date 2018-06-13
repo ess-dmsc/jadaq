@@ -3156,60 +3156,15 @@ namespace caen {
         void setExternalTriggerMode(CAEN_DGTZ_TriggerMode_t mode)
         { errorHandler(CAEN_DGTZ_SetExtTriggerInputMode(handle_, mode)); }
 
-        virtual uint32_t getChannelDCOffset(uint32_t channel)
+        uint32_t getChannelDCOffset(uint32_t channel)
         { uint32_t offset; errorHandler(CAEN_DGTZ_GetChannelDCOffset(handle_, channel, &offset)); return offset; }
-        virtual void setChannelDCOffset(uint32_t channel, uint32_t offset)
+        void setChannelDCOffset(uint32_t channel, uint32_t offset)
         { errorHandler(CAEN_DGTZ_SetChannelDCOffset(handle_, channel, offset)); }
 
-        /**
-         * @bug
-         * Get/Set GroupDCOffset often fails with GenericError on V1740D_137
-         * if used with specific group - something fails in the V1740
-         * specific case. But for whatever reason it works fine in QDC
-         * sample app unless a get is inserted before the set!?!
-         */
-        uint32_t getGroupDCOffset() 
-        { 
-            //std::cout << "in getGroupDCOffset broadcast" << std::endl;
-            uint32_t offset; errorHandler(CAEN_DGTZ_ReadRegister(handle_, 0x8098, &offset)); return offset; 
-        }
-
-        virtual uint32_t getGroupDCOffset(uint32_t group)
-        {
-            //std::cout << "in getGroupDCOffset " << group << std::endl;
-            uint32_t offset;
-            if (group >= groups())  // Needed because of bug in CAEN_DGTZ_GetGroupDCOffset - patch sent
-                errorHandler(CAEN_DGTZ_InvalidChannelNumber);
-            uint32_t mask = readRegister(0x1088|group<<8); 
-            if (mask & 0x4) {
-                std::cerr << "precondition for getting Group DC Offset is NOT satisfied: mask is " << mask << std::endl;
-                errorHandler(CAEN_DGTZ_CommError);
-            }
-            errorHandler(CAEN_DGTZ_GetGroupDCOffset(handle_, group, &offset)); return offset;
-        }
-        void setGroupDCOffset(uint32_t offset)
-        {
-            //std::cout << "in setGroupDCOffset broadcast" << std::endl;
-            errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x8098, offset));
-        }
-        virtual void setGroupDCOffset(uint32_t group, uint32_t offset)
-        {
-            //std::cout << "in setGroupDCOffset " << group << ", " << offset << std::endl;
-            if (group >= groups())  // Needed because of bug in CAEN_DGTZ_SetGroupDCOffset - patch sent
-                errorHandler(CAEN_DGTZ_InvalidChannelNumber);
-            /* NOTE: the 740 register docs emphasize that one MUST check
-             * that the mask in reg 1n88  has mask[2]==0 before writing
-             * to the DC Offset register, 1n98 - but the backend function
-             * does not seem to do so!
-             * We manually check here for now.
-             */
-            uint32_t mask = readRegister(0x1088|group<<8); 
-            if (mask & 0x4) {
-                std::cerr << "precondition for setting Group DC Offset is NOT satisfied: mask is " << mask << std::endl;
-                errorHandler(CAEN_DGTZ_CommError);
-            }            
-            errorHandler(CAEN_DGTZ_SetGroupDCOffset(handle_, group, offset));
-        }
+        uint32_t getGroupDCOffset(uint32_t channel)
+        { uint32_t offset; errorHandler(CAEN_DGTZ_GetGroupDCOffset(handle_, channel, &offset)); return offset; }
+        void setGroupDCOffset(uint32_t channel, uint32_t offset)
+        { errorHandler(CAEN_DGTZ_SetGroupDCOffset(handle_, channel, offset)); }
 
         CAEN_DGTZ_TriggerMode_t getSWTriggerMode()
         { CAEN_DGTZ_TriggerMode_t mode; errorHandler(CAEN_DGTZ_GetSWTriggerMode(handle_, &mode)); return mode; }
@@ -3733,18 +3688,6 @@ namespace caen {
         virtual uint32_t channels() const override { return groups()*channelsPerGroup(); }
         virtual uint32_t groups() const override { return boardInfo_.Channels; } // for x740: boardInfo.Channels stores number of groups
         virtual uint32_t channelsPerGroup() const override { return 8; } // 8 channels per group for x740
-
-        /* NOTE: disable inherited 740 ChannelDCOffset since we can only
-         *       allow group version here.
-         */
-        virtual uint32_t getChannelDCOffset(uint32_t channel) override { throw Error(CAEN_DGTZ_FunctionNotAllowed); }
-        virtual void setChannelDCOffset(uint32_t channel, uint32_t offset) override { throw Error(CAEN_DGTZ_FunctionNotAllowed); }
-
-        /* NOTE: disable inherited 740 GroupDCOffset for specific group
-         *       since it randomly fails.
-         */
-        virtual uint32_t getGroupDCOffset(uint32_t group) override { throw Error(CAEN_DGTZ_FunctionNotAllowed); }
-        virtual void setGroupDCOffset(uint32_t group, uint32_t offset) override { throw Error(CAEN_DGTZ_FunctionNotAllowed); }
 
         /* NOTE: BoardConfiguration differs in forced ones and zeros
          * between generic and DPP version. Use a class-specific mask.
