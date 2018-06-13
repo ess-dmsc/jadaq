@@ -136,7 +136,7 @@ int main(int argc, const char *argv[])
     DEBUG(std::cout << "Reading digitizer configuration from" << configFileName << std::endl;)
     // NOTE: switch verbose (2nd) arg on here to enable conf warnings
     // TODO: implement a general verbose mode in sted of this
-    Configuration configuration(configFile, false);
+    Configuration configuration(configFile, conf.verbose > 1);
     configFile.close();
 
     if (conf.outConfigFile)
