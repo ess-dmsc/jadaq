@@ -47,7 +47,7 @@ namespace Data
     {
         None,
         List422,
-        List822,
+        List8222,
         Waweform
     };
     /* Shared meta data for the entire data package */
@@ -84,26 +84,29 @@ namespace Data
             return datatype;
         }
     };
-    struct __attribute__ ((__packed__)) ListElement822
+    struct __attribute__ ((__packed__)) ListElement8222
     {
         uint64_t localTime;
         uint16_t adcValue;
+        uint16_t baseline;
         uint16_t channel;
-        bool operator< (const ListElement822& rhs) const
+        bool operator< (const ListElement8222& rhs) const
         {
             return localTime < rhs.localTime || (localTime == rhs.localTime && channel < rhs.channel) ;
         };
         void printOn(std::ostream& os) const
         {
-            os << std::setw(10) << channel << " " << std::setw(10) << localTime << " " << std::setw(10) << adcValue;
+            os << std::setw(10) << channel << " " << std::setw(10) << localTime <<
+               " " << std::setw(10) << adcValue << " " << std::setw(10) << baseline;
         }
-        static ElementType type() { return List822; }
+        static ElementType type() { return List8222; }
         static H5::CompType h5type()
         {
-            H5::CompType datatype(sizeof(ListElement822));
-            datatype.insertMember("localTime", HOFFSET(ListElement822, localTime), H5::PredType::NATIVE_UINT64);
-            datatype.insertMember("adcValue", HOFFSET(ListElement822, adcValue), H5::PredType::NATIVE_UINT16);
-            datatype.insertMember("channel", HOFFSET(ListElement822, channel), H5::PredType::NATIVE_UINT16);
+            H5::CompType datatype(sizeof(ListElement8222));
+            datatype.insertMember("localTime", HOFFSET(ListElement8222, localTime), H5::PredType::NATIVE_UINT64);
+            datatype.insertMember("adcValue", HOFFSET(ListElement8222, adcValue), H5::PredType::NATIVE_UINT16);
+            datatype.insertMember("baseline", HOFFSET(ListElement8222, baseline), H5::PredType::NATIVE_UINT16);
+            datatype.insertMember("channel", HOFFSET(ListElement8222, channel), H5::PredType::NATIVE_UINT16);
             return datatype;
         }
     };
@@ -115,8 +118,8 @@ namespace Data
                 return 0;
             case List422:
                 return sizeof(ListElement422);
-            case List822:
-                return sizeof(ListElement822);
+            case List8222:
+                return sizeof(ListElement8222);
             default:
                 throw std::runtime_error("Unknown element type." );
         }
@@ -129,7 +132,7 @@ namespace Data
 
 static inline std::ostream& operator<< (std::ostream& os, const Data::ListElement422& e)
 { e.printOn(os); return os; }
-static inline std::ostream& operator<< (std::ostream& os, const Data::ListElement822& e)
+static inline std::ostream& operator<< (std::ostream& os, const Data::ListElement8222& e)
 { e.printOn(os); return os; }
 
 #endif //JADAQ_DATAFORMAT_HPP
