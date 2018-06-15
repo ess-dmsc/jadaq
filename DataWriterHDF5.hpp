@@ -52,14 +52,22 @@ private:
     }
     void writeAttribute(std::string name, H5::DataSet& dataset, const H5::PredType& type, const void* data) const
     {
-        H5::Attribute a = dataset.createAttribute(name, type, H5::DataSpace(H5S_SCALAR));
-        a.write(type,data);
-        a.close();
+        try {
+            H5::Attribute a = dataset.createAttribute(name, type, H5::DataSpace(H5S_SCALAR));
+            a.write(type,data);
+            a.close();
+        } catch (H5::Exception& e)
+        {
+            std::cerr << "ERROR: DataWriterHDF5 can not writeAttribute \"" << name << "\"." << std::endl;
+            throw;
+        }
     }
 
     template <typename E, template<typename...> typename C>
     void write(const C<E>* buffer, uint32_t digitizerID, uint64_t globalTimeStamp)
     {
+        if (buffer->size() < 1)
+            return;
         mutex.lock();
         H5::Group* digitizerGroup;
         auto itr = digitizerMap.find(digitizerID);
