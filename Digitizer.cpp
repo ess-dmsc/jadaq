@@ -318,22 +318,8 @@ void Digitizer::close()
 void Digitizer::initialize()
 {
     boardConfiguration = digitizer->getBoardConfiguration();
-
     DEBUG(std::cout << "Prepare readout buffer for digitizer " << name() << std::endl;)
     readoutBuffer_ = digitizer->mallocReadoutBuffer();
-    if (firmware != CAEN_DGTZ_NotDPPFirmware)
-    {
-        dppEvents = digitizer->mallocDPPEvents(firmware);
-        caen::EasyDPPBoardConfiguration boardConf(boardConfiguration);
-        waveformRecording = boardConf.getValue("waveformRecording") == 1;
-        if (waveformRecording)
-        {
-            waveforms = digitizer->mallocDPPWaveforms();
-        }
-    } else
-    {
-        plainEvent = digitizer->mallocEvent();
-    }
 }
 
 void Digitizer::acquisition() {
