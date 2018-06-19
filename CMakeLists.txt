@@ -38,7 +38,7 @@ add_library(caen SHARED caen.hpp caen.cpp _CAENDigitizer.c _CAENDigitizer.h)
 target_link_libraries(caen dl)
 
 #file(GLOB DataHandlerHEADERS DataFormat.hpp DataHandler*.hpp uuid.hpp EventAccessor.hpp)
-file(GLOB DataHandlerHEADERS DataFormat.hpp DataHandler.hpp DataWriterHDF5.hpp DataWriterText.hpp DataWriter.hpp DataWriterNetwork.hpp uuid.hpp EventAccessor.hpp)
+file(GLOB DataHandlerHEADERS DataFormat.hpp DataHandler.hpp DataWriterHDF5.hpp DataWriterText.hpp DataWriter.hpp DataWriterNetwork.hpp uuid.hpp EventAccessor.hpp  EventIterator.hpp)
 #file(GLOB DataHandlerSOURCES DataHandler*.cpp uuid.cpp)
 file(GLOB DataHandlerSOURCES uuid.cpp)
 add_library(DataHandler ${DataHandlerHEADERS} ${DataHandlerSOURCES})

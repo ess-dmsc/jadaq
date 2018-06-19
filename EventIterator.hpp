@@ -30,19 +30,19 @@
 #include "caen.hpp"
 #include "DataFormat.hpp"
 
-template <typename T>
-class EventIterator : public std::iterator<std::input_iterator_tag , T > {};
+template <typename E>
+class EventIterator : public std::iterator<std::input_iterator_tag , E > {};
 
-template <typename T>
-class DPPQDCEventIterator<T> : public EventIterator<T>
+template <typename E>
+class DPPQDCEventIterator : public EventIterator<E>
 {
 private:
     caen::ReadoutBuffer buffer;
     uint32_t* ptr;
-    size_t size;
+    uint32_t* aggregateEnd;
     uint8_t groupMask;
-    template <typename T>
-    class AggregateIterator<T> : public EventIterator<T>
+
+    class AggregateIterator : public EventIterator<E>
     {
     private:
         uint32_t* ptr;
@@ -80,59 +80,91 @@ private:
             ptr += elementSize;
             return tmp;
         }
-        bool operator==(const AggregateIterator& other) const
-        { return ptr == other.ptr; }
-        bool operator!=(const AggregateIterator& other) const
-        { return !(ptr == other.ptr); }
-        T operator*() const;
+        bool operator==(const AggregateIterator& other) const { return ptr == other.ptr; }
+        bool operator!=(const AggregateIterator& other) const { return (ptr != other.ptr); }
+        bool operator>(const AggregateIterator& other) const { return ptr > other.ptr; }
+        bool operator<(const AggregateIterator& other) const { return ptr < other.ptr; }
+        bool operator>=(const AggregateIterator& other) const { return ptr >= other.ptr; }
+        bool operator<=(const AggregateIterator& other) const { return ptr <= other.ptr; }
+        bool operator==(const void* other) const { return ptr == other; }
+        bool operator!=(const void* other) const { return ptr != other; }
+        bool operator>(const void* other) const { return ptr > other; }
+        bool operator<(const void* other) const { return ptr < other; }
+        bool operator>=(const void* other) const { return ptr >= other; }
+        bool operator<=(const void* other) const { return ptr <= other; }
+        E operator*() const;
     };
-    template <>
-    inline Data::ListElement422 AggregateIterator<Data::ListElement422>::operator*() const
-    {
-        Data::ListElement422 res;
-        res.localTime = ptr[0];
-        uint32_t data = ptr[elementSize-1];
-        res.adcValue  = (uint16_t)(data & 0x0000FFFF);
-        res.channel   = (uint16_t)((data >> 28) & 0xF) | group;
-        return res;
-    }
-    AggregateIterator<T> aggregateIterator;
-    AggregateIterator<T> nextAggregateIterator()
+    AggregateIterator aggregateIterator;
+    AggregateIterator nextAggregateIterator()
     {
         while (groupMask == 0) // New Board Aggregate
         {
-            size = (*ptr++) & 0x0FFFFFFF;
-            groupMask = (uint8_t)(*ptr++ & 0xFF);
-            ptr+=2;
+            size_t size = (ptr[0]) & 0x0FFFFFFF;
+            aggregateEnd = ptr + size;
+            groupMask = (uint8_t)(ptr[1] & 0xFF);
+            ptr += 4;
             if ((char*)ptr >= buffer.end())
             {
-                return AggregateIterator<T>(buffer.end());
+                return AggregateIterator(buffer.end());
             }
         }
-        uint16_t group = 0;
-        // You are here - Finding the next group
-        // Consider end of aggregate
-        AggregateIterator<T> res(ptr,0);
-        return res;
+        uint16_t group;
+        for (group = 0;;++group)
+        {
+            if (groupMask & (1<<group))
+            {
+                groupMask = groupMask | ~(1<<group);
+                break;
+            }
+        }
+        return AggregateIterator(ptr,group);
     }
 public:
     DPPQDCEventIterator(caen::ReadoutBuffer b)
             : buffer(b)
             , ptr((uint32_t*)buffer.data)
             , groupMask(0)
-            , aggregateIterator(nextAggregateIterator())
-    {
-        size = (*ptr++) & 0x0FFFFFFF;
-        groupMask = (uint8_t)(*ptr++ & 0xFF);
-        ptr+=2;
-        aggregateIterator(ptr,);
-    }
+            , aggregateIterator(nextAggregateIterator()) {}
     DPPQDCEventIterator& operator++()
     {
-        ptr += elementSize;
+        if (++aggregateIterator >= aggregateEnd)
+        {
+            aggregateIterator = nextAggregateIterator();
+        }
         return *this;
     }
-
+    DPPQDCEventIterator operator++(int)
+    {
+        DPPQDCEventIterator tmp(*this);
+        ++*this;
+        return tmp;
+    }
+    bool operator==(const DPPQDCEventIterator& other) const { return aggregateIterator == other.aggregateIterator; }
+    bool operator!=(const DPPQDCEventIterator& other) const { return aggregateIterator != other.aggregateIterator; }
+    bool operator>(const DPPQDCEventIterator& other) const { return aggregateIterator > other.aggregateIterator; }
+    bool operator<(const DPPQDCEventIterator& other) const { return aggregateIterator < other.aggregateIterator; }
+    bool operator>=(const DPPQDCEventIterator& other) const { return aggregateIterator >= other.aggregateIterator; }
+    bool operator<=(const DPPQDCEventIterator& other) const { return aggregateIterator <= other.aggregateIterator; }
+    bool operator==(const void* other) const { return aggregateIterator == other; }
+    bool operator!=(const void* other) const { return aggregateIterator != other; }
+    bool operator>(const void* other) const { return aggregateIterator > other; }
+    bool operator<(const void* other) const { return aggregateIterator < other; }
+    bool operator>=(const void* other) const { return aggregateIterator >= other; }
+    bool operator<=(const void* other) const { return aggregateIterator <= other; }
+    E operator*() const { return *aggregateIterator; }
+    static DPPQDCEventIterator begin(caen::ReadoutBuffer b) { return DPPQDCEventIterator{b}; }
+    static void* end(caen::ReadoutBuffer b) { return b.end(); }
 };
+
+template <>
+inline Data::ListElement422 DPPQDCEventIterator<Data::ListElement422>::AggregateIterator::operator*() const
+{
+    Data::ListElement422 res;
+    res.localTime = ptr[0];
+    uint32_t data = ptr[elementSize-1];
+    res.adcValue  = (uint16_t)(data & 0x0000FFFF);
+    res.channel   = (uint16_t)((data >> 28) & 0xF) | group;
+    return res;
+}
 
 #endif //JADAQ_EVENTITERATOR_HPP
