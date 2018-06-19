@@ -200,10 +200,13 @@ namespace caen {
      * @var ReadoutBuffer::dataSize
      * The size (in byte) of the buffer actually used
      */
-    struct ReadoutBuffer {
+    struct ReadoutBuffer
+    {
         char* data = nullptr;
         uint32_t size = 0;
         uint32_t dataSize = 0;
+        char* begin() { return data;}
+        char* end() { return data+dataSize;}
     };
 
     /**
