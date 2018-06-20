@@ -77,12 +77,13 @@ private:
                 , elementSize(2)
                 , group(g<<3)
         {
-            uint32_t size = *ptr++;
-            uint32_t format = *ptr++;
+            uint32_t size = ptr[0] & 0x7fffffff;
+            uint32_t format = ptr[1];
             assert (((format>>30) & 1) == 1);
             assert (((format>>29) & 1) == 1);
             extras = ((format>>28) & 1) == 1;
             waveform = ((format>>27) & 1) == 1;
+            ptr += 2; //point to first event
             if (extras)
                 elementSize += 1;
             if (waveform)
