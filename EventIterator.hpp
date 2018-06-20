@@ -34,7 +34,7 @@ template <typename E>
 class EventIterator : public std::iterator<std::input_iterator_tag , E > {};
 
 template <typename E>
-class DPPQDCEventIterator : public EventIterator<E>
+class DPPQDCEventIterator
 {
 private:
     caen::ReadoutBuffer buffer;
@@ -42,7 +42,7 @@ private:
     uint32_t* aggregateEnd;
     uint8_t groupMask;
 
-    class AggregateIterator : public EventIterator<E>
+    class AggregateIterator
     {
     private:
         uint32_t* ptr;
@@ -152,8 +152,7 @@ public:
     bool operator>=(const void* other) const { return aggregateIterator >= other; }
     bool operator<=(const void* other) const { return aggregateIterator <= other; }
     E operator*() const { return *aggregateIterator; }
-    static DPPQDCEventIterator begin(caen::ReadoutBuffer b) { return DPPQDCEventIterator{b}; }
-    static void* end(caen::ReadoutBuffer b) { return b.end(); }
+    void* end() const { return buffer.end(); }
 };
 
 template <>

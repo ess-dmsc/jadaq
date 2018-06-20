@@ -205,8 +205,8 @@ namespace caen {
         char* data = nullptr;
         uint32_t size = 0;
         uint32_t dataSize = 0;
-        char* begin() { return data;}
-        char* end() { return data+dataSize;}
+        char* begin() const { return data;}
+        char* end() const { return data+dataSize;}
     };
 
     /**
