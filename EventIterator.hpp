@@ -113,7 +113,7 @@ private:
         {
             if (groupMask & (1<<group))
             {
-                groupMask = groupMask | ~(1<<group);
+                groupMask = groupMask & ~(1<<group);
                 break;
             }
         }
