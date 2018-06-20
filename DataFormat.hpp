@@ -83,6 +83,10 @@ namespace Data
             datatype.insertMember("channel", HOFFSET(ListElement422, channel), H5::PredType::NATIVE_UINT16);
             return datatype;
         }
+        static void headerOn(std::ostream& os)
+        {
+            os << std::setw(10) << "channel" << " " << std::setw(10) << "localTime" << " " << std::setw(10) << "adcValue";
+        }
     };
     struct __attribute__ ((__packed__)) ListElement8222
     {
@@ -108,6 +112,11 @@ namespace Data
             datatype.insertMember("baseline", HOFFSET(ListElement8222, baseline), H5::PredType::NATIVE_UINT16);
             datatype.insertMember("channel", HOFFSET(ListElement8222, channel), H5::PredType::NATIVE_UINT16);
             return datatype;
+        }
+        static void headerOn(std::ostream& os)
+        {
+            os << std::setw(10) << "channel" << " " << std::setw(10) << "localTime" <<
+               " " << std::setw(10) << "adcValue" << " " << std::setw(10) << "baseline";
         }
     };
     static inline size_t elementSize(ElementType elementType)
