@@ -63,7 +63,8 @@ namespace Data
     };
     struct __attribute__ ((__packed__)) ListElement422
     {
-        uint32_t localTime;
+        typedef uint32_t time_t;
+        time_t localTime;
         uint16_t adcValue;
         uint16_t channel;
         bool operator< (const ListElement422& rhs) const
@@ -90,7 +91,8 @@ namespace Data
     };
     struct __attribute__ ((__packed__)) ListElement8222
     {
-        uint64_t localTime;
+        typedef uint64_t time_t;
+        time_t localTime;
         uint16_t adcValue;
         uint16_t baseline;
         uint16_t channel;

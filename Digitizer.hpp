@@ -50,7 +50,7 @@ private:
     uint32_t numChannels;
     uint32_t id;
     bool waveformRecording = false;
-    std::function<size_t(DPPQDCEventIterator<Data::ListElement422>&)> dataHandler;
+    std::function<size_t(EventIterator&)> dataHandler;
     std::set<uint32_t> manipulatedRegisters;
     caen::ReadoutBuffer readoutBuffer;
 
@@ -79,17 +79,52 @@ public:
     std::string get(FunctionID functionID, int index);
     void acquisition();
     const std::set<uint32_t>& getRegisters() { return manipulatedRegisters; }
-    //Post setup, pre aquisition initialization
-    void initialize();
     // TODO: Sould we do somthing different than expose these three function?
     void startAcquisition() { digitizer->startAcquisition(); }
     void stopAcquisition() { digitizer->stopAcquisition(); }
     void reset() { digitizer->reset(); }
+
     template <template<typename...> typename C>
-    void setDataWriter(DataWriter* dataWriter)
+    void initialize(DataWriter* dataWriter)
     {
-        DataHandler<Data::ListElement422,C,uint32_t> dh{dataWriter,serial(),channels()};
-        dataHandler = dh;
+        boardConfiguration = digitizer->getBoardConfiguration();
+        DEBUG(std::cout << "Prepare readout buffer for digitizer " << name() << std::endl;)
+        readoutBuffer = digitizer->mallocReadoutBuffer();
+
+        switch ((int)firmware) //Cast to int as long as CAEN_DGTZ_DPPFirmware_QDC is not part of the enumeration
+        {
+            case CAEN_DGTZ_DPPFirmware_PHA:
+                throw std::runtime_error("PHA firmware not supported by Digitizer.");
+                break;
+            case CAEN_DGTZ_DPPFirmware_PSD:
+                throw std::runtime_error("PSD firmware not supported by Digitizer.");
+                break;
+            case CAEN_DGTZ_DPPFirmware_CI:
+                throw std::runtime_error("CI firmware not supported by Digitizer.");
+                break;
+            case CAEN_DGTZ_DPPFirmware_ZLE:
+                throw std::runtime_error("ZLE firmware not supported by Digitizer.");
+                break;
+            case CAEN_DGTZ_DPPFirmware_QDC:
+            {
+                caen::Digitizer740DPP::BoardConfiguration bc{boardConfiguration};
+                if (bc.extras())
+                {
+                    DataHandler<Data::ListElement8222,C> dh{dataWriter,serial(),channels()};
+                    dataHandler = dh;
+                } else
+                {
+                    DataHandler<Data::ListElement422,C> dh{dataWriter,serial(),channels()};
+                    dataHandler = dh;
+                }
+                break;
+            }
+            case CAEN_DGTZ_NotDPPFirmware:
+                throw std::runtime_error("Non DPP firmware not supported by Digitizer.");
+                break;
+            default:
+                throw std::runtime_error("Unknown firmware type. Not supported by Digitizer.");
+        }
     }
 };
 

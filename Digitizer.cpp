@@ -314,13 +314,6 @@ void Digitizer::close()
     }
 }
 
-void Digitizer::initialize()
-{
-    boardConfiguration = digitizer->getBoardConfiguration();
-    DEBUG(std::cout << "Prepare readout buffer for digitizer " << name() << std::endl;)
-    readoutBuffer = digitizer->mallocReadoutBuffer();
-}
-
 void Digitizer::acquisition() {
 
     /* NOTE: these are per-digitizer local helpers */
@@ -360,7 +353,8 @@ void Digitizer::acquisition() {
         case CAEN_DGTZ_DPPFirmware_QDC:
         {
             DPPQDCEventIterator<Data::ListElement422> iterator{readoutBuffer};
-            size_t events = dataHandler(iterator);
+            EventIterator it{iterator};
+            size_t events = dataHandler(it);
             stats.eventsFound += events;
             break;
         }

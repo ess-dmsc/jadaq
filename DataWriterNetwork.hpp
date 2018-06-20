@@ -95,6 +95,18 @@ public:
     {
         write(buffer,digitizerID,globalTimeStamp);
     }
+    void operator()(const jadaq::vector<Data::ListElement8222>* buffer, uint32_t digitizerID, uint64_t globalTimeStamp) override
+    {
+        throw std::runtime_error("Error: jadaq::vector not supported by DataWriterNetwork.");
+    }
+    void operator()(const jadaq::set<Data::ListElement8222>* buffer, uint32_t digitizerID, uint64_t globalTimeStamp) override
+    {
+        throw std::runtime_error("Error: jadaq::set not supported by DataWriterNetwork.");
+    }
+    void operator()(const jadaq::buffer<Data::ListElement8222>* buffer, uint32_t digitizerID, uint64_t globalTimeStamp) override
+    {
+        write(buffer,digitizerID,globalTimeStamp);
+    }
 };
 
 

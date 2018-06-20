@@ -30,8 +30,28 @@
 #include "caen.hpp"
 #include "DataFormat.hpp"
 
-template <typename E>
-class EventIterator : public std::iterator<std::input_iterator_tag , E > {};
+template <typename E> class DPPQDCEventIterator;
+
+class EventIterator
+{
+private:
+    void* ptr;
+
+public:
+    template <typename T>
+    EventIterator(DPPQDCEventIterator<T>& b): ptr(&b) {}
+    template<typename T>
+    EventIterator& operator=(DPPQDCEventIterator<T>& b)
+    {
+        ptr = &b;
+        return *this;
+    }
+    template<typename T>
+    DPPQDCEventIterator<T>& base() const
+    {
+        return *static_cast<DPPQDCEventIterator<T>*>(ptr);
+    }
+};
 
 template <typename E>
 class DPPQDCEventIterator
@@ -161,8 +181,24 @@ inline Data::ListElement422 DPPQDCEventIterator<Data::ListElement422>::Aggregate
     Data::ListElement422 res;
     res.localTime = ptr[0];
     uint32_t data = ptr[elementSize-1];
-    res.adcValue  = (uint16_t)(data & 0x0000FFFF);
-    res.channel   = (uint16_t)((data >> 28) & 0xF) | group;
+    res.adcValue  = (uint16_t)(data & 0x0000ffffu);
+    res.channel   = group | (uint16_t)(data >> 28);
+    return res;
+}
+
+template <>
+inline Data::ListElement8222 DPPQDCEventIterator<Data::ListElement8222>::AggregateIterator::operator*() const
+{
+    uint64_t time = ptr[0];
+    uint32_t extra = 0;
+    if (extras)
+        extra = ptr[elementSize-2];
+    uint32_t data = ptr[elementSize-1];
+    Data::ListElement8222 res;
+    res.localTime = ((uint64_t)(extra & 0x0000ffffu)<<32) | time;
+    res.adcValue  = (uint16_t)(data & 0x0000ffffu);
+    res.baseline  = (uint16_t)(extra>>16);
+    res.channel   = group | (uint16_t)(data >> 28);
     return res;
 }
 

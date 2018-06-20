@@ -145,6 +145,19 @@ public:
         throw std::runtime_error("Error: jadaq::buffer not supported by DataWriterHDF5.");
     }
 
+    void operator()(const jadaq::vector<Data::ListElement8222>* buffer, uint32_t digitizerID, uint64_t globalTimeStamp) override
+    { write(buffer,digitizerID,globalTimeStamp); }
+
+    void operator()(const jadaq::set<Data::ListElement8222>* buffer, uint32_t digitizerID, uint64_t globalTimeStamp) override
+    {
+        std::vector<Data::ListElement8222> v(buffer->begin(), buffer->end());
+        write(&v,digitizerID,globalTimeStamp);
+    }
+    void operator()(const jadaq::buffer<Data::ListElement8222>* buffer, uint32_t digitizerID, uint64_t globalTimeStamp) override
+    {
+        throw std::runtime_error("Error: jadaq::buffer not supported by DataWriterHDF5.");
+    }
+
 };
 
 #endif //JADAQ_DATAHANDLERHDF5_HPP

@@ -48,9 +48,8 @@ public:
 /*
  * E is element type e.g. Data::ListElementxxx
  * C is containertype i.e. jadaq::vector, jadaq::set, jadaq::buffer
- * T is Element time stamp type e.g. uint32_t, uint64_t
  */
-template <typename E, template<typename...> typename C, typename T>
+template <typename E, template<typename...> typename C>
 class DataHandler
 {
     static_assert(std::is_pod<E>::value, "E must be POD");
@@ -61,7 +60,7 @@ private:
     struct Buffer
     {
         C<E>* buffer;
-        T* maxLocalTime; // Array containing MaxLocalTime from the previous insertion needed to detect reset
+        typename E::time_t* maxLocalTime; // Array containing MaxLocalTime from the previous insertion needed to detect reset
         uint64_t globalTimeStamp = 0;
         void clear(size_t numChannels)
         {
@@ -80,14 +79,15 @@ public:
             , numChannels(channels)
     {
         current.buffer = new C<E>();
-        current.maxLocalTime = new T[numChannels];
+        current.maxLocalTime = new typename E::time_t[numChannels];
         current.clear(numChannels);
         next.buffer = new C<E>();
-        next.maxLocalTime = new T[numChannels];
+        next.maxLocalTime = new typename E::time_t[numChannels];
         next.clear(numChannels);
     }
-    size_t operator()(DPPQDCEventIterator<E>& eventIterator)
+    size_t operator()(EventIterator& it)
     {
+        DPPQDCEventIterator<E>& eventIterator = it.base<E>();
         size_t events = 0;
         for (;eventIterator != eventIterator.end(); ++eventIterator)
         {
