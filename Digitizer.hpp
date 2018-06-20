@@ -52,6 +52,8 @@ private:
     bool waveformRecording = false;
     std::function<size_t(DPPQDCEventIterator<Data::ListElement422>&)> dataHandler;
     std::set<uint32_t> manipulatedRegisters;
+    caen::ReadoutBuffer readoutBuffer;
+
 public:
     /* Connection parameters */
     const CAEN_DGTZ_ConnectionType linkType;
@@ -64,7 +66,7 @@ public:
              uint32_t eventsUnpacked = 0;
              uint32_t eventsDecoded = 0;
              uint32_t eventsSent = 0;
-         };)
+         } stats;)
     Digitizer(CAEN_DGTZ_ConnectionType linkType_, int linkNum_, int conetNode_, uint32_t VMEBaseAddress_);
     const std::string name() { return digitizer->modelName() + "_" + std::to_string(digitizer->serialNumber()); }
     const std::string model() { return digitizer->modelName(); }
@@ -76,7 +78,6 @@ public:
     std::string get(FunctionID functionID);
     std::string get(FunctionID functionID, int index);
     void acquisition();
-    const Stats& stats() const {return stats_;}
     const std::set<uint32_t>& getRegisters() { return manipulatedRegisters; }
     //Post setup, pre aquisition initialization
     void initialize();
@@ -90,19 +91,6 @@ public:
         DataHandler<Data::ListElement422,C,uint32_t> dh{dataWriter,serial(),channels()};
         dataHandler = dh;
     }
-private:
-    /* We bind a ReadoutBuffer to each digitizer for ease of use */
-    caen::ReadoutBuffer readoutBuffer_;
-    /* Standard firmware uses eventInfo and Event while DPP firmware
-     * keeps it all in a DPPEvents structure. */
-    caen::EventInfo eventInfo_;
-    caen::DPPEvents_t*  dppEvents;
-    void* plainEvent;
-
-    caen::DPPWaveforms waveforms;
-
-    STAT(Stats stats_;)
-
 };
 
 

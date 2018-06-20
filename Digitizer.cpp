@@ -297,7 +297,6 @@ Digitizer::Digitizer(CAEN_DGTZ_ConnectionType linkType_, int linkNum_, int conet
         , linkNum(linkNum_)
         , conetNode(conetNode_)
         , VMEBaseAddress(VMEBaseAddress_)
-        , plainEvent(nullptr)
 {
     firmware = digitizer->getDPPFirmwareType();
     numChannels = digitizer->channels();
@@ -307,19 +306,19 @@ Digitizer::Digitizer(CAEN_DGTZ_ConnectionType linkType_, int linkNum_, int conet
 void Digitizer::close()
 {
     DEBUG(std::cout << "Closing digitizer " << name() << std::endl;)
-    if (plainEvent != nullptr)
-        digitizer->freeEvent(plainEvent);
-    digitizer->freeDPPEvents(dppEvents);
-    digitizer->freeDPPWaveforms(waveforms);
-    digitizer->freeReadoutBuffer(readoutBuffer_);
-    delete digitizer;
+    digitizer->freeReadoutBuffer(readoutBuffer);
+    if (digitizer)
+    {
+        delete digitizer;
+        digitizer = nullptr;
+    }
 }
 
 void Digitizer::initialize()
 {
     boardConfiguration = digitizer->getBoardConfiguration();
     DEBUG(std::cout << "Prepare readout buffer for digitizer " << name() << std::endl;)
-    readoutBuffer_ = digitizer->mallocReadoutBuffer();
+    readoutBuffer = digitizer->mallocReadoutBuffer();
 }
 
 void Digitizer::acquisition() {
@@ -332,10 +331,10 @@ void Digitizer::acquisition() {
     uint32_t eventsFound = 0;
     STAT(uint32_t eventsUnpacked = 0; uint32_t eventsDecoded = 0; uint32_t eventsSent = 0;)
 
-    DEBUG(std::cout << "Read at most " << readoutBuffer_.size << "b data from " << name() << std::endl;)
+    DEBUG(std::cout << "Read at most " << readoutBuffer.size << "b data from " << name() << std::endl;)
     /* We use slave terminated mode like in the sample from CAEN Digitizer library docs. */
-    digitizer->readData(readoutBuffer_,CAEN_DGTZ_SLAVE_TERMINATED_READOUT_MBLT);
-    bytesRead = readoutBuffer_.dataSize;
+    digitizer->readData(readoutBuffer,CAEN_DGTZ_SLAVE_TERMINATED_READOUT_MBLT);
+    bytesRead = readoutBuffer.dataSize;
     DEBUG(std::cout << "Read " << bytesRead << "b of acquired data" << std::endl;)
 
     /* NOTE: check and skip if there's no actual events to handle */
@@ -360,9 +359,9 @@ void Digitizer::acquisition() {
             break;
         case CAEN_DGTZ_DPPFirmware_QDC:
         {
-            DPPQDCEventIterator<Data::ListElement422> iterator{readoutBuffer_};
+            DPPQDCEventIterator<Data::ListElement422> iterator{readoutBuffer};
             size_t events = dataHandler(iterator);
-            stats_.eventsFound += events;
+            stats.eventsFound += events;
             break;
         }
         case CAEN_DGTZ_NotDPPFirmware:
