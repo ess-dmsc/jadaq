@@ -43,7 +43,7 @@ private:
     void write(const C<E>* buffer, uint32_t digitizerID, uint64_t globalTimeStamp)
     {
         mutex.lock();
-        *file << std::setw(10) << "digitizer";
+        *file << "#" << std::setw(10) << "digitID" << " ";
         E::headerOn(*file);
         *file << std::endl << "@" << globalTimeStamp << std::endl;
         for(const E& element: *buffer)
