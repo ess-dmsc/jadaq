@@ -38,7 +38,7 @@ Configuration::Configuration(std::ifstream& file, bool verbose)
     apply();
 }
 
-std::vector<Digitizer> Configuration::getDigitizers()
+std::vector<Digitizer>& Configuration::getDigitizers()
 {
     return digitizers;
 }

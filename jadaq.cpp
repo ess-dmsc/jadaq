@@ -153,9 +153,7 @@ int main(int argc, const char *argv[])
         }
     }
 
-    // Extract a vector of all configured digitizers
-    std::vector<Digitizer> digitizers;
-    digitizers = configuration.getDigitizers();
+    std::vector<Digitizer>& digitizers = configuration.getDigitizers();
     if (conf.verbose)
     {
         std::cout << "Setup " << digitizers.size() << " digitizer(s):" << std::endl;
