@@ -59,8 +59,8 @@ private:
         {
             uint32_t size = *ptr++;
             uint32_t format = *ptr++;
-            assert (((format>>30) & 1) == 0);
-            assert (((format>>29) & 1) == 0);
+            assert (((format>>30) & 1) == 1);
+            assert (((format>>29) & 1) == 1);
             extras = ((format>>28) & 1) == 1;
             waveform = ((format>>27) & 1) == 1;
             if (extras)
