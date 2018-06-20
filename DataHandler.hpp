@@ -81,8 +81,10 @@ public:
     {
         current.buffer = new C<E>();
         current.maxLocalTime = new T[numChannels];
+        current.clear(numChannels);
         next.buffer = new C<E>();
         next.maxLocalTime = new T[numChannels];
+        next.clear(numChannels);
     }
     size_t operator()(DPPQDCEventIterator<E>& eventIterator)
     {
