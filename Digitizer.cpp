@@ -360,12 +360,8 @@ void Digitizer::acquisition() {
             break;
         case CAEN_DGTZ_DPPFirmware_QDC:
         {
-            digitizer->getDPPEvents(readoutBuffer_, dppEvents);
-            // TODO: Move constructor??
-            // TODO: Cast in the DPPQDCEventAccessor constructor?
-            DPPQDCEventAccessor<Data::ListElement422> accessor{*static_cast<caen::DPPEvents<_CAEN_DGTZ_DPP_QDC_Event_t> * >(dppEvents),
-                                                               (uint16_t) numChannels};
-            size_t events = dataHandler(accessor);
+            DPPQDCEventIterator<Data::ListElement422> iterator{readoutBuffer_};
+            size_t events = dataHandler(iterator);
             stats_.eventsFound += events;
             break;
         }

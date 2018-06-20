@@ -45,9 +45,13 @@ public:
 
 };
 
-
+/*
+ * E is element type e.g. Data::ListElementxxx
+ * C is containertype i.e. jadaq::vector, jadaq::set, jadaq::buffer
+ * T is Element time stamp type e.g. uint32_t, uint64_t
+ */
 template <typename E, template<typename...> typename C, typename T>
-class DataHandler //: public DataHandlerGeneric
+class DataHandler
 {
     static_assert(std::is_pod<E>::value, "E must be POD");
 private:
@@ -80,47 +84,39 @@ public:
         next.buffer = new C<E>();
         next.maxLocalTime = new T[numChannels];
     }
-    size_t operator()(const AnyDPPEventAccessor& a)
+    size_t operator()(DPPQDCEventIterator<E>& eventIterator)
     {
-        DPPEventAccessor<E>& accessor = a.base<E>();
         size_t events = 0;
-        for (uint16_t channel = 0; channel < accessor.channels(); channel++)
+        for (;eventIterator != eventIterator.end(); ++eventIterator)
         {
-            uint64_t currentMaxLocalTime = current.maxLocalTime[channel];
-            uint64_t nextMaxLocalTime = next.maxLocalTime[channel];
-            for (uint32_t i = 0; i < accessor.events(channel); ++i)
+            events += 1;
+            E element = *eventIterator;
+            if (element.localTime > current.maxLocalTime[element.channel])
             {
-                events += 1;
-                E element = accessor(channel,i);
-                if (element.localTime > currentMaxLocalTime)
+                current.maxLocalTime[element.channel] = element.localTime;
+                try {
+                    current.buffer->insert(element);
+                } catch (std::length_error&)
                 {
-                    currentMaxLocalTime = element.localTime;
-                    try {
-                        current.buffer->insert(element);
-                    } catch (std::length_error&)
-                    {
-                        (*dataWriter)(current.buffer,digitizerID,current.globalTimeStamp);
-                        current.buffer->clear();
-                        current.buffer->insert(element);
-                    }
-                } else {
-                    nextMaxLocalTime = element.localTime;
-                    if (next.globalTimeStamp == 0)
-                    {
-                        next.globalTimeStamp = DataHandlerGeneric::getTimeMsecs();
-                    }
-                    try {
-                        next.buffer->insert(element);
-                    } catch (std::length_error&)
-                    {
-                        (*dataWriter)(next.buffer,digitizerID,next.globalTimeStamp);
-                        next.buffer->clear();
-                        next.buffer->insert(element);
-                    }
+                    (*dataWriter)(current.buffer,digitizerID,current.globalTimeStamp);
+                    current.buffer->clear();
+                    current.buffer->insert(element);
+                }
+            } else {
+                next.maxLocalTime[element.channel] = element.localTime;
+                if (next.globalTimeStamp == 0)
+                {
+                    next.globalTimeStamp = DataHandlerGeneric::getTimeMsecs();
+                }
+                try {
+                    next.buffer->insert(element);
+                } catch (std::length_error&)
+                {
+                    (*dataWriter)(next.buffer,digitizerID,next.globalTimeStamp);
+                    next.buffer->clear();
+                    next.buffer->insert(element);
                 }
             }
-            current.maxLocalTime[channel] = currentMaxLocalTime;
-            next.maxLocalTime[channel] = nextMaxLocalTime;
         }
         if (!next.buffer->empty())
         {

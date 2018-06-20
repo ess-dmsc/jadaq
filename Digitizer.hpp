@@ -50,7 +50,7 @@ private:
     uint32_t numChannels;
     uint32_t id;
     bool waveformRecording = false;
-    std::function<size_t(const AnyDPPEventAccessor&)> dataHandler;
+    std::function<size_t(DPPQDCEventIterator<Data::ListElement422>&)> dataHandler;
     std::set<uint32_t> manipulatedRegisters;
 public:
     /* Connection parameters */
