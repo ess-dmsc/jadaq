@@ -306,7 +306,10 @@ Digitizer::Digitizer(CAEN_DGTZ_ConnectionType linkType_, int linkNum_, int conet
 void Digitizer::close()
 {
     DEBUG(std::cout << "Closing digitizer " << name() << std::endl;)
-    dataFlush();
+    if (dataFlush)
+    {
+        dataFlush();
+    }
     digitizer->freeReadoutBuffer(readoutBuffer);
     if (digitizer)
     {
