@@ -83,6 +83,7 @@ private:
         GroupIterator(uint32_t* p, uint16_t gm)
                 : ptr(p)
                 , groupMask(gm)
+                , elementSize(2)
         { nextGroup(); }
         void nextGroup()
         {
