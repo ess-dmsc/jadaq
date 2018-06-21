@@ -166,6 +166,7 @@ public:
     {
         if (++groupIterator == boardAggregateEnd)
         {
+            ptr = boardAggregateEnd;
             groupIterator = nextGroupIterator();
         }
         return *this;
