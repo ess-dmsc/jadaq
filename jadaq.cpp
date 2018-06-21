@@ -273,6 +273,7 @@ int main(int argc, const char *argv[])
     {
         digitizer.close();
     }
+    digitizers.clear();
     delete dataWriter;
     if (conf.verbose)
     {

@@ -56,13 +56,13 @@ class DataHandler
 private:
     DataWriter* dataWriter;
     uint32_t digitizerID;
-    size_t numChannels;
     struct Buffer
     {
+        size_t numChannels;
         C<E>* buffer;
         typename E::time_t* maxLocalTime; // Array containing MaxLocalTime from the previous insertion needed to detect reset
         uint64_t globalTimeStamp = 0;
-        void clear(size_t numChannels)
+        void clear()
         {
             buffer->clear();
             for (size_t i = 0; i < numChannels; ++i)
@@ -71,19 +71,31 @@ private:
             }
             globalTimeStamp = 0;
         }
+        Buffer(size_t nc)
+                : numChannels(nc)
+        {
+            buffer = new C<E>();
+            maxLocalTime = new typename E::time_t[numChannels];
+        }
+        ~Buffer()
+        {
+            delete buffer;
+            delete[] maxLocalTime;
+        }
     } current, next;
 public:
     DataHandler( DataWriter* dw, uint32_t digID, size_t channels)
             : dataWriter(dw)
             , digitizerID(digID)
-            , numChannels(channels)
+            , current(channels)
+            , next(current)
     {
-        current.buffer = new C<E>();
-        current.maxLocalTime = new typename E::time_t[numChannels];
-        current.clear(numChannels);
-        next.buffer = new C<E>();
-        next.maxLocalTime = new typename E::time_t[numChannels];
-        next.clear(numChannels);
+        current.clear();
+        next.clear();
+    }
+    ~DataHandler()
+    {
+        flush();
     }
     size_t operator()(EventIterator& it)
     {
@@ -123,7 +135,7 @@ public:
         if (!next.buffer->empty())
         {
             (*dataWriter)(current.buffer,digitizerID,current.globalTimeStamp);
-            current.clear(numChannels);
+            current.clear();
             Buffer temp = current;
             current = next;
             next = temp;
@@ -133,9 +145,9 @@ public:
     void flush()
     {
         (*dataWriter)(current.buffer,digitizerID,current.globalTimeStamp);
-        current.clear(numChannels);
+        current.clear();
         (*dataWriter)(next.buffer,digitizerID,next.globalTimeStamp);
-        next.clear(numChannels);
+        next.clear();
     }
 };
 #endif //JADAQ_DATAHANDLER_HPP
