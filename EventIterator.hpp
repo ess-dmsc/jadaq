@@ -74,7 +74,7 @@ private:
         uint32_t* end;
         uint8_t groupMask = 0;
         size_t elementSize = 0 ;
-        uint16_t group = 0;
+        int group = -1;
         bool waveform = false;
         bool extras = false;
         static const uint channelsPerGroup = 8;
@@ -87,9 +87,8 @@ private:
         { nextGroup(); }
         void nextGroup()
         {
-            while (!(groupMask & (1<<group)))
+            while (!(groupMask & (1<<++group)))
             {
-                ++group;
                 if (group == sizeof(groupMask)*CHAR_BIT)
                 {
                     return; // End of Board Aggregate
