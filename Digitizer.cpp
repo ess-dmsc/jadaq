@@ -352,10 +352,19 @@ void Digitizer::acquisition() {
             break;
         case CAEN_DGTZ_DPPFirmware_QDC:
         {
-            DPPQDCEventIterator<Data::ListElement422> iterator{readoutBuffer};
-            EventIterator it{iterator};
-            size_t events = dataHandler(it);
-            stats.eventsFound += events;
+            if (extras)
+            {
+                DPPQDCEventIterator<Data::ListElement8222> iterator{readoutBuffer};
+                EventIterator it{iterator};
+                size_t events = dataHandler(it);
+                stats.eventsFound += events;
+            } else
+            {
+                DPPQDCEventIterator<Data::ListElement422> iterator{readoutBuffer};
+                EventIterator it{iterator};
+                size_t events = dataHandler(it);
+                stats.eventsFound += events;
+            }
             break;
         }
         case CAEN_DGTZ_NotDPPFirmware:

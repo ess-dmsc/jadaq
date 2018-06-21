@@ -49,7 +49,8 @@ private:
     uint32_t boardConfiguration = 0;
     uint32_t numChannels;
     uint32_t id;
-    bool waveformRecording = false;
+    bool waveform = false;
+    bool extras   = false;
     DataHandler dataHandler;
     std::set<uint32_t> manipulatedRegisters;
     caen::ReadoutBuffer readoutBuffer;
@@ -108,7 +109,9 @@ public:
             case CAEN_DGTZ_DPPFirmware_QDC:
             {
                 caen::Digitizer740DPP::BoardConfiguration bc{boardConfiguration};
-                if (bc.extras())
+                extras = bc.extras();
+                waveform = bc.waveform();
+                if (extras)
                 {
                     dataHandler.initialize<Data::ListElement8222,C>(dataWriter,serial(),channels());
                 } else
