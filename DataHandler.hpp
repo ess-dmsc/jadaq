@@ -148,7 +148,10 @@ private:
             }
             if (!next.buffer->empty())
             {
-                (*dataWriter)(current.buffer,digitizerID,current.globalTimeStamp);
+                if (current.buffer->size() > 0)
+                {
+                    (*dataWriter)(current.buffer, digitizerID, current.globalTimeStamp);
+                }
                 current.clear();
                 std::swap(current,next);
             }
@@ -156,10 +159,16 @@ private:
         }
         void flush()
         {
-            (*dataWriter)(current.buffer,digitizerID,current.globalTimeStamp);
-            current.clear();
-            (*dataWriter)(next.buffer,digitizerID,next.globalTimeStamp);
-            next.clear();
+            if (current.buffer->size() > 0)
+            {
+                (*dataWriter)(current.buffer, digitizerID, current.globalTimeStamp);
+                current.clear();
+            }
+            if (next.buffer->size() > 0)
+            {
+                (*dataWriter)(next.buffer, digitizerID, next.globalTimeStamp);
+                next.clear();
+            }
         }
     };
     std::unique_ptr<Interface> instance;
