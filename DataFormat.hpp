@@ -102,7 +102,7 @@ namespace Data
         };
         void printOn(std::ostream& os) const
         {
-            os << std::setw(10) << channel << " " << std::setw(10) << localTime <<
+            os << std::setw(10) << channel << " " << std::setw(20) << localTime <<
                " " << std::setw(10) << adcValue << " " << std::setw(10) << baseline;
         }
         static ElementType type() { return List8222; }
@@ -117,7 +117,7 @@ namespace Data
         }
         static void headerOn(std::ostream& os)
         {
-            os << std::setw(10) << "channel" << " " << std::setw(10) << "localTime" <<
+            os << std::setw(10) << "channel" << " " << std::setw(20) << "localTime" <<
                " " << std::setw(10) << "adcValue" << " " << std::setw(10) << "baseline";
         }
     };
