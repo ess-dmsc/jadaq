@@ -80,17 +80,20 @@ private:
                 }
                 globalTimeStamp = 0;
             }
-            Buffer(size_t nc)
-                    : numChannels(nc)
+            Buffer(size_t nc) : numChannels(nc) {}
+
+            void malloc()
             {
                 buffer = new C<E>();
                 maxLocalTime = new typename E::time_t[numChannels];
+                clear();
             }
-            ~Buffer()
+            void free()
             {
                 delete buffer;
                 delete[] maxLocalTime;
             }
+
         } current, next;
     public:
         Implementation(DataWriter* dw, uint32_t digID, size_t channels)
@@ -99,12 +102,14 @@ private:
                 , current(channels)
                 , next(current)
         {
-            current.clear();
-            next.clear();
+            current.malloc();
+            next.malloc();
         }
         ~Implementation()
         {
             flush();
+            current.free();
+            next.free();
         }
         size_t operator()(EventIterator& it)
         {
@@ -145,9 +150,7 @@ private:
             {
                 (*dataWriter)(current.buffer,digitizerID,current.globalTimeStamp);
                 current.clear();
-                Buffer temp = current;
-                current = next;
-                next = temp;
+                std::swap(current,next);
             }
             return events;
         }
