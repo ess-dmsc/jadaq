@@ -27,6 +27,7 @@
 #define JADAQ_EVENTITERATOR_HPP
 
 #include <iterator>
+#include <limits>
 #include "caen.hpp"
 #include "DataFormat.hpp"
 
@@ -88,7 +89,7 @@ private:
             while (!(groupMask & (1<<group)))
             {
                 ++group;
-                if (group == sizeof(groupMask))
+                if (group == sizeof(groupMask)*CHAR_BIT)
                 {
                     return; // End of Board Aggregate
                 }
