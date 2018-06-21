@@ -264,16 +264,16 @@ int main(int argc, const char *argv[])
         }
         digitizer.stopAcquisition();
     }
+    if (conf.verbose)
+    {
+        std::cout << "Acquisition complete - shutting down." << std::endl;
+    }
     /* Clean up after all digitizers: buffers, etc. */
     for (Digitizer& digitizer: digitizers)
     {
         digitizer.close();
     }
-
-    if (conf.verbose)
-    {
-        std::cout << "Acquisition complete - shutting down." << std::endl;
-    }
+    delete dataWriter;
     if (conf.verbose)
     {
         double runtime = (acquisitionStop - acquisitionStart) / 1000.0;
