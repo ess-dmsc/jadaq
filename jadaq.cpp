@@ -224,7 +224,7 @@ int main(int argc, const char *argv[])
     {
         std::cout << "Running acquisition loop - Ctrl-C to interrupt" << std::endl;
     }
-    long acquisitionStart = DataHandlerGeneric::getTimeMsecs();
+    long acquisitionStart = DataHandler::getTimeMsecs();
     while(true)
     {
         eventsFound = 0;
@@ -255,7 +255,7 @@ int main(int argc, const char *argv[])
             break;
         }
     }
-    long acquisitionStop = DataHandlerGeneric::getTimeMsecs();
+    long acquisitionStop = DataHandler::getTimeMsecs();
     for (Digitizer& digitizer: digitizers)
     {
         if (conf.verbose)

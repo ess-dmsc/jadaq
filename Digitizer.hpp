@@ -50,8 +50,7 @@ private:
     uint32_t numChannels;
     uint32_t id;
     bool waveformRecording = false;
-    std::function<size_t(EventIterator&)> dataHandler;
-    std::function<void()> dataFlush;
+    DataHandler dataHandler;
     std::set<uint32_t> manipulatedRegisters;
     caen::ReadoutBuffer readoutBuffer;
 
@@ -111,12 +110,10 @@ public:
                 caen::Digitizer740DPP::BoardConfiguration bc{boardConfiguration};
                 if (bc.extras())
                 {
-                    DataHandler<Data::ListElement8222,C> dh{dataWriter,serial(),channels()};
-                    dataHandler = dh;
+                    dataHandler.initialize<Data::ListElement8222,C>(dataWriter,serial(),channels());
                 } else
                 {
-                    DataHandler<Data::ListElement422,C> dh{dataWriter,serial(),channels()};
-                    dataHandler = dh;
+                    dataHandler.initialize<Data::ListElement422,C>(dataWriter,serial(),channels());
                 }
                 break;
             }
