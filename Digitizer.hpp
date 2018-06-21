@@ -51,6 +51,7 @@ private:
     uint32_t id;
     bool waveformRecording = false;
     std::function<size_t(EventIterator&)> dataHandler;
+    std::function<void()> dataFlush;
     std::set<uint32_t> manipulatedRegisters;
     caen::ReadoutBuffer readoutBuffer;
 
@@ -112,10 +113,12 @@ public:
                 {
                     DataHandler<Data::ListElement8222,C> dh{dataWriter,serial(),channels()};
                     dataHandler = dh;
+                    dataFlush = std::bind(&DataHandler<Data::ListElement8222,C>::flush, &dh);
                 } else
                 {
                     DataHandler<Data::ListElement422,C> dh{dataWriter,serial(),channels()};
                     dataHandler = dh;
+                    dataFlush = std::bind(&DataHandler<Data::ListElement422,C>::flush, &dh);
                 }
                 break;
             }

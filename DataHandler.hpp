@@ -130,5 +130,12 @@ public:
         }
         return events;
     }
+    void flush()
+    {
+        (*dataWriter)(current.buffer,digitizerID,current.globalTimeStamp);
+        current.clear(numChannels);
+        (*dataWriter)(next.buffer,digitizerID,next.globalTimeStamp);
+        next.clear(numChannels);
+    }
 };
 #endif //JADAQ_DATAHANDLER_HPP
