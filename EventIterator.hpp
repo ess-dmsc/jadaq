@@ -94,8 +94,10 @@ private:
                     return; // End of Board Aggregate
                 }
             }
+            assert(((ptr[0] >> 31) & 1) == 1);
             uint32_t size = ptr[0] & 0x7fffffff;
             uint32_t format = ptr[1];
+            assert (((format>>31) & 1) == 0);
             assert (((format>>30) & 1) == 1);
             assert (((format>>29) & 1) == 1);
             extras = ((format>>28) & 1) == 1;
@@ -144,7 +146,8 @@ private:
     {
         if ((char*)ptr < buffer.end())
         {
-            size_t size = (ptr[0]) & 0x0FFFFFFF;
+            size_t size = (ptr[0] & 0x0fffffff);
+            assert((ptr[0] & 0xf0000000) == 0xa0000000); // Magic value
             boardAggregateEnd = ptr + size;
             uint8_t groupMask = (uint8_t) (ptr[1] & 0xFF);
             ptr += 4; // point to first group aggregate
