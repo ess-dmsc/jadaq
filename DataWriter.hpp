@@ -33,27 +33,70 @@
 class DataWriter
 {
 public:
-    virtual ~DataWriter() = default;
-    virtual void addDigitizer(uint32_t digitizerID) = 0;
-    virtual void operator()(const jadaq::vector<Data::ListElement422>* buffer, uint32_t digitizerID, uint64_t globalTimeStamp) = 0;
-    virtual void operator()(const jadaq::set<Data::ListElement422>* buffer, uint32_t digitizerID, uint64_t globalTimeStamp) = 0;
-    virtual void operator()(const jadaq::buffer<Data::ListElement422>* buffer, uint32_t digitizerID, uint64_t globalTimeStamp) = 0;
-    virtual void operator()(const jadaq::vector<Data::ListElement8222>* buffer, uint32_t digitizerID, uint64_t globalTimeStamp) = 0;
-    virtual void operator()(const jadaq::set<Data::ListElement8222>* buffer, uint32_t digitizerID, uint64_t globalTimeStamp) = 0;
-    virtual void operator()(const jadaq::buffer<Data::ListElement8222>* buffer, uint32_t digitizerID, uint64_t globalTimeStamp) = 0;
+    DataWriter() = default;
+    template<typename T>
+    DataWriter &operator=(T* dataWriter)
+    {
+        instance.reset(new Model<T>(dataWriter));
+        return *this;
+    }
+    template<typename T>
+    void operator()(const T* buffer, uint32_t digitizerID, uint64_t globalTimeStamp)
+    { instance->operator()(buffer,digitizerID,globalTimeStamp); }
+
+
+private:
+    struct Concept
+    {
+        virtual ~Concept() = default;
+        virtual void addDigitizer(uint32_t digitizerID) = 0;
+        virtual void operator()(const jadaq::vector<Data::ListElement422>* buffer, uint32_t digitizerID, uint64_t globalTimeStamp) = 0;
+        virtual void operator()(const jadaq::set<Data::ListElement422>* buffer, uint32_t digitizerID, uint64_t globalTimeStamp) = 0;
+        virtual void operator()(const jadaq::buffer<Data::ListElement422>* buffer, uint32_t digitizerID, uint64_t globalTimeStamp) = 0;
+        virtual void operator()(const jadaq::vector<Data::ListElement8222>* buffer, uint32_t digitizerID, uint64_t globalTimeStamp) = 0;
+        virtual void operator()(const jadaq::set<Data::ListElement8222>* buffer, uint32_t digitizerID, uint64_t globalTimeStamp) = 0;
+        virtual void operator()(const jadaq::buffer<Data::ListElement8222>* buffer, uint32_t digitizerID, uint64_t globalTimeStamp) = 0;
+        virtual void operator()(const jadaq::vector<Data::WaveformElement8222n2>* buffer, uint32_t digitizerID, uint64_t globalTimeStamp) = 0;
+        virtual void operator()(const jadaq::set<Data::WaveformElement8222n2>* buffer, uint32_t digitizerID, uint64_t globalTimeStamp) = 0;
+        virtual void operator()(const jadaq::buffer<Data::WaveformElement8222n2>* buffer, uint32_t digitizerID, uint64_t globalTimeStamp) = 0;
+    };
+    template <typename T>
+    struct Model : Concept
+    {
+        explicit Model(T* value) : val(value) {}
+        void addDigitizer(uint32_t digitizerID) override
+        { val->addDigitizer(digitizerID); }
+        void operator()(const jadaq::vector<Data::ListElement422>* buffer, uint32_t digitizerID, uint64_t globalTimeStamp) final 
+        { val->operator()(buffer,digitizerID,globalTimeStamp); }
+        void operator()(const jadaq::set<Data::ListElement422>* buffer, uint32_t digitizerID, uint64_t globalTimeStamp) final
+        { val->operator()(buffer,digitizerID,globalTimeStamp); }
+        void operator()(const jadaq::buffer<Data::ListElement422>* buffer, uint32_t digitizerID, uint64_t globalTimeStamp) final 
+        { val->operator()(buffer,digitizerID,globalTimeStamp); }
+        void operator()(const jadaq::vector<Data::ListElement8222>* buffer, uint32_t digitizerID, uint64_t globalTimeStamp) final 
+        { val->operator()(buffer,digitizerID,globalTimeStamp); }
+        void operator()(const jadaq::set<Data::ListElement8222>* buffer, uint32_t digitizerID, uint64_t globalTimeStamp) final 
+        { val->operator()(buffer,digitizerID,globalTimeStamp); }
+        void operator()(const jadaq::buffer<Data::ListElement8222>* buffer, uint32_t digitizerID, uint64_t globalTimeStamp) final 
+        { val->operator()(buffer,digitizerID,globalTimeStamp); }
+        void operator()(const jadaq::vector<Data::WaveformElement8222n2>* buffer, uint32_t digitizerID, uint64_t globalTimeStamp) final 
+        { val->operator()(buffer,digitizerID,globalTimeStamp); }
+        void operator()(const jadaq::set<Data::WaveformElement8222n2>* buffer, uint32_t digitizerID, uint64_t globalTimeStamp) final
+        { val->operator()(buffer,digitizerID,globalTimeStamp); }
+        void operator()(const jadaq::buffer<Data::WaveformElement8222n2>* buffer, uint32_t digitizerID, uint64_t globalTimeStamp) final
+        { val->operator()(buffer,digitizerID,globalTimeStamp); }
+        T* val;
+    };
+
+    std::unique_ptr<Concept> instance;
 };
 
-class DataWriterNull: public DataWriter
+class DataWriterNull
 {
 public:
-    DataWriterNull(uuid runID) {}
-    void addDigitizer(uint32_t digitizerID) override {}
-    void operator()(const jadaq::vector<Data::ListElement422>* buffer, uint32_t digitizerID, uint64_t globalTimeStamp) override {}
-    void operator()(const jadaq::set<Data::ListElement422>* buffer, uint32_t digitizerID, uint64_t globalTimeStamp) override {}
-    void operator()(const jadaq::buffer<Data::ListElement422>* buffer, uint32_t digitizerID, uint64_t globalTimeStamp) override {}
-    void operator()(const jadaq::vector<Data::ListElement8222>* buffer, uint32_t digitizerID, uint64_t globalTimeStamp) override {}
-    void operator()(const jadaq::set<Data::ListElement8222>* buffer, uint32_t digitizerID, uint64_t globalTimeStamp) override {}
-    void operator()(const jadaq::buffer<Data::ListElement8222>* buffer, uint32_t digitizerID, uint64_t globalTimeStamp) override {}
+    DataWriterNull() = default;
+    void addDigitizer(uint32_t digitizerID) {}
+    template <typename T>
+    void operator()(const T* buffer, uint32_t digitizerID, uint64_t globalTimeStamp) {}
 };
 
 

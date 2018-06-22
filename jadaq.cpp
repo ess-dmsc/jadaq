@@ -164,7 +164,7 @@ int main(int argc, const char *argv[])
     }
 
     // TODO: move DataHandler creation to factory method in DataHandlerGeneric
-    DataWriter* dataWriter;
+    DataWriter dataWriter;
     if (conf.hdf5out)
     {
         dataWriter = new DataWriterHDF5(runID);
@@ -179,7 +179,7 @@ int main(int argc, const char *argv[])
     }
     else if (conf.nullout)
     {
-        dataWriter = new DataWriterNull(runID);
+        dataWriter = new DataWriterNull();
     }
     else
     {
@@ -274,7 +274,6 @@ int main(int argc, const char *argv[])
         digitizer.close();
     }
     digitizers.clear();
-    delete dataWriter;
     if (conf.verbose)
     {
         double runtime = (acquisitionStop - acquisitionStart) / 1000.0;

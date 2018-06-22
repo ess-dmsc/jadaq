@@ -48,7 +48,7 @@ private:
     const size_t bufferSize = Data::maxBufferSize;
     uuid runID{0};
     uint64_t currentTimestamp = 0;
-    DataWriter* dataWriter = nullptr;
+    DataWriter dataWriter;
     std::map<uint32_t ,jadaq::vector<Data::ListElement422> > dataBuffers;
     void newDataWriter(uuid newID);
     void newTimeStamp(uint64_t timeStamp);

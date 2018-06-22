@@ -33,11 +33,10 @@
 #include <cassert>
 #include "uuid.hpp"
 #include <H5Cpp.h>
-#include "DataWriter.hpp"
 #include "DataFormat.hpp"
 #include "container.hpp"
 
-class DataWriterHDF5: public DataWriter
+class DataWriterHDF5
 {
 private:
     H5::H5File* file = nullptr;
@@ -63,8 +62,41 @@ private:
         }
     }
 
-    template <typename E, template<typename...> typename C>
-    void write(const C<E>* buffer, uint32_t digitizerID, uint64_t globalTimeStamp)
+
+public:
+    DataWriterHDF5(uuid runID)
+    {
+        std::string filename = "jadaq-run-" + runID.toString() + ".h5";
+        try
+        {
+            file = new H5::H5File(filename, H5F_ACC_TRUNC);
+            root = new H5::Group(file->openGroup("/"));
+        } catch (H5::Exception& e)
+        {
+            std::cerr << "ERROR: could not open/create HDF5-file \"" << filename <<  "\":" << e.getDetailMsg() << std::endl;
+            throw;
+        }
+    }
+
+    ~DataWriterHDF5()
+    {
+        assert(file);
+        mutex.lock(); // Wait if someone is still writing data
+        root->close();
+        delete root;
+        file->close();
+        delete file;
+        mutex.unlock();
+    }
+    void addDigitizer(uint32_t digitizerID)
+    {
+        mutex.lock();
+        addDigitizer_(digitizerID);
+        mutex.unlock();
+    }
+
+    template <typename E>
+    void operator()(const std::vector<E>* buffer, uint32_t digitizerID, uint64_t globalTimeStamp)
     {
         if (buffer->size() < 1)
             return;
@@ -90,7 +122,7 @@ private:
         {
             std::cerr << "Error while writing to HDF5 file: " << e.getDetailMsg() <<
                       "\n\t " << "HDF5::write( " << digitizerID << ", " << globalTimeStamp <<
-                              ", " << buffer->size() << " )" << std::endl;
+                      ", " << buffer->size() << " )" << std::endl;
             for(const E& element: *buffer)
             {
                 std::cerr << element << "\n";
@@ -100,64 +132,19 @@ private:
         mutex.unlock();
     }
 
-public:
-    DataWriterHDF5(uuid runID)
+    template <typename E>
+    void operator()(const std::set<E>* buffer, uint32_t digitizerID, uint64_t globalTimeStamp)
     {
-        std::string filename = "jadaq-run-" + runID.toString() + ".h5";
-        try
-        {
-            file = new H5::H5File(filename, H5F_ACC_TRUNC);
-            root = new H5::Group(file->openGroup("/"));
-        } catch (H5::Exception& e)
-        {
-            std::cerr << "ERROR: could not open/create HDF5-file \"" << filename <<  "\":" << e.getDetailMsg() << std::endl;
-            throw;
-        }
+        std::vector<E> v(buffer->begin(), buffer->end());
+        operator()(&v,digitizerID,globalTimeStamp);
     }
 
-    ~DataWriterHDF5() override
-    {
-        assert(file);
-        mutex.lock(); // Wait if someone is still writing data
-        root->close();
-        delete root;
-        file->close();
-        delete file;
-        mutex.unlock();
-    }
-    void addDigitizer(uint32_t digitizerID) override
-    {
-        mutex.lock();
-        addDigitizer_(digitizerID);
-        mutex.unlock();
-    }
-
-    void operator()(const jadaq::vector<Data::ListElement422>* buffer, uint32_t digitizerID, uint64_t globalTimeStamp) override
-    { write(buffer,digitizerID,globalTimeStamp); }
-
-    void operator()(const jadaq::set<Data::ListElement422>* buffer, uint32_t digitizerID, uint64_t globalTimeStamp) override
-    {
-        std::vector<Data::ListElement422> v(buffer->begin(), buffer->end());
-        write(&v,digitizerID,globalTimeStamp);
-    }
-    void operator()(const jadaq::buffer<Data::ListElement422>* buffer, uint32_t digitizerID, uint64_t globalTimeStamp) override
+    template <typename E>
+    void operator()(const jadaq::buffer<E>* buffer, uint32_t digitizerID, uint64_t globalTimeStamp)
     {
         throw std::runtime_error("Error: jadaq::buffer not supported by DataWriterHDF5.");
     }
-
-    void operator()(const jadaq::vector<Data::ListElement8222>* buffer, uint32_t digitizerID, uint64_t globalTimeStamp) override
-    { write(buffer,digitizerID,globalTimeStamp); }
-
-    void operator()(const jadaq::set<Data::ListElement8222>* buffer, uint32_t digitizerID, uint64_t globalTimeStamp) override
-    {
-        std::vector<Data::ListElement8222> v(buffer->begin(), buffer->end());
-        write(&v,digitizerID,globalTimeStamp);
-    }
-    void operator()(const jadaq::buffer<Data::ListElement8222>* buffer, uint32_t digitizerID, uint64_t globalTimeStamp) override
-    {
-        throw std::runtime_error("Error: jadaq::buffer not supported by DataWriterHDF5.");
-    }
-
 };
+
 
 #endif //JADAQ_DATAHANDLERHDF5_HPP

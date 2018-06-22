@@ -32,26 +32,12 @@
 #include "uuid.hpp"
 #include "DataFormat.hpp"
 #include "container.hpp"
-#include "DataWriter.hpp"
 
-class DataWriterText: public DataWriter
+class DataWriterText
 {
 private:
     std::fstream* file = nullptr;
     std::mutex mutex;
-    template <typename E, template<typename...> typename C>
-    void write(const C<E>* buffer, uint32_t digitizerID, uint64_t globalTimeStamp)
-    {
-        mutex.lock();
-        *file << "#" << std::setw(10) << "digitID" << " ";
-        E::headerOn(*file);
-        *file << std::endl << "@" << globalTimeStamp << std::endl;
-        for(const E& element: *buffer)
-        {
-            *file << std::setw(10) << digitizerID << " " << element << "\n";
-        }
-        mutex.unlock();
-    }
 
 public:
     DataWriterText(uuid runID)
@@ -65,7 +51,7 @@ public:
         *file << "# runID: " << runID << std::endl;
     }
 
-    ~DataWriterText() override
+    ~DataWriterText()
     {
         assert(file);
         mutex.lock(); // Wait if someone is still writing data
@@ -73,34 +59,26 @@ public:
         mutex.unlock();
     }
 
-    void addDigitizer(uint32_t digitizerID) override
+    void addDigitizer(uint32_t digitizerID)
     {
         mutex.lock();
         *file << "# digitizerID: " << digitizerID << std::endl;
         mutex.unlock();
     }
 
-    void operator()(const jadaq::vector<Data::ListElement422>* buffer, uint32_t digitizerID, uint64_t globalTimeStamp) override
-    { write(buffer,digitizerID,globalTimeStamp); }
-
-    void operator()(const jadaq::set<Data::ListElement422>* buffer, uint32_t digitizerID, uint64_t globalTimeStamp) override
-    { write(buffer,digitizerID,globalTimeStamp); }
-
-    void operator()(const jadaq::buffer<Data::ListElement422>* buffer, uint32_t digitizerID, uint64_t globalTimeStamp) override
+    template <typename E, template<typename...> typename C>
+    void operator()(const C<E>* buffer, uint32_t digitizerID, uint64_t globalTimeStamp)
     {
-        throw std::runtime_error("Error: jadaq::buffer not supported by DataWriterText.");
+        mutex.lock();
+        *file << "#" << std::setw(10) << "digitID" << " ";
+        E::headerOn(*file);
+        *file << std::endl << "@" << globalTimeStamp << std::endl;
+        for(const E& element: *buffer)
+        {
+            *file << std::setw(10) << digitizerID << " " << element << "\n";
+        }
+        mutex.unlock();
     }
-    void operator()(const jadaq::vector<Data::ListElement8222>* buffer, uint32_t digitizerID, uint64_t globalTimeStamp) override
-    { write(buffer,digitizerID,globalTimeStamp); }
-
-    void operator()(const jadaq::set<Data::ListElement8222>* buffer, uint32_t digitizerID, uint64_t globalTimeStamp) override
-    { write(buffer,digitizerID,globalTimeStamp); }
-
-    void operator()(const jadaq::buffer<Data::ListElement8222>* buffer, uint32_t digitizerID, uint64_t globalTimeStamp) override
-    {
-        throw std::runtime_error("Error: jadaq::buffer not supported by DataWriterText.");
-    }
-
 };
 
 #endif //JADAQ_DATAHANDLERTEXT_HPP

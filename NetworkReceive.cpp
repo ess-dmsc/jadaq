@@ -50,10 +50,9 @@ void NetworkReceive::newDataWriter(uuid newID)
     {
         uint32_t digitizerID = db.first;
         jadaq::vector<Data::ListElement422>& buffer = db.second;
-        (*dataWriter)(&buffer,digitizerID,currentTimestamp);
+        dataWriter(&buffer,digitizerID,currentTimestamp);
     }
     dataBuffers.clear();
-    delete dataWriter;
     runID = newID;
     dataWriter = new DataWriterText(runID);
 
@@ -65,7 +64,7 @@ void NetworkReceive::newTimeStamp(uint64_t timeStamp)
     {
         uint32_t digitizerID = db.first;
         jadaq::vector<Data::ListElement422>& buffer = db.second;
-        (*dataWriter)(&buffer,digitizerID,currentTimestamp);
+        dataWriter(&buffer,digitizerID,currentTimestamp);
         buffer.clear();
     }
     currentTimestamp = timeStamp;

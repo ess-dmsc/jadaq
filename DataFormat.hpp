@@ -211,5 +211,7 @@ static inline std::ostream& operator<< (std::ostream& os, const Data::ListElemen
 { e.printOn(os); return os; }
 static inline std::ostream& operator<< (std::ostream& os, const Data::ListElement8222& e)
 { e.printOn(os); return os; }
+static inline std::ostream& operator<< (std::ostream& os, const Data::WaveformElement8222n2& e)
+{ e.printOn(os); return os; }
 
 #endif //JADAQ_DATAFORMAT_HPP

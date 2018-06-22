@@ -86,7 +86,7 @@ public:
     void reset() { digitizer->reset(); }
 
     template <template<typename...> typename C>
-    void initialize(DataWriter* dataWriter)
+    void initialize(DataWriter& dataWriter)
     {
         boardConfiguration = digitizer->getBoardConfiguration();
         DEBUG(std::cout << "Prepare readout buffer for digitizer " << name() << std::endl;)

@@ -33,32 +33,16 @@
 #include "uuid.hpp"
 #include "DataFormat.hpp"
 #include "container.hpp"
-#include "DataWriter.hpp"
 
 using boost::asio::ip::udp;
 
-class DataWriterNetwork: public DataWriter
+class DataWriterNetwork
 {
 private:
     uuid runID;
     boost::asio::io_service ioService;
     udp::endpoint remoteEndpoint;
     udp::socket *socket = nullptr;
-
-    template <typename E>
-    void write(const jadaq::buffer<E>* buffer, uint32_t digitizerID, uint64_t globalTimeStamp)
-    {
-        Data::Header* header = (Data::Header*)buffer->data;
-        header->runID = runID.value();
-        header->globalTime = globalTimeStamp;
-        header->digitizerID = digitizerID;
-        header->version = Data::currentVersion;
-        header->elementType = E::type();
-        header->numElements = (uint16_t)buffer->size();
-
-        socket->send_to(boost::asio::buffer(buffer->data, buffer->data_size()), remoteEndpoint);
-
-    }
 
 public:
     DataWriterNetwork(const std::string& address, const std::string& port, uuid runID_)
@@ -78,35 +62,37 @@ public:
 
     }
 
-    void addDigitizer(uint32_t digitizerID) override
+    void addDigitizer(uint32_t digitizerID)
     {
         // TODO: This is where we will send the configuration over TCP
     }
 
-    void operator()(const jadaq::vector<Data::ListElement422>* buffer, uint32_t digitizerID, uint64_t globalTimeStamp) override
+    template <typename E>
+    void operator()(const jadaq::buffer<E>* buffer, uint32_t digitizerID, uint64_t globalTimeStamp)
     {
-        throw std::runtime_error("Error: jadaq::vector not supported by DataWriterNetwork.");
+        Data::Header* header = (Data::Header*)buffer->data;
+        header->runID = runID.value();
+        header->globalTime = globalTimeStamp;
+        header->digitizerID = digitizerID;
+        header->version = Data::currentVersion;
+        header->elementType = E::type();
+        header->numElements = (uint16_t)buffer->size();
+        socket->send_to(boost::asio::buffer(buffer->data, buffer->data_size()), remoteEndpoint);
     }
-    void operator()(const jadaq::set<Data::ListElement422>* buffer, uint32_t digitizerID, uint64_t globalTimeStamp) override
-    {
-        throw std::runtime_error("Error: jadaq::set not supported by DataWriterNetwork.");
-    }
-    void operator()(const jadaq::buffer<Data::ListElement422>* buffer, uint32_t digitizerID, uint64_t globalTimeStamp) override
-    {
-        write(buffer,digitizerID,globalTimeStamp);
-    }
-    void operator()(const jadaq::vector<Data::ListElement8222>* buffer, uint32_t digitizerID, uint64_t globalTimeStamp) override
-    {
-        throw std::runtime_error("Error: jadaq::vector not supported by DataWriterNetwork.");
-    }
-    void operator()(const jadaq::set<Data::ListElement8222>* buffer, uint32_t digitizerID, uint64_t globalTimeStamp) override
+
+    template <typename E>
+    void operator()(const jadaq::set<E>* buffer, uint32_t digitizerID, uint64_t globalTimeStamp)
     {
         throw std::runtime_error("Error: jadaq::set not supported by DataWriterNetwork.");
     }
-    void operator()(const jadaq::buffer<Data::ListElement8222>* buffer, uint32_t digitizerID, uint64_t globalTimeStamp) override
+
+    template <typename E>
+    void operator()(const jadaq::vector<E>* buffer, uint32_t digitizerID, uint64_t globalTimeStamp)
     {
-        write(buffer,digitizerID,globalTimeStamp);
+        throw std::runtime_error("Error: jadaq::vector not supported by DataWriterNetwork.");
     }
+
+
 };
 
 

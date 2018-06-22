@@ -37,7 +37,7 @@ class DataHandler
 {
 public:
     template<typename E, template<typename...> typename C>
-    void initialize(DataWriter* dataWriter, uint32_t digitizerID, size_t channels)
+    void initialize(DataWriter& dataWriter, uint32_t digitizerID, size_t channels)
     {
         instance.reset(new Implementation<E,C>(dataWriter,digitizerID,channels));
     }
@@ -63,7 +63,7 @@ private:
     {
         static_assert(std::is_pod<E>::value, "E must be POD");
     private:
-        DataWriter* dataWriter;
+        DataWriter& dataWriter;
         uint32_t digitizerID;
         struct Buffer
         {
@@ -96,7 +96,7 @@ private:
 
         } current, next;
     public:
-        Implementation(DataWriter* dw, uint32_t digID, size_t channels)
+        Implementation(DataWriter& dw, uint32_t digID, size_t channels)
                 : dataWriter(dw)
                 , digitizerID(digID)
                 , current(channels)
@@ -126,7 +126,7 @@ private:
                         current.buffer->insert(element);
                     } catch (std::length_error&)
                     {
-                        (*dataWriter)(current.buffer,digitizerID,current.globalTimeStamp);
+                        dataWriter(current.buffer,digitizerID,current.globalTimeStamp);
                         current.buffer->clear();
                         current.buffer->insert(element);
                     }
@@ -140,7 +140,7 @@ private:
                         next.buffer->insert(element);
                     } catch (std::length_error&)
                     {
-                        (*dataWriter)(next.buffer,digitizerID,next.globalTimeStamp);
+                        dataWriter(next.buffer,digitizerID,next.globalTimeStamp);
                         next.buffer->clear();
                         next.buffer->insert(element);
                     }
@@ -150,7 +150,7 @@ private:
             {
                 if (current.buffer->size() > 0)
                 {
-                    (*dataWriter)(current.buffer, digitizerID, current.globalTimeStamp);
+                    dataWriter(current.buffer, digitizerID, current.globalTimeStamp);
                 }
                 current.clear();
                 std::swap(current,next);
@@ -161,12 +161,12 @@ private:
         {
             if (current.buffer->size() > 0)
             {
-                (*dataWriter)(current.buffer, digitizerID, current.globalTimeStamp);
+                dataWriter(current.buffer, digitizerID, current.globalTimeStamp);
                 current.clear();
             }
             if (next.buffer->size() > 0)
             {
-                (*dataWriter)(next.buffer, digitizerID, next.globalTimeStamp);
+                dataWriter(next.buffer, digitizerID, next.globalTimeStamp);
                 next.clear();
             }
         }
