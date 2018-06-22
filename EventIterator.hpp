@@ -220,4 +220,36 @@ inline Data::ListElement8222 DPPQDCEventIterator<Data::ListElement8222>::GroupIt
     return res;
 }
 
+template <>
+inline Data::WaveformElement8222n2 DPPQDCEventIterator<Data::WaveformElement8222n2>::GroupIterator::operator*() const
+{
+    size_t n = (elementSize-(2+extras))<<1;
+    uint64_t time = ptr[0];
+    uint32_t extra = 0;
+    if (extras)
+        extra = ptr[elementSize-2];
+    uint32_t data = ptr[elementSize-1];
+    Data::WaveformElement8222n2 res;
+    res.localTime = ((uint64_t)(extra & 0x0000ffffu)<<32) | time;
+    res.adcValue  = (uint16_t)(data & 0x0000ffffu);
+    res.baseline  = (uint16_t)(extra>>16);
+    res.channel   = (group*channelsPerGroup) | (uint16_t)(data >> 28);
+    for (size_t i = 0; i < (n>>1); ++i)
+    {
+        uint32_t ss = ptr[i+1];
+        res.samples[i*2] = (uint16_t)(ss & 0xFFFF);
+        res.samples[i*2+1] = (uint16_t)((ss>>16) & 0xFFFF);
+        res.gate[i*2] = (bool)((ss>>12) & 1);
+        res.gate[i*2+1] = (bool)((ss>>28) & 1);
+        res.trigger[i*2] = (bool)((ss>>13) & 1);
+        res.trigger[i*2+1] = (bool)((ss>>29) & 1);
+        res.holdOff[i*2] = (bool)((ss>>14) & 1);
+        res.holdOff[i*2+1] = (bool)((ss>>30) & 1);
+        res.overThreshold[i*2] = (bool)((ss>>15) & 1);
+        res.overThreshold[i*2+1] = (bool)((ss>>31) & 1);
+
+    }
+    return res;
+}
+
 #endif //JADAQ_EVENTITERATOR_HPP

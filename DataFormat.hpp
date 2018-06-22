@@ -30,7 +30,7 @@
 #include <H5Cpp.h>
 #include <iomanip>
 
-#define VERSION {1,0}
+#define VERSION {1,1}
 
 #define JUMBO_PAYLOAD 9000
 #define IP_HEADER       20
@@ -48,7 +48,7 @@ namespace Data
         None,
         List422,
         List8222,
-        Waweform
+        Waveform8222n2
     };
     /* Shared meta data for the entire data package */
     struct __attribute__ ((__packed__)) Header // 32 bytes
@@ -120,6 +120,72 @@ namespace Data
             os << std::setw(10) << "channel" << " " << std::setw(20) << "localTime" <<
                " " << std::setw(10) << "adcValue" << " " << std::setw(10) << "baseline";
         }
+    };
+    struct WaveformElement8222n2
+    {
+        typedef uint64_t time_t;
+        time_t localTime;
+        uint16_t adcValue;
+        uint16_t baseline;
+        uint16_t channel;
+        std::vector<uint16_t> samples;
+        std::vector<bool> gate;
+        std::vector<bool> trigger;
+        std::vector<bool> holdOff;
+        std::vector<bool> overThreshold;
+
+        bool operator< (const WaveformElement8222n2& rhs) const
+        {
+            return localTime < rhs.localTime || (localTime == rhs.localTime && channel < rhs.channel) ;
+        };
+        void printOn(std::ostream& os) const
+        {
+            os << std::setw(10) << channel << " " << std::setw(20) << localTime <<
+               " " << std::setw(10) << adcValue << " " << std::setw(10) << baseline << std::endl;
+            for (const auto& s: samples)
+            {
+                os << " " <<  std::setw(5) << s;
+            }
+            os << std::endl;
+            for (const auto& f: gate)
+            {
+                os << " " <<  std::setw(5) << f;
+            }
+            os << std::endl;
+            for (const auto& f: trigger)
+            {
+                os << " " <<  std::setw(5) << f;
+            }
+            os << std::endl;
+            for (const auto& f: holdOff)
+            {
+                os << " " <<  std::setw(5) << f;
+            }
+            os << std::endl;
+            for (const auto& f: overThreshold)
+            {
+                os << " " <<  std::setw(5) << f;
+            }
+            os << std::endl;
+        }
+        static ElementType type() { return Waveform8222n2; }
+        static H5::CompType h5type()
+        {
+            static constexpr const hsize_t n[1] = {256};
+            H5::CompType datatype(sizeof(WaveformElement8222n2));
+            datatype.insertMember("localTime", HOFFSET(WaveformElement8222n2, localTime), H5::PredType::NATIVE_UINT64);
+            datatype.insertMember("adcValue", HOFFSET(WaveformElement8222n2, adcValue), H5::PredType::NATIVE_UINT16);
+            datatype.insertMember("baseline", HOFFSET(WaveformElement8222n2, baseline), H5::PredType::NATIVE_UINT16);
+            datatype.insertMember("channel", HOFFSET(WaveformElement8222n2, channel), H5::PredType::NATIVE_UINT16);
+            datatype.insertMember("samples", HOFFSET(WaveformElement8222n2, samples), H5::ArrayType(H5::PredType::NATIVE_UINT16,1,n));
+            return datatype;
+        }
+        static void headerOn(std::ostream& os)
+        {
+            os << std::setw(10) << "channel" << " " << std::setw(20) << "localTime" <<
+               " " << std::setw(10) << "adcValue" << " " << std::setw(10) << "baseline";
+        }
+
     };
     static inline size_t elementSize(ElementType elementType)
     {
