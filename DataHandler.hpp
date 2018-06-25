@@ -61,7 +61,7 @@ private:
     template <typename E, template<typename...> typename C>
     class Implementation: public Interface
     {
-        static_assert(std::is_pod<E>::value, "E must be POD");
+        //static_assert(std::is_pod<E>::value, "E must be POD");
     private:
         DataWriter& dataWriter;
         uint32_t digitizerID;

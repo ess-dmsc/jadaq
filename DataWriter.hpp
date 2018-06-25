@@ -64,6 +64,7 @@ private:
     struct Model : Concept
     {
         explicit Model(T* value) : val(value) {}
+        ~Model() { delete val; }
         void addDigitizer(uint32_t digitizerID) override
         { val->addDigitizer(digitizerID); }
         void operator()(const jadaq::vector<Data::ListElement422>* buffer, uint32_t digitizerID, uint64_t globalTimeStamp) final 

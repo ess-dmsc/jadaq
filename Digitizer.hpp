@@ -111,7 +111,11 @@ public:
                 caen::Digitizer740DPP::BoardConfiguration bc{boardConfiguration};
                 extras = bc.extras();
                 waveform = bc.waveform();
-                if (extras)
+                if (waveform)
+                {
+                    dataHandler.initialize<Data::WaveformElement8222n2,C>(dataWriter,serial(),channels());
+                }
+                else if (extras)
                 {
                     dataHandler.initialize<Data::ListElement8222,C>(dataWriter,serial(),channels());
                 } else
