@@ -61,7 +61,7 @@ template <typename E>
 class DPPQDCEventIterator
 {
 private:
-    caen::ReadoutBuffer buffer;
+    const caen::ReadoutBuffer& buffer;
     uint32_t* ptr;
     uint32_t* boardAggregateEnd;
     /*
@@ -158,7 +158,7 @@ private:
         }
     }
 public:
-    DPPQDCEventIterator(caen::ReadoutBuffer b)
+    DPPQDCEventIterator(const caen::ReadoutBuffer& b)
             : buffer(b)
             , ptr((uint32_t*)buffer.data)
             , groupIterator(nextGroupIterator()) {}
