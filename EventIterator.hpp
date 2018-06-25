@@ -237,16 +237,28 @@ inline Data::WaveformElement8222n2 DPPQDCEventIterator<Data::WaveformElement8222
     for (size_t i = 0; i < (n>>1); ++i)
     {
         uint32_t ss = ptr[i+1];
-        res.samples[i*2] = (uint16_t)(ss & 0xFFFF);
-        res.samples[i*2+1] = (uint16_t)((ss>>16) & 0xFFFF);
-        res.gate[i*2] = (bool)((ss>>12) & 1);
-        res.gate[i*2+1] = (bool)((ss>>28) & 1);
-        res.trigger[i*2] = (bool)((ss>>13) & 1);
-        res.trigger[i*2+1] = (bool)((ss>>29) & 1);
-        res.holdOff[i*2] = (bool)((ss>>14) & 1);
-        res.holdOff[i*2+1] = (bool)((ss>>30) & 1);
-        res.overThreshold[i*2] = (bool)((ss>>15) & 1);
-        res.overThreshold[i*2+1] = (bool)((ss>>31) & 1);
+        res.samples.push_back((uint16_t)(ss & 0x0FFF));
+        res.samples.push_back((uint16_t)((ss>>16) & 0x0FFF));
+        res.gate.push_back((bool)((ss>>12) & 1));
+        res.gate.push_back((bool)((ss>>28) & 1));
+        res.trigger.push_back((bool)((ss>>13) & 1));
+        res.trigger.push_back((bool)((ss>>29) & 1));
+        res.holdOff.push_back((bool)((ss>>14) & 1));
+        res.holdOff.push_back((bool)((ss>>30) & 1));
+        res.overThreshold.push_back((bool)((ss>>15) & 1));
+        res.overThreshold.push_back((bool)((ss>>31) & 1));
+/*
+        res.samples.push_back((uint16_t)(ss & 0x0FFF));
+        res.samples.push_back((uint16_t)((ss>>16) & 0x0FFF));
+        res.gate.push_back((bool)((ss>>12) & 1));
+        res.gate.push_back((bool)((ss>>28) & 1));
+        res.trigger.push_back((bool)((ss>>13) & 1));
+        res.trigger.push_back((bool)((ss>>29) & 1));
+        res.holdOff.push_back((bool)((ss>>14) & 1));
+        res.holdOff.push_back((bool)((ss>>30) & 1));
+        res.overThreshold.push_back((bool)((ss>>15) & 1));
+        res.overThreshold.push_back((bool)((ss>>31) & 1));
+*/
 
     }
     return res;
