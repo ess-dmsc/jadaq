@@ -67,15 +67,15 @@ public:
     }
 
     template <typename E, template<typename...> typename C>
-    void operator()(const C<E>* buffer, uint32_t digitizerID, uint64_t globalTimeStamp)
+    void operator()(const C<E>* buffer, uint32_t digitizer, uint64_t globalTimeStamp)
     {
         mutex.lock();
-        *file << "#" << std::setw(10) << "digitID" << " ";
+        *file << "#" << PRINTH(digitizer) << " ";
         E::headerOn(*file);
         *file << std::endl << "@" << globalTimeStamp << std::endl;
         for(const E& element: *buffer)
         {
-            *file << std::setw(10) << digitizerID << " " << element << "\n";
+            *file << PRINTD(digitizer) << " " << element << "\n";
         }
         mutex.unlock();
     }

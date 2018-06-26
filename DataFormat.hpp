@@ -163,7 +163,7 @@ namespace Data
             }
         }
         static ElementType type() { return Waveform8222n2; }
-        H5::CompType h5type() const 
+        H5::CompType h5type() const
         {
             static const hsize_t n[1] = {num_samples};
             H5::CompType datatype(sizeof(WaveformElement8222n2)+ sizeof(uint16_t)*num_samples);
@@ -208,7 +208,6 @@ namespace Data
     static constexpr const size_t maxBufferSize = JUMBO_PAYLOAD-(UDP_HEADER+IP_HEADER);
 
 } // namespace Data
-
 static inline std::ostream& operator<< (std::ostream& os, const Data::ListElement422& e)
 { e.printOn(os); return os; }
 static inline std::ostream& operator<< (std::ostream& os, const Data::ListElement8222& e)
