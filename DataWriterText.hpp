@@ -75,7 +75,7 @@ public:
         *file << std::endl << "@" << globalTimeStamp << std::endl;
         for(const E& element: *buffer)
         {
-            *file << PRINTD(digitizer) << " " << element << "\n";
+            *file << " " << PRINTD(digitizer) << " " << element << "\n";
         }
         mutex.unlock();
     }
