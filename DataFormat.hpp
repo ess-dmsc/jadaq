@@ -36,9 +36,9 @@
 #define IP_HEADER       20
 #define UDP_HEADER       8
 
-
-#define PRINTD(V) std::setw(sizeof(V)*3) << V
-#define PRINTH(V) std::setw(sizeof(V)*3) << (#V)
+#define MAX(a,b) (((a)>(b))?(a):(b))
+#define PRINTD(V) std::setw(MAX(sizeof(V)*3,sizeof(#V))) << V
+#define PRINTH(V) std::setw(MAX(sizeof(V)*3,sizeof(#V))) << (#V)
 
 /* TODO: Take care of endianness: https://linux.die.net/man/3/endian
  * We will use little endian for our network protocol since odds
