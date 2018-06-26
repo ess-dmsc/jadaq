@@ -243,38 +243,55 @@ inline Data::WaveformElement8222n2 DPPQDCEventIterator<Data::WaveformElement8222
         uint32_t ss = ptr[i+1];
         res.samples[i<<1] = (uint16_t)(ss & 0x0fff);
         res.samples[i<<1|1] = (uint16_t)((ss>>16) & 0x0fff);
-        // gate
-        if((ss>>12) & 1)
-            gate.start = i<<1;
-        else if(gate.start != 0xffff)
-            gate.end = i<<1;
-        if((ss>>28) & 1)
-            gate.start = (i<<1)|1;
-        else if(gate.start != 0xffff)
-            gate.end = (i<<1)|1;
+
         // trigger
-        if ((ss>>13) & 1)
-            res.trigger = i<<1;
-        if ((ss>>29) & 1)
-            res.trigger = (i<<1)|1;
-        // holdoff
-        if((ss>>14) & 1)
-            holdoff.start = i<<1;
-        else if(holdoff.start != 0xffff)
-            holdoff.end = i<<1;
-        if((ss>>30) & 1)
-            holdoff.start = (i<<1)|1;
-        else if(holdoff.start != 0xffff)
-            holdoff.end = (i<<1)|1;
-        //over threshold
-        if((ss>>15) & 1)
-            over.start = i<<1;
-        else if(holdoff.start != 0xffff)
-            over.end = i<<1;
-        if((ss>>31) & 1)
-            over.start = (i<<1)|1;
-        else if(holdoff.start != 0xffff)
-            over.end = (i<<1)|1;
+        if (uint32_t t = (ss & 0x20002000))
+        {
+            trigger = (i<<1) | (t>>29);
+        }
+        { // gate
+            uint32_t g = (ss & 0x10001000);
+            if (gate.start == 0xffff)
+            {
+                if (g)
+                {
+                    gate.start = (i<<1) | (g>>28);
+                    if (g == 0x1000)
+                        gate.end = (i<<1)|1;
+                }
+            } else {
+                if (g<0x10001000)
+                    gate.end = (i<<1) | (g>>28);
+            }
+        }{ // holdoff
+            uint32_t h = (ss & 0x40004000);
+            if (holdoff.start == 0xffff)
+            {
+                if (h)
+                {
+                    holdoff.start = (i<<1) | (h>>30);
+                    if (h == 0x4000)
+                        holdoff.end = (i<<1)|1;
+                }
+            } else {
+                if (h<0x40004000)
+                    holdoff.end = (i<<1) | (h>>30);
+            }
+        }{//over threshold
+            uint32_t o = (ss & 0x80008000);
+            if (over.start == 0xffff)
+            {
+                if (o)
+                {
+                    over.start = (i << 1) | (o >> 30);
+                    if (o == 0x4000)
+                        over.end = (i<<1)|1;
+                }
+            } else {
+                if (o<0x80008000)
+                    over.end = (i << 1) | (o>>30);
+            }
+        }
     }
     res.trigger = trigger;
     res.gate = gate;
