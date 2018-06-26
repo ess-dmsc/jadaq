@@ -197,10 +197,10 @@ template <>
 inline Data::ListElement422 DPPQDCEventIterator<Data::ListElement422>::GroupIterator::operator*() const
 {
     Data::ListElement422 res;
-    res.localTime = ptr[0];
+    res.time = ptr[0];
     uint32_t data = ptr[elementSize-1];
-    res.adcValue  = (uint16_t)(data & 0x0000ffffu);
     res.channel   = (group*channelsPerGroup) | (uint16_t)(data >> 28);
+    res.charge  = (uint16_t)(data & 0x0000ffffu);
     return res;
 }
 
@@ -213,10 +213,10 @@ inline Data::ListElement8222 DPPQDCEventIterator<Data::ListElement8222>::GroupIt
         extra = ptr[elementSize-2];
     uint32_t data = ptr[elementSize-1];
     Data::ListElement8222 res;
-    res.localTime = ((uint64_t)(extra & 0x0000ffffu)<<32) | time;
-    res.adcValue  = (uint16_t)(data & 0x0000ffffu);
-    res.baseline  = (uint16_t)(extra>>16);
+    res.time = ((uint64_t)(extra & 0x0000ffffu)<<32) | time;
     res.channel   = (group*channelsPerGroup) | (uint16_t)(data >> 28);
+    res.charge  = (uint16_t)(data & 0x0000ffffu);
+    res.baseline  = (uint16_t)(extra>>16);
     return res;
 }
 
@@ -230,37 +230,56 @@ inline Data::WaveformElement8222n2 DPPQDCEventIterator<Data::WaveformElement8222
         extra = ptr[elementSize-2];
     uint32_t data = ptr[elementSize-1];
     Data::WaveformElement8222n2 res;
-    res.localTime = ((uint64_t)(extra & 0x0000ffffu)<<32) | time;
-    res.adcValue  = (uint16_t)(data & 0x0000ffffu);
-    res.baseline  = (uint16_t)(extra>>16);
+    res.time = ((uint64_t)(extra & 0x0000ffffu)<<32) | time;
     res.channel   = (group*channelsPerGroup) | (uint16_t)(data >> 28);
-    for (size_t i = 0; i < (n>>1); ++i)
+    res.charge  = (uint16_t)(data & 0x0000ffffu);
+    res.baseline  = (uint16_t)(extra>>16);
+    uint16_t trigger = 0xFFFF;
+    Data::WaveformElement8222n2::interval gate = {0xffff,0xffff};
+    Data::WaveformElement8222n2::interval holdoff  = {0xffff,0xffff};
+    Data::WaveformElement8222n2::interval over = {0xffff,0xffff};
+    for (uint16_t i = 0; i < (n>>1); ++i)
     {
         uint32_t ss = ptr[i+1];
-        res.samples.push_back((uint16_t)(ss & 0x0FFF));
-        res.samples.push_back((uint16_t)((ss>>16) & 0x0FFF));
-        res.gate.push_back((bool)((ss>>12) & 1));
-        res.gate.push_back((bool)((ss>>28) & 1));
-        res.trigger.push_back((bool)((ss>>13) & 1));
-        res.trigger.push_back((bool)((ss>>29) & 1));
-        res.holdOff.push_back((bool)((ss>>14) & 1));
-        res.holdOff.push_back((bool)((ss>>30) & 1));
-        res.overThreshold.push_back((bool)((ss>>15) & 1));
-        res.overThreshold.push_back((bool)((ss>>31) & 1));
-/*
-        res.samples.push_back((uint16_t)(ss & 0x0FFF));
-        res.samples.push_back((uint16_t)((ss>>16) & 0x0FFF));
-        res.gate.push_back((bool)((ss>>12) & 1));
-        res.gate.push_back((bool)((ss>>28) & 1));
-        res.trigger.push_back((bool)((ss>>13) & 1));
-        res.trigger.push_back((bool)((ss>>29) & 1));
-        res.holdOff.push_back((bool)((ss>>14) & 1));
-        res.holdOff.push_back((bool)((ss>>30) & 1));
-        res.overThreshold.push_back((bool)((ss>>15) & 1));
-        res.overThreshold.push_back((bool)((ss>>31) & 1));
-*/
-
+        res.samples[i<<1] = (uint16_t)(ss & 0x0fff);
+        res.samples[i<<1|1] = (uint16_t)((ss>>16) & 0x0fff);
+        // gate
+        if((ss>>12) & 1)
+            gate.start = i<<1;
+        else if(gate.start != 0xffff)
+            gate.end = i<<1;
+        if((ss>>28) & 1)
+            gate.start = (i<<1)|1;
+        else if(gate.start != 0xffff)
+            gate.end = (i<<1)|1;
+        // trigger
+        if ((ss>>13) & 1)
+            res.trigger = i<<1;
+        if ((ss>>29) & 1)
+            res.trigger = (i<<1)|1;
+        // holdoff
+        if((ss>>14) & 1)
+            holdoff.start = i<<1;
+        else if(holdoff.start != 0xffff)
+            holdoff.end = i<<1;
+        if((ss>>30) & 1)
+            holdoff.start = (i<<1)|1;
+        else if(holdoff.start != 0xffff)
+            holdoff.end = (i<<1)|1;
+        //over threshold
+        if((ss>>15) & 1)
+            over.start = i<<1;
+        else if(holdoff.start != 0xffff)
+            over.end = i<<1;
+        if((ss>>31) & 1)
+            over.start = (i<<1)|1;
+        else if(holdoff.start != 0xffff)
+            over.end = (i<<1)|1;
     }
+    res.trigger = trigger;
+    res.gate = gate;
+    res.holdoff = holdoff;
+    res.overthreshold = over;
     return res;
 }
 

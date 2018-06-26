@@ -30,11 +30,15 @@
 #include <H5Cpp.h>
 #include <iomanip>
 
-#define VERSION {1,1}
+#define VERSION {1,2}
 
 #define JUMBO_PAYLOAD 9000
 #define IP_HEADER       20
 #define UDP_HEADER       8
+
+
+#define PRINTD(V) std::setw(sizeof(V)*3) << V
+#define PRINTH(V) std::setw(sizeof(V)*3) << (#V)
 
 /* TODO: Take care of endianness: https://linux.die.net/man/3/endian
  * We will use little endian for our network protocol since odds
@@ -64,119 +68,117 @@ namespace Data
     struct __attribute__ ((__packed__)) ListElement422
     {
         typedef uint32_t time_t;
-        time_t localTime;
-        uint16_t adcValue;
+        time_t time;
         uint16_t channel;
+        uint16_t charge;
         bool operator< (const ListElement422& rhs) const
         {
-            return localTime < rhs.localTime || (localTime == rhs.localTime && channel < rhs.channel) ;
+            return time < rhs.time || (time == rhs.time && channel < rhs.channel) ;
         };
         void printOn(std::ostream& os) const
         {
-            os << std::setw(10) << channel << " " << std::setw(10) << localTime << " " << std::setw(10) << adcValue;
+            os << PRINTD(channel) << " " << PRINTD(time) << " " << PRINTD(charge);
         }
         static ElementType type() { return List422; }
         static H5::CompType h5type()
         {
             H5::CompType datatype(sizeof(ListElement422));
-            datatype.insertMember("localTime", HOFFSET(ListElement422, localTime), H5::PredType::NATIVE_UINT32);
-            datatype.insertMember("adcValue", HOFFSET(ListElement422, adcValue), H5::PredType::NATIVE_UINT16);
+            datatype.insertMember("time", HOFFSET(ListElement422, time), H5::PredType::NATIVE_UINT32);
             datatype.insertMember("channel", HOFFSET(ListElement422, channel), H5::PredType::NATIVE_UINT16);
+            datatype.insertMember("charge", HOFFSET(ListElement422, charge), H5::PredType::NATIVE_UINT16);
+
             return datatype;
         }
         static void headerOn(std::ostream& os)
         {
-            os << std::setw(10) << "channel" << " " << std::setw(10) << "localTime" << " " << std::setw(10) << "adcValue";
+            os << PRINTH(channel) << " " << PRINTH(time) << " " << PRINTH(charge);
         }
     };
     struct __attribute__ ((__packed__)) ListElement8222
     {
         typedef uint64_t time_t;
-        time_t localTime;
-        uint16_t adcValue;
-        uint16_t baseline;
+        time_t time;
         uint16_t channel;
+        uint16_t charge;
+        uint16_t baseline;
         bool operator< (const ListElement8222& rhs) const
         {
-            return localTime < rhs.localTime || (localTime == rhs.localTime && channel < rhs.channel) ;
+            return time < rhs.time || (time == rhs.time && channel < rhs.channel) ;
         };
         void printOn(std::ostream& os) const
         {
-            os << std::setw(10) << channel << " " << std::setw(20) << localTime <<
-               " " << std::setw(10) << adcValue << " " << std::setw(10) << baseline;
+            os << PRINTD(channel) << " " << PRINTD(time) << " " << PRINTD(charge) << " " << PRINTD(baseline) ;
         }
         static ElementType type() { return List8222; }
         static H5::CompType h5type()
         {
             H5::CompType datatype(sizeof(ListElement8222));
-            datatype.insertMember("localTime", HOFFSET(ListElement8222, localTime), H5::PredType::NATIVE_UINT64);
-            datatype.insertMember("adcValue", HOFFSET(ListElement8222, adcValue), H5::PredType::NATIVE_UINT16);
-            datatype.insertMember("baseline", HOFFSET(ListElement8222, baseline), H5::PredType::NATIVE_UINT16);
+            datatype.insertMember("time", HOFFSET(ListElement8222, time), H5::PredType::NATIVE_UINT64);
             datatype.insertMember("channel", HOFFSET(ListElement8222, channel), H5::PredType::NATIVE_UINT16);
+            datatype.insertMember("charge", HOFFSET(ListElement8222, charge), H5::PredType::NATIVE_UINT16);
+            datatype.insertMember("baseline", HOFFSET(ListElement8222, baseline), H5::PredType::NATIVE_UINT16);
             return datatype;
         }
         static void headerOn(std::ostream& os)
         {
-            os << std::setw(10) << "channel" << " " << std::setw(20) << "localTime" <<
-               " " << std::setw(10) << "adcValue" << " " << std::setw(10) << "baseline";
+            os << PRINTH(channel) << " " << PRINTH(time) << " " << PRINTH(charge) << " " << PRINTH(baseline) ;
         }
     };
-    struct WaveformElement8222n2
+    template <typename T>
+    struct Interval
+    {
+        T start;
+        T end;
+        void printOn(std::ostream& os) const
+        {
+            os << PRINTD(start) << " " << PRINTD(end);
+        }
+    };
+
+    struct __attribute__ ((__packed__)) WaveformElement8222n2
     {
         typedef uint64_t time_t;
-        time_t localTime;
-        uint16_t adcValue;
-        uint16_t baseline;
+        typedef Interval<uint16_t > interval;
+        time_t time;
         uint16_t channel;
-        std::vector<uint16_t> samples;
-        std::vector<bool> gate;
-        std::vector<bool> trigger;
-        std::vector<bool> holdOff;
-        std::vector<bool> overThreshold;
+        uint16_t charge;
+        uint16_t baseline;
+        uint16_t trigger;
+        interval gate;
+        interval holdoff;
+        interval overthreshold;
+        uint16_t num_samples;
+        uint16_t samples[];
 
         bool operator< (const WaveformElement8222n2& rhs) const
         {
-            return localTime < rhs.localTime || (localTime == rhs.localTime && channel < rhs.channel) ;
+            return time < rhs.time || (time == rhs.time && channel < rhs.channel) ;
         };
         void printOn(std::ostream& os) const
         {
-            os << std::setw(10) << channel << " " << std::setw(20) << localTime <<
-               " " << std::setw(10) << adcValue << " " << std::setw(10) << baseline << std::endl;
-            for (const auto& s: samples)
+
+            for (uint16_t i = 0; i < num_samples; ++i)
             {
-                os << " " <<  std::setw(5) << s;
+                os << " " <<  std::setw(5) << samples[i];
             }
-            os << std::endl;
-            for (const auto& f: gate)
-            {
-                os << " " <<  std::setw(5) << f;
-            }
-            os << std::endl;
-            for (const auto& f: trigger)
-            {
-                os << " " <<  std::setw(5) << f;
-            }
-            os << std::endl;
-            for (const auto& f: holdOff)
-            {
-                os << " " <<  std::setw(5) << f;
-            }
-            os << std::endl;
-            for (const auto& f: overThreshold)
-            {
-                os << " " <<  std::setw(5) << f;
-            }
-            os << std::endl;
         }
         static ElementType type() { return Waveform8222n2; }
-        static H5::CompType h5type()
+        H5::CompType h5type() const 
         {
-            static constexpr const hsize_t n[1] = {256};
-            H5::CompType datatype(sizeof(WaveformElement8222n2));
-            datatype.insertMember("localTime", HOFFSET(WaveformElement8222n2, localTime), H5::PredType::NATIVE_UINT64);
-            datatype.insertMember("adcValue", HOFFSET(WaveformElement8222n2, adcValue), H5::PredType::NATIVE_UINT16);
-            datatype.insertMember("baseline", HOFFSET(WaveformElement8222n2, baseline), H5::PredType::NATIVE_UINT16);
+            static const hsize_t n[1] = {num_samples};
+            H5::CompType datatype(sizeof(WaveformElement8222n2)+ sizeof(uint16_t)*num_samples);
+            H5::CompType h5interval(sizeof(interval));
+            h5interval.insertMember("start", HOFFSET(interval, start), H5::PredType::NATIVE_UINT16);
+            h5interval.insertMember("end", HOFFSET(interval, end), H5::PredType::NATIVE_UINT16);
+            datatype.insertMember("time", HOFFSET(WaveformElement8222n2, time), H5::PredType::NATIVE_UINT64);
             datatype.insertMember("channel", HOFFSET(WaveformElement8222n2, channel), H5::PredType::NATIVE_UINT16);
+            datatype.insertMember("charge", HOFFSET(WaveformElement8222n2, charge), H5::PredType::NATIVE_UINT16);
+            datatype.insertMember("baseline", HOFFSET(WaveformElement8222n2, baseline), H5::PredType::NATIVE_UINT16);
+            datatype.insertMember("trigger", HOFFSET(WaveformElement8222n2, trigger), H5::PredType::NATIVE_UINT16);
+            datatype.insertMember("gate", HOFFSET(WaveformElement8222n2, gate), h5interval);
+            datatype.insertMember("holdoff", HOFFSET(WaveformElement8222n2, holdoff), h5interval);
+            datatype.insertMember("overthreshold", HOFFSET(WaveformElement8222n2, overthreshold), h5interval);
+            datatype.insertMember("num_samples", HOFFSET(WaveformElement8222n2, num_samples), H5::PredType::NATIVE_UINT16);
             datatype.insertMember("samples", HOFFSET(WaveformElement8222n2, samples), H5::ArrayType(H5::PredType::NATIVE_UINT16,1,n));
             return datatype;
         }

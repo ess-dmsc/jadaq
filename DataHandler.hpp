@@ -119,9 +119,9 @@ private:
             {
                 events += 1;
                 E element = *eventIterator;
-                if (element.localTime > current.maxLocalTime[element.channel])
+                if (element.time > current.maxLocalTime[element.channel])
                 {
-                    current.maxLocalTime[element.channel] = element.localTime;
+                    current.maxLocalTime[element.channel] = element.time;
                     try {
                         current.buffer->insert(element);
                     } catch (std::length_error&)
@@ -131,7 +131,7 @@ private:
                         current.buffer->insert(element);
                     }
                 } else {
-                    next.maxLocalTime[element.channel] = element.localTime;
+                    next.maxLocalTime[element.channel] = element.time;
                     if (next.globalTimeStamp == 0)
                     {
                         next.globalTimeStamp = DataHandler::getTimeMsecs();

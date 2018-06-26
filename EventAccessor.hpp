@@ -84,9 +84,9 @@ template <>
 inline Data::ListElement422 DPPQDCEventAccessor<Data::ListElement422>::operator()(uint16_t channel, size_t i) const
 {
     Data::ListElement422 res;
-    res.localTime = container.ptr[channel][i].TimeTag;
-    res.adcValue = container.ptr[channel][i].Charge;
+    res.time = container.ptr[channel][i].TimeTag;
     res.channel = channel;
+    res.charge = container.ptr[channel][i].Charge;
     return res;
 }
 
