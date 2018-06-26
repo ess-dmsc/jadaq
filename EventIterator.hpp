@@ -220,6 +220,22 @@ inline Data::ListElement8222 DPPQDCEventIterator<Data::ListElement8222>::GroupIt
     return res;
 }
 
+#define DVP(V,M) {                          \
+    uint32_t v = (ss & 0x##M##000##M##000); \
+    if (V.start == 0xffff)                  \
+    {                                       \
+        if (v)                              \
+        {                                   \
+            V.start = (i<<1) | (v>>27+M);   \
+            if (v == 0x##M##000)            \
+                V.end = (i<<1)|1;           \
+        }                                   \
+    } else {                                \
+        if (v<0x##M##000##M##000)           \
+            V.end = (i<<1) | (v>>27+M);     \
+    }                                       \
+}
+
 template <>
 inline Data::WaveformElement8222n2 DPPQDCEventIterator<Data::WaveformElement8222n2>::GroupIterator::operator*() const
 {
@@ -243,55 +259,14 @@ inline Data::WaveformElement8222n2 DPPQDCEventIterator<Data::WaveformElement8222
         uint32_t ss = ptr[i+1];
         res.samples[i<<1] = (uint16_t)(ss & 0x0fff);
         res.samples[i<<1|1] = (uint16_t)((ss>>16) & 0x0fff);
-
         // trigger
         if (uint32_t t = (ss & 0x20002000))
         {
             trigger = (i<<1) | (t>>29);
         }
-        { // gate
-            uint32_t g = (ss & 0x10001000);
-            if (gate.start == 0xffff)
-            {
-                if (g)
-                {
-                    gate.start = (i<<1) | (g>>28);
-                    if (g == 0x1000)
-                        gate.end = (i<<1)|1;
-                }
-            } else {
-                if (g<0x10001000)
-                    gate.end = (i<<1) | (g>>28);
-            }
-        }{ // holdoff
-            uint32_t h = (ss & 0x40004000);
-            if (holdoff.start == 0xffff)
-            {
-                if (h)
-                {
-                    holdoff.start = (i<<1) | (h>>30);
-                    if (h == 0x4000)
-                        holdoff.end = (i<<1)|1;
-                }
-            } else {
-                if (h<0x40004000)
-                    holdoff.end = (i<<1) | (h>>30);
-            }
-        }{//over threshold
-            uint32_t o = (ss & 0x80008000);
-            if (over.start == 0xffff)
-            {
-                if (o)
-                {
-                    over.start = (i << 1) | (o >> 30);
-                    if (o == 0x4000)
-                        over.end = (i<<1)|1;
-                }
-            } else {
-                if (o<0x80008000)
-                    over.end = (i << 1) | (o>>30);
-            }
-        }
+        DVP(gate,1)
+        DVP(holdoff,4)
+        DVP(over,8)
     }
     res.trigger = trigger;
     res.gate = gate;
