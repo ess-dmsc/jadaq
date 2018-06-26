@@ -220,20 +220,20 @@ inline Data::ListElement8222 DPPQDCEventIterator<Data::ListElement8222>::GroupIt
     return res;
 }
 
-#define DVP(V,S) {                          \
-    uint32_t v = (ss & (0x10001000u<<S));   \
-    if (V.start == 0xffffu)                 \
-    {                                       \
-        if (v)                              \
-        {                                   \
-            V.start = (i<<1) | (v>>(28+S)); \
-            if (v == 0x1000u<<S)            \
-                V.end = (i<<1)|1;           \
-        }                                   \
-    } else {                                \
-        if (v<(0x10001000u<<S))             \
-            V.end = (i<<1) | (v>>(28+S));   \
-    }                                       \
+#define DVP(V,S) {                              \
+    uint32_t v = (ss & (0x10001000u<<(S)));     \
+    if ((V).start == 0xffffu)                   \
+    {                                           \
+        if (v)                                  \
+        {                                       \
+            (V).start = (i<<1) | (v>>(28+(S))); \
+            if (v == 0x1000u<<(S))              \
+                (V).end = (i<<1)|1;             \
+        }                                       \
+    } else {                                    \
+        if (v<(0x10001000u<<(S)))               \
+            (V).end = (i<<1) | (v>>(28+(S)));   \
+    }                                           \
 }
 
 template <>
