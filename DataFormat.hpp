@@ -179,7 +179,7 @@ namespace Data
         static void headerOn(std::ostream& os)
         {
             os << PRINTH(num_samples) << " " << PRINTH(trigger) << " " << PRINTH(gate) << " " << PRINTH(holdoff) <<
-               PRINTH(overthreshold) << " " << PRINTH(samples);
+               PRINTH(overthreshold) << " " << "samples";
         }
         void insertMembers(H5::CompType& datatype) const
         {
