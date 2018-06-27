@@ -14,10 +14,11 @@
 #define PRINTD(V) std::setw(MAX(sizeof(V)*3,sizeof(#V))) << V
 #define PRINTH(V) std::setw(MAX(sizeof(V)*3,sizeof(#V))) << (#V)
 
-struct __attribute__ ((__packed__)) Interval
+    struct __attribute__ ((__packed__)) Interval
     {
         uint16_t start;
         uint16_t end;
+        Interval() = default;
         void printOn(std::ostream& os) const
         {
             os << PRINTD(start) << " " << PRINTD(end);
@@ -35,9 +36,9 @@ struct __attribute__ ((__packed__)) Interval
             return datatype;
         }
     };
-
-static inline std::ostream& operator<< (std::ostream& os, const Interval& i)
-{ i.printOn(os); return os; }
+    static_assert(std::is_pod<Interval>::value, "Interval must be POD");
+    static inline std::ostream& operator<< (std::ostream& os, const Interval& i)
+    { i.printOn(os); return os; }
 
     struct __attribute__ ((__packed__)) Waveform
     {
@@ -47,6 +48,7 @@ static inline std::ostream& operator<< (std::ostream& os, const Interval& i)
         Interval holdoff;
         Interval overthreshold;
         uint16_t samples[];
+        Waveform() = default;
         void printOn(std::ostream& os) const
         {
             os << PRINTD(num_samples) << " " << PRINTD(trigger) << " " << PRINTD(gate) << " " <<
@@ -82,7 +84,8 @@ static inline std::ostream& operator<< (std::ostream& os, const Interval& i)
         }
     };
 
-static inline std::ostream& operator<< (std::ostream& os, const Waveform& w)
-{ w.printOn(os); return os; }
+    static_assert(std::is_pod<Waveform>::value, "Waveform must be POD");
+    static inline std::ostream& operator<< (std::ostream& os, const Waveform& w)
+    { w.printOn(os); return os; }
 
 #endif //JADAQ_WAVEFORM_HPP
