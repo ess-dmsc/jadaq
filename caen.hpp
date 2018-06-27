@@ -2018,24 +2018,6 @@ namespace caen {
             bool charge() {return (v&(1<<19)) == (1<<19);}
         };
 
-        class Event
-        {
-        private:
-            uint32_t* ptr;
-            size_t size;
-        public:
-            typedef Data::Interval interval;
-
-            Event(uint32_t* p, size_t s, bool extras): ptr(p), size(s) {}
-            uint32_t timeTag() { return ptr[0]; }
-            uint16_t charge()  { return (uint16_t)(ptr[size-1] & 0x0000ffffu); }
-            uint8_t subChannel() {return (uint8_t)(ptr[size-1] >> 28);}
-            uint16_t extendedTimeTag() { return (uint16_t)(ptr[size-2] & 0x0000ffffu); }
-            uint16_t baseline() { return (uint16_t)(ptr[size-2]>>16); }
-
-        };
-
-
         /* According to register docs the bits [0:3,5:7,9:11,14:15,22:31]
          * must be 0 and the bits [4,8,18,19] must be 1 so we always
          * force compliance by a bitwise-or with 0x000C0110 followed
