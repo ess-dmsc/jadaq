@@ -30,6 +30,7 @@
 #include <H5Cpp.h>
 #include <iomanip>
 #include "Waveform.hpp"
+#include "EventIterator.hpp"
 
 #define VERSION {1,2}
 
@@ -62,12 +63,21 @@ namespace Data
         uint16_t version;
         uint8_t __pad[6];
     };
+    static_assert(std::is_pod<Header>::value, "Data::Header must be POD");
+
     struct __attribute__ ((__packed__)) ListElement422
     {
         typedef uint32_t time_t;
         time_t time;
         uint16_t channel;
         uint16_t charge;
+        ListElement422() = default;
+        ListElement422(const DPPQCDEvent& event, uint16_t group)
+        {
+            time = event.timeTag();
+            channel = event.channel(group);
+            charge = event.charge();
+        }
         bool operator< (const ListElement422& rhs) const
         {
             return time < rhs.time || (time == rhs.time && channel < rhs.channel) ;
@@ -95,6 +105,7 @@ namespace Data
             os << PRINTH(channel) << " " << PRINTH(time) << " " << PRINTH(charge);
         }
     };
+    static_assert(std::is_pod<ListElement422>::value, "Data::ListElement422 must be POD");
 
     struct __attribute__ ((__packed__)) ListElement8222
     {
@@ -103,6 +114,15 @@ namespace Data
         uint16_t channel;
         uint16_t charge;
         uint16_t baseline;
+        ListElement8222() = default;
+        ListElement8222(const DPPQCDEvent& e, uint16_t group)
+        {
+            const DPPQCDEventExtra& event = static_cast<const DPPQCDEventExtra&>(e);
+            time = event.fullTime();
+            channel = event.channel(group);
+            charge = event.charge();
+            baseline = event.baseline();
+        }
         bool operator< (const ListElement8222& rhs) const
         {
             return time < rhs.time || (time == rhs.time && channel < rhs.channel) ;
@@ -131,14 +151,20 @@ namespace Data
             os << PRINTH(channel) << " " << PRINTH(time) << " " << PRINTH(charge) << " " << PRINTH(baseline) ;
         }
     };
+    static_assert(std::is_pod<ListElement8222>::value, "Data::ListElement8222 must be POD");
 
-    struct __attribute__ ((__packed__)) WaveformElement: ListElement422
+    struct __attribute__ ((__packed__)) WaveformElement
     {
+        ListElement422 listElement422;
         Waveform waveform;
-
+        WaveformElement() = default;
+        WaveformElement(const DPPQCDEvent& event, uint16_t group): listElement422(event,group)
+        {}
+        bool operator< (const WaveformElement& rhs) const
+        { return listElement422 < rhs.listElement422; }
         void printOn(std::ostream& os) const
         {
-            ListElement422::printOn(os); os << " ";
+            listElement422.printOn(os); os << " ";
             waveform.printOn(os);
         }
         static void headerOn(std::ostream& os)
@@ -149,10 +175,10 @@ namespace Data
         static ElementType type() { return Waveform8222n2; }
         void insertMembers(H5::CompType& datatype) const
         {
-            ListElement422::insertMembers(datatype);
+            listElement422.insertMembers(datatype);
             waveform.insertMembers(datatype);
         }
-        size_t size() const { return ListElement422::size() + waveform.size(); }
+        size_t size() const { return listElement422.size() + waveform.size(); }
         H5::CompType h5type() const
         {
             H5::CompType datatype(size());
@@ -160,6 +186,7 @@ namespace Data
             return datatype;
         }
     };
+    static_assert(std::is_pod<WaveformElement>::value, "Data::WaveformElement must be POD");
 
     static constexpr const char* defaultDataPort = "12345";
     static constexpr const size_t maxBufferSize = JUMBO_PAYLOAD-(UDP_HEADER+IP_HEADER);
