@@ -47,13 +47,25 @@ namespace jadaq
         void insert(const T &&v)
         { std::vector<T>::push_back(v); }
 
+        template<typename... Args>
+        typename std::vector<T>::iterator emplace(Args&&... args)
+        {
+            std::vector<T>::emplace_back(args...);
+            return std::vector<T>::end()-1;
+        }
+
         template< class InputIt >
         void insert(InputIt first, InputIt last)
         { std::vector<T>::insert(this->end(),first,last); }
     };
 
     template<typename T>
-    class set : public std::set<T> {};
+    class set : public std::set<T>
+    {
+        template <typename... Args>
+        typename std::set<T>::iterator emplace(Args&&... args)
+        { return std::set<T>::emplace(args...).first; }
+    };
 
     template<typename T>
     class buffer
