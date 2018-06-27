@@ -31,6 +31,7 @@
 #define _CAEN_HPP
 
 #include "_CAENDigitizer.h"
+#include "DataFormat.hpp"
 #include <CAENDigitizerType.h>
 #include <string>
 #include <sstream>
@@ -2015,6 +2016,23 @@ namespace caen {
             bool extras() {return (v&(1<<17)) == (1<<17);}
             bool timestamp() {return (v&(1<<18)) == (1<<18);}
             bool charge() {return (v&(1<<19)) == (1<<19);}
+        };
+
+        class Event
+        {
+        private:
+            uint32_t* ptr;
+            size_t size;
+        public:
+            typedef Data::Interval interval;
+
+            Event(uint32_t* p, size_t s, bool extras): ptr(p), size(s) {}
+            uint32_t timeTag() { return ptr[0]; }
+            uint16_t charge()  { return (uint16_t)(ptr[size-1] & 0x0000ffffu); }
+            uint8_t subChannel() {return (uint8_t)(ptr[size-1] >> 28);}
+            uint16_t extendedTimeTag() { return (uint16_t)(ptr[size-2] & 0x0000ffffu); }
+            uint16_t baseline() { return (uint16_t)(ptr[size-2]>>16); }
+
         };
 
 
