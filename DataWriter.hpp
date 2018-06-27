@@ -56,9 +56,9 @@ private:
         virtual void operator()(const jadaq::vector<Data::ListElement8222>* buffer, uint32_t digitizerID, uint64_t globalTimeStamp) = 0;
         virtual void operator()(const jadaq::set<Data::ListElement8222>* buffer, uint32_t digitizerID, uint64_t globalTimeStamp) = 0;
         virtual void operator()(const jadaq::buffer<Data::ListElement8222>* buffer, uint32_t digitizerID, uint64_t globalTimeStamp) = 0;
-        virtual void operator()(const jadaq::vector<Data::WaveformElement8222n2>* buffer, uint32_t digitizerID, uint64_t globalTimeStamp) = 0;
-        virtual void operator()(const jadaq::set<Data::WaveformElement8222n2>* buffer, uint32_t digitizerID, uint64_t globalTimeStamp) = 0;
-        virtual void operator()(const jadaq::buffer<Data::WaveformElement8222n2>* buffer, uint32_t digitizerID, uint64_t globalTimeStamp) = 0;
+        virtual void operator()(const jadaq::vector<Data::WaveformElement>* buffer, uint32_t digitizerID, uint64_t globalTimeStamp) = 0;
+        virtual void operator()(const jadaq::set<Data::WaveformElement>* buffer, uint32_t digitizerID, uint64_t globalTimeStamp) = 0;
+        virtual void operator()(const jadaq::buffer<Data::WaveformElement>* buffer, uint32_t digitizerID, uint64_t globalTimeStamp) = 0;
     };
     template <typename T>
     struct Model : Concept
@@ -79,11 +79,11 @@ private:
         { val->operator()(buffer,digitizerID,globalTimeStamp); }
         void operator()(const jadaq::buffer<Data::ListElement8222>* buffer, uint32_t digitizerID, uint64_t globalTimeStamp) final 
         { val->operator()(buffer,digitizerID,globalTimeStamp); }
-        void operator()(const jadaq::vector<Data::WaveformElement8222n2>* buffer, uint32_t digitizerID, uint64_t globalTimeStamp) final 
+        void operator()(const jadaq::vector<Data::WaveformElement>* buffer, uint32_t digitizerID, uint64_t globalTimeStamp) final
         { val->operator()(buffer,digitizerID,globalTimeStamp); }
-        void operator()(const jadaq::set<Data::WaveformElement8222n2>* buffer, uint32_t digitizerID, uint64_t globalTimeStamp) final
+        void operator()(const jadaq::set<Data::WaveformElement>* buffer, uint32_t digitizerID, uint64_t globalTimeStamp) final
         { val->operator()(buffer,digitizerID,globalTimeStamp); }
-        void operator()(const jadaq::buffer<Data::WaveformElement8222n2>* buffer, uint32_t digitizerID, uint64_t globalTimeStamp) final
+        void operator()(const jadaq::buffer<Data::WaveformElement>* buffer, uint32_t digitizerID, uint64_t globalTimeStamp) final
         { val->operator()(buffer,digitizerID,globalTimeStamp); }
         T* val;
     };

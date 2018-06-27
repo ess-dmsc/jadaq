@@ -354,7 +354,7 @@ void Digitizer::acquisition() {
         {
             if (waveform)
             {
-                DPPQDCEventIterator<Data::WaveformElement8222n2> iterator{readoutBuffer};
+                DPPQDCEventIterator<Data::WaveformElement> iterator{readoutBuffer};
                 EventIterator it{iterator};
                 size_t events = dataHandler(it);
                 stats.eventsFound += events;

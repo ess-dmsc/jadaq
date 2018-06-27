@@ -236,29 +236,32 @@ inline Data::ListElement8222 DPPQDCEventIterator<Data::ListElement8222>::GroupIt
     }                                           \
 }
 
+
 template <>
-inline Data::WaveformElement8222n2 DPPQDCEventIterator<Data::WaveformElement8222n2>::GroupIterator::operator*() const
+inline Data::WaveformElement DPPQDCEventIterator<Data::WaveformElement>::GroupIterator::operator*() const
 {
+    Data::WaveformElement res;
+    /*
     size_t n = (elementSize-(2+extras))<<1;
     uint64_t time = ptr[0];
     uint32_t extra = 0;
     if (extras)
         extra = ptr[elementSize-2];
     uint32_t data = ptr[elementSize-1];
-    Data::WaveformElement8222n2 res;
+
     res.time = ((uint64_t)(extra & 0x0000ffffu)<<32) | time;
     res.channel   = (group*channelsPerGroup) | (uint16_t)(data >> 28);
     res.charge  = (uint16_t)(data & 0x0000ffffu);
     res.baseline  = (uint16_t)(extra>>16);
     uint16_t trigger = 0xFFFF;
-    Data::WaveformElement8222n2::interval gate = {0xffff,0xffff};
-    Data::WaveformElement8222n2::interval holdoff  = {0xffff,0xffff};
-    Data::WaveformElement8222n2::interval over = {0xffff,0xffff};
+    Data::Interval gate = {0xffff,0xffff};
+    Data::Interval holdoff  = {0xffff,0xffff};
+    Data::Interval over = {0xffff,0xffff};
     for (uint16_t i = 0; i < (n>>1); ++i)
     {
         uint32_t ss = ptr[i+1];
-        res.samples[i<<1] = (uint16_t)(ss & 0x0fff);
-        res.samples[i<<1|1] = (uint16_t)((ss>>16) & 0x0fff);
+      //  res.samples[i<<1] = (uint16_t)(ss & 0x0fff);
+      //  res.samples[i<<1|1] = (uint16_t)((ss>>16) & 0x0fff);
         // trigger
         if (uint32_t t = (ss & 0x20002000))
         {
@@ -272,6 +275,7 @@ inline Data::WaveformElement8222n2 DPPQDCEventIterator<Data::WaveformElement8222
     res.gate = gate;
     res.holdoff = holdoff;
     res.overthreshold = over;
+    */
     return res;
 }
 

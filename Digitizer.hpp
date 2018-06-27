@@ -113,7 +113,7 @@ public:
                 waveform = bc.waveform();
                 if (waveform)
                 {
-                    dataHandler.initialize<Data::WaveformElement8222n2,C>(dataWriter,serial(),channels());
+                    dataHandler.initialize<Data::WaveformElement,C>(dataWriter,serial(),channels());
                 }
                 else if (extras)
                 {
