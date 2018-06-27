@@ -31,7 +31,6 @@
 #define _CAEN_HPP
 
 #include "_CAENDigitizer.h"
-#include "DataFormat.hpp"
 #include <CAENDigitizerType.h>
 #include <string>
 #include <sstream>
