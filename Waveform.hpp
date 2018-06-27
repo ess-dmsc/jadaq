@@ -36,6 +36,9 @@ struct __attribute__ ((__packed__)) Interval
         }
     };
 
+static inline std::ostream& operator<< (std::ostream& os, const Interval& i)
+{ i.printOn(os); return os; }
+
     struct __attribute__ ((__packed__)) Waveform
     {
         uint16_t num_samples;
@@ -46,10 +49,8 @@ struct __attribute__ ((__packed__)) Interval
         uint16_t samples[];
         void printOn(std::ostream& os) const
         {
-            os << PRINTD(num_samples) << " " << PRINTD(trigger) << " ";
-            gate.printOn(os); os << " ";
-            holdoff.printOn(os); os << " ";
-            overthreshold.printOn(os);
+            os << PRINTD(num_samples) << " " << PRINTD(trigger) << " " << PRINTD(gate) << " " <<
+               PRINTD(holdoff) << " " << PRINTD(overthreshold);
             for (uint16_t i = 0; i < num_samples; ++i)
             {
                 os << " " <<  std::setw(5) << samples[i];
@@ -81,8 +82,6 @@ struct __attribute__ ((__packed__)) Interval
         }
     };
 
-static inline std::ostream& operator<< (std::ostream& os, const Interval& i)
-{ i.printOn(os); return os; }
 static inline std::ostream& operator<< (std::ostream& os, const Waveform& w)
 { w.printOn(os); return os; }
 
