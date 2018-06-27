@@ -113,6 +113,14 @@ namespace jadaq
             check_length();
             *next++ = v;
         }
+        template <typename... Args>
+        T* emplace(Args&&... args)
+        {
+            check_length();
+            T* res = new(next++) T(args...);
+            return res;
+        }
+
         void clear()
         { next = (T*)(data + sizeof(Data::Header)); }
         T* begin()
