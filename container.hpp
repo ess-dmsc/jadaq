@@ -62,6 +62,7 @@ namespace jadaq
     template<typename T>
     class set : public std::set<T>
     {
+    public:
         template <typename... Args>
         typename std::set<T>::iterator emplace(Args&&... args)
         { return std::set<T>::emplace(args...).first; }
