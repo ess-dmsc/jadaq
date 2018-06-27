@@ -165,10 +165,6 @@ namespace Data
     static constexpr const size_t maxBufferSize = JUMBO_PAYLOAD-(UDP_HEADER+IP_HEADER);
 
 } // namespace Data
-static inline std::ostream& operator<< (std::ostream& os, const Data::Interval& i)
-{ i.printOn(os); return os; }
-static inline std::ostream& operator<< (std::ostream& os, const Data::Waveform& w)
-{ w.printOn(os); return os; }
 static inline std::ostream& operator<< (std::ostream& os, const Data::ListElement422& e)
 { e.printOn(os); return os; }
 static inline std::ostream& operator<< (std::ostream& os, const Data::ListElement8222& e)
