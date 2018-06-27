@@ -29,35 +29,84 @@
 #include <iterator>
 #include <limits>
 #include "caen.hpp"
-#include "DataFormat.hpp"
+#include "Waveform.hpp"
 
-template <typename E> class DPPQDCEventIterator;
-
-class EventIterator
+struct Event
 {
-private:
-    void* ptr;
+    uint32_t* ptr;
+    size_t size;
+    Event(uint32_t* p, size_t s): ptr(p), size(s) {}
+};
 
-public:
-    template <typename T>
-    EventIterator(DPPQDCEventIterator<T>& b): ptr(&b) {}
-    template<typename T>
-    EventIterator& operator=(DPPQDCEventIterator<T>& b)
+struct DPPQCDEvent: Event
+{
+    DPPQCDEvent(uint32_t* p, size_t s): Event(p,s) {}
+    uint32_t timeTag() const { return ptr[0]; }
+    uint16_t charge() const { return (uint16_t)(ptr[size-1] & 0x0000ffffu); }
+    uint8_t subChannel() const {return (uint8_t)(ptr[size-1] >> 28);}
+    uint16_t channel(uint16_t group) const { return (group<<3) | subChannel(); }
+};
+
+struct DPPQCDEventExtra: DPPQCDEvent
+{
+    DPPQCDEventExtra(uint32_t* p, size_t s): DPPQCDEvent(p,s) {}
+    uint16_t extendedTimeTag() const { return (uint16_t)(ptr[size-2] & 0x0000ffffu); }
+    uint16_t baseline() const { return (uint16_t)(ptr[size-2]>>16); }
+    uint64_t fullTime() const { return ((uint64_t)timeTag()) | (((uint64_t)extendedTimeTag())<<32); }
+};
+
+#define DVP(V,S) {                              \
+    uint32_t v = (ss & (0x10001000u<<(S)));     \
+    if ((V).start == 0xffffu)                   \
+    {                                           \
+        if (v)                                  \
+        {                                       \
+            (V).start = (i<<1) | (v>>(28+(S))); \
+            if (v == 0x1000u<<(S))              \
+                (V).end = (i<<1)|1;             \
+        }                                       \
+    } else {                                    \
+        if (v<(0x10001000u<<(S)))               \
+            (V).end = (i<<1) | (v>>(28+(S)));   \
+    }                                           \
+}
+
+struct DPPQCDEventWaveform: DPPQCDEvent
+{
+    bool extras = false;
+    DPPQCDEventWaveform(uint32_t* p, size_t s): DPPQCDEvent(p,s) {}
+    void waveform(Waveform& waveform) const
     {
-        ptr = &b;
-        return *this;
-    }
-    template<typename T>
-    DPPQDCEventIterator<T>& base() const
-    {
-        return *static_cast<DPPQDCEventIterator<T>*>(ptr);
+        size_t n = (size-(2+extras))<<1;
+        uint16_t trigger = 0xFFFF;
+        Interval gate = {0xffff,0xffff};
+        Interval holdoff  = {0xffff,0xffff};
+        Interval over = {0xffff,0xffff};
+        for (uint16_t i = 0; i < (n>>1); ++i)
+        {
+            uint32_t ss = ptr[i+1];
+          waveform.samples[i<<1] = (uint16_t)(ss & 0x0fff);
+          waveform.samples[i<<1|1] = (uint16_t)((ss>>16) & 0x0fff);
+            // trigger
+            if (uint32_t t = (ss & 0x20002000))
+            {
+                trigger = (i<<1) | (t>>29);
+            }
+            DVP(gate,0)
+            DVP(holdoff,2)
+            DVP(over,3)
+        }
+        waveform.trigger = trigger;
+        waveform.gate = gate;
+        waveform.holdoff = holdoff;
+        waveform.overthreshold = over;
     }
 };
+
 
 /*
  * DPPQDCEventIterator will iterate over a set of Board Aggregates contained in one Data Block
  */
-template <typename E>
 class DPPQDCEventIterator
 {
 private:
@@ -111,6 +160,11 @@ private:
             assert((size - 2) % elementSize == 0);
 
         }
+        uint16_t currentGroup()
+        {
+            assert (group >= 0);
+            return (uint16_t)group;
+        }
         GroupIterator& operator++()
         {
             ptr += elementSize;
@@ -139,7 +193,7 @@ private:
         bool operator<(const void* other) const { return ptr < other; }
         bool operator>=(const void* other) const { return ptr >= other; }
         bool operator<=(const void* other) const { return ptr <= other; }
-        E operator*() const;
+        DPPQCDEvent operator*() const { return DPPQCDEvent{ptr, elementSize}; }
     };
     GroupIterator groupIterator;
     GroupIterator nextGroupIterator()
@@ -189,94 +243,9 @@ public:
     bool operator<(const void* other) const { return groupIterator < other; }
     bool operator>=(const void* other) const { return groupIterator >= other; }
     bool operator<=(const void* other) const { return groupIterator <= other; }
-    E operator*() const { return *groupIterator; }
+    DPPQCDEvent operator*() const { return *groupIterator; }
     void* end() const { return buffer.end(); }
+    uint16_t group() { return groupIterator.currentGroup(); }
 };
-
-template <>
-inline Data::ListElement422 DPPQDCEventIterator<Data::ListElement422>::GroupIterator::operator*() const
-{
-    Data::ListElement422 res;
-    res.time = ptr[0];
-    uint32_t data = ptr[elementSize-1];
-    res.channel   = (group*channelsPerGroup) | (uint16_t)(data >> 28);
-    res.charge  = (uint16_t)(data & 0x0000ffffu);
-    return res;
-}
-
-template <>
-inline Data::ListElement8222 DPPQDCEventIterator<Data::ListElement8222>::GroupIterator::operator*() const
-{
-    uint64_t time = ptr[0];
-    uint32_t extra = 0;
-    if (extras)
-        extra = ptr[elementSize-2];
-    uint32_t data = ptr[elementSize-1];
-    Data::ListElement8222 res;
-    res.time = ((uint64_t)(extra & 0x0000ffffu)<<32) | time;
-    res.channel   = (group*channelsPerGroup) | (uint16_t)(data >> 28);
-    res.charge  = (uint16_t)(data & 0x0000ffffu);
-    res.baseline  = (uint16_t)(extra>>16);
-    return res;
-}
-
-#define DVP(V,S) {                              \
-    uint32_t v = (ss & (0x10001000u<<(S)));     \
-    if ((V).start == 0xffffu)                   \
-    {                                           \
-        if (v)                                  \
-        {                                       \
-            (V).start = (i<<1) | (v>>(28+(S))); \
-            if (v == 0x1000u<<(S))              \
-                (V).end = (i<<1)|1;             \
-        }                                       \
-    } else {                                    \
-        if (v<(0x10001000u<<(S)))               \
-            (V).end = (i<<1) | (v>>(28+(S)));   \
-    }                                           \
-}
-
-
-template <>
-inline Data::WaveformElement DPPQDCEventIterator<Data::WaveformElement>::GroupIterator::operator*() const
-{
-    Data::WaveformElement res;
-    /*
-    size_t n = (elementSize-(2+extras))<<1;
-    uint64_t time = ptr[0];
-    uint32_t extra = 0;
-    if (extras)
-        extra = ptr[elementSize-2];
-    uint32_t data = ptr[elementSize-1];
-
-    res.time = ((uint64_t)(extra & 0x0000ffffu)<<32) | time;
-    res.channel   = (group*channelsPerGroup) | (uint16_t)(data >> 28);
-    res.charge  = (uint16_t)(data & 0x0000ffffu);
-    res.baseline  = (uint16_t)(extra>>16);
-    uint16_t trigger = 0xFFFF;
-    Data::Interval gate = {0xffff,0xffff};
-    Data::Interval holdoff  = {0xffff,0xffff};
-    Data::Interval over = {0xffff,0xffff};
-    for (uint16_t i = 0; i < (n>>1); ++i)
-    {
-        uint32_t ss = ptr[i+1];
-      //  res.samples[i<<1] = (uint16_t)(ss & 0x0fff);
-      //  res.samples[i<<1|1] = (uint16_t)((ss>>16) & 0x0fff);
-        // trigger
-        if (uint32_t t = (ss & 0x20002000))
-        {
-            trigger = (i<<1) | (t>>29);
-        }
-        DVP(gate,0)
-        DVP(holdoff,2)
-        DVP(over,3)
-    }
-    res.trigger = trigger;
-    res.gate = gate;
-    res.holdoff = holdoff;
-    res.overthreshold = over;
-    */
-    return res;
-}
 
 #endif //JADAQ_EVENTITERATOR_HPP

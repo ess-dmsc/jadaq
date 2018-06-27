@@ -37,12 +37,12 @@ class DataHandler
 {
 public:
     template<typename E, template<typename...> typename C>
-    void initialize(DataWriter& dataWriter, uint32_t digitizerID, size_t channels)
+    void initialize(DataWriter& dataWriter, uint32_t digitizerID, size_t groups)
     {
-        instance.reset(new Implementation<E,C>(dataWriter,digitizerID,channels));
+        instance.reset(new Implementation<E,C>(dataWriter,digitizerID,groups));
     }
     void flush() { instance->flush(); }
-    size_t operator()(EventIterator& it) { return instance->operator()(it); }
+    size_t operator()(DPPQDCEventIterator& it) { return instance->operator()(it); }
     static int64_t getTimeMsecs()
     {
         return std::chrono::duration_cast<std::chrono::milliseconds>(
@@ -52,7 +52,7 @@ private:
     struct Interface
     {
         virtual ~Interface() = default;
-        virtual size_t operator()(EventIterator& it) = 0;
+        virtual size_t operator()(DPPQDCEventIterator& it) = 0;
         virtual void flush() = 0;
     };
     /* E is element type e.g. Data::ListElementxxx
@@ -61,31 +61,31 @@ private:
     template <typename E, template<typename...> typename C>
     class Implementation: public Interface
     {
-        //static_assert(std::is_pod<E>::value, "E must be POD");
+        static_assert(std::is_pod<E>::value, "E must be POD");
     private:
         DataWriter& dataWriter;
         uint32_t digitizerID;
         struct Buffer
         {
-            size_t numChannels;
+            size_t groups;
             C<E>* buffer;
-            typename E::time_t* maxLocalTime; // Array containing MaxLocalTime from the previous insertion needed to detect reset
+            uint32_t* maxLocalTime; // Array containing MaxLocalTime from the previous insertion needed to detect reset
             uint64_t globalTimeStamp = 0;
             void clear()
             {
                 buffer->clear();
-                for (size_t i = 0; i < numChannels; ++i)
+                for (size_t i = 0; i < groups; ++i)
                 {
                     maxLocalTime[i] = 0;
                 }
                 globalTimeStamp = 0;
             }
-            Buffer(size_t nc) : numChannels(nc) {}
+            Buffer(size_t numGroups) : groups(numGroups) {}
 
             void malloc()
             {
                 buffer = new C<E>();
-                maxLocalTime = new typename E::time_t[numChannels];
+                maxLocalTime = new uint32_t[groups];
                 clear();
             }
             void free()
@@ -96,11 +96,11 @@ private:
 
         } current, next;
     public:
-        Implementation(DataWriter& dw, uint32_t digID, size_t channels)
+        Implementation(DataWriter& dw, uint32_t digID, size_t groups)
                 : dataWriter(dw)
                 , digitizerID(digID)
-                , current(channels)
-                , next(current)
+                , current(groups)
+                , next(groups)
         {
             current.malloc();
             next.malloc();
@@ -111,38 +111,40 @@ private:
             current.free();
             next.free();
         }
-        size_t operator()(EventIterator& it)
+        size_t operator()(DPPQDCEventIterator& eventIterator)
         {
-            DPPQDCEventIterator<E>& eventIterator = it.base<E>();
             size_t events = 0;
             for (;eventIterator != eventIterator.end(); ++eventIterator)
             {
                 events += 1;
-                E element = *eventIterator;
-                if (element.time > current.maxLocalTime[element.channel])
+                DPPQCDEvent event = *eventIterator;
+                uint32_t timeTag = event.timeTag();
+                uint16_t group = eventIterator.group();
+
+                if (timeTag > current.maxLocalTime[group])
                 {
-                    current.maxLocalTime[element.channel] = element.time;
+                    current.maxLocalTime[group] = timeTag;
                     try {
-                        current.buffer->insert(element);
+                        current.buffer->emplace(event,group);
                     } catch (std::length_error&)
                     {
                         dataWriter(current.buffer,digitizerID,current.globalTimeStamp);
                         current.buffer->clear();
-                        current.buffer->insert(element);
+                        current.buffer->emplace(event,group);
                     }
                 } else {
-                    next.maxLocalTime[element.channel] = element.time;
+                    next.maxLocalTime[group] = timeTag;
                     if (next.globalTimeStamp == 0)
                     {
                         next.globalTimeStamp = DataHandler::getTimeMsecs();
                     }
                     try {
-                        next.buffer->insert(element);
+                        next.buffer->emplace(event,group);
                     } catch (std::length_error&)
                     {
                         dataWriter(next.buffer,digitizerID,next.globalTimeStamp);
                         next.buffer->clear();
-                        next.buffer->insert(element);
+                        next.buffer->emplace(event,group);
                     }
                 }
             }
