@@ -81,4 +81,9 @@ struct __attribute__ ((__packed__)) Interval
         }
     };
 
+static inline std::ostream& operator<< (std::ostream& os, const Interval& i)
+{ i.printOn(os); return os; }
+static inline std::ostream& operator<< (std::ostream& os, const Waveform& w)
+{ w.printOn(os); return os; }
+
 #endif //JADAQ_WAVEFORM_HPP
