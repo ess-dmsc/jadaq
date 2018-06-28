@@ -47,7 +47,6 @@ private:
     caen::Digitizer* digitizer = nullptr;
     CAEN_DGTZ_DPPFirmware_t firmware;
     uint32_t boardConfiguration = 0;
-    uint32_t numChannels;
     uint32_t id;
     bool waveform = false;
     bool extras   = false;
@@ -72,7 +71,8 @@ public:
     const std::string name() { return digitizer->modelName() + "_" + std::to_string(digitizer->serialNumber()); }
     const std::string model() { return digitizer->modelName(); }
     const uint32_t serial() { return digitizer->serialNumber(); }
-    uint32_t channels() { return numChannels; }
+    uint32_t channels() const { return digitizer->channels(); }
+    uint32_t groups() const { return digitizer->groups(); }
     void close(); //TODO: Why do we need close() in stead of using a destructor
     void set(FunctionID functionID, std::string value);
     void set(FunctionID functionID, int index, std::string value);
@@ -113,14 +113,14 @@ public:
                 waveform = bc.waveform();
                 if (waveform)
                 {
-                    dataHandler.initialize<Data::WaveformElement,C>(dataWriter,serial(),channels());
+                    dataHandler.initialize<Data::WaveformElement,C>(dataWriter,serial(),groups());
                 }
                 else if (extras)
                 {
-                    dataHandler.initialize<Data::ListElement8222,C>(dataWriter,serial(),channels());
+                    dataHandler.initialize<Data::ListElement8222,C>(dataWriter,serial(),groups());
                 } else
                 {
-                    dataHandler.initialize<Data::ListElement422,C>(dataWriter,serial(),channels());
+                    dataHandler.initialize<Data::ListElement422,C>(dataWriter,serial(),groups());
                 }
                 break;
             }
