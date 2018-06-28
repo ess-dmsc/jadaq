@@ -121,7 +121,7 @@ private:
                 uint32_t timeTag = event.timeTag();
                 uint16_t group = eventIterator.group();
 
-                if (timeTag > current.maxLocalTime[group])
+                if (timeTag >= current.maxLocalTime[group])
                 {
                     current.maxLocalTime[group] = timeTag;
                     try {
