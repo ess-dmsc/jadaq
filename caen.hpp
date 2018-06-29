@@ -849,13 +849,13 @@ namespace caen {
 
 
         /* Device configuration - i.e. getter and setters */
-        virtual uint32_t getRecordLength(int channel)
+        virtual uint32_t getRecordLength(uint32_t channel)
         { uint32_t size; errorHandler(CAEN_DGTZ_GetRecordLength(handle_,&size,channel)); return size; }
         virtual uint32_t getRecordLength()
         { uint32_t size; errorHandler(CAEN_DGTZ_GetRecordLength(handle_,&size)); return size; }
         virtual void setRecordLength(uint32_t size)
         { errorHandler(CAEN_DGTZ_SetRecordLength(handle_,size)); }
-        virtual void setRecordLength(int channel, uint32_t size)
+        virtual void setRecordLength(uint32_t channel, uint32_t size)
         { errorHandler(CAEN_DGTZ_SetRecordLength(handle_,size,channel)); }
 
         uint32_t getMaxNumEventsBLT()
@@ -2613,18 +2613,28 @@ namespace caen {
         void setDPPAggregateNumberPerBLT(uint32_t value) override
         { errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0xEF1C, value & 0x03FF)); }
 
-        virtual uint32_t getRecordLength()
+        uint32_t getRecordLength() override
         {
             uint32_t size; errorHandler(CAEN_DGTZ_ReadRegister(handle_, 0x8024, &size)); return size<<3;
         }
-        uint32_t getRecordLength(int channel) override
-        { throw Error(CAEN_DGTZ_InvalidChannelNumber); }
+        uint32_t getRecordLength(uint32_t group) override
+        {
+            if (group > groups())
+                throw Error(CAEN_DGTZ_InvalidChannelNumber);
+            uint32_t size;
+            errorHandler(CAEN_DGTZ_ReadRegister(handle_, 0x1024 | group<<8, &size));
+            return size<<3;
+        }
         void setRecordLength(uint32_t size) override
         {
             errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x8024, size>>3));
         }
-        void setRecordLength(int channel, uint32_t size) override
-        { throw Error(CAEN_DGTZ_InvalidChannelNumber); }
+        void setRecordLength(uint32_t group, uint32_t size) override
+        {
+            if (group > groups())
+                throw Error(CAEN_DGTZ_InvalidChannelNumber);
+            errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x1024 | group<<8, size));
+        }
 
 
     };
