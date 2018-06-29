@@ -32,9 +32,6 @@
 #ifndef JADAQ_CONTAINER_HPP
 #define JADAQ_CONTAINER_HPP
 
-class DataWriterNetwork;
-class NetworkReceive;
-
 namespace jadaq
 {
     template<typename T>
