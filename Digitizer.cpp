@@ -327,7 +327,7 @@ void Digitizer::initialize(DataWriter& dataWriter)
             caen::Digitizer740DPP::BoardConfiguration bc{boardConfiguration};
             extras = bc.extras();
             if (bc.waveform())
-                waveforms = digitizer->getRecordLength();
+                waveforms = digitizer->getRecordLength(0);
             if (waveforms)
             {
                 dataHandler.initialize<Data::WaveformElement>(dataWriter,serial(),groups(),waveforms);
