@@ -36,10 +36,10 @@
 class DataHandler
 {
 public:
-    template<typename E, template<typename...> typename C>
-    void initialize(DataWriter& dataWriter, uint32_t digitizerID, size_t groups)
+    template<typename E>
+    void initialize(DataWriter& dataWriter, uint32_t digitizerID, size_t groups, size_t samples)
     {
-        instance.reset(new Implementation<E,C>(dataWriter,digitizerID,groups));
+        instance.reset(new Implementation<E>(dataWriter,digitizerID,groups,samples));
     }
     void flush() { instance->flush(); }
     size_t operator()(DPPQDCEventIterator& it) { return instance->operator()(it); }
@@ -58,7 +58,7 @@ private:
     /* E is element type e.g. Data::ListElementxxx
      * C is containertype i.e. jadaq::vector, jadaq::set, jadaq::buffer
     */
-    template <typename E, template<typename...> typename C>
+    template <typename E>
     class Implementation: public Interface
     {
         static_assert(std::is_pod<E>::value, "E must be POD");
@@ -68,7 +68,7 @@ private:
         struct Buffer
         {
             size_t groups;
-            C<E>* buffer;
+            jadaq::buffer<E>* buffer;
             uint32_t* maxLocalTime; // Array containing MaxLocalTime from the previous insertion needed to detect reset
             uint64_t globalTimeStamp = 0;
             void clear()
@@ -82,9 +82,12 @@ private:
             }
             Buffer(size_t numGroups) : groups(numGroups) {}
 
-            void malloc()
+            void malloc(DataWriter& dataWriter, size_t samples, bool network)
             {
-                buffer = new C<E>();
+                if (network)
+                    buffer = new jadaq::buffer<E>(Data::maxBufferSize,E::size(samples), sizeof(Data::Header));
+                else
+                    buffer = new jadaq::buffer<E>(4096*E::size(samples),E::size(samples));
                 maxLocalTime = new uint32_t[groups];
                 clear();
             }
@@ -96,14 +99,14 @@ private:
 
         } current, next;
     public:
-        Implementation(DataWriter& dw, uint32_t digID, size_t groups)
+        Implementation(DataWriter& dw, uint32_t digID, size_t groups, size_t samples)
                 : dataWriter(dw)
                 , digitizerID(digID)
                 , current(groups)
                 , next(groups)
         {
-            current.malloc();
-            next.malloc();
+            current.malloc(dataWriter, samples, dataWriter.network());
+            next.malloc(dataWriter, samples, dataWriter.network());
         }
         ~Implementation()
         {
@@ -125,12 +128,12 @@ private:
                 {
                     current.maxLocalTime[group] = timeTag;
                     try {
-                        current.buffer->emplace(event,group);
+                        current.buffer->emplace_back(event,group);
                     } catch (std::length_error&)
                     {
                         dataWriter(current.buffer,digitizerID,current.globalTimeStamp);
                         current.buffer->clear();
-                        current.buffer->emplace(event,group);
+                        current.buffer->emplace_back(event,group);
                     }
                 } else {
                     next.maxLocalTime[group] = timeTag;
@@ -139,12 +142,12 @@ private:
                         next.globalTimeStamp = DataHandler::getTimeMsecs();
                     }
                     try {
-                        next.buffer->emplace(event,group);
+                        next.buffer->emplace_back(event,group);
                     } catch (std::length_error&)
                     {
                         dataWriter(next.buffer,digitizerID,next.globalTimeStamp);
                         next.buffer->clear();
-                        next.buffer->emplace(event,group);
+                        next.buffer->emplace_back(event,group);
                     }
                 }
             }

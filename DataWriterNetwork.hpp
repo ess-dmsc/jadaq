@@ -67,6 +67,8 @@ public:
         // TODO: This is where we will send the configuration over TCP
     }
 
+    static bool network() { return true; }
+
     template <typename E>
     void operator()(const jadaq::buffer<E>* buffer, uint32_t digitizerID, uint64_t globalTimeStamp)
     {
@@ -79,20 +81,6 @@ public:
         header->numElements = (uint16_t)buffer->size();
         socket->send_to(boost::asio::buffer(buffer->data(), buffer->data_size()), remoteEndpoint);
     }
-
-    template <typename E>
-    void operator()(const jadaq::set<E>* buffer, uint32_t digitizerID, uint64_t globalTimeStamp)
-    {
-        throw std::runtime_error("Error: jadaq::set not supported by DataWriterNetwork.");
-    }
-
-    template <typename E>
-    void operator()(const jadaq::vector<E>* buffer, uint32_t digitizerID, uint64_t globalTimeStamp)
-    {
-        throw std::runtime_error("Error: jadaq::vector not supported by DataWriterNetwork.");
-    }
-
-
 };
 
 

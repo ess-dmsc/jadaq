@@ -74,11 +74,11 @@
             static const hsize_t n[1] = {num_samples};
             datatype.insertMember("samples", HOFFSET(Waveform, samples), H5::ArrayType(H5::PredType::NATIVE_UINT16,1,n));
         }
-        size_t size() const { return sizeof(Waveform) + sizeof(uint16_t)*num_samples; }
+        static size_t size(size_t samples) { return sizeof(Waveform) + sizeof(uint16_t)*samples; }
 
         H5::CompType h5type() const
         {
-            H5::CompType datatype(size());
+            H5::CompType datatype(size(num_samples));
             insertMembers(datatype);
             return datatype;
         }

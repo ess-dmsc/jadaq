@@ -48,5 +48,5 @@ target_link_libraries(jadaq ${CAEN_LIB} caen DataHandler ${Boost_LIBRARIES} pthr
 
 # For jadaq-ds
 # jadaq-ds now depends on caen and CAEN_LIB because of EventAccessor. Can we get rid of this dependency
-add_executable(jadaq-ds jadaq-ds.cpp ${DataHandlerHEADERS} NetworkReceive.cpp NetworkReceive.hpp trace.hpp interrupt.hpp)
-target_link_libraries(jadaq-ds ${CAEN_LIB} caen DataHandler ${HDF5_CXX_LIBRARIES} ${Boost_LIBRARIES} pthread)
+#add_executable(jadaq-ds jadaq-ds.cpp ${DataHandlerHEADERS} NetworkReceive.cpp NetworkReceive.hpp trace.hpp interrupt.hpp)
+#target_link_libraries(jadaq-ds ${CAEN_LIB} caen DataHandler ${HDF5_CXX_LIBRARIES} ${Boost_LIBRARIES} pthread)

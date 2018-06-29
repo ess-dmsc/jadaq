@@ -48,7 +48,7 @@ private:
     CAEN_DGTZ_DPPFirmware_t firmware;
     uint32_t boardConfiguration = 0;
     uint32_t id;
-    bool waveform = false;
+    uint32_t waveforms = 0;
     bool extras   = false;
     DataHandler dataHandler;
     std::set<uint32_t> manipulatedRegisters;
@@ -84,53 +84,7 @@ public:
     void startAcquisition() { digitizer->startAcquisition(); }
     void stopAcquisition() { digitizer->stopAcquisition(); }
     void reset() { digitizer->reset(); }
-
-    template <template<typename...> typename C>
-    void initialize(DataWriter& dataWriter)
-    {
-        boardConfiguration = digitizer->getBoardConfiguration();
-        DEBUG(std::cout << "Prepare readout buffer for digitizer " << name() << std::endl;)
-        readoutBuffer = digitizer->mallocReadoutBuffer();
-
-        switch ((int)firmware) //Cast to int as long as CAEN_DGTZ_DPPFirmware_QDC is not part of the enumeration
-        {
-            case CAEN_DGTZ_DPPFirmware_PHA:
-                throw std::runtime_error("PHA firmware not supported by Digitizer.");
-                break;
-            case CAEN_DGTZ_DPPFirmware_PSD:
-                throw std::runtime_error("PSD firmware not supported by Digitizer.");
-                break;
-            case CAEN_DGTZ_DPPFirmware_CI:
-                throw std::runtime_error("CI firmware not supported by Digitizer.");
-                break;
-            case CAEN_DGTZ_DPPFirmware_ZLE:
-                throw std::runtime_error("ZLE firmware not supported by Digitizer.");
-                break;
-            case CAEN_DGTZ_DPPFirmware_QDC:
-            {
-                caen::Digitizer740DPP::BoardConfiguration bc{boardConfiguration};
-                extras = bc.extras();
-                waveform = bc.waveform();
-                if (waveform)
-                {
-                    dataHandler.initialize<Data::WaveformElement,C>(dataWriter,serial(),groups());
-                }
-                else if (extras)
-                {
-                    dataHandler.initialize<Data::ListElement8222,C>(dataWriter,serial(),groups());
-                } else
-                {
-                    dataHandler.initialize<Data::ListElement422,C>(dataWriter,serial(),groups());
-                }
-                break;
-            }
-            case CAEN_DGTZ_NotDPPFirmware:
-                throw std::runtime_error("Non DPP firmware not supported by Digitizer.");
-                break;
-            default:
-                throw std::runtime_error("Unknown firmware type. Not supported by Digitizer.");
-        }
-    }
+    void initialize(DataWriter& dataWriter);
 };
 
 

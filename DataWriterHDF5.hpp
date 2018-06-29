@@ -95,6 +95,8 @@ public:
         mutex.unlock();
     }
 
+    static bool network() { return false; }
+
     template <typename E>
     void operator()(const std::vector<E>* buffer, uint32_t digitizerID, uint64_t globalTimeStamp)
     {

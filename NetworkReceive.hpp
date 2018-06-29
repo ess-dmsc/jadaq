@@ -29,6 +29,7 @@
 #include <boost/asio/io_service.hpp>
 #include <boost/bind.hpp>
 #include "DataHandler.hpp"
+#include "DataFormat.hpp"
 #include "uuid.hpp"
 
 using boost::asio::ip::udp;
@@ -49,7 +50,7 @@ private:
     uuid runID{0};
     uint64_t currentTimestamp = 0;
     DataWriter dataWriter;
-    std::map<uint32_t ,jadaq::vector<Data::ListElement422> > dataBuffers;
+    std::map<uint32_t ,jadaq::buffer<Data::ListElement422> > dataBuffers;
     void newDataWriter(uuid newID);
     void newTimeStamp(uint64_t timeStamp);
 };

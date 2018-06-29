@@ -302,6 +302,54 @@ Digitizer::Digitizer(CAEN_DGTZ_ConnectionType linkType_, int linkNum_, int conet
     id = digitizer->serialNumber();
 }
 
+void Digitizer::initialize(DataWriter& dataWriter)
+{
+    boardConfiguration = digitizer->getBoardConfiguration();
+    DEBUG(std::cout << "Prepare readout buffer for digitizer " << name() << std::endl;)
+    readoutBuffer = digitizer->mallocReadoutBuffer();
+    dataWriter.addDigitizer(serial());
+    switch ((int)firmware) //Cast to int as long as CAEN_DGTZ_DPPFirmware_QDC is not part of the enumeration
+    {
+        case CAEN_DGTZ_DPPFirmware_PHA:
+            throw std::runtime_error("PHA firmware not supported by Digitizer.");
+            break;
+        case CAEN_DGTZ_DPPFirmware_PSD:
+            throw std::runtime_error("PSD firmware not supported by Digitizer.");
+            break;
+        case CAEN_DGTZ_DPPFirmware_CI:
+            throw std::runtime_error("CI firmware not supported by Digitizer.");
+            break;
+        case CAEN_DGTZ_DPPFirmware_ZLE:
+            throw std::runtime_error("ZLE firmware not supported by Digitizer.");
+            break;
+        case CAEN_DGTZ_DPPFirmware_QDC:
+        {
+            caen::Digitizer740DPP::BoardConfiguration bc{boardConfiguration};
+            extras = bc.extras();
+            if (bc.waveform())
+                waveforms = digitizer->getRecordLength();
+            if (waveforms)
+            {
+                dataHandler.initialize<Data::WaveformElement>(dataWriter,serial(),groups(),waveforms);
+            }
+            else if (extras)
+            {
+                dataHandler.initialize<Data::ListElement8222>(dataWriter,serial(),groups(),waveforms);
+            } else
+            {
+                dataHandler.initialize<Data::ListElement422>(dataWriter,serial(),groups(),waveforms);
+            }
+            break;
+        }
+        case CAEN_DGTZ_NotDPPFirmware:
+            throw std::runtime_error("Non DPP firmware not supported by Digitizer.");
+            break;
+        default:
+            throw std::runtime_error("Unknown firmware type. Not supported by Digitizer.");
+    }
+}
+
+
 void Digitizer::close()
 {
     DEBUG(std::cout << "Closing digitizer " << name() << std::endl;)

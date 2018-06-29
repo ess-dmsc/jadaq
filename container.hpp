@@ -24,130 +24,100 @@
  *
  */
 
-#include <vector>
-#include <set>
-#include <cassert>
-#include "DataFormat.hpp"
-
 #ifndef JADAQ_CONTAINER_HPP
 #define JADAQ_CONTAINER_HPP
+
+#include <cstddef>
+#include <cstring>
 
 namespace jadaq
 {
     template<typename T>
-    class vector : public std::vector<T>
-    {
-    public:
-        void insert(const T &v)
-        { std::vector<T>::push_back(v); }
-
-        void insert(const T &&v)
-        { std::vector<T>::push_back(v); }
-
-        template<typename... Args>
-        typename std::vector<T>::iterator emplace(Args&&... args)
-        {
-            std::vector<T>::emplace_back(args...);
-            return std::vector<T>::end()-1;
-        }
-
-        template< class InputIt >
-        void insert(InputIt first, InputIt last)
-        { std::vector<T>::insert(this->end(),first,last); }
-    };
-
-    template<typename T>
-    class set : public std::set<T>
-    {
-    public:
-        template <typename... Args>
-        typename std::set<T>::iterator emplace(Args&&... args)
-        { return std::set<T>::emplace(args...).first; }
-    };
-
-    template<typename T>
     class buffer
     {
     private:
-        char* rawData;
-        T* next;
+        char* const data_raw;    // pointer to the raw allocated data
+        char* const data_begin;  // pointer to where we begin inserting elements
+        char* const data_end;    // pointer to end of data
+        size_t const element_size;
+        char* next;              // past end pointer
         void check_length() const
         {
-            if ((char*)(next+1) > rawData + Data::maxBufferSize)
+            if (next+element_size > data_end)
             {
-                throw std::length_error("Out of storage space.");
+                throw std::length_error{"Out of storage space."};
             }
         }
     public:
-        buffer()
-        {
-            rawData = new char[Data::maxBufferSize];
-            next = (T*)(rawData + sizeof(Data::Header));
-            if ((char*)(next+1) > rawData + Data::maxBufferSize)
-            {
-                throw std::runtime_error("buffer creation error: buffer too small");
-            }
-        }
+        buffer(size_t raw_size, size_t object_size, size_t header_size)
+                : data_raw(new char[raw_size])
+                , data_begin(data_raw+header_size)
+                , data_end(data_raw+raw_size)
+                , element_size(object_size)
+                , next(data_begin) {}
+
+        buffer(size_t capacity, size_t object_size)
+                : buffer(capacity,object_size,0) {}
+
+        buffer(size_t capacity)
+                : buffer(capacity, sizeof(T),0) {}
+
         ~buffer()
-        {
-            delete[] rawData;
-        }
+        { delete[] data_raw; }
 
-        char* data() { return rawData; }
-        const char* data() const { return rawData; }
-
-        //set number of elements from information in header
-        void setElements()
-        {
-            next = (T*)(rawData + sizeof(Data::Header));
-            next += ((Data::Header*)rawData)->numElements;
-            if ((char*)(next) > rawData + Data::maxBufferSize)
-            {
-                throw std::runtime_error("Error in header or too much data in buffer.");
-            }
-        }
-
-        void insert(const T&& v)
+        void push_back(const T& v)
         {
             check_length();
-            *next++ = std::move(v);
-        }
-        void insert(const T& v)
-        {
-            check_length();
-            *next++ = v;
+            *next = v;
+            memcpy(next, &v, element_size);
+            next+=element_size;
         }
         template <typename... Args>
-        T* emplace(Args&&... args)
+        void emplace_back(Args&&... args)
         {
             check_length();
-            T* res = new(next++) T(args...);
-            return res;
+            T* res = new (reinterpret_cast<T*>(next)) T(args...);
+            next+=element_size;
         }
 
         void clear()
-        { next = (T*)(rawData + sizeof(Data::Header)); }
+        { next = data_begin; }
+
         T* begin()
-        { return (T*)(rawData + sizeof(Data::Header)); }
+        { return reinterpret_cast<T*>(data_begin); }
+
         const T* begin() const
-        { return (const T*)(rawData + sizeof(Data::Header)); }
+        { return reinterpret_cast<const T*>(data_begin); }
+
         T* end()
-        { return next; }
+        { return reinterpret_cast<T*>(next); }
+
         const T* end() const
-        { return next; }
+        { return reinterpret_cast<const T*>(next); }
+
+        char* data()
+        { return data_raw; }
+
+        const char* data() const
+        { return data_raw; }
+
         size_t size() const
-        {
-            return (end()-begin());
-        }
-        size_t data_size() const
-        {
-            return ((char*)next-rawData);
-        }
+        { return (next-data_begin)/element_size; }
+
+        size_t capacity() const
+        { return (data_end-data_begin)/element_size; }
+
+        size_t max_size() const noexcept
+        { return capacity(); }
 
         bool empty() const noexcept
-        {
-            return (char*)next == rawData + sizeof(Data::Header);
-        }
+        { return next == data_begin; }
+
+        size_t data_size() const noexcept
+        { return next-data_raw; }
+
+        void setElements(size_t n)
+        { next = (data_begin + element_size*n); }
     };
 }
 #endif //JADAQ_CONTAINER_HPP

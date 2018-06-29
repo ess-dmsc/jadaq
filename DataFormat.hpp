@@ -93,10 +93,10 @@ namespace Data
             datatype.insertMember("channel", HOFFSET(ListElement422, channel), H5::PredType::NATIVE_UINT16);
             datatype.insertMember("charge", HOFFSET(ListElement422, charge), H5::PredType::NATIVE_UINT16);
         }
-        static size_t size() { return sizeof(ListElement422); }
+        static size_t size(size_t) { return sizeof(ListElement422); }
         static H5::CompType h5type()
         {
-            H5::CompType datatype(size());
+            H5::CompType datatype(size(0));
             insertMembers(datatype);
             return datatype;
         }
@@ -139,10 +139,10 @@ namespace Data
             datatype.insertMember("charge", HOFFSET(ListElement8222, charge), H5::PredType::NATIVE_UINT16);
             datatype.insertMember("baseline", HOFFSET(ListElement8222, baseline), H5::PredType::NATIVE_UINT16);
         }
-        static size_t size() { return sizeof(ListElement8222); }
+        static size_t size(size_t) { return sizeof(ListElement8222); }
         static H5::CompType h5type()
         {
-            H5::CompType datatype(size());
+            H5::CompType datatype(size(0));
             insertMembers(datatype);
             return datatype;
         }
@@ -178,10 +178,10 @@ namespace Data
             listElement422.insertMembers(datatype);
             waveform.insertMembers(datatype);
         }
-        size_t size() const { return listElement422.size() + waveform.size(); }
+        static size_t size(size_t samples) { return ListElement422::size(0) + Waveform::size(samples); }
         H5::CompType h5type() const
         {
-            H5::CompType datatype(size());
+            H5::CompType datatype(size(waveform.num_samples));
             insertMembers(datatype);
             return datatype;
         }
