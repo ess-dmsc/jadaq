@@ -97,23 +97,60 @@ private:
                 delete[] maxLocalTime;
             }
 
-        } current, next;
+        } current, next, extra;
+
+        void inline store(Buffer& buffer, DPPQCDEvent& event, uint16_t group)
+        {
+            buffer.maxLocalTime[group] = event.timeTag();
+            try {
+                buffer.buffer->emplace_back(event,group);
+            } catch (std::length_error&)
+            {
+                if (dataWriter.network())
+                {
+                    dataWriter(buffer.buffer, digitizerID, buffer.globalTimeStamp);
+                    buffer.buffer->clear();
+                }
+                else {
+                    if (buffer.buffer->data_capacity() >= extra.buffer->data_capacity())
+                    {
+                        size_t new_size = buffer.buffer->data_capacity() * 2;
+                        delete extra.buffer;
+                        extra.buffer = new jadaq::buffer<E>(new_size, *buffer.buffer);
+                    }
+                    else {
+                        extra.buffer->copy(*buffer.buffer);
+                    }
+                    delete buffer.buffer;
+                    buffer.buffer = jadaq::buffer<E>::empty_like(*extra.buffer);
+                    std::swap(buffer,extra);
+                    extra.clear();
+                }
+
+                buffer.buffer->emplace_back(event,group);
+            }
+        }
+
     public:
         Implementation(DataWriter& dw, uint32_t digID, size_t groups, size_t samples)
                 : dataWriter(dw)
                 , digitizerID(digID)
                 , current(groups)
                 , next(groups)
+                , extra(groups)
         {
             current.malloc(dataWriter, samples, dataWriter.network());
             next.malloc(dataWriter, samples, dataWriter.network());
+            extra.malloc(dataWriter, samples, dataWriter.network());
         }
         ~Implementation()
         {
             flush();
             current.free();
             next.free();
+            extra.free();
         }
+
         size_t operator()(DPPQDCEventIterator& eventIterator)
         {
             size_t events = 0;
@@ -121,34 +158,16 @@ private:
             {
                 events += 1;
                 DPPQCDEvent event = *eventIterator;
-                uint32_t timeTag = event.timeTag();
                 uint16_t group = eventIterator.group();
-
-                if (timeTag >= current.maxLocalTime[group])
+                if (event.timeTag() >= current.maxLocalTime[group])
                 {
-                    current.maxLocalTime[group] = timeTag;
-                    try {
-                        current.buffer->emplace_back(event,group);
-                    } catch (std::length_error&)
-                    {
-                        dataWriter(current.buffer,digitizerID,current.globalTimeStamp);
-                        current.buffer->clear();
-                        current.buffer->emplace_back(event,group);
-                    }
+                    store(current,event,group);
                 } else {
-                    next.maxLocalTime[group] = timeTag;
                     if (next.globalTimeStamp == 0)
                     {
                         next.globalTimeStamp = DataHandler::getTimeMsecs();
                     }
-                    try {
-                        next.buffer->emplace_back(event,group);
-                    } catch (std::length_error&)
-                    {
-                        dataWriter(next.buffer,digitizerID,next.globalTimeStamp);
-                        next.buffer->clear();
-                        next.buffer->emplace_back(event,group);
-                    }
+                    store(next,event,group);
                 }
             }
             if (!next.buffer->empty())
