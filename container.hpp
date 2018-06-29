@@ -71,38 +71,45 @@ namespace jadaq
     template<typename T>
     class buffer
     {
-        friend class ::DataWriterNetwork;
-        friend class ::NetworkReceive;
     private:
-        char* data;
+        char* rawData;
         T* next;
         void check_length() const
         {
-            if ((char*)(next+1) > data + Data::maxBufferSize)
+            if ((char*)(next+1) > rawData + Data::maxBufferSize)
             {
                 throw std::length_error("Out of storage space.");
             }
         }
-        void setElements(uint16_t n)
-        {
-            next = (T*)(data + sizeof(Data::Header));
-            next += n;
-        }
     public:
         buffer()
         {
-            data = new char[Data::maxBufferSize];
-            next = (T*)(data + sizeof(Data::Header));
-            if ((char*)(next+1) > data + Data::maxBufferSize)
+            rawData = new char[Data::maxBufferSize];
+            next = (T*)(rawData + sizeof(Data::Header));
+            if ((char*)(next+1) > rawData + Data::maxBufferSize)
             {
                 throw std::runtime_error("buffer creation error: buffer too small");
             }
         }
         ~buffer()
         {
-            delete[] data;
+            delete[] rawData;
         }
-        
+
+        char* data() { return rawData; }
+        const char* data() const { return rawData; }
+
+        //set number of elements from information in header
+        void setElements()
+        {
+            next = (T*)(rawData + sizeof(Data::Header));
+            next += ((Data::Header*)rawData)->numElements;
+            if ((char*)(next) > rawData + Data::maxBufferSize)
+            {
+                throw std::runtime_error("Error in header or too much data in buffer.");
+            }
+        }
+
         void insert(const T&& v)
         {
             check_length();
@@ -122,11 +129,11 @@ namespace jadaq
         }
 
         void clear()
-        { next = (T*)(data + sizeof(Data::Header)); }
+        { next = (T*)(rawData + sizeof(Data::Header)); }
         T* begin()
-        { return (T*)(data + sizeof(Data::Header)); }
+        { return (T*)(rawData + sizeof(Data::Header)); }
         const T* begin() const
-        { return (const T*)(data + sizeof(Data::Header)); }
+        { return (const T*)(rawData + sizeof(Data::Header)); }
         T* end()
         { return next; }
         const T* end() const
@@ -137,12 +144,12 @@ namespace jadaq
         }
         size_t data_size() const
         {
-            return ((char*)next-data);
+            return ((char*)next-rawData);
         }
 
         bool empty() const noexcept
         {
-            return (char*)next == data + sizeof(Data::Header);
+            return (char*)next == rawData + sizeof(Data::Header);
         }
     };
 }

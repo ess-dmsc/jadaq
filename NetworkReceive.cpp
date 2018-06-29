@@ -79,7 +79,7 @@ void NetworkReceive::run(volatile sig_atomic_t* interrupt)
         udp::endpoint remoteEndpoint;
         try
         {
-            receivedBytes = socket->receive_from(boost::asio::buffer((receiveBuffer.data), Data::maxBufferSize), remoteEndpoint);
+            receivedBytes = socket->receive_from(boost::asio::buffer((receiveBuffer.data()), Data::maxBufferSize), remoteEndpoint);
         }
         catch (boost::system::system_error& error)
         {
@@ -88,7 +88,7 @@ void NetworkReceive::run(volatile sig_atomic_t* interrupt)
         }
         if (receivedBytes >= sizeof(Data::Header))
         {
-            Data::Header* header = (Data::Header*) receiveBuffer.data;
+            Data::Header* header = (Data::Header*) receiveBuffer.data();
             if (header->version != Data::currentVersion)
             {
                 uint8_t* version = (uint8_t*)&(header->version);
@@ -100,7 +100,7 @@ void NetworkReceive::run(volatile sig_atomic_t* interrupt)
                 std::cerr << "ERROR UDP element type unsupported: " << std::endl;
                 continue;
             }
-            receiveBuffer.setElements(header->numElements);
+            receiveBuffer.setElements(); //set number of elements from information in header
             uuid id(header->runID);
             if (id != runID)
             {
