@@ -63,6 +63,7 @@ void DPPQCDEventWaveform::waveform(Waveform& waveform) const
         DVP(holdoff,2)
         DVP(over,3)
     }
+    waveform.num_samples = n;
     waveform.trigger = trigger;
     waveform.gate = gate;
     waveform.holdoff = holdoff;
