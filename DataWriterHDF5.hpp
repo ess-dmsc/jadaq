@@ -98,7 +98,7 @@ public:
     static bool network() { return false; }
 
     template <typename E>
-    void operator()(const std::vector<E>* buffer, uint32_t digitizerID, uint64_t globalTimeStamp)
+    void operator()(const jadaq::buffer<E>* buffer, uint32_t digitizerID, uint64_t globalTimeStamp)
     {
         if (buffer->size() < 1)
             return;
@@ -132,19 +132,6 @@ public:
 
         }
         mutex.unlock();
-    }
-
-    template <typename E>
-    void operator()(const std::set<E>* buffer, uint32_t digitizerID, uint64_t globalTimeStamp)
-    {
-        std::vector<E> v(buffer->begin(), buffer->end());
-        operator()(&v,digitizerID,globalTimeStamp);
-    }
-
-    template <typename E>
-    void operator()(const jadaq::buffer<E>* buffer, uint32_t digitizerID, uint64_t globalTimeStamp)
-    {
-        throw std::runtime_error("Error: jadaq::buffer not supported by DataWriterHDF5.");
     }
 };
 

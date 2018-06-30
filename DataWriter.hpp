@@ -87,10 +87,10 @@ class DataWriterNull
 {
 public:
     DataWriterNull() = default;
-    void addDigitizer(uint32_t digitizerID) {}
+    void addDigitizer(uint32_t) {}
     static bool network() { return false; }
-    template <typename T>
-    void operator()(const T* buffer, uint32_t digitizerID, uint64_t globalTimeStamp) {}
+    template <typename E>
+    void operator()(const jadaq::buffer<E>*, uint32_t, uint64_t) {}
 };
 
 

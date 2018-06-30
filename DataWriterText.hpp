@@ -68,8 +68,8 @@ public:
 
     static bool network() { return false; }
 
-    template <typename E, template<typename...> typename C>
-    void operator()(const C<E>* buffer, uint32_t digitizer, uint64_t globalTimeStamp)
+    template <typename E>
+    void operator()(const jadaq::buffer<E>* buffer, uint32_t digitizer, uint64_t globalTimeStamp)
     {
         mutex.lock();
         *file << "#" << PRINTH(digitizer) << " ";
