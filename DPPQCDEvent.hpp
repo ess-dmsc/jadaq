@@ -57,7 +57,6 @@ struct Waveform;
 
 struct DPPQCDEventWaveform: DPPQCDEvent
 {
-    bool extras = false;
     DPPQCDEventWaveform(uint32_t* p, size_t s): DPPQCDEvent(p,s) {}
     void waveform(Waveform& waveform) const;
 };

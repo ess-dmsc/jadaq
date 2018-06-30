@@ -44,7 +44,7 @@
 
 void DPPQCDEventWaveform::waveform(Waveform& waveform) const
 {
-    size_t n = (size-(2+extras))<<1;
+    size_t n = (size-2)<<1;
     uint16_t trigger = 0xFFFF;
     Interval gate = {0xffff,0xffff};
     Interval holdoff  = {0xffff,0xffff};
