@@ -158,8 +158,9 @@ namespace Data
         ListElement422 listElement422;
         Waveform waveform;
         WaveformElement() = default;
-        WaveformElement(const DPPQCDEvent& event, uint16_t group): listElement422(event,group)
-        {}
+        WaveformElement(const DPPQCDEvent& event, uint16_t group)
+                : listElement422(event,group)
+                , waveform(event) {}
         bool operator< (const WaveformElement& rhs) const
         { return listElement422 < rhs.listElement422; }
         void printOn(std::ostream& os) const

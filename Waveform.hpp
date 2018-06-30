@@ -9,10 +9,12 @@
 #include <ostream>
 #include <H5Cpp.h>
 #include <iomanip>
+#include "DPPQCDEvent.hpp"
 
 #define MAX(a,b) (((a)>(b))?(a):(b))
 #define PRINTD(V) std::setw(MAX(sizeof(V)*3,sizeof(#V))) << V
 #define PRINTH(V) std::setw(MAX(sizeof(V)*3,sizeof(#V))) << (#V)
+
 
     struct __attribute__ ((__packed__)) Interval
     {
@@ -40,7 +42,7 @@
     static inline std::ostream& operator<< (std::ostream& os, const Interval& i)
     { i.printOn(os); return os; }
 
-    struct __attribute__ ((__packed__)) Waveform
+        struct __attribute__ ((__packed__)) Waveform
     {
         uint16_t num_samples;
         uint16_t trigger;
@@ -49,6 +51,11 @@
         Interval overthreshold;
         uint16_t samples[];
         Waveform() = default;
+        Waveform(const DPPQCDEvent& e)
+        {
+            const DPPQCDEventWaveform& event = static_cast<const DPPQCDEventWaveform&>(e);
+            event.waveform(*this);
+        }
         void printOn(std::ostream& os) const
         {
             os << PRINTD(num_samples) << " " << PRINTD(trigger) << " " << PRINTD(gate) << " " <<

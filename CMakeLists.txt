@@ -34,7 +34,7 @@ include_directories(${HDF5_INCLUDE_DIRS})
 add_library(debugCAENComm SHARED debugCAENComm.c)
 target_link_libraries(debugCAENComm dl)
 
-add_library(caen SHARED caen.hpp caen.cpp _CAENDigitizer.c _CAENDigitizer.h)
+add_library(caen SHARED caen.hpp caen.cpp _CAENDigitizer.c _CAENDigitizer.h DPPQCDEvent.hpp DPPQCDEvent.cpp)
 target_link_libraries(caen dl)
 
 #file(GLOB DataHandlerHEADERS DataFormat.hpp DataHandler*.hpp uuid.hpp EventAccessor.hpp)
