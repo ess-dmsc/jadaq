@@ -99,7 +99,7 @@ private:
 
         } current, next, extra;
 
-        void inline store(Buffer& buffer, DPPQCDEvent& event, uint16_t group)
+        void inline store(Buffer& buffer, typename E::EventType& event, uint16_t group)
         {
             buffer.maxLocalTime[group] = event.timeTag();
             try {
@@ -157,7 +157,7 @@ private:
             for (;eventIterator != eventIterator.end(); ++eventIterator)
             {
                 events += 1;
-                DPPQCDEvent event = *eventIterator;
+                typename E::EventType event = eventIterator.event<typename E::EventType>();
                 uint16_t group = eventIterator.group();
                 if (event.timeTag() >= current.maxLocalTime[group])
                 {

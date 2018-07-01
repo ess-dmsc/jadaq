@@ -88,11 +88,19 @@ private:
             assert((size - 2) % elementSize == 0);
 
         }
+
+        bool waveformFlag() const
+        { return waveform; }
+
+        bool extrasFlag() const
+        { return extras; }
+
         uint16_t currentGroup()
         {
             assert (group >= 0);
             return (uint16_t)group;
         }
+
         GroupIterator& operator++()
         {
             ptr += elementSize;
@@ -122,6 +130,8 @@ private:
         bool operator>=(const void* other) const { return ptr >= other; }
         bool operator<=(const void* other) const { return ptr <= other; }
         DPPQCDEvent operator*() const { return DPPQCDEvent{ptr, elementSize}; }
+        template <typename T>
+        T event() { return T{ptr, elementSize}; }
     };
     GroupIterator groupIterator;
     GroupIterator nextGroupIterator()
@@ -144,6 +154,13 @@ public:
             : buffer(b)
             , ptr((uint32_t*)buffer.data)
             , groupIterator(nextGroupIterator()) {}
+
+    bool waveformFlag() const
+    { return groupIterator.waveformFlag(); }
+
+    bool extrasFlag() const
+    { return groupIterator.extrasFlag(); }
+
     DPPQDCEventIterator& operator++()
     {
         if (++groupIterator == boardAggregateEnd)
@@ -174,6 +191,33 @@ public:
     DPPQCDEvent operator*() const { return *groupIterator; }
     void* end() const { return buffer.end(); }
     uint16_t group() { return groupIterator.currentGroup(); }
+    template <typename T>
+    T event() {return groupIterator.event<T>();}
 };
+
+template <>
+inline DPPQCDEvent DPPQDCEventIterator::GroupIterator::event<DPPQCDEvent>()
+{
+    assert(extras == false);
+    assert(waveform == false);
+    return DPPQCDEvent{ptr, elementSize};
+}
+
+template <>
+inline DPPQCDEventExtra DPPQDCEventIterator::GroupIterator::event<DPPQCDEventExtra>()
+{
+    assert(extras == true);
+    assert(waveform == false);
+    return DPPQCDEventExtra{ptr, elementSize};
+}
+
+template <>
+inline DPPQCDEventWaveform DPPQDCEventIterator::GroupIterator::event<DPPQCDEventWaveform>()
+{
+    assert(extras == false);
+    assert(waveform == true);
+    return DPPQCDEventWaveform{ptr, elementSize};
+}
+
 
 #endif //JADAQ_EVENTITERATOR_HPP

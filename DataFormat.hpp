@@ -68,11 +68,12 @@ namespace Data
     struct __attribute__ ((__packed__)) ListElement422
     {
         typedef uint32_t time_t;
+        typedef DPPQCDEvent EventType;
         time_t time;
         uint16_t channel;
         uint16_t charge;
         ListElement422() = default;
-        ListElement422(const DPPQCDEvent& event, uint16_t group)
+        ListElement422(const EventType& event, uint16_t group)
         {
             time = event.timeTag();
             channel = event.channel(group);
@@ -110,14 +111,14 @@ namespace Data
     struct __attribute__ ((__packed__)) ListElement8222
     {
         typedef uint64_t time_t;
+        typedef DPPQCDEventExtra EventType;
         time_t time;
         uint16_t channel;
         uint16_t charge;
         uint16_t baseline;
         ListElement8222() = default;
-        ListElement8222(const DPPQCDEvent& e, uint16_t group)
+        ListElement8222(const EventType& event, uint16_t group)
         {
-            const DPPQCDEventExtra& event = static_cast<const DPPQCDEventExtra&>(e);
             time = event.fullTime();
             channel = event.channel(group);
             charge = event.charge();
@@ -155,10 +156,11 @@ namespace Data
 
     struct __attribute__ ((__packed__)) WaveformElement
     {
+        typedef DPPQCDEventWaveform EventType;
         ListElement422 listElement422;
         Waveform waveform;
         WaveformElement() = default;
-        WaveformElement(const DPPQCDEvent& event, uint16_t group)
+        WaveformElement(const EventType& event, uint16_t group)
                 : listElement422(event,group)
                 , waveform(event) {}
         bool operator< (const WaveformElement& rhs) const
