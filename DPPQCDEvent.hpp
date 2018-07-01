@@ -59,6 +59,7 @@ struct DPPQCDEventWaveform: DPPQCDEvent
 {
     DPPQCDEventWaveform(uint32_t* p, size_t s): DPPQCDEvent(p,s) {}
     void waveform(Waveform& waveform) const;
+    static constexpr const bool extras = false;
 };
 
 #endif //JADAQ_DPPQCDEVENT_HPP
