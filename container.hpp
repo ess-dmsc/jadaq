@@ -49,6 +49,52 @@ namespace jadaq
             }
         }
     public:
+        template <typename IT>
+        class iterator_
+                : public std::iterator<std::forward_iterator_tag, IT>
+        {
+            using base = std::iterator<std::forward_iterator_tag, IT>;
+            using typename base::pointer;
+            using typename base::reference;
+            char* ptr;
+            size_t const element_size;
+        public:
+            iterator_()
+                    : ptr(nullptr)
+                    , element_size(0) {}
+            iterator_(char* p, size_t es)
+                    : ptr(p)
+                    , element_size(es)  {}
+            ~iterator_() = default;
+
+            iterator_ operator++(int) /* postfix */
+            {
+                iterator_ tmp{ptr,element_size};
+                ptr += element_size;
+                return tmp;
+            }
+
+            iterator_ operator++()    /* prefix */
+            {
+                ptr += element_size;
+                return *this;
+            }
+
+            reference operator*() const
+            { return reinterpret_cast<reference>(*ptr); }
+
+            pointer operator->() const
+            { return reinterpret_cast<pointer >(ptr); }
+
+            bool operator==(const iterator_& rhs) const
+            { return ptr == rhs.ptr; }
+
+            bool operator!=(const iterator_& rhs) const
+            { return ptr != rhs.ptr; }
+        };
+        typedef iterator_<T> iterator;
+        typedef iterator_<const T> const_iterator;
+
         buffer(size_t raw_size, size_t object_size, size_t header_size)
                 : data_raw(new char[raw_size])
                 , data_begin(data_raw+header_size)
@@ -94,17 +140,17 @@ namespace jadaq
         void clear()
         { next = data_begin; }
 
-        T* begin()
-        { return reinterpret_cast<T*>(data_begin); }
+        iterator begin()
+        { return iterator{data_begin,element_size}; }
 
-        const T* begin() const
-        { return reinterpret_cast<const T*>(data_begin); }
+        const_iterator begin() const
+        { return const_iterator{data_begin,element_size}; }
 
-        T* end()
-        { return reinterpret_cast<T*>(next); }
+        iterator end()
+        { return iterator{next,element_size}; }
 
-        const T* end() const
-        { return reinterpret_cast<const T*>(next); }
+        const_iterator end() const
+        { return const_iterator{next,element_size}; }
 
         char* data()
         { return data_raw; }
@@ -122,7 +168,7 @@ namespace jadaq
         { return data_begin-data_raw; }
 
         size_t size() const
-        { return end() - begin(); }
+        { return (next-data_begin)/element_size; }
 
         size_t capacity() const
         { return (data_end-data_begin)/element_size; }
@@ -139,6 +185,7 @@ namespace jadaq
         void copy(const buffer<T>& other)
         {
             memcpy(data_raw,other.data_raw,other.data_size());
+            setElements(other.size());
         }
 
         buffer<T>& operator=(const buffer<T>& other)
