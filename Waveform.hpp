@@ -25,16 +25,16 @@
         {
             os << PRINTD(start) << " " << PRINTD(end);
         }
-        static void insertMembers(H5::CompType& datatype)
+        static void insertMembers(H5::CompType& datatype, size_t offset)
         {
-            datatype.insertMember("start", HOFFSET(Interval, start), H5::PredType::NATIVE_UINT16);
-            datatype.insertMember("end", HOFFSET(Interval, end), H5::PredType::NATIVE_UINT16);
+            datatype.insertMember("start", HOFFSET(Interval, start) + offset, H5::PredType::NATIVE_UINT16);
+            datatype.insertMember("end", HOFFSET(Interval, end) + offset, H5::PredType::NATIVE_UINT16);
         }
         static size_t size() { return sizeof(Interval); }
         static H5::CompType h5type()
         {
             H5::CompType datatype(size());
-            insertMembers(datatype);
+            insertMembers(datatype,0);
             return datatype;
         }
     };
@@ -42,7 +42,7 @@
     static inline std::ostream& operator<< (std::ostream& os, const Interval& i)
     { i.printOn(os); return os; }
 
-        struct __attribute__ ((__packed__)) Waveform
+    struct __attribute__ ((__packed__)) Waveform
     {
         uint16_t num_samples;
         uint16_t trigger;
@@ -69,22 +69,22 @@
             os << PRINTH(num_samples) << " " << PRINTH(trigger) << " " << PRINTH(gate) << " " << PRINTH(holdoff) <<
                PRINTH(overthreshold) << " " << "samples";
         }
-        void insertMembers(H5::CompType& datatype) const
+        void insertMembers(H5::CompType& datatype, size_t offset) const
         {
-            datatype.insertMember("num_samples", HOFFSET(Waveform, num_samples), H5::PredType::NATIVE_UINT16);
-            datatype.insertMember("trigger", HOFFSET(Waveform, trigger), H5::PredType::NATIVE_UINT16);
-            datatype.insertMember("gate", HOFFSET(Waveform, gate), Interval::h5type());
-            datatype.insertMember("holdoff", HOFFSET(Waveform, holdoff), Interval::h5type());
-            datatype.insertMember("overthreshold", HOFFSET(Waveform, overthreshold), Interval::h5type());
+            datatype.insertMember("num_samples", HOFFSET(Waveform, num_samples) + offset, H5::PredType::NATIVE_UINT16);
+            datatype.insertMember("trigger", HOFFSET(Waveform, trigger) + offset, H5::PredType::NATIVE_UINT16);
+            datatype.insertMember("gate", HOFFSET(Waveform, gate) + offset, Interval::h5type());
+            datatype.insertMember("holdoff", HOFFSET(Waveform, holdoff) + offset, Interval::h5type());
+            datatype.insertMember("overthreshold", HOFFSET(Waveform, overthreshold) + offset, Interval::h5type());
             static const hsize_t n[1] = {num_samples};
-            datatype.insertMember("samples", HOFFSET(Waveform, samples), H5::ArrayType(H5::PredType::NATIVE_UINT16,1,n));
+            datatype.insertMember("samples", HOFFSET(Waveform, samples) + offset, H5::ArrayType(H5::PredType::NATIVE_UINT16,1,n));
         }
         static size_t size(size_t samples) { return sizeof(Waveform) + sizeof(uint16_t)*samples; }
 
         H5::CompType h5type() const
         {
             H5::CompType datatype(size(num_samples));
-            insertMembers(datatype);
+            insertMembers(datatype,0);
             return datatype;
         }
     };

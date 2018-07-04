@@ -179,7 +179,7 @@ namespace Data
         void insertMembers(H5::CompType& datatype) const
         {
             listElement422.insertMembers(datatype);
-            waveform.insertMembers(datatype);
+            waveform.insertMembers(datatype,offsetof(WaveformElement,waveform));
         }
         static size_t size(size_t samples) { return ListElement422::size(0) + Waveform::size(samples); }
         H5::CompType h5type() const
