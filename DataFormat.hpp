@@ -177,7 +177,7 @@ namespace Data
         }
         static void headerOn(std::ostream& os)
         {
-            ListElement422::headerOn(os);
+            ListElementType::headerOn(os);
             Waveform::headerOn(os);
         }
         static ElementType type() { return (ElementType)(WaveformBase | ListElementType::type()); }
