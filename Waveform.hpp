@@ -76,7 +76,6 @@
             datatype.insertMember("gate", HOFFSET(Waveform, gate), Interval::h5type());
             datatype.insertMember("holdoff", HOFFSET(Waveform, holdoff), Interval::h5type());
             datatype.insertMember("overthreshold", HOFFSET(Waveform, overthreshold), Interval::h5type());
-            datatype.insertMember("overthreshold", HOFFSET(Waveform, overthreshold), Interval::h5type());
             static const hsize_t n[1] = {num_samples};
             datatype.insertMember("samples", HOFFSET(Waveform, samples), H5::ArrayType(H5::PredType::NATIVE_UINT16,1,n));
         }
