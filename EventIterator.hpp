@@ -212,11 +212,19 @@ inline DPPQCDEventExtra DPPQDCEventIterator::GroupIterator::event<DPPQCDEventExt
 }
 
 template <>
-inline DPPQCDEventWaveform DPPQDCEventIterator::GroupIterator::event<DPPQCDEventWaveform>()
+inline DPPQCDEventWaveform<DPPQCDEvent> DPPQDCEventIterator::GroupIterator::event<DPPQCDEventWaveform<DPPQCDEvent> >()
 {
     assert(extras == false);
     assert(waveform == true);
-    return DPPQCDEventWaveform{ptr, elementSize};
+    return DPPQCDEventWaveform<DPPQCDEvent>{ptr, elementSize};
+}
+
+template <>
+inline DPPQCDEventWaveform<DPPQCDEventExtra> DPPQDCEventIterator::GroupIterator::event<DPPQCDEventWaveform<DPPQCDEventExtra> >()
+{
+    assert(extras == true);
+    assert(waveform == true);
+    return DPPQCDEventWaveform<DPPQCDEventExtra>{ptr, elementSize};
 }
 
 

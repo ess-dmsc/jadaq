@@ -43,17 +43,17 @@
     }                                           \
 }
 
-void DPPQCDEventWaveform::waveform(Waveform& waveform) const
+template <typename DPPQCDEventType>
+static inline void waveform_(const DPPQCDEventWaveform<DPPQCDEventType>& event, Waveform& waveform)
 {
-    assert(extras == false);
-    size_t n = (size-(2+extras))<<1;
+    size_t n = (event.size-(2+event.extras))<<1;
     uint16_t trigger = 0xFFFF;
     Interval gate = {0xffff,0xffff};
     Interval holdoff  = {0xffff,0xffff};
     Interval over = {0xffff,0xffff};
     for (uint16_t i = 0; i < (n>>1); ++i)
     {
-        uint32_t ss = ptr[i+1];
+        uint32_t ss = event.ptr[i+1];
         waveform.samples[i<<1] = (uint16_t)(ss & 0x0fff);
         waveform.samples[i<<1|1] = (uint16_t)((ss>>16) & 0x0fff);
         // trigger
@@ -72,4 +72,14 @@ void DPPQCDEventWaveform::waveform(Waveform& waveform) const
     waveform.overthreshold = over;
 }
 
+template <>
+void DPPQCDEventWaveform<DPPQCDEvent>::waveform(Waveform &waveform) const
+{
+    waveform_(*this,waveform);
+}
 
+template <>
+void DPPQCDEventWaveform<DPPQCDEventExtra>::waveform(Waveform &waveform) const
+{
+    waveform_(*this,waveform);
+}

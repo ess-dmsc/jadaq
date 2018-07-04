@@ -45,12 +45,14 @@
 namespace Data
 {
     const uint16_t currentVersion = *(uint16_t*)(uint8_t[])VERSION;
+    const constexpr uint16_t WaveformBase = 1<<8;
     enum ElementType: uint16_t
     {
         None,
         List422,
         List8222,
-        Waveform8222n2
+        Waveform422 = WaveformBase | List422,
+        Waveform8222 = WaveformBase | List8222,
     };
     /* Shared meta data for the entire data package */
     struct __attribute__ ((__packed__)) Header // 32 bytes
@@ -156,20 +158,21 @@ namespace Data
     };
     static_assert(std::is_pod<ListElement8222>::value, "Data::ListElement8222 must be POD");
 
+    template <typename ListElementType>
     struct __attribute__ ((__packed__)) WaveformElement
     {
-        typedef DPPQCDEventWaveform EventType;
-        ListElement422 listElement422;
+        typedef DPPQCDEventWaveform<typename ListElementType::EventType> EventType;
+        ListElementType listElement;
         Waveform waveform;
         WaveformElement() = default;
         WaveformElement(const EventType& event, uint16_t group)
-                : listElement422(event,group)
-                , waveform(event) {}
+                : listElement(event,group)
+                , waveform{event} {}
         bool operator< (const WaveformElement& rhs) const
-        { return listElement422 < rhs.listElement422; }
+        { return listElement < rhs.listElement; }
         void printOn(std::ostream& os) const
         {
-            listElement422.printOn(os); os << " ";
+            listElement.printOn(os); os << " ";
             waveform.printOn(os);
         }
         static void headerOn(std::ostream& os)
@@ -177,13 +180,13 @@ namespace Data
             ListElement422::headerOn(os);
             Waveform::headerOn(os);
         }
-        static ElementType type() { return Waveform8222n2; }
+        static ElementType type() { return (ElementType)(WaveformBase | ListElementType::type()); }
         void insertMembers(H5::CompType& datatype) const
         {
-            listElement422.insertMembers(datatype);
+            listElement.insertMembers(datatype);
             waveform.insertMembers(datatype,offsetof(WaveformElement,waveform));
         }
-        static size_t size(size_t samples) { return ListElement422::size() + Waveform::size(samples); }
+        static size_t size(size_t samples) { return ListElementType::size() + Waveform::size(samples); }
         H5::CompType h5type() const
         {
             H5::CompType datatype(size(waveform.num_samples));
@@ -191,7 +194,8 @@ namespace Data
             return datatype;
         }
     };
-    static_assert(std::is_pod<WaveformElement>::value, "Data::WaveformElement must be POD");
+    static_assert(std::is_pod<WaveformElement<Data::ListElement422> >::value, "Data::WaveformElement<Data::ListElement422> > must be POD");
+    static_assert(std::is_pod<WaveformElement<Data::ListElement8222> >::value, "Data::WaveformElement<Data::ListElement8222> > must be POD");
 
     static constexpr const char* defaultDataPort = "12345";
     static constexpr const size_t maxBufferSize = JUMBO_PAYLOAD-(UDP_HEADER+IP_HEADER);
@@ -201,7 +205,9 @@ static inline std::ostream& operator<< (std::ostream& os, const Data::ListElemen
 { e.printOn(os); return os; }
 static inline std::ostream& operator<< (std::ostream& os, const Data::ListElement8222& e)
 { e.printOn(os); return os; }
-static inline std::ostream& operator<< (std::ostream& os, const Data::WaveformElement& e)
+static inline std::ostream& operator<< (std::ostream& os, const Data::WaveformElement<Data::ListElement422>& e)
+{ e.printOn(os); return os; }
+static inline std::ostream& operator<< (std::ostream& os, const Data::WaveformElement<Data::ListElement8222>& e)
 { e.printOn(os); return os; }
 
 #endif //JADAQ_DATAFORMAT_HPP

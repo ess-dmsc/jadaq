@@ -330,7 +330,10 @@ void Digitizer::initialize(DataWriter& dataWriter)
                 waveforms = digitizer->getRecordLength(0);
             if (waveforms)
             {
-                dataHandler.initialize<Data::WaveformElement>(dataWriter,serial(),groups(),waveforms);
+                if (extras)
+                    dataHandler.initialize<Data::WaveformElement<Data::ListElement8222> >(dataWriter,serial(),groups(),waveforms);
+                else
+                    dataHandler.initialize<Data::WaveformElement<Data::ListElement422> >(dataWriter,serial(),groups(),waveforms);
             }
             else if (extras)
             {

@@ -51,7 +51,8 @@
         Interval overthreshold;
         uint16_t samples[];
         Waveform() = default;
-        Waveform(const DPPQCDEventWaveform& event)
+        template <typename DPPQCDEventType>
+        Waveform(const DPPQCDEventWaveform<DPPQCDEventType> & event)
         {
             event.waveform(*this);
         }
