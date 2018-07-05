@@ -123,7 +123,7 @@ private:
                     }
                     delete buffer.buffer;
                     buffer.buffer = jadaq::buffer<E>::empty_like(*extra.buffer);
-                    std::swap(buffer,extra);
+                    std::swap(buffer.buffer,extra.buffer);
                     extra.clear();
                 }
 
