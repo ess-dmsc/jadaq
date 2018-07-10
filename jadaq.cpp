@@ -185,7 +185,7 @@ int main(int argc, const char *argv[])
     std::ofstream  dst(dstName.str(), std::ios::binary);
     dst << src.rdbuf();
     if (!dst){
-      std::cerr << "Error: could not copy config file to " << *conf.path;
+      std::cerr << "Error: could not copy config file to '" << *conf.path << "' -- please check the output path argument!" << std::endl;
       return -1;
     }
     // write out next run number to file
