@@ -38,6 +38,7 @@
 #include "DataWriterHDF5.hpp"
 #include "DataWriterText.hpp"
 #include "DataWriterNetwork.hpp"
+#include "runno.hpp"
 
 namespace po = boost::program_options;
 namespace asio = boost::asio;
@@ -51,6 +52,7 @@ struct
     long  events  = -1;
     float time    = -1.0f;
     int   verbose =  1;
+    std::string* path = nullptr;
     std::string* network = nullptr;
     std::string* port = nullptr;
     std::string* outConfigFile = nullptr;
@@ -73,6 +75,7 @@ int main(int argc, const char *argv[])
                 ("sort,s", po::bool_switch(&conf.sort), "Sort output before writing to file (only valid for file output).")
                 ("text,T", po::bool_switch(&conf.textout), "Output to text file.")
                 ("hdf5,H", po::bool_switch(&conf.hdf5out), "Output to hdf5 file.")
+                ("path,p", po::value<std::string>()->value_name("<path>")->default_value(""), "Store data and other run information in local <path>.")
                 ("network,N", po::value<std::string>()->value_name("<address>"), "Send data over network - address to bind to.")
                 ("port,P", po::value<std::string>()->value_name("<port>")->default_value(Data::defaultDataPort), "Network port to bind to if sending over network")
                 ("config_out", po::value<std::string>()->value_name("<file>"), "Read back device(s) configuration and write to <file>")
@@ -106,6 +109,10 @@ int main(int argc, const char *argv[])
         {
             conf.outConfigFile = new std::string(vm["config_out"].as<std::string>());
         }
+        conf.path = new std::string(vm["path"].as<std::string>());
+        // add trailing slash to path (if given)
+        if (!conf.path->empty() && *conf.path->rbegin() != '/')
+          *conf.path += '/';
         conf.events = vm["events"].as<int>();
         conf.time   = vm["time"].as<float>();
         if (vm.count("network"))
@@ -124,6 +131,8 @@ int main(int argc, const char *argv[])
 
     // get a unique run ID
     uuid runID;
+    // prepare a run number
+    runno runNumber;
 
     /* Read-in and write resulting digitizer configuration */
     std::string configFileName = conf.configFile[0];
@@ -162,6 +171,28 @@ int main(int argc, const char *argv[])
             std::cout << "\t" << digitizer.name() << std::endl;
         }
     }
+
+    // read in run number stored in path (if any)
+    if (runNumber.readFromPath(*conf.path)){
+      DEBUG(std::cout << "Found run number " << runNumber.value << " at path "<< *conf.path << std::endl;)
+        } else {
+      DEBUG(std::cout << "No run number " << runNumber.value << " found at path "<< *conf.path << "(will be created later)."<< std::endl;)
+        }
+    // copy over configuration file
+    std::stringstream dstName;
+    dstName << *conf.path << "jadaq-run-" << runNumber.toString() << ".cfg";
+    std::ifstream  src(configFileName, std::ios::binary);
+    std::ofstream  dst(dstName.str(), std::ios::binary);
+    dst << src.rdbuf();
+    if (!dst){
+      std::cerr << "Error: could not copy config file to " << *conf.path;
+      return -1;
+    }
+    // write out next run number to file
+    runno nextRun(runNumber.value()+1);
+    nextRun.writeToPath(*conf.path);
+
+    std::cout << "Starting run " << runNumber.toString() << " (ID " << runID.toString() << ") " << std::endl;
 
     // TODO: move DataHandler creation to factory method in DataHandlerGeneric
     DataWriter dataWriter;
