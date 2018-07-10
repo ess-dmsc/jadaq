@@ -30,7 +30,6 @@
 #include <boost/asio.hpp>
 #include <boost/asio/io_service.hpp>
 #include <boost/bind.hpp>
-#include "uuid.hpp"
 #include "DataFormat.hpp"
 #include "container.hpp"
 
@@ -39,13 +38,13 @@ using boost::asio::ip::udp;
 class DataWriterNetwork
 {
 private:
-    uuid runID;
+    uint64_t runID;
     boost::asio::io_service ioService;
     udp::endpoint remoteEndpoint;
     udp::socket *socket = nullptr;
 
 public:
-    DataWriterNetwork(const std::string& address, const std::string& port, uuid runID_)
+    DataWriterNetwork(const std::string& address, const std::string& port, uint64_t runID_)
             : runID(runID_)
     {
         try {
@@ -73,7 +72,7 @@ public:
     void operator()(const jadaq::buffer<E>* buffer, uint32_t digitizerID, uint64_t globalTimeStamp)
     {
         Data::Header* header = (Data::Header*)buffer->data();
-        header->runID = runID.value();
+        header->runID = runID;
         header->globalTime = globalTimeStamp;
         header->digitizerID = digitizerID;
         header->version = Data::currentVersion;

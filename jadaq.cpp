@@ -198,15 +198,15 @@ int main(int argc, const char *argv[])
     DataWriter dataWriter;
     if (conf.hdf5out)
     {
-        dataWriter = new DataWriterHDF5(runID);
+      dataWriter = new DataWriterHDF5(*conf.path, runNumber.toString());
     }
     else if (conf.textout)
     {
-        dataWriter = new DataWriterText(runID);
+      dataWriter = new DataWriterText(*conf.path, runNumber.toString());
     }
     else if(conf.network != nullptr)
     {
-        dataWriter = new DataWriterNetwork(*conf.network,*conf.port,runID);
+      dataWriter = new DataWriterNetwork(*conf.network,*conf.port,runID.value());
     }
     else if (conf.nullout)
     {

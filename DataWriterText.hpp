@@ -29,7 +29,6 @@
 #include <iomanip>
 #include <mutex>
 #include <cassert>
-#include "uuid.hpp"
 #include "DataFormat.hpp"
 #include "container.hpp"
 
@@ -40,9 +39,11 @@ private:
     std::mutex mutex;
 
 public:
-    DataWriterText(uuid runID)
+  DataWriterText(std::string pathname, std::string runID)
     {
-        std::string filename = "jadaq-run-" + runID.toString() + ".txt";
+        if (!pathname.empty() && *pathname.rbegin() != '/')
+          pathname += '/';
+        std::string filename = pathname + "jadaq-run-" + runID + ".txt";
         file = new std::fstream(filename,std::fstream::out);
         if (!file->is_open())
         {

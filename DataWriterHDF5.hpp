@@ -31,7 +31,6 @@
 #include <vector>
 #include <set>
 #include <cassert>
-#include "uuid.hpp"
 #include <H5Cpp.h>
 #include "DataFormat.hpp"
 #include "container.hpp"
@@ -64,9 +63,11 @@ private:
 
 
 public:
-    DataWriterHDF5(uuid runID)
+  DataWriterHDF5(std::string pathname, std::string runID)
     {
-        std::string filename = "jadaq-run-" + runID.toString() + ".h5";
+        if (!pathname.empty() && *pathname.rbegin() != '/')
+          pathname += '/';
+        std::string filename = pathname + "jadaq-run-" + runID + ".h5";
         try
         {
             file = new H5::H5File(filename, H5F_ACC_TRUNC);
