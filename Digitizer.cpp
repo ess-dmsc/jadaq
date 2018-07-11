@@ -304,7 +304,6 @@ Digitizer::Digitizer(CAEN_DGTZ_ConnectionType linkType_, int linkNum_, int conet
 
 void Digitizer::initialize(DataWriter& dataWriter)
 {
-    boardConfiguration = digitizer->getBoardConfiguration();
     DEBUG(std::cout << "Prepare readout buffer for digitizer " << name() << std::endl;)
     readoutBuffer = digitizer->mallocReadoutBuffer();
     dataWriter.addDigitizer(serial());
@@ -324,6 +323,7 @@ void Digitizer::initialize(DataWriter& dataWriter)
             break;
         case CAEN_DGTZ_DPPFirmware_QDC:
         {
+            boardConfiguration = digitizer->getBoardConfiguration();
             caen::Digitizer740DPP::BoardConfiguration bc{boardConfiguration};
             extras = bc.extras();
             if (bc.waveform())
