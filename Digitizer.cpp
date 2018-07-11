@@ -310,16 +310,16 @@ void Digitizer::initialize(DataWriter& dataWriter)
     switch ((int)firmware) //Cast to int as long as CAEN_DGTZ_DPPFirmware_QDC is not part of the enumeration
     {
         case CAEN_DGTZ_DPPFirmware_PHA:
-            throw std::runtime_error("PHA firmware not supported by Digitizer.");
+            throw std::runtime_error("PHA firmware not supported by jadaq::Digitizer.");
             break;
         case CAEN_DGTZ_DPPFirmware_PSD:
-            throw std::runtime_error("PSD firmware not supported by Digitizer.");
+            throw std::runtime_error("PSD firmware not supported by jadaq::Digitizer.");
             break;
         case CAEN_DGTZ_DPPFirmware_CI:
-            throw std::runtime_error("CI firmware not supported by Digitizer.");
+            throw std::runtime_error("CI firmware not supported by jadaq::Digitizer.");
             break;
         case CAEN_DGTZ_DPPFirmware_ZLE:
-            throw std::runtime_error("ZLE firmware not supported by Digitizer.");
+            throw std::runtime_error("ZLE firmware not supported by jadaq::Digitizer.");
             break;
         case CAEN_DGTZ_DPPFirmware_QDC:
         {
@@ -345,10 +345,10 @@ void Digitizer::initialize(DataWriter& dataWriter)
             break;
         }
         case CAEN_DGTZ_NotDPPFirmware:
-            throw std::runtime_error("Non DPP firmware not supported by Digitizer.");
+            throw std::runtime_error("Non DPP firmware not supported by jadaq::Digitizer.");
             break;
         default:
-            throw std::runtime_error("Unknown firmware type. Not supported by Digitizer.");
+            throw std::runtime_error("Unknown firmware type. Not supported by jadaq::Digitizer.");
     }
 }
 
@@ -389,16 +389,16 @@ void Digitizer::acquisition() {
     switch ((int)firmware) //Cast to int as long as CAEN_DGTZ_DPPFirmware_QDC is not part of the enumeration
     {
         case CAEN_DGTZ_DPPFirmware_PHA:
-            throw std::runtime_error("PHA firmware not supported by Digitizer.");
+            throw std::runtime_error("PHA firmware not supported by jadaq::Digitizer.");
             break;
         case CAEN_DGTZ_DPPFirmware_PSD:
-            throw std::runtime_error("PSD firmware not supported by Digitizer.");
+            throw std::runtime_error("PSD firmware not supported by jadaq::Digitizer.");
             break;
         case CAEN_DGTZ_DPPFirmware_CI:
-            throw std::runtime_error("CI firmware not supported by Digitizer.");
+            throw std::runtime_error("CI firmware not supported by jadaq::Digitizer.");
             break;
         case CAEN_DGTZ_DPPFirmware_ZLE:
-            throw std::runtime_error("ZLE firmware not supported by Digitizer.");
+            throw std::runtime_error("ZLE firmware not supported by jadaq::Digitizer.");
             break;
         case CAEN_DGTZ_DPPFirmware_QDC:
         {
@@ -408,9 +408,9 @@ void Digitizer::acquisition() {
             break;
         }
         case CAEN_DGTZ_NotDPPFirmware:
-            throw std::runtime_error("Non DPP firmware not supported by Digitizer.");
+            throw std::runtime_error("Non DPP firmware not supported by jadaq::Digitizer.");
             break;
         default:
-            throw std::runtime_error("Unknown firmware type. Not supported by Digitizer.");
+            throw std::runtime_error("Unknown firmware type. Not supported by jadaq::Digitizer.");
     }
 }
