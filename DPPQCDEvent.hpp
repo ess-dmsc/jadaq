@@ -55,6 +55,28 @@ struct DPPQDCEventExtra: DPPQDCEvent
     static constexpr const bool extras = true;
 };
 
+/** A standard event structure as supported by the standard, non-DPP firmware (checked for XX751).
+    This is the non-ETTT (Extended Trigger Time Stamp) version with a 32-bit timestamp.
+    Event structure is documented in UM3350 - V1751/VX1751 User Manual rev. 16, page 32ff.
+*/
+struct StdEvent751: Event {
+  StdEvent751(uint32_t* p, size_t ): Event(p,(size_t)(p[0] & 0x0fffffffu)) {} // size is stored in event header itself
+  uint8_t channelMask() const { return (uint8_t)(ptr[1] & 0x000000ffu); }
+  uint32_t eventNo() const { return (uint32_t)(ptr[2] & 0x00ffffffu);}
+  uint32_t timeTag() const { return ptr[3]; }
+  static constexpr const bool ettt = false;
+};
+
+struct StdWaveform;
+
+template <typename StdEventType>
+struct StdEventWaveform: StdEventType
+{
+  StdEventWaveform(uint32_t* p, size_t s): StdEventType(p,s) {}
+  void waveform(StdWaveform& waveform) const;
+};
+
+
 struct DPPQDCWaveform;
 
 template <typename DPPQDCEventType>
