@@ -55,6 +55,8 @@ namespace caen {
                     return new Digitizer740DPP(handle, boardInfo);
                 else
                     return new Digitizer740(handle, boardInfo);
+            case CAEN_DGTZ_XX751_FAMILY_CODE:
+                return new Digitizer751(handle, boardInfo);
             default:
                 return new Digitizer(handle, boardInfo);;
         }
