@@ -70,7 +70,7 @@ namespace Data
     struct __attribute__ ((__packed__)) ListElement422
     {
         typedef uint32_t time_t;
-        typedef DPPQCDEvent EventType;
+        typedef DPPQDCEvent EventType;
         time_t time;
         uint16_t channel;
         uint16_t charge;
@@ -114,7 +114,7 @@ namespace Data
     struct __attribute__ ((__packed__)) ListElement8222
     {
         typedef uint64_t time_t;
-        typedef DPPQCDEventExtra EventType;
+        typedef DPPQDCEventExtra EventType;
         time_t time;
         uint16_t channel;
         uint16_t charge;
@@ -159,16 +159,16 @@ namespace Data
     static_assert(std::is_pod<ListElement8222>::value, "Data::ListElement8222 must be POD");
 
     template <typename ListElementType>
-    struct __attribute__ ((__packed__)) WaveformElement
+    struct __attribute__ ((__packed__)) DPPQDCWaveformElement
     {
-        typedef DPPQCDEventWaveform<typename ListElementType::EventType> EventType;
+        typedef DPPQDCEventWaveform<typename ListElementType::EventType> EventType;
         ListElementType listElement;
-        Waveform waveform;
-        WaveformElement() = default;
-        WaveformElement(const EventType& event, uint16_t group)
+        DPPQDCWaveform waveform;
+        DPPQDCWaveformElement() = default;
+        DPPQDCWaveformElement(const EventType& event, uint16_t group)
                 : listElement(event,group)
                 , waveform{event} {}
-        bool operator< (const WaveformElement& rhs) const
+        bool operator< (const DPPQDCWaveformElement& rhs) const
         { return listElement < rhs.listElement; }
         void printOn(std::ostream& os) const
         {
@@ -178,15 +178,15 @@ namespace Data
         static void headerOn(std::ostream& os)
         {
             ListElementType::headerOn(os);
-            Waveform::headerOn(os);
+            DPPQDCWaveform::headerOn(os);
         }
         static ElementType type() { return (ElementType)(WaveformBase | ListElementType::type()); }
         void insertMembers(H5::CompType& datatype) const
         {
             listElement.insertMembers(datatype);
-            waveform.insertMembers(datatype,offsetof(WaveformElement,waveform));
+            waveform.insertMembers(datatype,offsetof(DPPQDCWaveformElement,waveform));
         }
-        static size_t size(size_t samples) { return ListElementType::size() + Waveform::size(samples); }
+        static size_t size(size_t samples) { return ListElementType::size() + DPPQDCWaveform::size(samples); }
         H5::CompType h5type() const
         {
             H5::CompType datatype(size(waveform.num_samples));
@@ -194,8 +194,8 @@ namespace Data
             return datatype;
         }
     };
-    static_assert(std::is_pod<WaveformElement<Data::ListElement422> >::value, "Data::WaveformElement<Data::ListElement422> > must be POD");
-    static_assert(std::is_pod<WaveformElement<Data::ListElement8222> >::value, "Data::WaveformElement<Data::ListElement8222> > must be POD");
+    static_assert(std::is_pod<DPPQDCWaveformElement<Data::ListElement422> >::value, "Data::DPPQDCWaveformElement<Data::ListElement422> > must be POD");
+    static_assert(std::is_pod<DPPQDCWaveformElement<Data::ListElement8222> >::value, "Data::DPPQDCWaveformElement<Data::ListElement8222> > must be POD");
 
     static constexpr const char* defaultDataPort = "12345";
     static constexpr const size_t maxBufferSize = JUMBO_PAYLOAD-(UDP_HEADER+IP_HEADER);
@@ -205,9 +205,10 @@ static inline std::ostream& operator<< (std::ostream& os, const Data::ListElemen
 { e.printOn(os); return os; }
 static inline std::ostream& operator<< (std::ostream& os, const Data::ListElement8222& e)
 { e.printOn(os); return os; }
-static inline std::ostream& operator<< (std::ostream& os, const Data::WaveformElement<Data::ListElement422>& e)
 { e.printOn(os); return os; }
-static inline std::ostream& operator<< (std::ostream& os, const Data::WaveformElement<Data::ListElement8222>& e)
+static inline std::ostream& operator<< (std::ostream& os, const Data::DPPQDCWaveformElement<Data::ListElement422>& e)
+{ e.printOn(os); return os; }
+static inline std::ostream& operator<< (std::ostream& os, const Data::DPPQDCWaveformElement<Data::ListElement8222>& e)
 { e.printOn(os); return os; }
 
 #endif //JADAQ_DATAFORMAT_HPP

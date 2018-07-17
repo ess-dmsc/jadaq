@@ -35,7 +35,7 @@
 /*
  * DPPQDCEventIterator will iterate over a set of Board Aggregates contained in one Data Block
  */
-class DPPQDCEventIterator
+  class DPPQDCEventIterator
 {
 private:
     const caen::ReadoutBuffer& buffer;
@@ -129,7 +129,7 @@ private:
         bool operator<(const void* other) const { return ptr < other; }
         bool operator>=(const void* other) const { return ptr >= other; }
         bool operator<=(const void* other) const { return ptr <= other; }
-        DPPQCDEvent operator*() const { return DPPQCDEvent{ptr, elementSize}; }
+        DPPQDCEvent operator*() const { return DPPQDCEvent{ptr, elementSize}; }
         template <typename T>
         T event() { return T{ptr, elementSize}; }
     };
@@ -188,7 +188,7 @@ public:
     bool operator<(const void* other) const { return groupIterator < other; }
     bool operator>=(const void* other) const { return groupIterator >= other; }
     bool operator<=(const void* other) const { return groupIterator <= other; }
-    DPPQCDEvent operator*() const { return *groupIterator; }
+    DPPQDCEvent operator*() const { return *groupIterator; }
     void* end() const { return buffer.end(); }
     uint16_t group() { return groupIterator.currentGroup(); }
     template <typename T>
@@ -196,35 +196,35 @@ public:
 };
 
 template <>
-inline DPPQCDEvent DPPQDCEventIterator::GroupIterator::event<DPPQCDEvent>()
+inline DPPQDCEvent DPPQDCEventIterator::GroupIterator::event<DPPQDCEvent>()
 {
     assert(extras == false);
     assert(waveform == false);
-    return DPPQCDEvent{ptr, elementSize};
+    return DPPQDCEvent{ptr, elementSize};
 }
 
 template <>
-inline DPPQCDEventExtra DPPQDCEventIterator::GroupIterator::event<DPPQCDEventExtra>()
+inline DPPQDCEventExtra DPPQDCEventIterator::GroupIterator::event<DPPQDCEventExtra>()
 {
     assert(extras == true);
     assert(waveform == false);
-    return DPPQCDEventExtra{ptr, elementSize};
+    return DPPQDCEventExtra{ptr, elementSize};
 }
 
 template <>
-inline DPPQCDEventWaveform<DPPQCDEvent> DPPQDCEventIterator::GroupIterator::event<DPPQCDEventWaveform<DPPQCDEvent> >()
+inline DPPQDCEventWaveform<DPPQDCEvent> DPPQDCEventIterator::GroupIterator::event<DPPQDCEventWaveform<DPPQDCEvent> >()
 {
     assert(extras == false);
     assert(waveform == true);
-    return DPPQCDEventWaveform<DPPQCDEvent>{ptr, elementSize};
+    return DPPQDCEventWaveform<DPPQDCEvent>{ptr, elementSize};
 }
 
 template <>
-inline DPPQCDEventWaveform<DPPQCDEventExtra> DPPQDCEventIterator::GroupIterator::event<DPPQCDEventWaveform<DPPQCDEventExtra> >()
+inline DPPQDCEventWaveform<DPPQDCEventExtra> DPPQDCEventIterator::GroupIterator::event<DPPQDCEventWaveform<DPPQDCEventExtra> >()
 {
     assert(extras == true);
     assert(waveform == true);
-    return DPPQCDEventWaveform<DPPQCDEventExtra>{ptr, elementSize};
+    return DPPQDCEventWaveform<DPPQDCEventExtra>{ptr, elementSize};
 }
 
 

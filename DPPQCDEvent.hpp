@@ -23,8 +23,8 @@
  *
  */
 
-#ifndef JADAQ_DPPQCDEVENT_HPP
-#define JADAQ_DPPQCDEVENT_HPP
+#ifndef JADAQ_DPPQDCEVENT_HPP
+#define JADAQ_DPPQDCEVENT_HPP
 
 #include <cstdint>
 #include <cstddef>
@@ -36,9 +36,9 @@ struct Event
     Event(uint32_t* p, size_t s): ptr(p), size(s) {}
 };
 
-struct DPPQCDEvent: Event
+struct DPPQDCEvent: Event
 {
-    DPPQCDEvent(uint32_t* p, size_t s): Event(p,s) {}
+    DPPQDCEvent(uint32_t* p, size_t s): Event(p,s) {}
     uint32_t timeTag() const { return ptr[0]; }
     uint16_t charge() const { return (uint16_t)(ptr[size-1] & 0x0000ffffu); }
     uint8_t subChannel() const {return (uint8_t)(ptr[size-1] >> 28);}
@@ -46,23 +46,23 @@ struct DPPQCDEvent: Event
     static constexpr const bool extras = false;
 };
 
-struct DPPQCDEventExtra: DPPQCDEvent
+struct DPPQDCEventExtra: DPPQDCEvent
 {
-    DPPQCDEventExtra(uint32_t* p, size_t s): DPPQCDEvent(p,s) {}
+    DPPQDCEventExtra(uint32_t* p, size_t s): DPPQDCEvent(p,s) {}
     uint16_t extendedTimeTag() const { return (uint16_t)(ptr[size-2] & 0x0000ffffu); }
     uint16_t baseline() const { return (uint16_t)(ptr[size-2]>>16); }
     uint64_t fullTime() const { return ((uint64_t)timeTag()) | (((uint64_t)extendedTimeTag())<<32); }
     static constexpr const bool extras = true;
 };
 
-struct Waveform;
+struct DPPQDCWaveform;
 
-template <typename DPPQCDEventType>
-struct DPPQCDEventWaveform: DPPQCDEventType
+template <typename DPPQDCEventType>
+struct DPPQDCEventWaveform: DPPQDCEventType
 {
-    DPPQCDEventWaveform(uint32_t* p, size_t s): DPPQCDEventType(p,s) {}
-    void waveform(Waveform& waveform) const;
+    DPPQDCEventWaveform(uint32_t* p, size_t s): DPPQDCEventType(p,s) {}
+    void waveform(DPPQDCWaveform& waveform) const;
 };
 
 
-#endif //JADAQ_DPPQCDEVENT_HPP
+#endif //JADAQ_DPPQDCEVENT_HPP

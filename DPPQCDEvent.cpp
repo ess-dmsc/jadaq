@@ -43,8 +43,9 @@
     }                                           \
 }
 
-template <typename DPPQCDEventType>
-static inline void waveform_(const DPPQCDEventWaveform<DPPQCDEventType>& event, Waveform& waveform)
+/** DPP QDC on XX740 digitizer mixed-mode waveform decoding */
+template <typename DPPQDCEventType>
+static inline void waveform_(const DPPQDCEventWaveform<DPPQDCEventType>& event, DPPQDCWaveform& waveform)
 {
     size_t n = (event.size-(2+event.extras))<<1;
     uint16_t trigger = 0xFFFF;
@@ -73,13 +74,13 @@ static inline void waveform_(const DPPQCDEventWaveform<DPPQCDEventType>& event, 
 }
 
 template <>
-void DPPQCDEventWaveform<DPPQCDEvent>::waveform(Waveform &waveform) const
+void DPPQDCEventWaveform<DPPQDCEvent>::waveform(DPPQDCWaveform &waveform) const
 {
     waveform_(*this,waveform);
 }
 
 template <>
-void DPPQCDEventWaveform<DPPQCDEventExtra>::waveform(Waveform &waveform) const
+void DPPQDCEventWaveform<DPPQDCEventExtra>::waveform(DPPQDCWaveform &waveform) const
 {
     waveform_(*this,waveform);
 }
