@@ -60,6 +60,7 @@ private:
         virtual bool network() const = 0;
         virtual void operator()(const jadaq::buffer<Data::ListElement422>* buffer, uint32_t digitizerID, uint64_t globalTimeStamp) = 0;
         virtual void operator()(const jadaq::buffer<Data::ListElement8222>* buffer, uint32_t digitizerID, uint64_t globalTimeStamp) = 0;
+        virtual void operator()(const jadaq::buffer<Data::StdElement751>* buffer, uint32_t digitizerID, uint64_t globalTimeStamp) = 0;
         virtual void operator()(const jadaq::buffer<Data::DPPQDCWaveformElement<Data::ListElement422> >* buffer, uint32_t digitizerID, uint64_t globalTimeStamp) = 0;
         virtual void operator()(const jadaq::buffer<Data::DPPQDCWaveformElement<Data::ListElement8222> >* buffer, uint32_t digitizerID, uint64_t globalTimeStamp) = 0;
     };
@@ -76,6 +77,7 @@ private:
         { val->operator()(buffer,digitizerID,globalTimeStamp); }
         void operator()(const jadaq::buffer<Data::ListElement8222>* buffer, uint32_t digitizerID, uint64_t globalTimeStamp) final
         { val->operator()(buffer,digitizerID,globalTimeStamp); }
+        void operator()(const jadaq::buffer<Data::StdElement751>* buffer, uint32_t digitizerID, uint64_t globalTimeStamp) final
         { val->operator()(buffer,digitizerID,globalTimeStamp); }
         void operator()(const jadaq::buffer<Data::DPPQDCWaveformElement<Data::ListElement422> >* buffer, uint32_t digitizerID, uint64_t globalTimeStamp) final
         { val->operator()(buffer,digitizerID,globalTimeStamp); }

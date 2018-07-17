@@ -51,6 +51,7 @@ namespace Data
         None,
         List422,
         List8222,
+        Standard751, // non-DPP standard data with waveform for XX751
         Waveform422 = WaveformBase | List422,
         Waveform8222 = WaveformBase | List8222,
     };
@@ -158,6 +159,54 @@ namespace Data
     };
     static_assert(std::is_pod<ListElement8222>::value, "Data::ListElement8222 must be POD");
 
+    struct __attribute__ ((__packed__)) StdElement751
+    {
+        typedef uint32_t time_t;
+        typedef StdEventWaveform<StdEvent751> EventType;
+        time_t time;
+        uint8_t channelMask;
+        uint32_t eventNo;
+        StdWaveform waveform;
+        StdElement751() = default;
+        StdElement751(const EventType& event)
+          : time(event.timeTag()),
+          channelMask(event.channelMask()),
+          eventNo(event.eventNo()),
+          waveform{event} { }
+        bool operator< (const StdElement751& rhs) const
+        {
+            return time < rhs.time;
+        };
+        void printOn(std::ostream& os) const
+        {
+            os << PRINTD(channelMask) << " " << PRINTD(time) << " " << PRINTD(eventNo) << " ";
+            waveform.printOn(os);
+        }
+        static ElementType type() { return Standard751; }
+        void insertMembers(H5::CompType& datatype) const
+        {
+            datatype.insertMember("time", HOFFSET(StdElement751, time), H5::PredType::NATIVE_UINT64);
+            datatype.insertMember("channelMask", HOFFSET(StdElement751, channelMask), H5::PredType::NATIVE_UINT8);
+            datatype.insertMember("eventNo", HOFFSET(StdElement751, eventNo), H5::PredType::NATIVE_UINT32);
+            waveform.insertMembers(datatype,offsetof(StdElement751,waveform));
+        }
+        static size_t size(size_t samples) { return sizeof(StdElement751) + StdWaveform::size(samples); }
+        H5::CompType h5type() const
+        {
+          H5::CompType datatype(size(waveform.num_samples));
+          insertMembers(datatype);
+          return datatype;
+        }
+        static void headerOn(std::ostream& os)
+        {
+          os << PRINTH(channelMask) << " " << PRINTH(time) << " " << PRINTH(eventNo) << " ";
+          StdWaveform::headerOn(os);
+        }
+    };
+    static_assert(std::is_pod<StdElement751>::value, "Data::StdElement751 must be POD");
+
+
+
     template <typename ListElementType>
     struct __attribute__ ((__packed__)) DPPQDCWaveformElement
     {
@@ -205,6 +254,7 @@ static inline std::ostream& operator<< (std::ostream& os, const Data::ListElemen
 { e.printOn(os); return os; }
 static inline std::ostream& operator<< (std::ostream& os, const Data::ListElement8222& e)
 { e.printOn(os); return os; }
+static inline std::ostream& operator<< (std::ostream& os, const Data::StdElement751& e)
 { e.printOn(os); return os; }
 static inline std::ostream& operator<< (std::ostream& os, const Data::DPPQDCWaveformElement<Data::ListElement422>& e)
 { e.printOn(os); return os; }
