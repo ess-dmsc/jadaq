@@ -309,14 +309,6 @@ void Digitizer::initialize(DataWriter& dataWriter)
     readoutBuffer = digitizer->mallocReadoutBuffer();
     uint32_t groups = this->groups();
     acqWindowSize = new uint32_t[groups];
-    for (uint32_t i = 0; i < groups; ++i)
-    {
-        acqWindowSize[i] = std::max({digitizer->getRecordLength(i)*(waveforms>0),
-                                     digitizer->getDPPPreTriggerSize(i) + digitizer->getDPPTriggerHoldOffWidth(i),
-                                     digitizer->getDPPGateWidth(i) - digitizer->getDPPGateOffset(i)+ digitizer->getDPPPreTriggerSize(i)
-                                    });
-        std::cout << "acqWindowSize[" << i << "] = " <<  acqWindowSize[i] << std::endl;
-    }
     dataWriter.addDigitizer(serial());
     switch ((int)firmware) //Cast to int as long as CAEN_DGTZ_DPPFirmware_QDC is not part of the enumeration
     {
@@ -338,6 +330,15 @@ void Digitizer::initialize(DataWriter& dataWriter)
             extras = bc.extras();
             if (bc.waveform())
                 waveforms = digitizer->getRecordLength(0);
+            for (uint32_t i = 0; i < groups; ++i)
+            {
+                acqWindowSize[i] = std::max({digitizer->getRecordLength(i)*bc.waveform(),
+                                             digitizer->getDPPPreTriggerSize(i) + digitizer->getDPPTriggerHoldOffWidth(i),
+                                             digitizer->getDPPGateWidth(i) - digitizer->getDPPGateOffset(i)+ digitizer->getDPPPreTriggerSize(i)
+                                            });
+                std::cout << "acqWindowSize[" << i << "] = " <<  acqWindowSize[i] << std::endl;
+            }
+
             if (waveforms)
             {
                 if (extras)
