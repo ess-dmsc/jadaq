@@ -311,7 +311,7 @@ void Digitizer::initialize(DataWriter& dataWriter)
     acqWindowSize = new uint32_t[groups];
     for (uint32_t i = 0; i < groups; ++i)
     {
-        acqWindowSize[i] = std::max({digitizer->getRecordLength(i),
+        acqWindowSize[i] = std::max({digitizer->getRecordLength(i)*(waveforms>0),
                                      digitizer->getDPPPreTriggerSize(i) + digitizer->getDPPTriggerHoldOffWidth(i),
                                      digitizer->getDPPGateWidth(i) - digitizer->getDPPGateOffset(i)+ digitizer->getDPPPreTriggerSize(i)
                                     });
