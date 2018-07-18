@@ -162,7 +162,7 @@ private:
                 events += 1;
                 typename E::EventType event = eventIterator.event<typename E::EventType>();
                 uint16_t group = eventIterator.group();
-                if (current.maxLocalTime[group] - event.timeTag() < maxJitter[group])
+                if (current.maxLocalTime[group] < event.timeTag() + maxJitter[group])
                 {
                     store(current,event,group);
                 } else {
