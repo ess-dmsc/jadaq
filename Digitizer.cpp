@@ -307,6 +307,16 @@ void Digitizer::initialize(DataWriter& dataWriter)
     boardConfiguration = digitizer->getBoardConfiguration();
     DEBUG(std::cout << "Prepare readout buffer for digitizer " << name() << std::endl;)
     readoutBuffer = digitizer->mallocReadoutBuffer();
+    uint32_t groups = this->groups();
+    acqWindowSize = new uint32_t[groups];
+    for (uint32_t i = 0; i < groups; ++i)
+    {
+        acqWindowSize[i] = std::max({digitizer->getRecordLength(groups),
+                                     digitizer->getDPPPreTriggerSize(groups) + digitizer->getDPPTriggerHoldOffWidth(groups),
+                                     digitizer->getDPPGateWidth(groups) - digitizer->getDPPGateOffset(groups)+ digitizer->getDPPPreTriggerSize(groups)
+                                    });
+        std::cout << "acqWindowSize[" << i << "] = " <<  acqWindowSize[i] << std::endl;
+    }
     dataWriter.addDigitizer(serial());
     switch ((int)firmware) //Cast to int as long as CAEN_DGTZ_DPPFirmware_QDC is not part of the enumeration
     {
@@ -331,16 +341,16 @@ void Digitizer::initialize(DataWriter& dataWriter)
             if (waveforms)
             {
                 if (extras)
-                    dataHandler.initialize<Data::WaveformElement<Data::ListElement8222> >(dataWriter,serial(),groups(),waveforms);
+                    dataHandler.initialize<Data::WaveformElement<Data::ListElement8222> >(dataWriter,serial(),groups,waveforms);
                 else
-                    dataHandler.initialize<Data::WaveformElement<Data::ListElement422> >(dataWriter,serial(),groups(),waveforms);
+                    dataHandler.initialize<Data::WaveformElement<Data::ListElement422> >(dataWriter,serial(),groups,waveforms);
             }
             else if (extras)
             {
-                dataHandler.initialize<Data::ListElement8222>(dataWriter,serial(),groups(),waveforms);
+                dataHandler.initialize<Data::ListElement8222>(dataWriter,serial(),groups,waveforms);
             } else
             {
-                dataHandler.initialize<Data::ListElement422>(dataWriter,serial(),groups(),waveforms);
+                dataHandler.initialize<Data::ListElement422>(dataWriter,serial(),groups,waveforms);
             }
             break;
         }

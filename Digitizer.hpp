@@ -50,6 +50,7 @@ private:
     uint32_t id;
     uint32_t waveforms = 0;
     bool extras   = false;
+    uint32_t* acqWindowSize = nullptr;
     DataHandler dataHandler;
     std::set<uint32_t> manipulatedRegisters;
     caen::ReadoutBuffer readoutBuffer;
