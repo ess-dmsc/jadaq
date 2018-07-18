@@ -311,9 +311,9 @@ void Digitizer::initialize(DataWriter& dataWriter)
     acqWindowSize = new uint32_t[groups];
     for (uint32_t i = 0; i < groups; ++i)
     {
-        acqWindowSize[i] = std::max({digitizer->getRecordLength(groups),
-                                     digitizer->getDPPPreTriggerSize(groups) + digitizer->getDPPTriggerHoldOffWidth(groups),
-                                     digitizer->getDPPGateWidth(groups) - digitizer->getDPPGateOffset(groups)+ digitizer->getDPPPreTriggerSize(groups)
+        acqWindowSize[i] = std::max({digitizer->getRecordLength(i),
+                                     digitizer->getDPPPreTriggerSize(i) + digitizer->getDPPTriggerHoldOffWidth(i),
+                                     digitizer->getDPPGateWidth(i) - digitizer->getDPPGateOffset(i)+ digitizer->getDPPPreTriggerSize(i)
                                     });
         std::cout << "acqWindowSize[" << i << "] = " <<  acqWindowSize[i] << std::endl;
     }
