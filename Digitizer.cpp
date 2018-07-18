@@ -341,16 +341,16 @@ void Digitizer::initialize(DataWriter& dataWriter)
             if (waveforms)
             {
                 if (extras)
-                    dataHandler.initialize<Data::WaveformElement<Data::ListElement8222> >(dataWriter,serial(),groups,waveforms);
+                    dataHandler.initialize<Data::WaveformElement<Data::ListElement8222> >(dataWriter,serial(),groups,waveforms,acqWindowSize);
                 else
-                    dataHandler.initialize<Data::WaveformElement<Data::ListElement422> >(dataWriter,serial(),groups,waveforms);
+                    dataHandler.initialize<Data::WaveformElement<Data::ListElement422> >(dataWriter,serial(),groups,waveforms,acqWindowSize);
             }
             else if (extras)
             {
-                dataHandler.initialize<Data::ListElement8222>(dataWriter,serial(),groups,waveforms);
+                dataHandler.initialize<Data::ListElement8222>(dataWriter,serial(),groups,waveforms,acqWindowSize);
             } else
             {
-                dataHandler.initialize<Data::ListElement422>(dataWriter,serial(),groups,waveforms);
+                dataHandler.initialize<Data::ListElement422>(dataWriter,serial(),groups,waveforms,acqWindowSize);
             }
             break;
         }
