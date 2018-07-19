@@ -81,6 +81,7 @@ private:
             waveform = ((format>>27) & 1) == 1;
             end = ptr+size;
             ptr += 2; //point to first event
+            elementSize = 2; 
             if (extras)
                 elementSize += 1;
             if (waveform)
