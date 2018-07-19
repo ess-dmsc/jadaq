@@ -173,6 +173,8 @@ namespace Data
           channelMask(event.channelMask()),
           eventNo(event.eventNo()),
           waveform{event} { }
+        StdElement751(const EventType& event, uint16_t)
+          : StdElement751(event) {}
         bool operator< (const StdElement751& rhs) const
         {
             return time < rhs.time;
@@ -185,7 +187,7 @@ namespace Data
         static ElementType type() { return Standard751; }
         void insertMembers(H5::CompType& datatype) const
         {
-            datatype.insertMember("time", HOFFSET(StdElement751, time), H5::PredType::NATIVE_UINT64);
+            datatype.insertMember("time", HOFFSET(StdElement751, time), H5::PredType::NATIVE_UINT32);
             datatype.insertMember("channelMask", HOFFSET(StdElement751, channelMask), H5::PredType::NATIVE_UINT8);
             datatype.insertMember("eventNo", HOFFSET(StdElement751, eventNo), H5::PredType::NATIVE_UINT32);
             waveform.insertMembers(datatype,offsetof(StdElement751,waveform));
