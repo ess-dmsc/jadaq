@@ -81,12 +81,11 @@ private:
             waveform = ((format>>27) & 1) == 1;
             end = ptr+size;
             ptr += 2; //point to first event
-            elementSize = 2; 
+            elementSize = 2;
             if (extras)
                 elementSize += 1;
             if (waveform)
                 elementSize += (format & 0xFFF) << 2;
-            std::cout << "nextGroup " << size << " " << elementSize << " " << std::hex << format << " " << std::endl;
             assert((size - 2) % elementSize == 0);
 
         }
