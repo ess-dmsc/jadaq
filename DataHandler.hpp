@@ -37,9 +37,9 @@ class DataHandler
 {
 public:
     template<typename E>
-    void initialize(DataWriter& dataWriter, uint32_t digitizerID, size_t groups, size_t samples)
+    void initialize(DataWriter& dataWriter, uint32_t digitizerID, size_t groups, size_t samples, const uint32_t* maxJitter)
     {
-        instance.reset(new Implementation<E>(dataWriter,digitizerID,groups,samples));
+        instance.reset(new Implementation<E>(dataWriter,digitizerID,groups,samples,maxJitter));
     }
     void flush() { instance->flush(); }
     size_t operator()(DataBlockBaseIterator& it) { return instance->operator()(it); }
@@ -65,6 +65,8 @@ private:
     private:
         DataWriter& dataWriter;
         uint32_t digitizerID;
+        const uint32_t* maxJitter;
+
         struct Buffer
         {
             size_t groups;
@@ -132,9 +134,10 @@ private:
         }
 
     public:
-        Implementation(DataWriter& dw, uint32_t digID, size_t groups, size_t samples)
+        Implementation(DataWriter& dw, uint32_t digID, size_t groups, size_t samples, const uint32_t* jitter)
                 : dataWriter(dw)
                 , digitizerID(digID)
+                , maxJitter(jitter)
                 , current(groups)
                 , next(groups)
                 , extra(groups)
@@ -159,7 +162,7 @@ private:
                 events += 1;
                 typename E::EventType event = eventIterator.event<typename E::EventType>();
                 uint16_t group = eventIterator.group();
-                if (event.timeTag() >= current.maxLocalTime[group])
+                if (current.maxLocalTime[group] < event.timeTag() + maxJitter[group])
                 {
                     store(current,event,group);
                 } else {

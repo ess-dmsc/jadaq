@@ -357,23 +357,34 @@ void Digitizer::initialize(DataWriter& dataWriter)
         case CAEN_DGTZ_DPPFirmware_QDC:
           {
             caen::Digitizer740DPP::BoardConfiguration bc{boardConfiguration};
+            uint32_t groups = this->groups();
+            acqWindowSize = new uint32_t[groups];
             extras = bc.extras();
             if (bc.waveform())
-              waveforms = digitizer->getRecordLength(0);
+                waveforms = digitizer->getRecordLength(0);
+            for (uint32_t i = 0; i < groups; ++i)
+            {
+                acqWindowSize[i] = std::max({digitizer->getRecordLength(i)*bc.waveform(),
+                                             digitizer->getDPPPreTriggerSize(i) + digitizer->getDPPTriggerHoldOffWidth(i),
+                                             digitizer->getDPPGateWidth(i) - digitizer->getDPPGateOffset(i)+ digitizer->getDPPPreTriggerSize(i)
+                                            });
+                std::cout << "acqWindowSize[" << i << "] = " <<  acqWindowSize[i] << std::endl;
+            }
+
             if (waveforms)
               {
                 if (extras)
-                  dataHandler.initialize<Data::DPPQDCWaveformElement<Data::ListElement8222> >(dataWriter,serial(),groups(),waveforms);
+                    dataHandler.initialize<Data::DPPQDCWaveformElement<Data::ListElement8222> >(dataWriter,serial(),groups,waveforms,acqWindowSize);
                 else
-                  dataHandler.initialize<Data::DPPQDCWaveformElement<Data::ListElement422> >(dataWriter,serial(),groups(),waveforms);
-              }
+                    dataHandler.initialize<Data::DPPQDCWaveformElement<Data::ListElement422> >(dataWriter,serial(),groups,waveforms,acqWindowSize);
+            }
             else if (extras)
-              {
-                dataHandler.initialize<Data::ListElement8222>(dataWriter,serial(),groups(),waveforms);
-              } else
-              {
-                dataHandler.initialize<Data::ListElement422>(dataWriter,serial(),groups(),waveforms);
-              }
+            {
+                dataHandler.initialize<Data::ListElement8222>(dataWriter,serial(),groups,waveforms,acqWindowSize);
+            } else
+            {
+                dataHandler.initialize<Data::ListElement422>(dataWriter,serial(),groups,waveforms,acqWindowSize);
+            }
             break;
           }
         case CAEN_DGTZ_NotDPPFirmware:
