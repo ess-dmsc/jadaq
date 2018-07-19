@@ -31,15 +31,44 @@
 #include "caen.hpp"
 #include "Waveform.hpp"
 
+/** abstract base class for an iterator over the elements contained in a data block */
+class DataBlockBaseIterator{
+protected:
+  const caen::ReadoutBuffer& buffer;
+  uint32_t* ptr;
+public:
+  DataBlockBaseIterator(const caen::ReadoutBuffer& b)
+    : buffer(b)
+    , ptr((uint32_t*)buffer.data) {}
+  virtual uint16_t group() { return 0; }
+  virtual void* end() const { return buffer.end(); }
+  virtual DataBlockBaseIterator& operator++() { return *this; }
+  bool operator==(const DataBlockBaseIterator& other) const { return ptr == other.ptr; }
+  bool operator!=(const DataBlockBaseIterator& other) const { return (ptr != other.ptr); }
+  bool operator> (const DataBlockBaseIterator& other) const { return ptr > other.ptr; }
+  bool operator< (const DataBlockBaseIterator& other) const { return ptr < other.ptr; }
+  bool operator>=(const DataBlockBaseIterator& other) const { return ptr >= other.ptr; }
+  bool operator<=(const DataBlockBaseIterator& other) const { return ptr <= other.ptr; }
+  bool operator==(const void* other) const { return ptr == other; }
+  bool operator!=(const void* other) const { return ptr != other; }
+  bool operator> (const void* other) const { return ptr > other; }
+  bool operator< (const void* other) const { return ptr < other; }
+  bool operator>=(const void* other) const { return ptr >= other; }
+  bool operator<=(const void* other) const { return ptr <= other; }
+
+  virtual uint32_t* getEventPtr() = 0;
+  virtual size_t getEventSize() = 0;
+  template <typename T>
+  T event() { return T{getEventPtr(), getEventSize()}; }
+};
+
 
 /*
  * DPPQDCEventIterator will iterate over a set of Board Aggregates contained in one Data Block
  */
-  class DPPQDCEventIterator
+  class DPPQDCEventIterator : public DataBlockBaseIterator
 {
 private:
-    const caen::ReadoutBuffer& buffer;
-    uint32_t* ptr;
     uint32_t* boardAggregateEnd;
     /*
      * Group Iterator will iterate over a set of Group Aggregates contained in one Board Aggregate
@@ -130,6 +159,8 @@ private:
         bool operator>=(const void* other) const { return ptr >= other; }
         bool operator<=(const void* other) const { return ptr <= other; }
         DPPQDCEvent operator*() const { return DPPQDCEvent{ptr, elementSize}; }
+        uint32_t* getEventPtr() { return ptr; }
+        size_t getEventSize() { return elementSize; };
         template <typename T>
         T event() { return T{ptr, elementSize}; }
     };
@@ -151,9 +182,8 @@ private:
     }
 public:
     DPPQDCEventIterator(const caen::ReadoutBuffer& b)
-            : buffer(b)
-            , ptr((uint32_t*)buffer.data)
-            , groupIterator(nextGroupIterator()) {}
+      : DataBlockBaseIterator(b)
+      , groupIterator(nextGroupIterator()) {}
 
     bool waveformFlag() const
     { return groupIterator.waveformFlag(); }
@@ -191,8 +221,8 @@ public:
     DPPQDCEvent operator*() const { return *groupIterator; }
     void* end() const { return buffer.end(); }
     uint16_t group() { return groupIterator.currentGroup(); }
-    template <typename T>
-    T event() {return groupIterator.event<T>();}
+    uint32_t* getEventPtr() { return groupIterator.getEventPtr(); }
+    size_t getEventSize() { return groupIterator.getEventSize(); };
 };
 
 template <>

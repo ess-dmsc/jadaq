@@ -42,7 +42,7 @@ public:
         instance.reset(new Implementation<E>(dataWriter,digitizerID,groups,samples));
     }
     void flush() { instance->flush(); }
-    size_t operator()(DPPQDCEventIterator& it) { return instance->operator()(it); }
+    size_t operator()(DataBlockBaseIterator& it) { return instance->operator()(it); }
     static int64_t getTimeMsecs()
     {
         return std::chrono::duration_cast<std::chrono::milliseconds>(
@@ -52,7 +52,7 @@ private:
     struct Interface
     {
         virtual ~Interface() = default;
-        virtual size_t operator()(DPPQDCEventIterator& it) = 0;
+        virtual size_t operator()(DataBlockBaseIterator& it) = 0;
         virtual void flush() = 0;
     };
     /* E is element type e.g. Data::ListElementxxx
@@ -151,7 +151,7 @@ private:
             extra.free();
         }
 
-        size_t operator()(DPPQDCEventIterator& eventIterator)
+      size_t operator()(DataBlockBaseIterator& eventIterator)
         {
             size_t events = 0;
             for (;eventIterator != eventIterator.end(); ++eventIterator)
