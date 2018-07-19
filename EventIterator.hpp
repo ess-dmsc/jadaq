@@ -63,6 +63,49 @@ public:
 };
 
 
+
+
+/*
+ * StdBLTEventIterator will iterate over a transferred block of events as used in the std FW of XX751.
+ * Format is described on p53 in UM3350 - V1751/VX1751 User Manual rev. 16
+ */
+class StdBLTEventIterator : public DataBlockBaseIterator
+{
+private:
+  size_t eventSize;
+
+public:
+    StdBLTEventIterator(const caen::ReadoutBuffer& b)
+      : DataBlockBaseIterator(b) { initNextEvent(); }
+
+  void initNextEvent(){
+    if ((char*)ptr < buffer.end()){
+      eventSize = (ptr[0] & 0x0fffffffu);
+      assert(((ptr[0] >> 28) & 0xff) == 0xA); // magic pattern
+      assert((char*)(ptr+ ((uint32_t) eventSize)) <= buffer.end());
+      // TODO: check for "BoardFail" flag and handle errors: (((ptr[1]>>26) & 1) == 1)
+    }
+  }
+
+
+  StdBLTEventIterator& operator++(){
+    if ((char*)ptr < buffer.end()){
+      ptr += eventSize;
+      initNextEvent();
+    }
+    return *this;
+  }
+  StdBLTEventIterator operator++(int){
+      StdBLTEventIterator tmp(*this);
+      ++*this;
+      return tmp;
+    }
+
+  uint32_t* getEventPtr() { return ptr; }
+  size_t getEventSize() { return eventSize; };
+};
+
+
 /*
  * DPPQDCEventIterator will iterate over a set of Board Aggregates contained in one Data Block
  */
