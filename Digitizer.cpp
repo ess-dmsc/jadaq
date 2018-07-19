@@ -336,7 +336,6 @@ void Digitizer::initialize(DataWriter& dataWriter)
                                              digitizer->getDPPPreTriggerSize(i) + digitizer->getDPPTriggerHoldOffWidth(i),
                                              digitizer->getDPPGateWidth(i) - digitizer->getDPPGateOffset(i)+ digitizer->getDPPPreTriggerSize(i)
                                             });
-                std::cout << "acqWindowSize[" << i << "] = " <<  acqWindowSize[i] << std::endl;
             }
 
             if (waveforms)
