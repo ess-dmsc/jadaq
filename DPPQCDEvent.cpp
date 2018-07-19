@@ -90,7 +90,7 @@ template <>
 void StdEventWaveform<StdEvent751>::waveform(StdWaveform &waveform) const
 {
   //  waveform_(*this,waveform);
-  size_t nActiveChannel = std::bitset::count(channelMask); // # of active channels given by mask
+  size_t nActiveChannel = std::bitset<8>(channelMask()).count(); // # of active channels given by mask
   size_t nWords = (size - 4); // number of words with samples: (event size - header)
   assert((nWords % nActiveChannel) == 0); // double-check that total size adds up
 
@@ -102,7 +102,7 @@ void StdEventWaveform<StdEvent751>::waveform(StdWaveform &waveform) const
 
   for (uint16_t i = 0; i < (nWords); ++i)
     {
-      uint32_t ss = event.ptr[i+4]; // current word after header
+      uint32_t ss = ptr[i+4]; // current word after header
       // current sample index calculated from 3 samples per word minus those
       // possibly missing in the trailing word of each channel block
       // uint16_t idx = i * 3 - ((uint16_t) i / (nWords / nActiveChannel))*( 3 - nTrailingSamples );
