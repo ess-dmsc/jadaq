@@ -85,6 +85,7 @@ private:
                 elementSize += 1;
             if (waveform)
                 elementSize += (format & 0xFFF) << 2;
+            std::cout << "nextGroup " << size << " " << elementSize << " " << std::hex << format << " " << std::endl;
             assert((size - 2) % elementSize == 0);
 
         }
