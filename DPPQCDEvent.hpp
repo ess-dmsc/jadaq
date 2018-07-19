@@ -60,7 +60,7 @@ struct DPPQDCEventExtra: DPPQDCEvent
     Event structure is documented in UM3350 - V1751/VX1751 User Manual rev. 16, page 32ff.
 */
 struct StdEvent751: Event {
-  StdEvent751(uint32_t* p, size_t ): Event(p,(size_t)(p[0] & 0x0fffffffu)) {} // size is stored in event header itself
+  StdEvent751(uint32_t* p, size_t s): Event(p,s) {}
   uint8_t channelMask() const { return (uint8_t)(ptr[1] & 0x000000ffu); }
   uint32_t eventNo() const { return (uint32_t)(ptr[2] & 0x00ffffffu);}
   uint32_t timeTag() const { return ptr[3]; }
