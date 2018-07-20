@@ -335,7 +335,7 @@ void Digitizer::initialize(DataWriter& dataWriter)
                 acqWindowSize[i] = std::max({digitizer->getRecordLength(i)*bc.waveform(),
                                              digitizer->getDPPPreTriggerSize(i) + digitizer->getDPPTriggerHoldOffWidth(i),
                                              digitizer->getDPPGateWidth(i) - digitizer->getDPPGateOffset(i)+ digitizer->getDPPPreTriggerSize(i)
-                                            });
+                                            }) * 2; // Lets be conservative :P
             }
 
             if (waveforms)
