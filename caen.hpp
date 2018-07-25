@@ -42,6 +42,7 @@
 #include <tuple>
 #include <boost/any.hpp>
 #include <stdexcept>
+#include <bitset>
 
 /* TODO: add doxygen comments to all important functions and structs */
 
@@ -872,6 +873,12 @@ namespace caen {
         { uint32_t mask; errorHandler(CAEN_DGTZ_GetGroupEnableMask(handle_, &mask)); return mask;}
         void setGroupEnableMask(uint32_t mask)
         { errorHandler(CAEN_DGTZ_SetGroupEnableMask(handle_, mask)); }
+
+        size_t getNChannelEnabled()
+        { return (size_t) std::bitset<32>(getChannelEnableMask()).count(); }
+
+        size_t getNGroupEnabled()
+        { return (size_t) std::bitset<32>(getGroupEnableMask()).count(); }
 
         /* TODO: mark get/setDecimationFactor as not allowed on DPP?
          *       Not clear from docs but one should supposedly use the
