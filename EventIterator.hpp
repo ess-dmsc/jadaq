@@ -126,7 +126,6 @@ private:
         int group = -1;
         bool waveform = false;
         bool extras = false;
-        static const uint channelsPerGroup = 8;
     public:
         GroupIterator(void* p) : ptr((uint32_t*)p) {}
         GroupIterator(uint32_t* p, uint16_t gm)
