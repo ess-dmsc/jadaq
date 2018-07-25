@@ -330,8 +330,12 @@ void Digitizer::initialize(DataWriter& dataWriter)
           break;
         case CAEN_DGTZ_NotDPPFirmware:{
           waveforms = digitizer->getRecordLength()*channels();
-
-          dataHandler.initialize<Data::StdElement751>(dataWriter,serial(), 1, waveforms);
+          acqWindowSize = new uint32_t[this->groups()];
+          for (uint32_t i = 0; i < this->groups(); ++i){
+            // TODO: initialize acqWindowSize elsewhere
+            acqWindowSize[i] = 0; // no "jitter" expected
+          }
+          dataHandler.initialize<Data::StdElement751>(dataWriter,serial(), this->groups(), waveforms, acqWindowSize);
           break;
         }
         default:
