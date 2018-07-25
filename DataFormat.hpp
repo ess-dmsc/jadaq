@@ -192,7 +192,11 @@ namespace Data
             datatype.insertMember("eventNo", HOFFSET(StdElement751, eventNo), H5::PredType::NATIVE_UINT32);
             waveform.insertMembers(datatype,offsetof(StdElement751,waveform));
         }
-        static size_t size(size_t samples) { return sizeof(StdElement751) + StdWaveform::size(samples); }
+        static size_t size(size_t samples) {
+          return sizeof(StdElement751)
+            - sizeof(StdWaveform) // avoids double-counting of StdWaveform member size
+            + StdWaveform::size(samples);
+        }
         H5::CompType h5type() const
         {
           H5::CompType datatype(size(waveform.num_samples));
