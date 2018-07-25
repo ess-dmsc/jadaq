@@ -329,10 +329,10 @@ void Digitizer::initialize(DataWriter& dataWriter)
           throw std::runtime_error("QDC firmware not supported by jadaq::Digitizer on " + digitizer->modelName());
           break;
         case CAEN_DGTZ_NotDPPFirmware:{
-          waveforms = digitizer->getRecordLength()*channels();
           acqWindowSize = new uint32_t[this->groups()];
           for (uint32_t i = 0; i < this->groups(); ++i){
             // TODO: initialize acqWindowSize elsewhere
+          waveforms = digitizer->getRecordLength()*digitizer->getNChannelEnabled();
             acqWindowSize[i] = 0; // no "jitter" expected
           }
           dataHandler.initialize<Data::StdElement751>(dataWriter,serial(), this->groups(), waveforms, acqWindowSize);
