@@ -556,12 +556,13 @@ namespace caen {
         virtual uint32_t channels() const
         { return boardInfo_.Channels; }
 
-        // by default groups do not exists. I.e. one channel pr. group
+        // by default groups do not exists, i.e. all channels are in one virtual "group"
         virtual uint32_t groups() const
-        { return boardInfo_.Channels; }
-
-        virtual uint32_t channelsPerGroup() const
         { return 1; }
+
+        // by default there exists only one "group"
+        virtual uint32_t channelsPerGroup() const
+        { return boardInfo_.Channels; }
 
         uint32_t formFactor() const
         { return boardInfo_.FormFactor; }
