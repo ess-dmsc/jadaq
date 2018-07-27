@@ -49,10 +49,11 @@ private:
         digitizerMap[digitizerID] = digitizerGroup;
         return digitizerGroup;
     }
-    void writeAttribute(std::string name, H5::DataSet& dataset, const H5::PredType& type, const void* data) const
+  template<typename H5LOC>
+  void writeAttribute(std::string name, H5LOC& location, const H5::PredType& type, const void* data) const
     {
         try {
-            H5::Attribute a = dataset.createAttribute(name, type, H5::DataSpace(H5S_SCALAR));
+            H5::Attribute a = location.createAttribute(name, type, H5::DataSpace(H5S_SCALAR));
             a.write(type,data);
             a.close();
         } catch (H5::Exception& e)
@@ -92,9 +93,9 @@ public:
     }
     void addDigitizer(uint64_t digitizerID)
     {
-        mutex.lock();
-        addDigitizer_(digitizerID);
-        mutex.unlock();
+        //mutex.lock();
+        //addDigitizer_(digitizerID);
+        //mutex.unlock();
     }
 
     static bool network() { return false; }
@@ -113,6 +114,8 @@ public:
         } else
         {
             digitizerGroup = addDigitizer_(digitizerID);
+            uint16_t format = E::type();
+            writeAttribute("JADAQ_DATA_TYPE", *digitizerGroup, H5::PredType::NATIVE_UINT16, &format);
         }
         const hsize_t size[1] = {buffer->size()};
         try
