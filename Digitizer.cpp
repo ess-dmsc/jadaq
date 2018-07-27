@@ -299,7 +299,7 @@ Digitizer::Digitizer(CAEN_DGTZ_ConnectionType linkType_, int linkNum_, int conet
         , VMEBaseAddress(VMEBaseAddress_)
 {
     firmware = digitizer->getDPPFirmwareType();
-    id = digitizer->serialNumber();
+    id = ((uint64_t)digitizer->modelNo()<<32)|digitizer->serialNumber();
 }
 
 void Digitizer::initialize(DataWriter& dataWriter)

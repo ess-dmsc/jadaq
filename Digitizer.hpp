@@ -47,7 +47,7 @@ private:
     caen::Digitizer* digitizer = nullptr;
     CAEN_DGTZ_DPPFirmware_t firmware;
     uint32_t boardConfiguration = 0;
-    uint32_t id;
+    uint64_t id;
     uint32_t waveforms = 0;
     bool extras   = false;
     uint32_t* acqWindowSize = nullptr;
@@ -71,7 +71,9 @@ public:
     Digitizer(CAEN_DGTZ_ConnectionType linkType_, int linkNum_, int conetNode_, uint32_t VMEBaseAddress_);
     const std::string name() { return digitizer->modelName() + "_" + std::to_string(digitizer->serialNumber()); }
     const std::string model() { return digitizer->modelName(); }
+    const uint32_t modelNo() { return digitizer->modelNo(); }
     const uint32_t serial() { return digitizer->serialNumber(); }
+    const uint64_t digitizerID() { return id; }
     uint32_t channels() const { return digitizer->channels(); }
     uint32_t groups() const { return digitizer->groups(); }
     void close(); //TODO: Why do we need close() in stead of using a destructor
