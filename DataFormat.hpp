@@ -51,7 +51,7 @@ namespace Data
         None,
         List422,
         List8222,
-        Standard751, // non-DPP standard data with waveform for XX751
+        Standard, // non-DPP standard data with waveform
         Waveform422 = WaveformBase | List422,
         Waveform8222 = WaveformBase | List8222,
     };
@@ -184,7 +184,7 @@ namespace Data
             os << PRINTD(channelMask) << " " << PRINTD(time) << " " << PRINTD(eventNo) << " ";
             waveform.printOn(os);
         }
-        static ElementType type() { return Standard751; }
+        static ElementType type() { return Standard; }
         void insertMembers(H5::CompType& datatype) const
         {
             datatype.insertMember("time", HOFFSET(StdElement751, time), H5::PredType::NATIVE_UINT32);
