@@ -81,8 +81,9 @@ public:
     std::string get(FunctionID functionID, int index);
     void acquisition();
     const std::set<uint32_t>& getRegisters() { return manipulatedRegisters; }
-    // TODO: Sould we do somthing different than expose these three function?
-    void startAcquisition() { digitizer->startAcquisition(); }
+    bool ready();
+    void startAcquisition();
+    // TODO: Sould we do somthing different than expose these functions?
     void stopAcquisition() { digitizer->stopAcquisition(); }
     void reset() { digitizer->reset(); }
     void initialize(DataWriter& dataWriter);
