@@ -32,6 +32,10 @@
 #include <set>
 #include <cassert>
 #include <H5Cpp.h>
+namespace H5 // For some reason H5PacketTable.h does not use the namespace H5
+{
+#include <H5PacketTable.h>
+}
 #include "DataFormat.hpp"
 #include "container.hpp"
 
@@ -42,6 +46,7 @@ private:
     H5::Group* root = nullptr;
     std::mutex mutex;
     std::map<uint32_t, H5::Group*> digitizerMap;
+
     H5::Group* addDigitizer_(uint32_t digitizerID)
     {
         H5::Group* digitizerGroup = new H5::Group(file->createGroup(std::to_string(digitizerID)));

@@ -28,8 +28,9 @@ include_directories(${CAEN_INCLUDE_DIR})
 
 find_package(Boost COMPONENTS system filesystem thread program_options REQUIRED)
 
-find_package(HDF5 REQUIRED COMPONENTS C CXX)
+find_package(HDF5 1.10 REQUIRED  COMPONENTS C CXX)
 include_directories(${HDF5_INCLUDE_DIRS})
+message( "HDF5 using version: " ${HDF5_VERSION})
 
 add_library(debugCAENComm SHARED debugCAENComm.c)
 target_link_libraries(debugCAENComm dl)
