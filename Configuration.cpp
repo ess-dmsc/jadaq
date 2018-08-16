@@ -268,12 +268,14 @@ void Configuration::apply()
                 digitizers.emplace_back(CAEN_DGTZ_USB, usb, conet, vme);
             }
             digitizer = &*digitizers.rbegin();
+            std::cerr << "INFO: Opened digitizer [" << name << "]: " << std::endl;
         } catch (caen::Error& e)
         {
             std::cerr << "ERROR: Unable to open digitizer [" << name << "]: " << e.what() << std::endl;
             continue;
         }
         configure(*digitizer,conf, getVerbose());
+        std::cerr << "INFO: Configured digitizer [" << name << "]: " << std::endl;
     }
 }
 
