@@ -270,7 +270,7 @@ void Configuration::apply()
             digitizer = &*digitizers.rbegin();
         } catch (caen::Error& e)
         {
-            std::cerr << "ERROR: Unable to open digitizer [" << name << ']' << std::endl;
+            std::cerr << "ERROR: Unable to open digitizer [" << name << "]: " << e.what() << std::endl;
             continue;
         }
         configure(*digitizer,conf, getVerbose());
