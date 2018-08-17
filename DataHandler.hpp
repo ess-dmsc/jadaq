@@ -99,7 +99,7 @@ private:
                 delete[] maxLocalTime;
             }
 
-        } current, next, extra;
+        } previous, current, next;
 
         void inline store(Buffer& buffer, typename E::EventType& event, uint16_t group)
         {
@@ -108,27 +108,8 @@ private:
                 buffer.buffer->emplace_back(event,group);
             } catch (std::length_error&)
             {
-                if (dataWriter.network())
-                {
-                    dataWriter(buffer.buffer, digitizerID, buffer.globalTimeStamp);
-                    buffer.buffer->clear();
-                }
-                else {
-                    if (buffer.buffer->data_capacity() >= extra.buffer->data_capacity())
-                    {
-                        size_t new_size = buffer.buffer->data_capacity() * 2;
-                        delete extra.buffer;
-                        extra.buffer = new jadaq::buffer<E>(new_size, *buffer.buffer);
-                    }
-                    else {
-                        extra.buffer->copy(*buffer.buffer);
-                    }
-                    delete buffer.buffer;
-                    buffer.buffer = jadaq::buffer<E>::empty_like(*extra.buffer);
-                    std::swap(buffer.buffer,extra.buffer);
-                    extra.clear();
-                }
-
+                dataWriter(buffer.buffer, digitizerID, buffer.globalTimeStamp);
+                buffer.buffer->clear();
                 buffer.buffer->emplace_back(event,group);
             }
         }
@@ -138,20 +119,20 @@ private:
                 : dataWriter(dw)
                 , digitizerID(digID)
                 , maxJitter(jitter)
+                , previous(groups)
                 , current(groups)
                 , next(groups)
-                , extra(groups)
         {
+            previous.malloc(dataWriter, samples, dataWriter.network());
             current.malloc(dataWriter, samples, dataWriter.network());
             next.malloc(dataWriter, samples, dataWriter.network());
-            extra.malloc(dataWriter, samples, dataWriter.network());
         }
         ~Implementation()
         {
             flush();
+            previous.free();
             current.free();
             next.free();
-            extra.free();
         }
 
         size_t operator()(DPPQDCEventIterator& eventIterator)
@@ -164,7 +145,15 @@ private:
                 uint16_t group = eventIterator.group();
                 if (current.maxLocalTime[group] < event.timeTag() + maxJitter[group])
                 {
-                    store(current,event,group);
+                    if (current.maxLocalTime[group] > 0
+                        || previous.maxLocalTime[group] == 0
+                        || previous.maxLocalTime[group] < event.timeTag() + maxJitter[group])
+                    {
+                        store(current, event, group);
+                    } else
+                    {
+                        store(previous, event, group);
+                    }
                 } else {
                     if (next.globalTimeStamp == 0)
                     {
@@ -175,27 +164,29 @@ private:
             }
             if (!next.buffer->empty())
             {
-                if (current.buffer->size() > 0)
+                if (previous.buffer->size() > 0)
                 {
-                    dataWriter(current.buffer, digitizerID, current.globalTimeStamp);
+                    dataWriter(previous.buffer, digitizerID, previous.globalTimeStamp);
                 }
-                current.clear();
-                std::swap(current,next);
+                previous.clear();
+                std::swap(current,previous);
+                std::swap(next,previous);
             }
             return events;
         }
         void flush()
         {
+            if (previous.buffer->size() > 0)
+            {
+                dataWriter(previous.buffer, digitizerID, previous.globalTimeStamp);
+                previous.clear();
+            }
             if (current.buffer->size() > 0)
             {
                 dataWriter(current.buffer, digitizerID, current.globalTimeStamp);
                 current.clear();
             }
-            if (next.buffer->size() > 0)
-            {
-                dataWriter(next.buffer, digitizerID, next.globalTimeStamp);
-                next.clear();
-            }
+            assert(next.buffer->size() == 0);
         }
     };
     std::unique_ptr<Interface> instance;
