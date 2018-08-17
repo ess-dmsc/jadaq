@@ -1342,11 +1342,9 @@ namespace caen {
         virtual uint32_t getDPPAggregateOrganization() { throw Error(CAEN_DGTZ_FunctionNotAllowed); }
         virtual void setDPPAggregateOrganization(uint32_t value) { throw Error(CAEN_DGTZ_FunctionNotAllowed); }
 
+        virtual uint32_t getAcquisitionStatus() { throw Error(CAEN_DGTZ_FunctionNotAllowed); }
         virtual uint32_t getAcquisitionControl() { throw Error(CAEN_DGTZ_FunctionNotAllowed); }
         virtual void setAcquisitionControl(uint32_t value) { throw Error(CAEN_DGTZ_FunctionNotAllowed); }
-
-        virtual uint32_t getAcquisitionStatus() { throw Error(CAEN_DGTZ_FunctionNotAllowed); }
-        virtual uint32_t getDPPAcquisitionStatus() { throw Error(CAEN_DGTZ_FunctionNotAllowed); }
 
         virtual uint32_t getGlobalTriggerMask() { throw Error(CAEN_DGTZ_FunctionNotAllowed); }
         virtual void setGlobalTriggerMask(uint32_t value) { throw Error(CAEN_DGTZ_FunctionNotAllowed); }
@@ -1406,6 +1404,24 @@ namespace caen {
             bool testPattern() {return (v&(1<<3)) == (1<<3);}
             bool polarity() {return (v&(1<<6)) == (1<<6);}
         };
+
+        class AcquisitionStatus
+        {
+        private:
+            uint32_t v;
+        public:
+            AcquisitionStatus(uint32_t value): v(value) {}
+            uint32_t value() {return v;}
+            bool status() {return (v&(1<<2)) == (1<<2);}
+            bool eventReady() {return (v&(1<<3)) == (1<<3);}
+            bool eventFull() {return (v&(1<<4)) == (1<<4);}
+            bool externalClockSource() {return (v&(1<<5)) == (1<<5);}
+            bool PLLready() {return (v&(1<<7)) == (1<<7);}
+            bool boardReady() {return (v&(1<<8)) == (1<<8);}
+            bool s_in() {return (v&(1<<15)) == (1<<15);}
+            bool trg_in() {return (v&(1<<16)) == (1<<16);}
+         };
+
         virtual uint32_t channels() const override { return groups()*channelsPerGroup(); }
         virtual uint32_t groups() const override { return boardInfo_.Channels; } // for x740: boardInfo.Channels stores number of groups
         virtual uint32_t channelsPerGroup() const override { return 8; } // 8 channels per group for x740

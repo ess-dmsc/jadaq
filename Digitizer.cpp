@@ -374,8 +374,23 @@ void Digitizer::close()
     }
 }
 
-void Digitizer::acquisition() {
+bool Digitizer::ready()
+{
+    caen::Digitizer740::AcquisitionStatus acqStatus{digitizer->getAcquisitionStatus()};
+    return acqStatus.boardReady() && acqStatus.PLLready();
+}
 
+
+void Digitizer::startAcquisition()
+{
+    while (!ready())
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    digitizer->startAcquisition();
+}
+
+
+void Digitizer::acquisition()
+{
     /* NOTE: these are per-digitizer local helpers */
     uint16_t listCount = 0, waveCount = 0;
     uint32_t channel = 0;
