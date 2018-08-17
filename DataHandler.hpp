@@ -170,7 +170,7 @@ private:
                 }
                 previous.clear();
                 std::swap(current,previous);
-                std::swap(next,previous);
+                std::swap(next,current);
             }
             return events;
         }
