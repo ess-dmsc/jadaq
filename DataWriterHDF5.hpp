@@ -42,15 +42,23 @@ namespace H5 // For some reason H5PacketTable.h does not use the namespace H5
 class DataWriterHDF5
 {
 private:
+    struct TablePair
+    {
+        H5::PacketTable* previous = nullptr;
+        H5::PacketTable* current = nullptr;
+        uint64_t currentTimeStamp = 0;
+    };
     H5::H5File* file = nullptr;
     H5::Group* root = nullptr;
     std::mutex mutex;
     std::map<uint32_t, H5::Group*> digitizerMap;
+    std::map<uint32_t, TablePair> activeTables;
 
     H5::Group* addDigitizer_(uint32_t digitizerID)
     {
         H5::Group* digitizerGroup = new H5::Group(file->createGroup(std::to_string(digitizerID)));
         digitizerMap[digitizerID] = digitizerGroup;
+        activeTables[digitizerID] = TablePair{};
         return digitizerGroup;
     }
     void writeAttribute(std::string name, H5::DataSet& dataset, const H5::PredType& type, const void* data) const
