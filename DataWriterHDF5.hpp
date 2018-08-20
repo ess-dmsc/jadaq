@@ -96,7 +96,6 @@ private:
         }
     }
 
-public:
     void open(const std::string& id)
     {
         std::string filename = pathname + basename + id + ".h5";
@@ -111,17 +110,9 @@ public:
         }
     }
 
-    DataWriterHDF5(const std::string& pathname_, const std::string& basename_, const std::string& id)
-            : pathname(pathname_)
-            , basename(basename_)
-    {
-        open(id);
-    }
-
     void close()
     {
         assert(file);
-        mutex.lock(); // Wait if someone is still writing data
         for (auto &itr: digitizerInfo)
         {
             if (itr.second.current)
@@ -134,18 +125,31 @@ public:
         delete root;
         file->close();
         delete file;
-        mutex.unlock();
     }
+
+public:
+
+    DataWriterHDF5(const std::string& pathname_, const std::string& basename_, const std::string& id)
+            : pathname(pathname_)
+            , basename(basename_)
+    {
+        open(id);
+    }
+
 
     ~DataWriterHDF5()
     {
+        mutex.lock(); // Wait if someone is still writing data
         close();
+        mutex.unlock();
     }
 
     void split(const std::string& id)
     {
+        mutex.lock();
         close();
         open(id);
+        mutex.unlock();
     }
 
     void addDigitizer(uint32_t digitizerID)

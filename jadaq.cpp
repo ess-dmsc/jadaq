@@ -293,13 +293,20 @@ int main(int argc, const char *argv[])
                 std::cout << "Splitting output file" << std::endl;
             ++runNumber;
             dataWriter.split(runNumber.toString());
+            std::cout << "Opened output file" << std::endl;
             delete split;
             split = new Timer{timerservice,conf.split};
+            std::cout << "Setup new timer" << std::endl;
         }
         if (run && run->timeout)
         {
             std::cout << "Time out - stop acquisition and clean up." << std::endl;
             delete run;
+            if (split)
+            {
+                split ->timer->cancel();
+                delete split;
+            }
             break;
         }
         if (conf.events >= 0 && eventsFound >= conf.events)

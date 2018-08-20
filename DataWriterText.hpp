@@ -41,7 +41,6 @@ private:
     std::fstream* file = nullptr;
     std::mutex mutex;
 
-public:
     void open(const std::string& id)
     {
         std::string filename = pathname + basename + id + ".txt";
@@ -53,6 +52,14 @@ public:
         *file << "# runID: " << id << std::endl;
     }
 
+    void close()
+    {
+        assert(file);
+        file->close();
+    }
+
+public:
+
     DataWriterText(const std::string& pathname_, const std::string& basename_, const std::string& id)
             : pathname(pathname_)
             , basename(basename_)
@@ -60,17 +67,12 @@ public:
         open(id);
     }
 
-    void close()
-    {
-        assert(file);
-        mutex.lock(); // Wait if someone is still writing data
-        file->close();
-        mutex.unlock();
-    }
 
     ~DataWriterText()
     {
+        mutex.lock();
         close();
+        mutex.unlock();
     }
 
     void addDigitizer(uint32_t digitizerID)
@@ -84,8 +86,10 @@ public:
 
     void split(const std::string& id)
     {
+        mutex.lock();
         close();
         open(id);
+        mutex.unlock();
     }
 
     template <typename E>
