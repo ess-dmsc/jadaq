@@ -76,7 +76,9 @@ struct Timer
     }
     ~Timer()
     {
+        std::cout << "Joining " << thread << std::endl;
         thread->join();
+        std::cout << "Joinied " << thread << std::endl;
         delete timer;
         delete thread;
     }
