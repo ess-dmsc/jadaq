@@ -32,34 +32,53 @@
 #include <set>
 #include <cassert>
 #include <H5Cpp.h>
-namespace H5 // For some reason H5PacketTable.h does not use the namespace H5
-{
 #include <H5PacketTable.h>
-}
 #include "DataFormat.hpp"
 #include "container.hpp"
 
 class DataWriterHDF5
 {
 private:
-    struct TablePair
+    struct DigitizerInfo
     {
-        H5::PacketTable* previous = nullptr;
-        H5::PacketTable* current = nullptr;
+        FL_PacketTable* previous = nullptr;
+        FL_PacketTable* current = nullptr;
+        H5::Group* group = nullptr;
         uint64_t currentTimeStamp = 0;
+        FL_PacketTable*& getTable(uint64_t timeStamp)
+        {
+            if (timeStamp == currentTimeStamp)
+                return current;
+            else if(timeStamp < currentTimeStamp)
+                return previous;
+            else {
+                if (previous)
+                    delete(previous);
+                previous = current;
+                currentTimeStamp = timeStamp;
+                current = nullptr;
+                return current;
+            }
+        }
     };
     H5::H5File* file = nullptr;
     H5::Group* root = nullptr;
     std::mutex mutex;
-    std::map<uint32_t, H5::Group*> digitizerMap;
-    std::map<uint32_t, TablePair> activeTables;
+    std::map<uint32_t, DigitizerInfo> digitizerInfo;
 
-    H5::Group* addDigitizer_(uint32_t digitizerID)
+    DigitizerInfo& getDigitizerInfo(uint32_t digitizerID)
     {
-        H5::Group* digitizerGroup = new H5::Group(file->createGroup(std::to_string(digitizerID)));
-        digitizerMap[digitizerID] = digitizerGroup;
-        activeTables[digitizerID] = TablePair{};
-        return digitizerGroup;
+        auto itr = digitizerInfo.find(digitizerID);
+        if (itr != digitizerInfo.end())
+        {
+            return itr->second;
+        } else
+        {
+            DigitizerInfo info;
+            info.group = new H5::Group(file->createGroup(std::to_string(digitizerID)));
+            digitizerInfo[digitizerID] = info;
+            return digitizerInfo[digitizerID];
+        }
     }
     void writeAttribute(std::string name, H5::DataSet& dataset, const H5::PredType& type, const void* data) const
     {
@@ -105,7 +124,7 @@ public:
     void addDigitizer(uint32_t digitizerID)
     {
         mutex.lock();
-        addDigitizer_(digitizerID);
+        getDigitizerInfo(digitizerID);
         mutex.unlock();
     }
 
@@ -117,32 +136,18 @@ public:
         if (buffer->size() < 1)
             return;
         mutex.lock();
-        H5::Group* digitizerGroup;
-        auto itr = digitizerMap.find(digitizerID);
-        if (itr != digitizerMap.end())
+        DigitizerInfo& info = getDigitizerInfo(digitizerID);
+        FL_PacketTable*& table = info.getTable(globalTimeStamp);
+        if (table == nullptr)
         {
-            digitizerGroup = itr->second;
-        } else
-        {
-            digitizerGroup = addDigitizer_(digitizerID);
+            table = new FL_PacketTable(info.group->getId(), std::to_string(globalTimeStamp).c_str(),
+            buffer->begin()->h5type().getId(),1); // TODO find a suitable chunk size - last argument
         }
-        const hsize_t size[1] = {buffer->size()};
-        try
+        if (table->AppendPackets(buffer->size(),(void*)buffer->data())); // Fuck this is the worst interface ever!
         {
-            H5::DataSpace dataspace(1, size);
-            H5::DataSet dataset = digitizerGroup->createDataSet(std::to_string(globalTimeStamp), buffer->begin()->h5type(),
-                                                                dataspace);
-            writeAttribute("globalTimestamp", dataset, H5::PredType::NATIVE_UINT64, &globalTimeStamp);
-            dataset.write(buffer->data(), buffer->begin()->h5type());
-        } catch (H5::Exception& e)
-        {
-            std::cerr << "Error while writing to HDF5 file: " << e.getDetailMsg() <<
+            std::cerr << "Error while writing to HDF5 file: " <<
                       "\n\t " << "HDF5::write( " << digitizerID << ", " << globalTimeStamp <<
                       ", " << buffer->size() << " )" << std::endl;
-            for(const E& element: *buffer)
-            {
-                std::cerr << element << "\n";
-            }
 
         }
         mutex.unlock();
