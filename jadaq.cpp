@@ -48,7 +48,6 @@ struct
     bool  textout = false;
     bool  hdf5out = false;
     bool  nullout = false;
-    bool  sort    = false;
     long  events  = -1;
     float time    = -1.0f;
     int   verbose =  1;
@@ -72,7 +71,6 @@ int main(int argc, const char *argv[])
                 ("verbose,v", po::value<int>()->value_name("<level>")->default_value(conf.verbose), "Set program verbosity level.")
                 ("events,e", po::value<int>()->value_name("<count>")->default_value(conf.events), "Stop acquisition after collecting <count> events")
                 ("time,t", po::value<float>()->value_name("<seconds>")->default_value(conf.time), "Stop acquisition after <seconds> seconds")
-                ("sort,s", po::bool_switch(&conf.sort), "Sort output before writing to file (only valid for file output).")
                 ("text,T", po::bool_switch(&conf.textout), "Output to text file.")
                 ("hdf5,H", po::bool_switch(&conf.hdf5out), "Output to hdf5 file.")
                 ("path,p", po::value<std::string>()->value_name("<path>")->default_value(""), "Store data and other run information in local <path>.")
