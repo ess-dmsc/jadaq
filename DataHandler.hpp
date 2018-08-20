@@ -147,7 +147,7 @@ private:
                 {
                     if (current.maxLocalTime[group] > 0
                         || previous.maxLocalTime[group] == 0
-                        || previous.maxLocalTime[group] < event.timeTag() + maxJitter[group])
+                        || previous.maxLocalTime[group] >= event.timeTag() + maxJitter[group])
                     {
                         store(current, event, group);
                     } else
