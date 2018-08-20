@@ -44,8 +44,12 @@ public:
     void addDigitizer(uint32_t digitizerID)
     { instance->addDigitizer(digitizerID); }
 
+    // TODO get rid of this function
     bool network() const
     { return instance->network(); }
+
+    void split(const std::string& id)
+    { instance->split(id); }
 
     template<typename E>
     void operator()(const jadaq::buffer<E>* buffer, uint32_t digitizerID, uint64_t globalTimeStamp)
@@ -58,6 +62,7 @@ private:
         virtual ~Concept() = default;
         virtual void addDigitizer(uint32_t digitizerID) = 0;
         virtual bool network() const = 0;
+        virtual void split(const std::string& id) = 0;
         virtual void operator()(const jadaq::buffer<Data::ListElement422>* buffer, uint32_t digitizerID, uint64_t globalTimeStamp) = 0;
         virtual void operator()(const jadaq::buffer<Data::ListElement8222>* buffer, uint32_t digitizerID, uint64_t globalTimeStamp) = 0;
         virtual void operator()(const jadaq::buffer<Data::WaveformElement<Data::ListElement422> >* buffer, uint32_t digitizerID, uint64_t globalTimeStamp) = 0;
@@ -72,6 +77,8 @@ private:
         { val->addDigitizer(digitizerID); }
         bool network() const override
         { return val->network(); }
+        void split(const std::string& id) override
+        { return val->split(id); }
         void operator()(const jadaq::buffer<Data::ListElement422>* buffer, uint32_t digitizerID, uint64_t globalTimeStamp) final
         { val->operator()(buffer,digitizerID,globalTimeStamp); }
         void operator()(const jadaq::buffer<Data::ListElement8222>* buffer, uint32_t digitizerID, uint64_t globalTimeStamp) final
@@ -92,6 +99,7 @@ public:
     DataWriterNull() = default;
     void addDigitizer(uint32_t) {}
     static bool network() { return false; }
+    void split(const std::string&) { }
     template <typename E>
     void operator()(const jadaq::buffer<E>*, uint32_t, uint64_t) {}
 };

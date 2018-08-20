@@ -61,6 +61,9 @@ private:
             }
         }
     };
+    const std::string& pathname;
+    const std::string& basename;
+
     H5::H5File* file = nullptr;
     H5::Group* root = nullptr;
     std::mutex mutex;
@@ -93,13 +96,10 @@ private:
         }
     }
 
-
 public:
-  DataWriterHDF5(std::string pathname, std::string runID)
+    void open(const std::string& id)
     {
-        if (!pathname.empty() && *pathname.rbegin() != '/')
-          pathname += '/';
-        std::string filename = pathname + "jadaq-run-" + runID + ".h5";
+        std::string filename = pathname + basename + id + ".h5";
         try
         {
             file = new H5::H5File(filename, H5F_ACC_TRUNC);
@@ -111,7 +111,14 @@ public:
         }
     }
 
-    ~DataWriterHDF5()
+    DataWriterHDF5(const std::string& pathname_, const std::string& basename_, const std::string& id)
+            : pathname(pathname_)
+            , basename(basename_)
+    {
+        open(id);
+    }
+
+    void close()
     {
         assert(file);
         mutex.lock(); // Wait if someone is still writing data
@@ -129,6 +136,18 @@ public:
         delete file;
         mutex.unlock();
     }
+
+    ~DataWriterHDF5()
+    {
+        close();
+    }
+
+    void split(const std::string& id)
+    {
+        close();
+        open(id);
+    }
+
     void addDigitizer(uint32_t digitizerID)
     {
         mutex.lock();

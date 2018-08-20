@@ -35,29 +35,42 @@
 class DataWriterText
 {
 private:
+    const std::string& pathname;
+    const std::string& basename;
+
     std::fstream* file = nullptr;
     std::mutex mutex;
 
 public:
-  DataWriterText(std::string pathname, std::string runID)
+    void open(const std::string& id)
     {
-        if (!pathname.empty() && *pathname.rbegin() != '/')
-          pathname += '/';
-        std::string filename = pathname + "jadaq-run-" + runID + ".txt";
+        std::string filename = pathname + basename + id + ".txt";
         file = new std::fstream(filename,std::fstream::out);
         if (!file->is_open())
         {
             throw std::runtime_error("Could not open text data file: \"" + filename + "\"");
         }
-        *file << "# runID: " << runID << std::endl;
+        *file << "# runID: " << id << std::endl;
     }
 
-    ~DataWriterText()
+    DataWriterText(const std::string& pathname_, const std::string& basename_, const std::string& id)
+            : pathname(pathname_)
+            , basename(basename_)
+    {
+        open(id);
+    }
+
+    void close()
     {
         assert(file);
         mutex.lock(); // Wait if someone is still writing data
         file->close();
         mutex.unlock();
+    }
+
+    ~DataWriterText()
+    {
+        close();
     }
 
     void addDigitizer(uint32_t digitizerID)
@@ -68,6 +81,12 @@ public:
     }
 
     static bool network() { return false; }
+
+    void split(const std::string& id)
+    {
+        close();
+        open(id);
+    }
 
     template <typename E>
     void operator()(const jadaq::buffer<E>* buffer, uint32_t digitizer, uint64_t globalTimeStamp)

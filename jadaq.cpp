@@ -50,9 +50,10 @@ struct
     bool  nullout = false;
     long  events  = -1;
     float time    = -1.0f;
-    float split    = 0.0f;
+    float split   = -1.0f;
     int   verbose =  1;
     std::string* path = nullptr;
+    std::string* basename = nullptr;
     std::string* network = nullptr;
     std::string* port = nullptr;
     std::string* outConfigFile = nullptr;
@@ -75,6 +76,7 @@ struct Timer
     }
     ~Timer()
     {
+        thread->join();
         delete timer;
         delete thread;
     }
@@ -96,6 +98,7 @@ int main(int argc, const char *argv[])
                 ("hdf5,H", po::bool_switch(&conf.hdf5out), "Output to hdf5 file.")
                 ("split,s", po::value<float>()->value_name("<seconds>")->default_value(conf.split), "Split output file every <seconds> seconds")
                 ("path,p", po::value<std::string>()->value_name("<path>")->default_value(""), "Store data and other run information in local <path>.")
+                ("basename,b", po::value<std::string>()->value_name("<name>")->default_value("jadaq-dmz-"), "Use <name> as the basename for file output.")
                 ("network,N", po::value<std::string>()->value_name("<address>"), "Send data over network - address to bind to.")
                 ("port,P", po::value<std::string>()->value_name("<port>")->default_value(Data::defaultDataPort), "Network port to bind to if sending over network")
                 ("config_out", po::value<std::string>()->value_name("<file>"), "Read back device(s) configuration and write to <file>")
@@ -130,9 +133,10 @@ int main(int argc, const char *argv[])
             conf.outConfigFile = new std::string(vm["config_out"].as<std::string>());
         }
         conf.path = new std::string(vm["path"].as<std::string>());
+        conf.basename = new std::string(vm["basename"].as<std::string>());
         // add trailing slash to path (if given)
         if (!conf.path->empty() && *conf.path->rbegin() != '/')
-          *conf.path += '/';
+            *conf.path += '/';
         conf.events = vm["events"].as<int>();
         conf.time   = vm["time"].as<float>();
         conf.split   = vm["split"].as<float>();
@@ -219,11 +223,11 @@ int main(int argc, const char *argv[])
     DataWriter dataWriter;
     if (conf.hdf5out)
     {
-      dataWriter = new DataWriterHDF5(*conf.path, runNumber.toString());
+        dataWriter = new DataWriterHDF5(*conf.path, *conf.basename, runNumber.toString());
     }
     else if (conf.textout)
     {
-      dataWriter = new DataWriterText(*conf.path, runNumber.toString());
+        dataWriter = new DataWriterText(*conf.path, *conf.basename, runNumber.toString());
     }
     else if(conf.network != nullptr)
     {
@@ -253,9 +257,9 @@ int main(int argc, const char *argv[])
 
     asio::io_service timerservice;
     // Setup IO service for file splitter
-    //Timer* split = nullptr;
-    //if (conf.split > 0.0f)
-    //    split = new Timer{timerservice,conf.split};
+    Timer* split = nullptr;
+    if (conf.split > 0.0f && (conf.hdf5out || conf.textout))
+        split = new Timer{timerservice,conf.split};
     // Setup IO service for timer
     Timer* run = nullptr;
     if (conf.time > 0.0f)
@@ -283,10 +287,19 @@ int main(int argc, const char *argv[])
             std::cout << "Caught interrupt - stop acquisition and clean up." << std::endl;
             break;
         }
-        if (run->timeout)
+        if (split && split->timeout)
+        {
+            if (conf.verbose)
+                std::cout << "Splitting output file" << std::endl;
+            ++runNumber;
+            dataWriter.split(runNumber.toString());
+            delete split;
+            split = new Timer{timerservice,conf.split};
+        }
+        if (run && run->timeout)
         {
             std::cout << "Time out - stop acquisition and clean up." << std::endl;
-            run->thread->join();
+            delete run;
             break;
         }
         if (conf.events >= 0 && eventsFound >= conf.events)

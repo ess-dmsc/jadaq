@@ -68,6 +68,8 @@ public:
 
     static bool network() { return true; }
 
+    void split(const std::string&) {}
+
     template <typename E>
     void operator()(const jadaq::buffer<E>* buffer, uint32_t digitizerID, uint64_t globalTimeStamp)
     {
