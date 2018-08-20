@@ -115,6 +115,14 @@ public:
     {
         assert(file);
         mutex.lock(); // Wait if someone is still writing data
+        for (auto &itr: digitizerInfo)
+        {
+            if (itr.second.current)
+                delete itr.second.current;
+            if (itr.second.previous)
+                delete itr.second.previous;
+            delete itr.second.group;
+        }
         root->close();
         delete root;
         file->close();
