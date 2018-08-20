@@ -50,6 +50,7 @@ struct
     bool  nullout = false;
     long  events  = -1;
     float time    = -1.0f;
+    float split    = 0.0f;
     int   verbose =  1;
     std::string* path = nullptr;
     std::string* network = nullptr;
@@ -59,6 +60,26 @@ struct
 } conf;
 
 std::atomic<long> eventsFound{0};
+
+struct Timer
+{
+    std::atomic<bool> timeout {false};
+    asio::steady_timer *timer = nullptr;
+    std::thread *thread = nullptr;
+    Timer(asio::io_service& timerservice, float seconds)
+    {
+        timer = new asio::steady_timer{timerservice, std::chrono::milliseconds{(long)(seconds*1000.0f)}};
+        timer->async_wait([this](const boost::system::error_code &ec)
+                              { this->timeout = true; });
+        thread = new std::thread{[&timerservice](){ timerservice.run(); }};
+    }
+    ~Timer()
+    {
+        delete timer;
+        delete thread;
+    }
+
+};
 
 int main(int argc, const char *argv[])
 {
@@ -73,6 +94,7 @@ int main(int argc, const char *argv[])
                 ("time,t", po::value<float>()->value_name("<seconds>")->default_value(conf.time), "Stop acquisition after <seconds> seconds")
                 ("text,T", po::bool_switch(&conf.textout), "Output to text file.")
                 ("hdf5,H", po::bool_switch(&conf.hdf5out), "Output to hdf5 file.")
+                ("split,s", po::value<float>()->value_name("<seconds>")->default_value(conf.split), "Split output file every <seconds> seconds")
                 ("path,p", po::value<std::string>()->value_name("<path>")->default_value(""), "Store data and other run information in local <path>.")
                 ("network,N", po::value<std::string>()->value_name("<address>"), "Send data over network - address to bind to.")
                 ("port,P", po::value<std::string>()->value_name("<port>")->default_value(Data::defaultDataPort), "Network port to bind to if sending over network")
@@ -113,6 +135,7 @@ int main(int argc, const char *argv[])
           *conf.path += '/';
         conf.events = vm["events"].as<int>();
         conf.time   = vm["time"].as<float>();
+        conf.split   = vm["split"].as<float>();
         if (vm.count("network"))
         {
             conf.network = new std::string(vm["network"].as<std::string>());
@@ -227,18 +250,16 @@ int main(int argc, const char *argv[])
     /* Set up interrupt handler */
     setup_interrupt_handler();
 
-    // Setup IO service for timer
+
     asio::io_service timerservice;
-    std::atomic<bool> timeout{false};
-    asio::steady_timer* timer = nullptr;
-    std::thread* timerthread = nullptr;
+    // Setup IO service for file splitter
+    //Timer* split = nullptr;
+    //if (conf.split > 0.0f)
+    //    split = new Timer{timerservice,conf.split};
+    // Setup IO service for timer
+    Timer* run = nullptr;
     if (conf.time > 0.0f)
-    {
-        timer = new asio::steady_timer{timerservice, std::chrono::milliseconds{(long)(conf.time*1000.0f)}};
-        timer->async_wait([&timeout](const boost::system::error_code &ec)
-                          { timeout = true; });
-        timerthread = new std::thread{[&timerservice](){ timerservice.run(); }};
-    }
+        run = new Timer{timerservice,conf.time};
     if (conf.verbose)
     {
         std::cout << "Running acquisition loop - Ctrl-C to interrupt" << std::endl;
@@ -262,10 +283,10 @@ int main(int argc, const char *argv[])
             std::cout << "Caught interrupt - stop acquisition and clean up." << std::endl;
             break;
         }
-        if (timeout)
+        if (run->timeout)
         {
             std::cout << "Time out - stop acquisition and clean up." << std::endl;
-            timerthread->join();
+            run->thread->join();
             break;
         }
         if (conf.events >= 0 && eventsFound >= conf.events)
