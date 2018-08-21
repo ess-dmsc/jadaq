@@ -256,7 +256,7 @@ int main(int argc, const char *argv[])
 
             } catch(std::exception& e) {
                 std::cerr << "ERROR: unexpected exception during acquisition: " << e.what() << std::endl;
-                throw;
+                break;
             }
         }
         if (interrupt)
