@@ -25,6 +25,7 @@
 #ifndef JADAQ_TIMER_HPP
 #define JADAQ_TIMER_HPP
 
+#include <iostream>
 #include <boost/asio/io_service.hpp>
 #include <boost/asio/steady_timer.hpp>
 #include <thread>
@@ -37,11 +38,16 @@ private:
     asio::steady_timer timer;
     std::thread* thread = nullptr;
 public:
-    template<typename WaitHandler>
-    Timer(float seconds, WaitHandler handler)
+    template<typename F>
+    Timer(float seconds,  F f)
             : timer{timerservice, std::chrono::milliseconds{(long)(seconds*1000.0f)}}
     {
-        timer.async_wait(handler);
+        timer.async_wait([&f](const boost::system::error_code &ec)
+        {
+            if (ec)
+                std::cerr << "Timer error: " << ec << std::endl;
+            f();
+        });
         thread = new std::thread{[this](){ timerservice.run(); }};
     }
     ~Timer()

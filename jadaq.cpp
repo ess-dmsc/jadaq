@@ -236,7 +236,7 @@ int main(int argc, const char *argv[])
     Timer* runtimer = nullptr;
     if (conf.time > 0.0f)
     {
-        runtimer = new Timer{conf.time, [&timeout](const boost::system::error_code &ec) { timeout = true; }};
+        runtimer = new Timer{conf.time, [&timeout]() { timeout = true; }};
     }
 
     if (conf.verbose)
