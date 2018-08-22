@@ -62,29 +62,6 @@ struct
 
 std::atomic<long> eventsFound{0};
 
-struct Timer
-{
-    std::atomic<bool> timeout {false};
-    asio::steady_timer *timer = nullptr;
-    std::thread *thread = nullptr;
-    Timer(asio::io_service& timerservice, float seconds)
-    {
-        timer = new asio::steady_timer{timerservice, std::chrono::milliseconds{(long)(seconds*1000.0f)}};
-        timer->async_wait([this](const boost::system::error_code &ec)
-                              { this->timeout = true; });
-        thread = new std::thread{[&timerservice](){ timerservice.run(); }};
-    }
-    ~Timer()
-    {
-        std::cout << "Joining " << thread << std::endl;
-        thread->join();
-        std::cout << "Joinied " << thread << std::endl;
-        delete timer;
-        delete thread;
-    }
-
-};
-
 int main(int argc, const char *argv[])
 {
 
@@ -256,16 +233,19 @@ int main(int argc, const char *argv[])
     /* Set up interrupt handler */
     setup_interrupt_handler();
 
-
-    asio::io_service timerservice;
-    // Setup IO service for file splitter
-    Timer* split = nullptr;
-    if (conf.split > 0.0f && (conf.hdf5out || conf.textout))
-        split = new Timer{timerservice,conf.split};
     // Setup IO service for timer
-    Timer* run = nullptr;
+    asio::io_service timerservice;
+    std::atomic<bool> timeout{false};
+    asio::steady_timer* timer = nullptr;
+    std::thread* timerthread = nullptr;
     if (conf.time > 0.0f)
-        run = new Timer{timerservice,conf.time};
+    {
+        timer = new asio::steady_timer{timerservice, std::chrono::milliseconds{(long)(conf.time*1000.0f)}};
+        timer->async_wait([&timeout](const boost::system::error_code &ec)
+                          { timeout = true; });
+        timerthread = new std::thread{[&timerservice](){ timerservice.run(); }};
+    }
+
     if (conf.verbose)
     {
         std::cout << "Running acquisition loop - Ctrl-C to interrupt" << std::endl;
@@ -289,26 +269,10 @@ int main(int argc, const char *argv[])
             std::cout << "Caught interrupt - stop acquisition and clean up." << std::endl;
             break;
         }
-        if (split && split->timeout)
-        {
-            if (conf.verbose)
-                std::cout << "Splitting output file" << std::endl;
-            ++runNumber;
-            dataWriter.split(runNumber.toString());
-            std::cout << "Opened output file" << std::endl;
-            delete split;
-            split = new Timer{timerservice,conf.split};
-            std::cout << "Setup new timer" << std::endl;
-        }
-        if (run && run->timeout)
+        if (timeout)
         {
             std::cout << "Time out - stop acquisition and clean up." << std::endl;
-            delete run;
-            if (split)
-            {
-                split ->timer->cancel();
-                delete split;
-            }
+            timerthread->join();
             break;
         }
         if (conf.events >= 0 && eventsFound >= conf.events)
