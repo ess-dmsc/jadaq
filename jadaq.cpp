@@ -28,8 +28,6 @@
 #include <chrono>
 #include <thread>
 #include <boost/program_options.hpp>
-#include <boost/asio/io_service.hpp>
-#include <boost/asio/steady_timer.hpp>
 #include "interrupt.hpp"
 #include "Digitizer.hpp"
 #include "Configuration.hpp"
@@ -39,9 +37,9 @@
 #include "DataWriterText.hpp"
 #include "DataWriterNetwork.hpp"
 #include "runno.hpp"
+#include "Timer.hpp"
 
 namespace po = boost::program_options;
-namespace asio = boost::asio;
 
 struct
 {
@@ -234,16 +232,11 @@ int main(int argc, const char *argv[])
     setup_interrupt_handler();
 
     // Setup IO service for timer
-    asio::io_service timerservice;
     std::atomic<bool> timeout{false};
-    asio::steady_timer* timer = nullptr;
-    std::thread* timerthread = nullptr;
+    Timer* runtimer = nullptr;
     if (conf.time > 0.0f)
     {
-        timer = new asio::steady_timer{timerservice, std::chrono::milliseconds{(long)(conf.time*1000.0f)}};
-        timer->async_wait([&timeout](const boost::system::error_code &ec)
-                          { timeout = true; });
-        timerthread = new std::thread{[&timerservice](){ timerservice.run(); }};
+        runtimer = new Timer{conf.time, [&timeout](const boost::system::error_code &ec) { timeout = true; }};
     }
 
     if (conf.verbose)
@@ -272,7 +265,6 @@ int main(int argc, const char *argv[])
         if (timeout)
         {
             std::cout << "Time out - stop acquisition and clean up." << std::endl;
-            timerthread->join();
             break;
         }
         if (conf.events >= 0 && eventsFound >= conf.events)
@@ -300,6 +292,8 @@ int main(int argc, const char *argv[])
         digitizer.close();
     }
     digitizers.clear();
+    if (runtimer)
+        delete runtimer;
     if (conf.verbose)
     {
         double runtime = (acquisitionStop - acquisitionStart) / 1000.0;
