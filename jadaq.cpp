@@ -236,7 +236,7 @@ int main(int argc, const char *argv[])
     Timer* runtimer = nullptr;
     if (conf.time > 0.0f)
     {
-        runtimer = new Timer{conf.time, [&timeout]() { timeout = true; }};
+        runtimer = new Timer{conf.time, [&timeout]() { std::cerr << "Fisse" << std::endl; timeout = true; }};
     }
 
     if (conf.verbose)
