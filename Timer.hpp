@@ -35,18 +35,35 @@ class Timer
 {
 private:
     asio::io_service timerservice;
+    std::chrono::milliseconds waitPeriod;
     asio::steady_timer timer;
     std::thread* thread = nullptr;
+    template<typename F>
+    void repeatWrapper(F& f)
+    {
+        f();
+        timer.expires_at(timer.expires_at() + waitPeriod);
+        timer.async_wait([this,f](const boost::system::error_code &ec) {repeatWrapper(f);});
+    }
+
 public:
     template<typename F>
-    Timer(float seconds,  F&& f)
-            : timer{timerservice, std::chrono::milliseconds{(long)(seconds*1000.0f)}}
+    Timer(float seconds,  F&& f, bool repeat=false)
+            : waitPeriod{std::chrono::milliseconds{(long)(seconds*1000.0f)}}
+            , timer{timerservice, waitPeriod}
     {
-        timer.async_wait([&f](const boost::system::error_code &ec)
+        if (repeat)
         {
-            std::cerr << "Timer error: " << ec << std::endl;
-            f();
-        });
+            timer.async_wait([this,f](const boost::system::error_code &ec) {
+                repeatWrapper(f);
+            });
+
+        } else {
+            timer.async_wait([f](const boost::system::error_code &ec) {
+                std::cerr << "Timer error: " << ec << std::endl;
+                f();
+            });
+        }
         thread = new std::thread{[this](){ timerservice.run(); }};
     }
     ~Timer()
