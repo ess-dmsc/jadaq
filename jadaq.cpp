@@ -241,7 +241,7 @@ int main(int argc, const char *argv[])
     Timer* splittimer = nullptr;
     if (conf.split > 0.0f)
     {
-        splittimer = new Timer{conf.time, []() { std::cout << "Split!" << std::endl; }};
+        splittimer = new Timer{conf.split, []() { std::cout << "Split!" << std::endl; }};
     }
     if (conf.verbose)
     {
