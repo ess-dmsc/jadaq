@@ -44,8 +44,7 @@ public:
     {
         timer.async_wait([&f](const boost::system::error_code &ec)
         {
-            if (ec)
-                std::cerr << "Timer error: " << ec << std::endl;
+            std::cerr << "Timer error: " << ec << std::endl;
             f();
         });
         thread = new std::thread{[this](){ timerservice.run(); }};
