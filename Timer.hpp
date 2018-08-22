@@ -39,7 +39,7 @@ private:
     std::thread* thread = nullptr;
 public:
     template<typename F>
-    Timer(float seconds,  F f)
+    Timer(float seconds,  F&& f)
             : timer{timerservice, std::chrono::milliseconds{(long)(seconds*1000.0f)}}
     {
         timer.async_wait([&f](const boost::system::error_code &ec)
