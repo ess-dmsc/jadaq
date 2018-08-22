@@ -43,7 +43,12 @@ private:
     {
         f();
         timer.expires_at(timer.expires_at() + waitPeriod);
-        timer.async_wait([this,f](const boost::system::error_code &ec) {repeatWrapper(f);});
+        timer.async_wait([this,f](const boost::system::error_code &ec) {
+            if (ec)
+                std::cerr << "Timer error: " << ec << std::endl;
+            else
+                repeatWrapper(f);
+        });
     }
 
 public:
@@ -55,7 +60,10 @@ public:
         if (repeat)
         {
             timer.async_wait([this,f](const boost::system::error_code &ec) {
-                repeatWrapper(f);
+                if (ec)
+                    std::cerr << "Timer error: " << ec << std::endl;
+                else
+                    repeatWrapper(f);
             });
 
         } else {
@@ -70,6 +78,10 @@ public:
     {
         thread->join();
         delete thread;
+    }
+    void cancel()
+    {
+        timer.cancel();
     }
 };
 

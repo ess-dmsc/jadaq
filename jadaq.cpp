@@ -236,9 +236,13 @@ int main(int argc, const char *argv[])
     Timer* runtimer = nullptr;
     if (conf.time > 0.0f)
     {
-        runtimer = new Timer{conf.time, [&timeout]() { std::cerr << "Fisse" << std::endl; timeout = true; }};
+        runtimer = new Timer{conf.time, [&timeout]() { timeout = true; }};
     }
-
+    Timer* splittimer = nullptr;
+    if (conf.split > 0.0f)
+    {
+        splittimer = new Timer{conf.time, []() { std::cout << "Split!" << std::endl; }};
+    }
     if (conf.verbose)
     {
         std::cout << "Running acquisition loop - Ctrl-C to interrupt" << std::endl;
@@ -286,14 +290,21 @@ int main(int argc, const char *argv[])
     {
         std::cout << "Acquisition complete - shutting down." << std::endl;
     }
+    if (runtimer)
+    {
+        delete runtimer;
+    }
+    if (splittimer)
+    {
+        splittimer->cancel();
+        delete splittimer;
+    }
     /* Clean up after all digitizers: buffers, etc. */
     for (Digitizer& digitizer: digitizers)
     {
         digitizer.close();
     }
     digitizers.clear();
-    if (runtimer)
-        delete runtimer;
     if (conf.verbose)
     {
         double runtime = (acquisitionStop - acquisitionStart) / 1000.0;
