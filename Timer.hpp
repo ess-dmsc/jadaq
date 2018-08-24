@@ -29,6 +29,7 @@
 #include <boost/asio/io_service.hpp>
 #include <boost/asio/steady_timer.hpp>
 #include <thread>
+#include <mutex>
 
 namespace asio = boost::asio;
 class Timer
@@ -38,15 +39,19 @@ private:
     std::chrono::milliseconds waitPeriod;
     asio::steady_timer timer;
     std::thread* thread = nullptr;
+    std::mutex mutex;
+
     template<typename F>
     void repeatWrapper(F& f)
     {
+        mutex.lock();
         f();
         timer.expires_at(timer.expires_at() + waitPeriod);
         timer.async_wait([this,f](const boost::system::error_code &ec) {
             if (!ec)
                 repeatWrapper(f);
         });
+        mutex.unlock();
     }
 
 public:
@@ -77,7 +82,9 @@ public:
     }
     void cancel()
     {
+        mutex.lock();
         timer.cancel();
+        mutex.unlock();
     }
 };
 
