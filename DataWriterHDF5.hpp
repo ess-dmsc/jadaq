@@ -75,8 +75,7 @@ private:
         if (itr != digitizerInfo.end())
         {
             return itr->second;
-        } else
-        {
+        } else {
             DigitizerInfo info;
             info.group = new H5::Group(file->createGroup(std::to_string(digitizerID)));
             digitizerInfo[digitizerID] = info;
@@ -101,14 +100,10 @@ private:
         std::string filename = pathname + basename + id + ".h5";
         try
         {
+            assert(file == nullptr);
             file = new H5::H5File(filename, H5F_ACC_TRUNC);
+            assert(root == nullptr);
             root = new H5::Group(file->openGroup("/"));
-            for (auto itr: digitizerInfo)
-            {
-                DigitizerInfo& info = itr.second;
-                info.group = new H5::Group(file->createGroup(std::to_string(itr.first)));
-            }
-
         } catch (H5::Exception& e)
         {
             std::cerr << "ERROR: could not open/create HDF5-file \"" << filename <<  "\":" << e.getDetailMsg() << std::endl;
@@ -122,21 +117,13 @@ private:
         for (auto &itr: digitizerInfo)
         {
             if (itr.second.current)
-            {
                 delete itr.second.current;
-                itr.second.current = nullptr;
-            }
             if (itr.second.previous)
-            {
                 delete itr.second.previous;
-                itr.second.previous = nullptr;
-            }
             if (itr.second.group)
-            {
                 delete itr.second.group;
-                itr.second.group = nullptr;
-            }
         }
+        digitizerInfo.clear();
         root->close();
         delete root;
         root = nullptr;
