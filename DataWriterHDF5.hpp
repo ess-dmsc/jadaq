@@ -129,7 +129,7 @@ private:
 
 public:
 
-    DataWriterHDF5(const std::string& pathname_, const std::string& basename_, const std::string& id)
+    DataWriterHDF5(const std::string& pathname_, const std::string& basename_, const std::string&& id)
             : pathname(pathname_)
             , basename(basename_)
     {

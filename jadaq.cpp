@@ -36,7 +36,7 @@
 #include "DataWriterHDF5.hpp"
 #include "DataWriterText.hpp"
 #include "DataWriterNetwork.hpp"
-#include "runno.hpp"
+#include "FileID.hpp"
 #include "Timer.hpp"
 
 namespace po = boost::program_options;
@@ -134,7 +134,7 @@ int main(int argc, const char *argv[])
     // get a unique run ID
     uuid runID;
     // prepare a run number
-    runno runNumber;
+    FileID fileID;
 
     /* Read-in and write resulting digitizer configuration */
     std::string configFileName = conf.configFile[0];
@@ -174,37 +174,15 @@ int main(int argc, const char *argv[])
         }
     }
 
-    // read in run number stored in path (if any)
-    if (runNumber.readFromPath(*conf.path)){
-      DEBUG(std::cout << "Found run number " << runNumber.value << " at path "<< *conf.path << std::endl;)
-        } else {
-      DEBUG(std::cout << "No run number " << runNumber.value << " found at path "<< *conf.path << "(will be created later)."<< std::endl;)
-        }
-    // copy over configuration file
-    std::stringstream dstName;
-    dstName << *conf.path << "jadaq-run-" << runNumber.toString() << ".cfg";
-    std::ifstream  src(configFileName, std::ios::binary);
-    std::ofstream  dst(dstName.str(), std::ios::binary);
-    dst << src.rdbuf();
-    if (!dst){
-      std::cerr << "Error: could not copy config file to '" << *conf.path << "' -- please check the output path argument!" << std::endl;
-      return -1;
-    }
-    // write out next run number to file
-    runno nextRun(runNumber.value()+1);
-    nextRun.writeToPath(*conf.path);
-
-    std::cout << "Starting run " << runNumber.toString() << " (ID " << runID.toString() << ") " << std::endl;
-
     // TODO: move DataHandler creation to factory method in DataHandlerGeneric
     DataWriter dataWriter;
     if (conf.hdf5out)
     {
-        dataWriter = new DataWriterHDF5(*conf.path, *conf.basename, runNumber.toString());
+        dataWriter = new DataWriterHDF5(*conf.path, *conf.basename, conf.split>0.0f?fileID.toString():"");
     }
     else if (conf.textout)
     {
-        dataWriter = new DataWriterText(*conf.path, *conf.basename, runNumber.toString());
+        dataWriter = new DataWriterText(*conf.path, *conf.basename, conf.split>0.0f?fileID.toString():"");
     }
     else if(conf.network != nullptr)
     {
@@ -241,7 +219,7 @@ int main(int argc, const char *argv[])
     Timer* splittimer = nullptr;
     if (conf.split > 0.0f)
     {
-        splittimer = new Timer{conf.split, []() { std::cout << "Split!" << std::endl; }, true};
+        splittimer = new Timer{conf.split, [&dataWriter, &fileID]() { dataWriter.split((++fileID).toString()); }, true};
     }
     if (conf.verbose)
     {

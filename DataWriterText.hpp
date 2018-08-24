@@ -60,7 +60,7 @@ private:
 
 public:
 
-    DataWriterText(const std::string& pathname_, const std::string& basename_, const std::string& id)
+    DataWriterText(const std::string& pathname_, const std::string& basename_, const std::string&& id)
             : pathname(pathname_)
             , basename(basename_)
     {
