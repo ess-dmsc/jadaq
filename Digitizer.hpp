@@ -35,6 +35,7 @@
 #include <unordered_map>
 #include <chrono>
 #include <thread>
+#include <atomic>
 #include <boost/thread/thread.hpp>
 #include "trace.hpp"
 #include "DataHandler.hpp"
@@ -62,11 +63,17 @@ public:
     const int conetNode;
     const uint32_t VMEBaseAddress;
     struct Stats
-            {
-        uint32_t bytesRead = 0;
-        uint32_t eventsFound = 0;
+    {
+        Stats(Stats&& other)
+                : bytesRead{other.bytesRead.load()}
+                , eventsFound{other.eventsFound.load()} {}
+        Stats() = default;
+        std::atomic<long> bytesRead{0};
+        std::atomic<long> eventsFound{0};
     } stats;
-         
+    Digitizer() = delete;
+    Digitizer(Digitizer&) = delete;
+    Digitizer(Digitizer&&) = default;
     Digitizer(CAEN_DGTZ_ConnectionType linkType_, int linkNum_, int conetNode_, uint32_t VMEBaseAddress_);
     const std::string name() { return digitizer->modelName() + "_" + std::to_string(digitizer->serialNumber()); }
     const std::string model() { return digitizer->modelName(); }
