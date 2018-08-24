@@ -391,18 +391,10 @@ void Digitizer::startAcquisition()
 
 void Digitizer::acquisition()
 {
-    /* NOTE: these are per-digitizer local helpers */
-    uint16_t listCount = 0, waveCount = 0;
-    uint32_t channel = 0;
-    uint64_t runtimeMsecs = 0;
-    uint32_t bytesRead = 0;
-    uint32_t eventsFound = 0;
-    STAT(uint32_t eventsUnpacked = 0; uint32_t eventsDecoded = 0; uint32_t eventsSent = 0;)
-
     DEBUG(std::cout << "Read at most " << readoutBuffer.size << "b data from " << name() << std::endl;)
     /* We use slave terminated mode like in the sample from CAEN Digitizer library docs. */
     digitizer->readData(readoutBuffer,CAEN_DGTZ_SLAVE_TERMINATED_READOUT_MBLT);
-    bytesRead = readoutBuffer.dataSize;
+    uint32_t bytesRead = readoutBuffer.dataSize;
     DEBUG(std::cout << "Read " << bytesRead << "b of acquired data" << std::endl;)
 
     /* NOTE: check and skip if there's no actual events to handle */
@@ -410,7 +402,7 @@ void Digitizer::acquisition()
         DEBUG(std::cout << "No data to read - skip further handling." << std::endl;)
         return;
     }
-
+    stats.bytesRead += bytesRead;
     switch ((int)firmware) //Cast to int as long as CAEN_DGTZ_DPPFirmware_QDC is not part of the enumeration
     {
         case CAEN_DGTZ_DPPFirmware_PHA:

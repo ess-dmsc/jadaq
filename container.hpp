@@ -133,7 +133,7 @@ namespace jadaq
         void emplace_back(Args&&... args)
         {
             check_length();
-            T* res = new (reinterpret_cast<T*>(next)) T(args...);
+            new (reinterpret_cast<T*>(next)) T(args...);
             next+=element_size;
         }
 

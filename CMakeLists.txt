@@ -10,7 +10,7 @@ project(jadaq)
 # valgrind --leak-check=full --track-origins=yes ./jadaq [CONFFILE]
 #
 set(CMAKE_CXX_STANDARD 11)
-set(ACCEPED_WARNINGS "-Wno-unused-function -Wno-unused-variable")
+set(ACCEPED_WARNINGS "-Wno-unused-function")
 set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -Wall ${ACCEPED_WARNINGS} -Werror" )
 set(CMAKE_C_STANDARD 99)
 if (CMAKE_COMPILER_IS_GNUCXX AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 5.3)
@@ -43,7 +43,7 @@ file(GLOB DataHandlerHEADERS DataFormat.hpp DataHandler.hpp DataWriterHDF5.hpp D
 file(GLOB DataHandlerSOURCES uuid.cpp)
 add_library(DataHandler ${DataHandlerHEADERS} ${DataHandlerSOURCES} Waveform.hpp)
 
-add_executable(jadaq ${DataHandlerHEADERS} jadaq.cpp caen.hpp Configuration.cpp Configuration.hpp Digitizer.cpp Digitizer.hpp FunctionID.hpp FunctionID.cpp ini_parser.hpp StringConversion.cpp StringConversion.hpp CAENConf.cpp CAENConf.hpp trace.hpp interrupt.hpp container.hpp Timer.hpp FileID.hpp)
+add_executable(jadaq ${DataHandlerHEADERS} jadaq.cpp caen.hpp Configuration.cpp Configuration.hpp Digitizer.cpp Digitizer.hpp FunctionID.hpp FunctionID.cpp ini_parser.hpp StringConversion.cpp StringConversion.hpp trace.hpp interrupt.hpp container.hpp Timer.hpp FileID.hpp)
 target_link_libraries(jadaq ${CAEN_LIB} caen DataHandler ${Boost_LIBRARIES} pthread ${HDF5_LIBRARIES} ${HDF5_HL_LIBRARIES})
 
 # For jadaq-ds
