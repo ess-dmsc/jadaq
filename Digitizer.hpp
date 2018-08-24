@@ -61,13 +61,12 @@ public:
     const int linkNum;
     const int conetNode;
     const uint32_t VMEBaseAddress;
-    STAT(struct Stats {
-             uint32_t bytesRead = 0;
-             uint32_t eventsFound = 0;
-             uint32_t eventsUnpacked = 0;
-             uint32_t eventsDecoded = 0;
-             uint32_t eventsSent = 0;
-         } stats;)
+    struct Stats
+            {
+        uint32_t bytesRead = 0;
+        uint32_t eventsFound = 0;
+    } stats;
+         
     Digitizer(CAEN_DGTZ_ConnectionType linkType_, int linkNum_, int conetNode_, uint32_t VMEBaseAddress_);
     const std::string name() { return digitizer->modelName() + "_" + std::to_string(digitizer->serialNumber()); }
     const std::string model() { return digitizer->modelName(); }
