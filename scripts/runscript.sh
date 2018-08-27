@@ -83,8 +83,9 @@ then
         config=${CONFIG_PATH}/${BASE_NAME}_${i}.ini
         path=${base_path}/`printf %03d ${i}`
         mkdir -p $path
+        basename=${BASE_NAME}-`printf %03d ${i}`-
         cp ${config} ${path}
-		${JADAQ} --hdf5 --time ${RUN_TIME} --split ${SPLIT_TIME} --config ${config} --path $path 2>&1 | tee -a ${path}/outputmessages_$datee.log
+		${JADAQ} --hdf5 --time ${RUN_TIME} --split ${SPLIT_TIME} --config ${config} --path $path --basename ${basename} 2>&1 | tee -a ${path}/outputmessages_$datee.log
 	done	
 			
 	echo "================================================="
