@@ -232,7 +232,7 @@ int main(int argc, const char *argv[])
         for (Digitizer& digitizer: digitizers) {
             try {
                 digitizer.acquisition();
-                eventsFound += digitizer.stats.eventsFound;
+                eventsFound += digitizer.getStats().eventsFound;
 
             } catch(std::exception& e) {
                 std::cerr << "ERROR: unexpected exception during acquisition: " << e.what() << std::endl;

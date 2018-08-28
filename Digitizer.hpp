@@ -44,6 +44,13 @@
 
 class Digitizer
 {
+public:
+    struct Stats
+    {
+        long bytesRead = 0;
+        long eventsFound = 0;
+    };
+
 private:
     caen::Digitizer* digitizer = nullptr;
     CAEN_DGTZ_DPPFirmware_t firmware;
@@ -55,22 +62,13 @@ private:
     DataHandler dataHandler;
     std::set<uint32_t> manipulatedRegisters;
     caen::ReadoutBuffer readoutBuffer;
-
+    Stats stats;
 public:
     /* Connection parameters */
     const CAEN_DGTZ_ConnectionType linkType;
     const int linkNum;
     const int conetNode;
     const uint32_t VMEBaseAddress;
-    struct Stats
-    {
-        Stats(Stats&& other)
-                : bytesRead{other.bytesRead.load()}
-                , eventsFound{other.eventsFound.load()} {}
-        Stats() = default;
-        std::atomic<long> bytesRead{0};
-        std::atomic<long> eventsFound{0};
-    } stats;
     Digitizer() = delete;
     Digitizer(Digitizer&) = delete;
     Digitizer(Digitizer&&) = default;
@@ -89,6 +87,7 @@ public:
     const std::set<uint32_t>& getRegisters() { return manipulatedRegisters; }
     bool ready();
     void startAcquisition();
+    const Stats& getStats() const { return stats; }
     // TODO: Sould we do somthing different than expose these functions?
     void stopAcquisition() { digitizer->stopAcquisition(); }
     void reset() { digitizer->reset(); }
