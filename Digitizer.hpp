@@ -69,6 +69,7 @@ public:
     const int linkNum;
     const int conetNode;
     const uint32_t VMEBaseAddress;
+    bool active = false;
     Digitizer() = delete;
     Digitizer(Digitizer&) = delete;
     Digitizer(Digitizer&&) = default;

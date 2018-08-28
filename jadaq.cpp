@@ -49,6 +49,7 @@ struct
     long  events  = -1;
     float time    = -1.0f;
     float split   = -1.0f;
+    float stats   = -1.0f;
     int   verbose =  1;
     std::string* path = nullptr;
     std::string* basename = nullptr;
@@ -59,6 +60,22 @@ struct
 } conf;
 
 std::atomic<long> eventsFound{0};
+
+inline static void printStats(const std::vector<Digitizer>& digitizers)
+{
+    for (const Digitizer& digitizer: digitizers)
+    {
+        std::cout << digitizer.name() << ": ";
+        if (digitizer.active)
+        {
+            const Digitizer::Stats& stats = digitizer.getStats();
+            std::cout << PRINTD(stats.eventsFound) << " events found, " <<
+            PRINTD(stats.bytesRead) << " bytes read." << std::endl;
+        } else {
+            std::cout << "DEAD!" << std::endl;
+        }
+    }
+}
 
 int main(int argc, const char *argv[])
 {
@@ -74,6 +91,7 @@ int main(int argc, const char *argv[])
                 ("text,T", po::bool_switch(&conf.textout), "Output to text file.")
                 ("hdf5,H", po::bool_switch(&conf.hdf5out), "Output to hdf5 file.")
                 ("split,s", po::value<float>()->value_name("<seconds>")->default_value(conf.split), "Split output file every <seconds> seconds")
+                ("stats", po::value<float>()->value_name("<seconds>")->default_value(conf.stats), "Print statistics every <seconds> seconds")
                 ("path,p", po::value<std::string>()->value_name("<path>")->default_value(""), "Store data and other run information in local <path>.")
                 ("basename,b", po::value<std::string>()->value_name("<name>")->default_value("jadaq-"), "Use <name> as the basename for file output.")
                 ("network,N", po::value<std::string>()->value_name("<address>"), "Send data over network - address to bind to.")
@@ -204,6 +222,7 @@ int main(int argc, const char *argv[])
         }
         digitizer.initialize(dataWriter);
         digitizer.startAcquisition();
+        digitizer.active = true;
     }
 
     /* Set up interrupt handler */
@@ -221,6 +240,11 @@ int main(int argc, const char *argv[])
     {
         splittimer = new Timer{conf.split, [&dataWriter, &fileID]() { dataWriter.split((++fileID).toString()); }, true};
     }
+    Timer* statstimer = nullptr;
+    if (conf.stats > 0.0f)
+    {
+        statstimer = new Timer{conf.stats, [&digitizers]() { printStats(digitizers); }, true};
+    }
     if (conf.verbose)
     {
         std::cout << "Running acquisition loop - Ctrl-C to interrupt" << std::endl;
@@ -230,14 +254,16 @@ int main(int argc, const char *argv[])
     {
         eventsFound = 0;
         for (Digitizer& digitizer: digitizers) {
-            try {
-                digitizer.acquisition();
-                eventsFound += digitizer.getStats().eventsFound;
-
-            } catch(std::exception& e) {
-                std::cerr << "ERROR: unexpected exception during acquisition: " << e.what() << std::endl;
-                break;
+            if (digitizer.active)
+            {
+                try { digitizer.acquisition(); }
+                catch (std::exception &e)
+                {
+                    std::cerr << "ERROR: unexpected exception during acquisition: " << e.what() << std::endl;
+                    digitizer.active = false;
+                }
             }
+            eventsFound += digitizer.getStats().eventsFound;
         }
         if (interrupt)
         {
@@ -271,6 +297,11 @@ int main(int argc, const char *argv[])
     if (runtimer)
     {
         delete runtimer;
+    }
+    if (statstimer)
+    {
+        statstimer->cancel();
+        delete statstimer;
     }
     if (splittimer)
     {
