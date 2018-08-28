@@ -60,27 +60,28 @@ struct
     std::vector<std::string> configFile;
 } conf;
 
-inline static void printStats(const std::vector<Digitizer>& digitizers)
+static void printStats(const std::vector<Digitizer>& digitizers)
 {
     long eventsFound = 0;
     long bytesRead = 0;
+    std::cout << std::setw(15+7) << "DIGITIZER: " <<
+              PRINTH(eventsFound) << PRINTH(bytesRead) << std::endl << std::endl;
     for (const Digitizer& digitizer: digitizers)
     {
-        std::cout << digitizer.name() << ": ";
+        std::cout << std::setw(15) << digitizer.name() << ": ";
         if (digitizer.active)
         {
-            std::cout << "ALIVE! " << std::endl;
+            std::cout << "ALIVE! ";
         } else {
-            std::cout << "DEAD!! " << std::endl;
+            std::cout << "DEAD!! ";
         }
         const Digitizer::Stats& stats = digitizer.getStats();
-        std::cout << PRINTD(stats.eventsFound) << " events found, " <<
-                  PRINTD(stats.bytesRead) << " bytes read." << std::endl;
+        std::cout << PRINTD(stats.eventsFound) << PRINTD(stats.bytesRead) << std::endl;
         eventsFound += stats.eventsFound;
         bytesRead += stats.bytesRead;
     }
-    std::cout << "TOTAL: " << std::endl << PRINTD(eventsFound) << " events found, " <<
-              PRINTD(bytesRead) << " bytes read." << std::endl << std::endl;
+    std::cout << std::setw(15) << std::setfill('*') << "  " << "TOTAL: " <<
+              PRINTD(eventsFound) << PRINTD(bytesRead) << std::endl << std::endl;
 
 }
 
