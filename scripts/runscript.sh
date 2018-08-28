@@ -12,6 +12,8 @@ N_CONFIG=1
 RUN_TIME=60
 # Amount of time that each file contains data for in seconds
 SPLIT_TIME=10
+# Print digitizer stats for STAT_TIME seconds
+STAT_TIME=10
 
 # Data path
 DATA_PATH=/data
@@ -78,60 +80,62 @@ do
         exit 1
     fi
 done
-   
+
 #check folder exist 
 if [ -d "${base_path}" ]
 then
-	echo "${base_path} --> Exists"
+    echo "${base_path} --> Exists"
 else
-	echo "${base_path} --> Folder does not exist --> It will be created"
-	mkdir -p ${base_path}
+    echo "${base_path} --> Folder does not exist --> It will be created"
+    mkdir -p ${base_path}
 fi
 
 #check folder is empty
 if [ -z "$(ls -A ${base_path})" ]
 then
-	echo "${base_path} --> it is empty"
-	var_name="c"
-	else
-	echo "${base_path} --> it is not empty"
-	echo -n "Press c to continue otherwise abort ... and press [ENTER] "
-	read var_name
+    echo "${base_path} --> it is empty"
+    var_name="c"
+else
+    echo "${base_path} --> it is not empty"
+    echo -n "Press c to continue otherwise abort ... and press [ENTER] "
+    read var_name
 fi
 
 if [ "$var_name" = "c" ]
 then
-	echo "================================================="		
-	echo "${N_CONFIG} runs of ${RUN_TIME}s will start ..."
-	echo "Data will be saved in: $path"
-	datee=$(date +%F_%H-%M-%S)
-
-	for ((i=1;i<=${N_CONFIG};i++))
+    echo "================================================="	
+    echo "* `printf %03d ${N_CONFIG}` run(s) of `printf %5d ${RUN_TIME}`s will start ...           *"
+    echo "* File split every    `printf %5d ${SPLIT_TIME}`s                    *"
+    echo "* Stats printed every `printf %5d ${STAT_TIME}`s                    *"
+    echo "Data will be saved in: ${base_path}"
+    datee=$(date +%F_%H-%M-%S)
+    
+    for ((i=1;i<=${N_CONFIG};i++))
     do
-  		echo "================================================="
-  		echo "===== Run ${i} of ${N_CONFIG}"
-  		sleep .5
+  	echo "================================================="
+  	echo "===== Run ${i} of ${N_CONFIG}"
+  	sleep .5
         set_config ${i}
         set_path ${i}
         set_basename ${i}
         mkdir -p $path
-        cp ${config} ${path}
-		COMMAND="${JADAQ} --hdf5 --time ${RUN_TIME} --split ${SPLIT_TIME} --config ${config} --path $path --basename ${basename} 2>&1 | tee -a ${path}/outputmessages_$datee.log"
+        cp ${config} ${path}/${BASE_NAME}.in.ini
+	COMMAND="${JADAQ} --hdf5 --time ${RUN_TIME} --split ${SPLIT_TIME} --stats ${STAT_TIME} --path $path --basename ${basename} --config ${config} --config_out ${path}/${BASE_NAME}.out.ini 2>&1 | tee -a ${path}/outputmessages_$datee.log"
         if [ ${1} ]
         then
             echo ${COMMAND}
         else
             eval ${COMMAND}
         fi
-	done	
-			
-	echo "================================================="
-	echo "${N_CONFIG} runs of ${RUN_TIME}s is complete     "
-	echo "================================================="
-	echo "================================================="
-	echo "================================================="
-
-
+    done	
+    
+    echo "================================================="
+    echo "${N_CONFIG} runs of ${RUN_TIME}s is complete     "
+    echo "================================================="
+    echo "================================================="
+    echo "================================================="
+    
+    
 else
-	echo "Aborted..."
+    echo "Aborted..."
 fi
