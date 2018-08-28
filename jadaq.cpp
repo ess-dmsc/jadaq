@@ -134,7 +134,8 @@ int main(int argc, const char *argv[])
             *conf.path += '/';
         conf.events = vm["events"].as<int>();
         conf.time   = vm["time"].as<float>();
-        conf.split   = vm["split"].as<float>();
+        conf.split  = vm["split"].as<float>();
+        conf.stats  = vm["stats"].as<float>();
         if (vm.count("network"))
         {
             conf.network = new std::string(vm["network"].as<std::string>());
