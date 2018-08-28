@@ -28,6 +28,7 @@
 #include <chrono>
 #include <thread>
 #include <boost/program_options.hpp>
+#include <queue>
 #include "interrupt.hpp"
 #include "Digitizer.hpp"
 #include "Configuration.hpp"
@@ -80,7 +81,7 @@ inline static void printStats(const std::vector<Digitizer>& digitizers)
         eventsFound += stats.eventsFound;
         bytesRead += stats.bytesRead;
     }
-    std::cout << "TOTAL         "<< PRINTD(eventsFound) << " events found, " <<
+    std::cout << "TOTAL: " << std::endl << PRINTD(eventsFound) << " events found, " <<
               PRINTD(bytesRead) << " bytes read." << std::endl << std::endl;
 
 }
@@ -239,21 +240,13 @@ int main(int argc, const char *argv[])
 
     // Setup IO service for timer
     std::atomic<bool> timeout{false};
-    Timer* runtimer = nullptr;
+    std::deque<Timer> timers;
     if (conf.time > 0.0f)
-    {
-        runtimer = new Timer{conf.time, [&timeout]() { timeout = true; }};
-    }
-    Timer* splittimer = nullptr;
+    { timers.emplace_back(conf.time, [&timeout]() { timeout = true; }); }
     if (conf.split > 0.0f)
-    {
-        splittimer = new Timer{conf.split, [&dataWriter, &fileID]() { dataWriter.split((++fileID).toString()); }, true};
-    }
-    Timer* statstimer = nullptr;
+    { timers.emplace_back(conf.split, [&dataWriter, &fileID]() { dataWriter.split((++fileID).toString()); }, true); }
     if (conf.stats > 0.0f)
-    {
-        statstimer = new Timer{conf.stats, [&digitizers]() { printStats(digitizers); }, true};
-    }
+    { timers.emplace_back(conf.stats, [&digitizers]() { printStats(digitizers); }, true); }
     if (conf.verbose)
     {
         std::cout << "Running acquisition loop - Ctrl-C to interrupt" << std::endl;
@@ -290,6 +283,10 @@ int main(int argc, const char *argv[])
             break;
         }
     }
+    for (Timer& timer: timers)
+    {
+        timer.cancel();
+    }
     long acquisitionStop = DataHandler::getTimeMsecs();
     for (Digitizer& digitizer: digitizers)
     {
@@ -302,21 +299,6 @@ int main(int argc, const char *argv[])
     if (conf.verbose)
     {
         std::cout << "Acquisition complete - shutting down." << std::endl;
-    }
-    if (runtimer)
-    {
-        runtimer->cancel();
-        delete runtimer;
-    }
-    if (statstimer)
-    {
-        statstimer->cancel();
-        delete statstimer;
-    }
-    if (splittimer)
-    {
-        splittimer->cancel();
-        delete splittimer;
     }
     /* Clean up after all digitizers: buffers, etc. */
     for (Digitizer& digitizer: digitizers)
