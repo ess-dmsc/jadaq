@@ -64,7 +64,7 @@ static void printStats(const std::vector<Digitizer>& digitizers)
 {
     long eventsFound = 0;
     long bytesRead = 0;
-    std::cout << std::setw(15) << "DIGITIZER" <<
+    std::cout << std::setw(15) << "DIGITIZER" << "       " << 
               PRINTH(eventsFound) << PRINTH(bytesRead) << std::endl;
     for (const Digitizer& digitizer: digitizers)
     {
@@ -80,7 +80,7 @@ static void printStats(const std::vector<Digitizer>& digitizers)
         eventsFound += stats.eventsFound;
         bytesRead += stats.bytesRead;
     }
-    std::cout << std::setw(15) << "TOTAL:        " <<
+    std::cout << std::setw(15) << "TOTAL" << ":        " <<
               PRINTD(eventsFound) << PRINTD(bytesRead) << std::endl << std::endl;
 
 }
