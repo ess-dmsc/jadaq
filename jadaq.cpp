@@ -60,8 +60,6 @@ struct
     std::vector<std::string> configFile;
 } conf;
 
-std::atomic<long> eventsFound{0};
-
 inline static void printStats(const std::vector<Digitizer>& digitizers)
 {
     long eventsFound = 0;
@@ -252,6 +250,7 @@ int main(int argc, const char *argv[])
         std::cout << "Running acquisition loop - Ctrl-C to interrupt" << std::endl;
     }
     long acquisitionStart = DataHandler::getTimeMsecs();
+    long eventsFound = 0;
     while(true)
     {
         eventsFound = 0;
