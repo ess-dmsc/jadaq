@@ -80,7 +80,7 @@ static void printStats(const std::vector<Digitizer>& digitizers)
         eventsFound += stats.eventsFound;
         bytesRead += stats.bytesRead;
     }
-    std::cout << std::setw(15) << std::setfill('*') << "  " << "TOTAL: " <<
+    std::cout << std::setw(15+7) << "TOTAL: " <<
               PRINTD(eventsFound) << PRINTD(bytesRead) << std::endl << std::endl;
 
 }
