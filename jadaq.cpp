@@ -63,18 +63,26 @@ std::atomic<long> eventsFound{0};
 
 inline static void printStats(const std::vector<Digitizer>& digitizers)
 {
+    long eventsFound = 0;
+    long bytesRead = 0;
     for (const Digitizer& digitizer: digitizers)
     {
         std::cout << digitizer.name() << ": ";
         if (digitizer.active)
         {
-            const Digitizer::Stats& stats = digitizer.getStats();
-            std::cout << PRINTD(stats.eventsFound) << " events found, " <<
-            PRINTD(stats.bytesRead) << " bytes read." << std::endl;
+            std::cout << "ALIVE! " << std::endl;
         } else {
-            std::cout << "DEAD!" << std::endl;
+            std::cout << "DEAD!! " << std::endl;
         }
+        const Digitizer::Stats& stats = digitizer.getStats();
+        std::cout << PRINTD(stats.eventsFound) << " events found, " <<
+                  PRINTD(stats.bytesRead) << " bytes read." << std::endl;
+        eventsFound += stats.eventsFound;
+        bytesRead += stats.bytesRead;
     }
+    std::cout << "TOTAL         "<< PRINTD(eventsFound) << " events found, " <<
+              PRINTD(bytesRead) << " bytes read." << std::endl << std::endl;
+
 }
 
 int main(int argc, const char *argv[])
