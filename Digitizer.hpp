@@ -73,9 +73,9 @@ public:
     Digitizer(Digitizer&) = delete;
     Digitizer(Digitizer&&) = default;
     Digitizer(CAEN_DGTZ_ConnectionType linkType_, int linkNum_, int conetNode_, uint32_t VMEBaseAddress_);
-    const std::string name() { return digitizer->modelName() + "_" + std::to_string(digitizer->serialNumber()); }
-    const std::string model() { return digitizer->modelName(); }
-    const uint32_t serial() { return digitizer->serialNumber(); }
+    const std::string name() const { return digitizer->modelName() + "_" + std::to_string(digitizer->serialNumber()); }
+    const std::string model() const { return digitizer->modelName(); }
+    const uint32_t serial() const { return digitizer->serialNumber(); }
     uint32_t channels() const { return digitizer->channels(); }
     uint32_t groups() const { return digitizer->groups(); }
     void close(); //TODO: Why do we need close() in stead of using a destructor
