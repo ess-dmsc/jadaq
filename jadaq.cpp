@@ -305,6 +305,7 @@ int main(int argc, const char *argv[])
     }
     if (runtimer)
     {
+        runtimer->cancel();
         delete runtimer;
     }
     if (statstimer)
