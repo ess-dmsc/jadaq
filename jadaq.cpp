@@ -259,9 +259,9 @@ int main(int argc, const char *argv[])
             if (digitizer.active)
             {
                 try { digitizer.acquisition(); }
-                catch (std::exception &e)
+                catch (caen::Error &e)
                 {
-                    std::cerr << "ERROR: unexpected exception during acquisition: " << e.what() << std::endl;
+                    std::cerr << "ERROR: unexpected exception during acquisition: " << e.what() << "(" << e.code() << ")" << std::endl;
                     digitizer.active = false;
                 }
             }
