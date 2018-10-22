@@ -42,6 +42,7 @@ private:
     boost::asio::io_service ioService;
     udp::endpoint remoteEndpoint;
     udp::socket *socket = nullptr;
+    uint32_t seqNum {0};
 
 public:
     DataWriterNetwork(const std::string& address, const std::string& port, uint64_t runID_)
@@ -74,6 +75,8 @@ public:
     void operator()(const jadaq::buffer<E>* buffer, uint32_t digitizerID, uint64_t globalTimeStamp)
     {
         Data::Header* header = (Data::Header*)buffer->data();
+        header->seqNum = seqNum;
+        seqNum++;
         header->runID = runID;
         header->globalTime = globalTimeStamp;
         header->digitizerID = digitizerID;

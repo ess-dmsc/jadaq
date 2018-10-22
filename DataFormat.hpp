@@ -63,7 +63,8 @@ namespace Data
         uint16_t elementType;
         uint16_t numElements;
         uint16_t version;
-        uint8_t __pad[6];
+        uint32_t seqNum;
+        uint8_t __pad[2];
     };
     static_assert(std::is_pod<Header>::value, "Data::Header must be POD");
 
