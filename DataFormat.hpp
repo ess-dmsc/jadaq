@@ -32,7 +32,7 @@
 #include "Waveform.hpp"
 #include "EventIterator.hpp"
 
-#define VERSION {1,2}
+#define VERSION {1,3}
 
 #define JUMBO_PAYLOAD 9000
 #define IP_HEADER       20
