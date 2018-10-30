@@ -159,7 +159,8 @@ int main(int argc, const char *argv[])
     }
 
     // get a unique run ID
-    uuid runID;
+    /// \todo get rid of this? hardcode for now
+    uint64_t runID{0xdeadbeef};
     // prepare a run number
     FileID fileID;
 
@@ -213,7 +214,7 @@ int main(int argc, const char *argv[])
     }
     else if(conf.network != nullptr)
     {
-      dataWriter = new DataWriterNetwork(*conf.network,*conf.port,runID.value());
+      dataWriter = new DataWriterNetwork(*conf.network,*conf.port,runID);
     }
     else if (conf.nullout)
     {

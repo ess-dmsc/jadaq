@@ -27,7 +27,6 @@
 
 #include <functional>
 #include "DataFormat.hpp"
-#include "uuid.hpp"
 #include "EventAccessor.hpp"
 #include "EventIterator.hpp"
 #include "container.hpp"

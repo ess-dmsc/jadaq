@@ -39,7 +39,6 @@
 #include <boost/thread/thread.hpp>
 #include "trace.hpp"
 #include "DataHandler.hpp"
-#include "uuid.hpp"
 #include "DataWriter.hpp"
 
 class Digitizer
