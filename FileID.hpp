@@ -28,25 +28,29 @@
 #include <iomanip>
 #include <sstream>
 
-class FileID
-{
+class FileID {
 private:
-    int id;
-    int width;
+  int id;
+  int width;
+
 public:
-    FileID() : id(0), width(5) {}
-    FileID(int id_, int width_) : id(id_), width(width_) {}
-    FileID& operator++() { ++id; return *this; }
-    std::string toString() const
-    {
-        std::stringstream ss;
-        ss << std::setfill('0') << std::setw(width) << id;
-        return ss.str();
-    }
+  FileID() : id(0), width(5) {}
+  FileID(int id_, int width_) : id(id_), width(width_) {}
+  FileID &operator++() {
+    ++id;
+    return *this;
+  }
+  std::string toString() const {
+    std::stringstream ss;
+    ss << std::setfill('0') << std::setw(width) << id;
+    return ss.str();
+  }
 };
 
 static inline std::string to_string(const FileID &id) { return id.toString(); }
-static inline std::ostream& operator<< (std::ostream& os, const FileID &id)
-{ os << id.toString(); return os; }
+static inline std::ostream &operator<<(std::ostream &os, const FileID &id) {
+  os << id.toString();
+  return os;
+}
 
-#endif //JADAQ_FILEID_HPP
+#endif // JADAQ_FILEID_HPP

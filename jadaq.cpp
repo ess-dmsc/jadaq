@@ -24,295 +24,299 @@
  *
  */
 
-#include <iostream>
-#include <chrono>
-#include <thread>
-#include <boost/program_options.hpp>
-#include <queue>
-#include "interrupt.hpp"
-#include "Digitizer.hpp"
 #include "Configuration.hpp"
 #include "DataHandler.hpp"
 #include "DataWriter.hpp"
 #include "DataWriterHDF5.hpp"
-#include "DataWriterText.hpp"
 #include "DataWriterNetwork.hpp"
+#include "DataWriterText.hpp"
+#include "Digitizer.hpp"
 #include "FileID.hpp"
 #include "Timer.hpp"
+#include "interrupt.hpp"
+#include <boost/program_options.hpp>
+#include <chrono>
+#include <iostream>
+#include <queue>
+#include <thread>
 
 namespace po = boost::program_options;
 
-struct
-{
-    bool  textout = false;
-    bool  hdf5out = false;
-    bool  nullout = false;
-    long  events  = -1;
-    float time    = -1.0f;
-    float split   = -1.0f;
-    float stats   = -1.0f;
-    int   verbose =  1;
-    std::string* path = nullptr;
-    std::string* basename = nullptr;
-    std::string* network = nullptr;
-    std::string* port = nullptr;
-    std::string* outConfigFile = nullptr;
-    std::vector<std::string> configFile;
+struct {
+  bool textout = false;
+  bool hdf5out = false;
+  bool nullout = false;
+  long events = -1;
+  float time = -1.0f;
+  float split = -1.0f;
+  float stats = -1.0f;
+  int verbose = 1;
+  std::string *path = nullptr;
+  std::string *basename = nullptr;
+  std::string *network = nullptr;
+  std::string *port = nullptr;
+  std::string *outConfigFile = nullptr;
+  std::vector<std::string> configFile;
 } conf;
 
-static void printStats(const std::vector<Digitizer>& digitizers)
-{
-    long eventsFound = 0;
-    long bytesRead = 0;
-    std::cout << std::setw(15) << "DIGITIZER" << "       " <<
-              PRINTHS(eventsFound,"Events") << PRINTHS(bytesRead,"Bytes") << std::endl;
-    for (const Digitizer& digitizer: digitizers)
-    {
-        std::cout << std::setw(15) << digitizer.name() << ": ";
-        if (digitizer.active)
-        {
-            std::cout << "ALIVE! ";
-        } else {
-            std::cout << "DEAD!! ";
-        }
-        const Digitizer::Stats& stats = digitizer.getStats();
-        std::cout << PRINTD(stats.eventsFound) << PRINTD(stats.bytesRead) << std::endl;
-        eventsFound += stats.eventsFound;
-        bytesRead += stats.bytesRead;
+static void printStats(const std::vector<Digitizer> &digitizers) {
+  long eventsFound = 0;
+  long bytesRead = 0;
+  std::cout << std::setw(15) << "DIGITIZER"
+            << "       " << PRINTHS(eventsFound, "Events")
+            << PRINTHS(bytesRead, "Bytes") << std::endl;
+  for (const Digitizer &digitizer : digitizers) {
+    std::cout << std::setw(15) << digitizer.name() << ": ";
+    if (digitizer.active) {
+      std::cout << "ALIVE! ";
+    } else {
+      std::cout << "DEAD!! ";
     }
-    std::cout << std::setw(15) << "TOTAL" << ":        " <<
-              PRINTD(eventsFound) << PRINTD(bytesRead) << std::endl << std::endl;
-
+    const Digitizer::Stats &stats = digitizer.getStats();
+    std::cout << PRINTD(stats.eventsFound) << PRINTD(stats.bytesRead)
+              << std::endl;
+    eventsFound += stats.eventsFound;
+    bytesRead += stats.bytesRead;
+  }
+  std::cout << std::setw(15) << "TOTAL"
+            << ":        " << PRINTD(eventsFound) << PRINTD(bytesRead)
+            << std::endl
+            << std::endl;
 }
 
-int main(int argc, const char *argv[])
-{
+int main(int argc, const char *argv[]) {
 
-    try
-    {
-        po::options_description desc{"Usage: " + std::string(argv[0]) + " [<options>]"};
-        desc.add_options()
-                ("help,h", "Display help information")
-                ("verbose,v", po::value<int>()->value_name("<level>")->default_value(conf.verbose), "Set program verbosity level.")
-                ("events,e", po::value<int>()->value_name("<count>")->default_value(conf.events), "Stop acquisition after collecting <count> events")
-                ("time,t", po::value<float>()->value_name("<seconds>")->default_value(conf.time), "Stop acquisition after <seconds> seconds")
-                ("text,T", po::bool_switch(&conf.textout), "Output to text file.")
-                ("hdf5,H", po::bool_switch(&conf.hdf5out), "Output to hdf5 file.")
-                ("split,s", po::value<float>()->value_name("<seconds>")->default_value(conf.split), "Split output file every <seconds> seconds")
-                ("stats", po::value<float>()->value_name("<seconds>")->default_value(conf.stats), "Print statistics every <seconds> seconds")
-                ("path,p", po::value<std::string>()->value_name("<path>")->default_value(""), "Store data and other run information in local <path>.")
-                ("basename,b", po::value<std::string>()->value_name("<name>")->default_value("jadaq-"), "Use <name> as the basename for file output.")
-                ("network,N", po::value<std::string>()->value_name("<address>"), "Send data over network - address to bind to.")
-                ("port,P", po::value<std::string>()->value_name("<port>")->default_value(Data::defaultDataPort), "Network port to bind to if sending over network")
-                ("config_out", po::value<std::string>()->value_name("<file>"), "Read back device(s) configuration and write to <file>")
-                ("config", po::value<std::vector<std::string> >()->value_name("<file>"), "Configuration file");
-        po::positional_options_description pos;
-        pos.add("config", -1);
-        po::variables_map vm;
-        po::store(po::command_line_parser(argc, argv).options(desc).positional(pos).run(), vm);
-        po::notify(vm);
+  try {
+    po::options_description desc{"Usage: " + std::string(argv[0]) +
+                                 " [<options>]"};
+    desc.add_options()("help,h", "Display help information")(
+        "verbose,v",
+        po::value<int>()->value_name("<level>")->default_value(conf.verbose),
+        "Set program verbosity level.")(
+        "events,e",
+        po::value<int>()->value_name("<count>")->default_value(conf.events),
+        "Stop acquisition after collecting <count> events")(
+        "time,t",
+        po::value<float>()->value_name("<seconds>")->default_value(conf.time),
+        "Stop acquisition after <seconds> seconds")(
+        "text,T", po::bool_switch(&conf.textout), "Output to text file.")(
+        "hdf5,H", po::bool_switch(&conf.hdf5out), "Output to hdf5 file.")(
+        "split,s",
+        po::value<float>()->value_name("<seconds>")->default_value(conf.split),
+        "Split output file every <seconds> seconds")(
+        "stats",
+        po::value<float>()->value_name("<seconds>")->default_value(conf.stats),
+        "Print statistics every <seconds> seconds")(
+        "path,p",
+        po::value<std::string>()->value_name("<path>")->default_value(""),
+        "Store data and other run information in local <path>.")(
+        "basename,b",
+        po::value<std::string>()->value_name("<name>")->default_value("jadaq-"),
+        "Use <name> as the basename for file output.")(
+        "network,N", po::value<std::string>()->value_name("<address>"),
+        "Send data over network - address to bind to.")(
+        "port,P", po::value<std::string>()->value_name("<port>")->default_value(
+                      Data::defaultDataPort),
+        "Network port to bind to if sending over network")(
+        "config_out", po::value<std::string>()->value_name("<file>"),
+        "Read back device(s) configuration and write to <file>")(
+        "config", po::value<std::vector<std::string>>()->value_name("<file>"),
+        "Configuration file");
+    po::positional_options_description pos;
+    pos.add("config", -1);
+    po::variables_map vm;
+    po::store(
+        po::command_line_parser(argc, argv).options(desc).positional(pos).run(),
+        vm);
+    po::notify(vm);
 
-        if (vm.count("help"))
-        {
-            std::cout << desc << std::endl;
-            return 0;
-        }
-        conf.verbose   = vm["verbose"].as<int>();
-        if (vm.count("config"))
-        {
-            conf.configFile = vm["config"].as<std::vector<std::string>>();
-            if (conf.configFile.size() != 1)
-            {
-                //TODO: Support multiple configurations files
-                std::cerr << "More than one configuration file given only the first will be used." << std::endl;
-            }
-        } else
-        {
-            std::cerr << "No configuration file given!" << std::endl;
-            return -1;
-        }
-        if (vm.count("config_out"))
-        {
-            conf.outConfigFile = new std::string(vm["config_out"].as<std::string>());
-        }
-        conf.path = new std::string(vm["path"].as<std::string>());
-        conf.basename = new std::string(vm["basename"].as<std::string>());
-        // add trailing slash to path (if given)
-        if (!conf.path->empty() && *conf.path->rbegin() != '/')
-            *conf.path += '/';
-        conf.events = vm["events"].as<int>();
-        conf.time   = vm["time"].as<float>();
-        conf.split  = vm["split"].as<float>();
-        conf.stats  = vm["stats"].as<float>();
-        if (vm.count("network"))
-        {
-            conf.network = new std::string(vm["network"].as<std::string>());
-            conf.port = new std::string(vm["port"].as<std::string>());
-        }
-        // We will use the Null data handlere if no other is selected
-        conf.nullout = (!conf.textout && !conf.hdf5out && (conf.network == nullptr));
+    if (vm.count("help")) {
+      std::cout << desc << std::endl;
+      return 0;
     }
-    catch (const po::error &error)
-    {
-        std::cerr << error.what() << '\n';
-        throw;
+    conf.verbose = vm["verbose"].as<int>();
+    if (vm.count("config")) {
+      conf.configFile = vm["config"].as<std::vector<std::string>>();
+      if (conf.configFile.size() != 1) {
+        // TODO: Support multiple configurations files
+        std::cerr << "More than one configuration file given only the first "
+                     "will be used."
+                  << std::endl;
+      }
+    } else {
+      std::cerr << "No configuration file given!" << std::endl;
+      return -1;
     }
+    if (vm.count("config_out")) {
+      conf.outConfigFile = new std::string(vm["config_out"].as<std::string>());
+    }
+    conf.path = new std::string(vm["path"].as<std::string>());
+    conf.basename = new std::string(vm["basename"].as<std::string>());
+    // add trailing slash to path (if given)
+    if (!conf.path->empty() && *conf.path->rbegin() != '/')
+      *conf.path += '/';
+    conf.events = vm["events"].as<int>();
+    conf.time = vm["time"].as<float>();
+    conf.split = vm["split"].as<float>();
+    conf.stats = vm["stats"].as<float>();
+    if (vm.count("network")) {
+      conf.network = new std::string(vm["network"].as<std::string>());
+      conf.port = new std::string(vm["port"].as<std::string>());
+    }
+    // We will use the Null data handlere if no other is selected
+    conf.nullout =
+        (!conf.textout && !conf.hdf5out && (conf.network == nullptr));
+  } catch (const po::error &error) {
+    std::cerr << error.what() << '\n';
+    throw;
+  }
 
-    // get a unique run ID
-    /// \todo get rid of this? hardcode for now
-    uint64_t runID{0xdeadbeef};
-    // prepare a run number
-    FileID fileID;
+  // get a unique run ID
+  /// \todo get rid of this? hardcode for now
+  uint64_t runID{0xdeadbeef};
+  // prepare a run number
+  FileID fileID;
 
-    /* Read-in and write resulting digitizer configuration */
-    std::string configFileName = conf.configFile[0];
-    std::ifstream configFile(configFileName);
-    if (!configFile.good())
-    {
-        std::cerr << "Could not open jadaq configuration file: " << configFileName << std::endl;
-        return -1;
-    }
-    DEBUG(std::cout << "Reading digitizer configuration from" << configFileName << std::endl;)
-    // NOTE: switch verbose (2nd) arg on here to enable conf warnings
-    // TODO: implement a general verbose mode in sted of this
-    Configuration configuration(configFile, conf.verbose > 1);
-    configFile.close();
+  /* Read-in and write resulting digitizer configuration */
+  std::string configFileName = conf.configFile[0];
+  std::ifstream configFile(configFileName);
+  if (!configFile.good()) {
+    std::cerr << "Could not open jadaq configuration file: " << configFileName
+              << std::endl;
+    return -1;
+  }
+  DEBUG(std::cout << "Reading digitizer configuration from" << configFileName
+                  << std::endl;)
+  // NOTE: switch verbose (2nd) arg on here to enable conf warnings
+  // TODO: implement a general verbose mode in sted of this
+  Configuration configuration(configFile, conf.verbose > 1);
+  configFile.close();
 
-    if (conf.outConfigFile)
-    {
-        std::ofstream outFile(*conf.outConfigFile);
-        if (outFile.good())
-        {
-            DEBUG(std::cout << "Writing current digitizer configuration to " << *conf.outConfigFile << std::endl;)
-            configuration.write(outFile);
-            outFile.close();
-        } else
-        {
-            std::cerr << "Unable to open configuration out file: " << *conf.outConfigFile << std::endl;
-        }
+  if (conf.outConfigFile) {
+    std::ofstream outFile(*conf.outConfigFile);
+    if (outFile.good()) {
+      DEBUG(std::cout << "Writing current digitizer configuration to "
+                      << *conf.outConfigFile << std::endl;)
+      configuration.write(outFile);
+      outFile.close();
+    } else {
+      std::cerr << "Unable to open configuration out file: "
+                << *conf.outConfigFile << std::endl;
     }
+  }
 
-    std::vector<Digitizer>& digitizers = configuration.getDigitizers();
-    if (conf.verbose)
-    {
-        std::cout << "Setup " << digitizers.size() << " digitizer(s):" << std::endl;
-        for (Digitizer &digitizer: digitizers)
-        {
-            std::cout << "\t" << digitizer.name() << std::endl;
-        }
+  std::vector<Digitizer> &digitizers = configuration.getDigitizers();
+  if (conf.verbose) {
+    std::cout << "Setup " << digitizers.size() << " digitizer(s):" << std::endl;
+    for (Digitizer &digitizer : digitizers) {
+      std::cout << "\t" << digitizer.name() << std::endl;
     }
+  }
 
-    // TODO: move DataHandler creation to factory method in DataHandlerGeneric
-    DataWriter dataWriter;
-    if (conf.hdf5out)
-    {
-        dataWriter = new DataWriterHDF5(*conf.path, *conf.basename, conf.split>0.0f?fileID.toString():"");
+  // TODO: move DataHandler creation to factory method in DataHandlerGeneric
+  DataWriter dataWriter;
+  if (conf.hdf5out) {
+    dataWriter = new DataWriterHDF5(*conf.path, *conf.basename,
+                                    conf.split > 0.0f ? fileID.toString() : "");
+  } else if (conf.textout) {
+    dataWriter = new DataWriterText(*conf.path, *conf.basename,
+                                    conf.split > 0.0f ? fileID.toString() : "");
+  } else if (conf.network != nullptr) {
+    dataWriter = new DataWriterNetwork(*conf.network, *conf.port, runID);
+  } else if (conf.nullout) {
+    dataWriter = new DataWriterNull();
+  } else {
+    std::cerr << "No valid data handler." << std::endl;
+    return -1;
+  }
+  for (Digitizer &digitizer : digitizers) {
+    if (conf.verbose) {
+      std::cout << "Start acquisition on digitizer " << digitizer.name()
+                << std::endl;
     }
-    else if (conf.textout)
-    {
-        dataWriter = new DataWriterText(*conf.path, *conf.basename, conf.split>0.0f?fileID.toString():"");
-    }
-    else if(conf.network != nullptr)
-    {
-      dataWriter = new DataWriterNetwork(*conf.network,*conf.port,runID);
-    }
-    else if (conf.nullout)
-    {
-        dataWriter = new DataWriterNull();
-    }
-    else
-    {
-        std::cerr << "No valid data handler." << std::endl;
-        return -1;
-    }
-    for (Digitizer& digitizer: digitizers) {
-        if (conf.verbose)
-        {
-            std::cout << "Start acquisition on digitizer " << digitizer.name() << std::endl;
-        }
-        digitizer.initialize(dataWriter);
-        digitizer.startAcquisition();
-        digitizer.active = true;
-    }
+    digitizer.initialize(dataWriter);
+    digitizer.startAcquisition();
+    digitizer.active = true;
+  }
 
-    /* Set up interrupt handler */
-    setup_interrupt_handler();
+  /* Set up interrupt handler */
+  setup_interrupt_handler();
 
-    // Setup IO service for timer
-    std::atomic<bool> timeout{false};
-    std::deque<Timer> timers;
-    if (conf.time > 0.0f)
-    { timers.emplace_back(conf.time, [&timeout]() { timeout = true; }); }
-    if (conf.split > 0.0f)
-    { timers.emplace_back(conf.split, [&dataWriter, &fileID]() { dataWriter.split((++fileID).toString()); }, true); }
-    if (conf.stats > 0.0f)
-    { timers.emplace_back(conf.stats, [&digitizers]() { printStats(digitizers); }, true); }
-    if (conf.verbose)
-    {
-        std::cout << "Running acquisition loop - Ctrl-C to interrupt" << std::endl;
-    }
-    long acquisitionStart = DataHandler::getTimeMsecs();
-    long eventsFound = 0;
-    while(true)
-    {
-        eventsFound = 0;
-        for (Digitizer& digitizer: digitizers) {
-            if (digitizer.active)
-            {
-                try { digitizer.acquisition(); }
-                catch (caen::Error &e)
-                {
-                    std::cerr << "ERROR: unexpected exception during acquisition: " << e.what() << "(" << e.code() << ")" << std::endl;
-                    digitizer.active = false;
-                }
-            }
-            eventsFound += digitizer.getStats().eventsFound;
+  // Setup IO service for timer
+  std::atomic<bool> timeout{false};
+  std::deque<Timer> timers;
+  if (conf.time > 0.0f) {
+    timers.emplace_back(conf.time, [&timeout]() { timeout = true; });
+  }
+  if (conf.split > 0.0f) {
+    timers.emplace_back(
+        conf.split,
+        [&dataWriter, &fileID]() { dataWriter.split((++fileID).toString()); },
+        true);
+  }
+  if (conf.stats > 0.0f) {
+    timers.emplace_back(conf.stats, [&digitizers]() { printStats(digitizers); },
+                        true);
+  }
+  if (conf.verbose) {
+    std::cout << "Running acquisition loop - Ctrl-C to interrupt" << std::endl;
+  }
+  long acquisitionStart = DataHandler::getTimeMsecs();
+  long eventsFound = 0;
+  while (true) {
+    eventsFound = 0;
+    for (Digitizer &digitizer : digitizers) {
+      if (digitizer.active) {
+        try {
+          digitizer.acquisition();
+        } catch (caen::Error &e) {
+          std::cerr << "ERROR: unexpected exception during acquisition: "
+                    << e.what() << "(" << e.code() << ")" << std::endl;
+          digitizer.active = false;
         }
-        if (interrupt)
-        {
-            std::cout << "Caught interrupt - stop acquisition and clean up." << std::endl;
-            break;
-        }
-        if (timeout)
-        {
-            std::cout << "Time out - stop acquisition and clean up." << std::endl;
-            break;
-        }
-        if (conf.events >= 0 && eventsFound >= conf.events)
-        {
-            std::cout << "Collected requested events - stop acquisition and clean up." << std::endl;
-            break;
-        }
+      }
+      eventsFound += digitizer.getStats().eventsFound;
     }
-    for (Timer& timer: timers)
-    {
-        timer.cancel();
+    if (interrupt) {
+      std::cout << "Caught interrupt - stop acquisition and clean up."
+                << std::endl;
+      break;
     }
-    long acquisitionStop = DataHandler::getTimeMsecs();
-    for (Digitizer& digitizer: digitizers)
-    {
-        if (conf.verbose)
-        {
-            std::cout << "Stop acquisition on digitizer " << digitizer.name() << std::endl;
-        }
-        digitizer.stopAcquisition();
+    if (timeout) {
+      std::cout << "Time out - stop acquisition and clean up." << std::endl;
+      break;
     }
-    if (conf.verbose)
-    {
-        std::cout << "Acquisition complete - shutting down." << std::endl;
+    if (conf.events >= 0 && eventsFound >= conf.events) {
+      std::cout << "Collected requested events - stop acquisition and clean up."
+                << std::endl;
+      break;
     }
-    /* Clean up after all digitizers: buffers, etc. */
-    for (Digitizer& digitizer: digitizers)
-    {
-        digitizer.close();
+  }
+  for (Timer &timer : timers) {
+    timer.cancel();
+  }
+  long acquisitionStop = DataHandler::getTimeMsecs();
+  for (Digitizer &digitizer : digitizers) {
+    if (conf.verbose) {
+      std::cout << "Stop acquisition on digitizer " << digitizer.name()
+                << std::endl;
     }
-    digitizers.clear();
-    if (conf.verbose)
-    {
-        double runtime = (acquisitionStop - acquisitionStart) / 1000.0;
-        std::cout << "Acquisition ran for " << runtime << " seconds." << std::endl;
-        std::cout << "Collecting " << eventsFound << " events." << std::endl;
-        std::cout << "Resulting in a collection rate of " << eventsFound/runtime/1000.0 << " kHz." << std::endl;
-    }
-    return 0;
+    digitizer.stopAcquisition();
+  }
+  if (conf.verbose) {
+    std::cout << "Acquisition complete - shutting down." << std::endl;
+  }
+  /* Clean up after all digitizers: buffers, etc. */
+  for (Digitizer &digitizer : digitizers) {
+    digitizer.close();
+  }
+  digitizers.clear();
+  if (conf.verbose) {
+    double runtime = (acquisitionStop - acquisitionStart) / 1000.0;
+    std::cout << "Acquisition ran for " << runtime << " seconds." << std::endl;
+    std::cout << "Collecting " << eventsFound << " events." << std::endl;
+    std::cout << "Resulting in a collection rate of "
+              << eventsFound / runtime / 1000.0 << " kHz." << std::endl;
+  }
+  return 0;
 }

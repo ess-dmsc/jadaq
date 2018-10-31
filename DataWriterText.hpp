@@ -25,86 +25,76 @@
 #ifndef JADAQ_DATAHANDLERTEXT_HPP
 #define JADAQ_DATAHANDLERTEXT_HPP
 
+#include "DataFormat.hpp"
+#include "container.hpp"
+#include <cassert>
 #include <fstream>
 #include <iomanip>
 #include <mutex>
-#include <cassert>
-#include "DataFormat.hpp"
-#include "container.hpp"
 
-class DataWriterText
-{
+class DataWriterText {
 private:
-    const std::string& pathname;
-    const std::string& basename;
+  const std::string &pathname;
+  const std::string &basename;
 
-    std::fstream* file = nullptr;
-    std::mutex mutex;
+  std::fstream *file = nullptr;
+  std::mutex mutex;
 
-    void open(const std::string& id)
-    {
-        std::string filename = pathname + basename + id + ".txt";
-        file = new std::fstream(filename,std::fstream::out);
-        if (!file->is_open())
-        {
-            throw std::runtime_error("Could not open text data file: \"" + filename + "\"");
-        }
-        *file << "# runID: " << id << std::endl;
+  void open(const std::string &id) {
+    std::string filename = pathname + basename + id + ".txt";
+    file = new std::fstream(filename, std::fstream::out);
+    if (!file->is_open()) {
+      throw std::runtime_error("Could not open text data file: \"" + filename +
+                               "\"");
     }
+    *file << "# runID: " << id << std::endl;
+  }
 
-    void close()
-    {
-        assert(file);
-        file->close();
-    }
+  void close() {
+    assert(file);
+    file->close();
+  }
 
 public:
+  DataWriterText(const std::string &pathname_, const std::string &basename_,
+                 const std::string &&id)
+      : pathname(pathname_), basename(basename_) {
+    open(id);
+  }
 
-    DataWriterText(const std::string& pathname_, const std::string& basename_, const std::string&& id)
-            : pathname(pathname_)
-            , basename(basename_)
-    {
-        open(id);
+  ~DataWriterText() {
+    mutex.lock();
+    close();
+    mutex.unlock();
+  }
+
+  void addDigitizer(uint32_t digitizerID) {
+    mutex.lock();
+    *file << "# digitizerID: " << digitizerID << std::endl;
+    mutex.unlock();
+  }
+
+  static bool network() { return false; }
+
+  void split(const std::string &id) {
+    mutex.lock();
+    close();
+    open(id);
+    mutex.unlock();
+  }
+
+  template <typename E>
+  void operator()(const jadaq::buffer<E> *buffer, uint32_t digitizer,
+                  uint64_t globalTimeStamp) {
+    mutex.lock();
+    *file << "#" << PRINTH(digitizer) << " ";
+    E::headerOn(*file);
+    *file << std::endl << "@" << globalTimeStamp << std::endl;
+    for (const E &element : *buffer) {
+      *file << " " << PRINTD(digitizer) << " " << element << "\n";
     }
-
-
-    ~DataWriterText()
-    {
-        mutex.lock();
-        close();
-        mutex.unlock();
-    }
-
-    void addDigitizer(uint32_t digitizerID)
-    {
-        mutex.lock();
-        *file << "# digitizerID: " << digitizerID << std::endl;
-        mutex.unlock();
-    }
-
-    static bool network() { return false; }
-
-    void split(const std::string& id)
-    {
-        mutex.lock();
-        close();
-        open(id);
-        mutex.unlock();
-    }
-
-    template <typename E>
-    void operator()(const jadaq::buffer<E>* buffer, uint32_t digitizer, uint64_t globalTimeStamp)
-    {
-        mutex.lock();
-        *file << "#" << PRINTH(digitizer) << " ";
-        E::headerOn(*file);
-        *file << std::endl << "@" << globalTimeStamp << std::endl;
-        for(const E& element: *buffer)
-        {
-            *file << " " << PRINTD(digitizer) << " " << element << "\n";
-        }
-        mutex.unlock();
-    }
+    mutex.unlock();
+  }
 };
 
-#endif //JADAQ_DATAHANDLERTEXT_HPP
+#endif // JADAQ_DATAHANDLERTEXT_HPP

@@ -5,7 +5,6 @@
 #define STATS
 //#define TIMING
 
-
 #ifndef JADAQ_TRACE_HPP
 #define JADAQ_TRACE_HPP
 
@@ -27,6 +26,4 @@
 #define STAT(x)
 #endif
 
-
-
-#endif //JADAQ_TRACE_HPP
+#endif // JADAQ_TRACE_HPP

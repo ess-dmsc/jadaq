@@ -29,83 +29,83 @@
 
 #include <string>
 
-
 /*
- * NOTE: Do not change the ordering  in FunctionID unless you absolutely know what you are doing.
+ * NOTE: Do not change the ordering  in FunctionID unless you absolutely know
+ * what you are doing.
  */
 enum FunctionID {
-    // Special functions - will be skipped by the begin to end iterater
-    Register,
-    // Global i.e. no channel/group
-    MaxNumEventsBLT,
-    ChannelEnableMask,
-    GroupEnableMask,
-    DecimationFactor,
-    PostTriggerSize,
-    IOlevel,
-    AcquisitionMode,
-    ExternalTriggerMode,
-    SWTriggerMode,
-    RunSynchronizationMode,
-    OutputSignalMode,
-    DESMode,
-    ZeroSuppressionMode,
-    AnalogMonOutput,
-    AnalogInspectionMonParams,
-    EventPackaging,
-    FastTriggerDigitizing,
-    FastTriggerMode,
-    DRS4SamplingFrequency,
-    DPPAcquisitionMode,
-    DPPTriggerMode,
-    MaxNumAggregatesBLT,
-    SAMCorrectionLevel,
-    SAMSamplingFrequency,
-    SAMAcquisitionMode,
-    TriggerLogic,
-    BoardConfiguration,
-    DPPAggregateOrganization,
-    AcquisitionControl,
-    AcquisitionStatus,
-    GlobalTriggerMask,
-    FrontPanelTRGOUTEnableMask,
-    FrontPanelIOControl,
-    ROCFPGAFirmwareRevision,
-    EventSize,
-    FanSpeedControl,
-    DPPDisableExternalTrigger,
-    RunStartStopDelay,
-    ReadoutControl,
-    ReadoutStatus,
-    Scratch,
-    DPPAggregateNumberPerBLT,
-    // Channel/group optional
-    DPPPreTriggerSize,
-    RecordLength,
-    NumEventsPerAggregate,
-    DPPGateWidth,
-    DPPGateOffset,
-    DPPFixedBaseline,
-    DPPAlgorithmControl,
-    DPPTriggerHoldOffWidth,
-    DPPShapedTriggerWidth,
-    // Channel/group mandatory
-    ChannelDCOffset,
-    GroupDCOffset,
-    AMCFirmwareRevision,
-    ChannelSelfTrigger,
-    GroupSelfTrigger,
-    ChannelTriggerThreshold,
-    GroupTriggerThreshold,
-    ChannelGroupMask,
-    TriggerPolarity,
-    GroupFastTriggerThreshold,
-    GroupFastTriggerDCOffset,
-    ChannelPulsePolarity,
-    ChannelZSParams,
-    SAMPostTriggerSize,
-    SAMTriggerCountVetoParam,
-    FunctionID_SIZE // This MUST be the last FunctionID
+  // Special functions - will be skipped by the begin to end iterater
+  Register,
+  // Global i.e. no channel/group
+  MaxNumEventsBLT,
+  ChannelEnableMask,
+  GroupEnableMask,
+  DecimationFactor,
+  PostTriggerSize,
+  IOlevel,
+  AcquisitionMode,
+  ExternalTriggerMode,
+  SWTriggerMode,
+  RunSynchronizationMode,
+  OutputSignalMode,
+  DESMode,
+  ZeroSuppressionMode,
+  AnalogMonOutput,
+  AnalogInspectionMonParams,
+  EventPackaging,
+  FastTriggerDigitizing,
+  FastTriggerMode,
+  DRS4SamplingFrequency,
+  DPPAcquisitionMode,
+  DPPTriggerMode,
+  MaxNumAggregatesBLT,
+  SAMCorrectionLevel,
+  SAMSamplingFrequency,
+  SAMAcquisitionMode,
+  TriggerLogic,
+  BoardConfiguration,
+  DPPAggregateOrganization,
+  AcquisitionControl,
+  AcquisitionStatus,
+  GlobalTriggerMask,
+  FrontPanelTRGOUTEnableMask,
+  FrontPanelIOControl,
+  ROCFPGAFirmwareRevision,
+  EventSize,
+  FanSpeedControl,
+  DPPDisableExternalTrigger,
+  RunStartStopDelay,
+  ReadoutControl,
+  ReadoutStatus,
+  Scratch,
+  DPPAggregateNumberPerBLT,
+  // Channel/group optional
+  DPPPreTriggerSize,
+  RecordLength,
+  NumEventsPerAggregate,
+  DPPGateWidth,
+  DPPGateOffset,
+  DPPFixedBaseline,
+  DPPAlgorithmControl,
+  DPPTriggerHoldOffWidth,
+  DPPShapedTriggerWidth,
+  // Channel/group mandatory
+  ChannelDCOffset,
+  GroupDCOffset,
+  AMCFirmwareRevision,
+  ChannelSelfTrigger,
+  GroupSelfTrigger,
+  ChannelTriggerThreshold,
+  GroupTriggerThreshold,
+  ChannelGroupMask,
+  TriggerPolarity,
+  GroupFastTriggerThreshold,
+  GroupFastTriggerDCOffset,
+  ChannelPulsePolarity,
+  ChannelZSParams,
+  SAMPostTriggerSize,
+  SAMTriggerCountVetoParam,
+  FunctionID_SIZE // This MUST be the last FunctionID
 };
 
 static inline bool takeIndex(FunctionID id) { return id >= DPPPreTriggerSize; }
@@ -113,30 +113,26 @@ static inline bool needIndex(FunctionID id) { return id >= ChannelDCOffset; }
 static inline FunctionID functionIDbegin() { return MaxNumEventsBLT; }
 static inline FunctionID functionIDend() { return FunctionID_SIZE; }
 
-static inline FunctionID& operator++(FunctionID& id)
-{
-    id = (FunctionID)((int)id+1);
-    return id;
+static inline FunctionID &operator++(FunctionID &id) {
+  id = (FunctionID)((int)id + 1);
+  return id;
 }
-static inline FunctionID operator++(FunctionID& id, int)
-{
-    FunctionID copy = id;
-    id = (FunctionID)((int)id+1);
-    return copy;
+static inline FunctionID operator++(FunctionID &id, int) {
+  FunctionID copy = id;
+  id = (FunctionID)((int)id + 1);
+  return copy;
 }
-static inline FunctionID& operator--(FunctionID& id)
-{
-    id = (FunctionID)((int)id-1);
-    return id;
+static inline FunctionID &operator--(FunctionID &id) {
+  id = (FunctionID)((int)id - 1);
+  return id;
 }
-static inline FunctionID operator--(FunctionID& id, int)
-{
-    FunctionID copy = id;
-    id = (FunctionID)((int)id-1);
-    return copy;
+static inline FunctionID operator--(FunctionID &id, int) {
+  FunctionID copy = id;
+  id = (FunctionID)((int)id - 1);
+  return copy;
 }
 
 FunctionID functionID(std::string s);
 const std::string to_string(FunctionID id);
 
-#endif //JADAQ_FUNCTIONID_HPP
+#endif // JADAQ_FUNCTIONID_HPP

@@ -23,63 +23,58 @@
  *
  */
 
-#include <cassert>
 #include "DPPQCDEvent.hpp"
 #include "Waveform.hpp"
+#include <cassert>
 
-#define DVP(V,S) {                              \
-    uint32_t v = (ss & (0x10001000u<<(S)));     \
-    if ((V).start == 0xffffu)                   \
-    {                                           \
-        if (v)                                  \
-        {                                       \
-            (V).start = (i<<1) | (v>>(28+(S))); \
-            if (v == 0x1000u<<(S))              \
-                (V).end = (i<<1)|1;             \
-        }                                       \
-    } else {                                    \
-        if (v<(0x10001000u<<(S)))               \
-            (V).end = (i<<1) | (v>>(28+(S)));   \
-    }                                           \
-}
+#define DVP(V, S)                                                              \
+  {                                                                            \
+    uint32_t v = (ss & (0x10001000u << (S)));                                  \
+    if ((V).start == 0xffffu) {                                                \
+      if (v) {                                                                 \
+        (V).start = (i << 1) | (v >> (28 + (S)));                              \
+        if (v == 0x1000u << (S))                                               \
+          (V).end = (i << 1) | 1;                                              \
+      }                                                                        \
+    } else {                                                                   \
+      if (v < (0x10001000u << (S)))                                            \
+        (V).end = (i << 1) | (v >> (28 + (S)));                                \
+    }                                                                          \
+  }
 
 template <typename DPPQCDEventType>
-static inline void waveform_(const DPPQCDEventWaveform<DPPQCDEventType>& event, Waveform& waveform)
-{
-    size_t n = (event.size-(2+event.extras))<<1;
-    uint16_t trigger = 0xFFFF;
-    Interval gate = {0xffff,0xffff};
-    Interval holdoff  = {0xffff,0xffff};
-    Interval over = {0xffff,0xffff};
-    for (uint16_t i = 0; i < (n>>1); ++i)
-    {
-        uint32_t ss = event.ptr[i+1];
-        waveform.samples[i<<1] = (uint16_t)(ss & 0x0fff);
-        waveform.samples[i<<1|1] = (uint16_t)((ss>>16) & 0x0fff);
-        // trigger
-        if (uint32_t t = (ss & 0x20002000))
-        {
-            trigger = (i<<1) | (t>>29);
-        }
-        DVP(gate,0)
-        DVP(holdoff,2)
-        DVP(over,3)
+static inline void waveform_(const DPPQCDEventWaveform<DPPQCDEventType> &event,
+                             Waveform &waveform) {
+  size_t n = (event.size - (2 + event.extras)) << 1;
+  uint16_t trigger = 0xFFFF;
+  Interval gate = {0xffff, 0xffff};
+  Interval holdoff = {0xffff, 0xffff};
+  Interval over = {0xffff, 0xffff};
+  for (uint16_t i = 0; i < (n >> 1); ++i) {
+    uint32_t ss = event.ptr[i + 1];
+    waveform.samples[i << 1] = (uint16_t)(ss & 0x0fff);
+    waveform.samples[i << 1 | 1] = (uint16_t)((ss >> 16) & 0x0fff);
+    // trigger
+    if (uint32_t t = (ss & 0x20002000)) {
+      trigger = (i << 1) | (t >> 29);
     }
-    waveform.num_samples = n;
-    waveform.trigger = trigger;
-    waveform.gate = gate;
-    waveform.holdoff = holdoff;
-    waveform.overthreshold = over;
+    DVP(gate, 0)
+    DVP(holdoff, 2)
+    DVP(over, 3)
+  }
+  waveform.num_samples = n;
+  waveform.trigger = trigger;
+  waveform.gate = gate;
+  waveform.holdoff = holdoff;
+  waveform.overthreshold = over;
 }
 
 template <>
-void DPPQCDEventWaveform<DPPQCDEvent>::waveform(Waveform &waveform) const
-{
-    waveform_(*this,waveform);
+void DPPQCDEventWaveform<DPPQCDEvent>::waveform(Waveform &waveform) const {
+  waveform_(*this, waveform);
 }
 
 template <>
-void DPPQCDEventWaveform<DPPQCDEventExtra>::waveform(Waveform &waveform) const
-{
-    waveform_(*this,waveform);
+void DPPQCDEventWaveform<DPPQCDEventExtra>::waveform(Waveform &waveform) const {
+  waveform_(*this, waveform);
 }

@@ -26,43 +26,42 @@
 #ifndef JADAQ_DPPQCDEVENT_HPP
 #define JADAQ_DPPQCDEVENT_HPP
 
-#include <cstdint>
 #include <cstddef>
+#include <cstdint>
 
-struct Event
-{
-    uint32_t* ptr;
-    size_t size;
-    Event(uint32_t* p, size_t s): ptr(p), size(s) {}
+struct Event {
+  uint32_t *ptr;
+  size_t size;
+  Event(uint32_t *p, size_t s) : ptr(p), size(s) {}
 };
 
-struct DPPQCDEvent: Event
-{
-    DPPQCDEvent(uint32_t* p, size_t s): Event(p,s) {}
-    uint32_t timeTag() const { return ptr[0]; }
-    uint16_t charge() const { return (uint16_t)(ptr[size-1] & 0x0000ffffu); }
-    uint8_t subChannel() const {return (uint8_t)(ptr[size-1] >> 28);}
-    uint16_t channel(uint16_t group) const { return (group<<3) | subChannel(); }
-    static constexpr const bool extras = false;
+struct DPPQCDEvent : Event {
+  DPPQCDEvent(uint32_t *p, size_t s) : Event(p, s) {}
+  uint32_t timeTag() const { return ptr[0]; }
+  uint16_t charge() const { return (uint16_t)(ptr[size - 1] & 0x0000ffffu); }
+  uint8_t subChannel() const { return (uint8_t)(ptr[size - 1] >> 28); }
+  uint16_t channel(uint16_t group) const { return (group << 3) | subChannel(); }
+  static constexpr const bool extras = false;
 };
 
-struct DPPQCDEventExtra: DPPQCDEvent
-{
-    DPPQCDEventExtra(uint32_t* p, size_t s): DPPQCDEvent(p,s) {}
-    uint16_t extendedTimeTag() const { return (uint16_t)(ptr[size-2] & 0x0000ffffu); }
-    uint16_t baseline() const { return (uint16_t)(ptr[size-2]>>16); }
-    uint64_t fullTime() const { return ((uint64_t)timeTag()) | (((uint64_t)extendedTimeTag())<<32); }
-    static constexpr const bool extras = true;
+struct DPPQCDEventExtra : DPPQCDEvent {
+  DPPQCDEventExtra(uint32_t *p, size_t s) : DPPQCDEvent(p, s) {}
+  uint16_t extendedTimeTag() const {
+    return (uint16_t)(ptr[size - 2] & 0x0000ffffu);
+  }
+  uint16_t baseline() const { return (uint16_t)(ptr[size - 2] >> 16); }
+  uint64_t fullTime() const {
+    return ((uint64_t)timeTag()) | (((uint64_t)extendedTimeTag()) << 32);
+  }
+  static constexpr const bool extras = true;
 };
 
 struct Waveform;
 
 template <typename DPPQCDEventType>
-struct DPPQCDEventWaveform: DPPQCDEventType
-{
-    DPPQCDEventWaveform(uint32_t* p, size_t s): DPPQCDEventType(p,s) {}
-    void waveform(Waveform& waveform) const;
+struct DPPQCDEventWaveform : DPPQCDEventType {
+  DPPQCDEventWaveform(uint32_t *p, size_t s) : DPPQCDEventType(p, s) {}
+  void waveform(Waveform &waveform) const;
 };
 
-
-#endif //JADAQ_DPPQCDEVENT_HPP
+#endif // JADAQ_DPPQCDEVENT_HPP

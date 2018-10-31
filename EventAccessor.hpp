@@ -26,69 +26,58 @@
 #ifndef JADAQ_EVENTACCESSOR_HPP
 #define JADAQ_EVENTACCESSOR_HPP
 
-#include "caen.hpp"
 #include "DataFormat.hpp"
+#include "caen.hpp"
 
-template <typename E>
-class DPPEventAccessor
-{
+template <typename E> class DPPEventAccessor {
 public:
-    virtual uint16_t channels() const = 0;
-    virtual uint32_t events(uint16_t channel) const = 0;
-    virtual E operator()(uint16_t channel, size_t i) const = 0;
+  virtual uint16_t channels() const = 0;
+  virtual uint32_t events(uint16_t channel) const = 0;
+  virtual E operator()(uint16_t channel, size_t i) const = 0;
 };
 
-struct AnyDPPEventAccessor
-{
+struct AnyDPPEventAccessor {
 private:
-    void* ptr;
+  void *ptr;
 
 public:
-    template <typename T>
-    AnyDPPEventAccessor(DPPEventAccessor<T>& b): ptr(&b) {}
-    template<typename T>
-    AnyDPPEventAccessor& operator=(DPPEventAccessor<T>& b)
-    {
-        ptr = &b;
-        return *this;
-    }
-    template<typename T>
-    DPPEventAccessor<T>& base() const
-    {
-        return *static_cast<DPPEventAccessor<T>*>(ptr);
-    }
-    template<typename T>
-    T operator()(uint16_t channel, size_t i) const
-    {
-        return base<T>().operator()(channel,i);
-    }
+  template <typename T> AnyDPPEventAccessor(DPPEventAccessor<T> &b) : ptr(&b) {}
+  template <typename T> AnyDPPEventAccessor &operator=(DPPEventAccessor<T> &b) {
+    ptr = &b;
+    return *this;
+  }
+  template <typename T> DPPEventAccessor<T> &base() const {
+    return *static_cast<DPPEventAccessor<T> *>(ptr);
+  }
+  template <typename T> T operator()(uint16_t channel, size_t i) const {
+    return base<T>().operator()(channel, i);
+  }
 };
 
-
-template <typename E>
-class DPPQDCEventAccessor : public DPPEventAccessor<E>
-{
+template <typename E> class DPPQDCEventAccessor : public DPPEventAccessor<E> {
 private:
-    const caen::DPPEvents<_CAEN_DGTZ_DPP_QDC_Event_t>& container;
-    const uint16_t numChannels;
+  const caen::DPPEvents<_CAEN_DGTZ_DPP_QDC_Event_t> &container;
+  const uint16_t numChannels;
+
 public:
-    DPPQDCEventAccessor(const caen::DPPEvents<_CAEN_DGTZ_DPP_QDC_Event_t>& events, uint16_t channels)
-            : container(events)
-            , numChannels(channels) {}
-    uint16_t channels() const override { return numChannels; }
-    uint32_t events(uint16_t channel) const override { return container.nEvents[channel]; }
-    E operator()(uint16_t channel, size_t i) const override;
+  DPPQDCEventAccessor(const caen::DPPEvents<_CAEN_DGTZ_DPP_QDC_Event_t> &events,
+                      uint16_t channels)
+      : container(events), numChannels(channels) {}
+  uint16_t channels() const override { return numChannels; }
+  uint32_t events(uint16_t channel) const override {
+    return container.nEvents[channel];
+  }
+  E operator()(uint16_t channel, size_t i) const override;
 };
 
 template <>
-inline Data::ListElement422 DPPQDCEventAccessor<Data::ListElement422>::operator()(uint16_t channel, size_t i) const
-{
-    Data::ListElement422 res;
-    res.time = container.ptr[channel][i].TimeTag;
-    res.channel = channel;
-    res.charge = container.ptr[channel][i].Charge;
-    return res;
+inline Data::ListElement422 DPPQDCEventAccessor<Data::ListElement422>::
+operator()(uint16_t channel, size_t i) const {
+  Data::ListElement422 res;
+  res.time = container.ptr[channel][i].TimeTag;
+  res.channel = channel;
+  res.charge = container.ptr[channel][i].Charge;
+  return res;
 }
 
-
-#endif //JADAQ_ACCESSOR_HPP
+#endif // JADAQ_ACCESSOR_HPP

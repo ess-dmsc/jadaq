@@ -25,67 +25,60 @@
 #ifndef JADAQ_TIMER_HPP
 #define JADAQ_TIMER_HPP
 
-#include <iostream>
 #include <boost/asio/io_service.hpp>
 #include <boost/asio/steady_timer.hpp>
-#include <thread>
+#include <iostream>
 #include <mutex>
+#include <thread>
 
 namespace asio = boost::asio;
-class Timer
-{
+class Timer {
 private:
-    asio::io_service timerservice;
-    std::chrono::milliseconds waitPeriod;
-    asio::steady_timer timer;
-    std::thread* thread = nullptr;
-    std::mutex mutex;
+  asio::io_service timerservice;
+  std::chrono::milliseconds waitPeriod;
+  asio::steady_timer timer;
+  std::thread *thread = nullptr;
+  std::mutex mutex;
 
-    template<typename F>
-    void repeatWrapper(F& f)
-    {
-        mutex.lock();
-        f();
-        timer.expires_at(timer.expires_at() + waitPeriod);
-        timer.async_wait([this,f](const boost::system::error_code &ec) {
-            if (!ec)
-                repeatWrapper(f);
-        });
-        mutex.unlock();
-    }
+  template <typename F> void repeatWrapper(F &f) {
+    mutex.lock();
+    f();
+    timer.expires_at(timer.expires_at() + waitPeriod);
+    timer.async_wait([this, f](const boost::system::error_code &ec) {
+      if (!ec)
+        repeatWrapper(f);
+    });
+    mutex.unlock();
+  }
 
 public:
-    template<typename F>
-    Timer(float seconds,  F&& f, bool repeat=false)
-            : waitPeriod{std::chrono::milliseconds{(long)(seconds*1000.0f)}}
-            , timer{timerservice, waitPeriod}
-    {
-        if (repeat)
-        {
-            timer.async_wait([this,f](const boost::system::error_code &ec) {
-                if (!ec)
-                    repeatWrapper(f);
-            });
+  template <typename F>
+  Timer(float seconds, F &&f, bool repeat = false)
+      : waitPeriod{std::chrono::milliseconds{(long)(seconds * 1000.0f)}},
+        timer{timerservice, waitPeriod} {
+    if (repeat) {
+      timer.async_wait([this, f](const boost::system::error_code &ec) {
+        if (!ec)
+          repeatWrapper(f);
+      });
 
-        } else {
-            timer.async_wait([f](const boost::system::error_code &ec) {
-                if (!ec)
-                    f();
-            });
-        }
-        thread = new std::thread{[this](){ timerservice.run(); }};
+    } else {
+      timer.async_wait([f](const boost::system::error_code &ec) {
+        if (!ec)
+          f();
+      });
     }
-    ~Timer()
-    {
-        thread->join();
-        delete thread;
-    }
-    void cancel()
-    {
-        mutex.lock();
-        timer.cancel();
-        mutex.unlock();
-    }
+    thread = new std::thread{[this]() { timerservice.run(); }};
+  }
+  ~Timer() {
+    thread->join();
+    delete thread;
+  }
+  void cancel() {
+    mutex.lock();
+    timer.cancel();
+    mutex.unlock();
+  }
 };
 
-#endif //JADAQ_TIMER_HPP
+#endif // JADAQ_TIMER_HPP
