@@ -37,6 +37,13 @@
 #include <iostream>
 #include <queue>
 #include <thread>
+#include "xtrace.h"
+
+
+// #undef TRC_MASK
+// #define TRC_MASK TRC_M_ALL
+// #undef TRC_LEVEL
+// #define TRC_LEVEL TRC_L_DEB
 
 namespace po = boost::program_options;
 
@@ -80,7 +87,6 @@ static void printStats(const std::vector<Digitizer> &digitizers) {
 }
 
 int main(int argc, const char *argv[]) {
-
   try {
     po::options_description desc{"Usage: " + std::string(argv[0]) +
                                  " [<options>]"};
@@ -163,18 +169,17 @@ int main(int argc, const char *argv[]) {
   /// \todo get rid of this? hardcode for now
   uint64_t runID{0xdeadbeef};
   // prepare a run number
+  /// \todo get rid of this, not writing to file
   FileID fileID;
 
   /* Read-in and write resulting digitizer configuration */
   std::string configFileName = conf.configFile[0];
   std::ifstream configFile(configFileName);
   if (!configFile.good()) {
-    std::cerr << "Could not open jadaq configuration file: " << configFileName
-              << std::endl;
+    XTRACE(MAIN, ERR, "Could not open jadaq configuration file: %s", configFileName.c_str());
     return -1;
   }
-  DEBUG(std::cout << "Reading digitizer configuration from" << configFileName
-                  << std::endl;)
+  XTRACE(MAIN, DEB, "Reading digitizer configuration from %s", configFileName.c_str());
   // NOTE: switch verbose (2nd) arg on here to enable conf warnings
   // TODO: implement a general verbose mode in sted of this
   Configuration configuration(configFile, conf.verbose > 1);
@@ -183,22 +188,19 @@ int main(int argc, const char *argv[]) {
   if (conf.outConfigFile) {
     std::ofstream outFile(*conf.outConfigFile);
     if (outFile.good()) {
-      DEBUG(std::cout << "Writing current digitizer configuration to "
-                      << *conf.outConfigFile << std::endl;)
+      XTRACE(MAIN, DEB, "Writing current digitizer configuration to %s", (*conf.outConfigFile).c_str());
       configuration.write(outFile);
       outFile.close();
     } else {
-      std::cerr << "Unable to open configuration out file: "
-                << *conf.outConfigFile << std::endl;
+      XTRACE(MAIN, ERR, "Unable to open configuration out file: ", (*conf.outConfigFile).c_str());
     }
   }
 
   std::vector<Digitizer> &digitizers = configuration.getDigitizers();
-  if (conf.verbose) {
-    std::cout << "Setup " << digitizers.size() << " digitizer(s):" << std::endl;
-    for (Digitizer &digitizer : digitizers) {
-      std::cout << "\t" << digitizer.name() << std::endl;
-    }
+  XTRACE(MAIN, INF, "Setup %d digitizer(s):", digitizers.size());
+
+  for (Digitizer &digitizer : digitizers) {
+      XTRACE(MAIN, INF, "digitizer: %s", digitizer.name().c_str());
   }
 
   /// \todo move DataHandler creation to factory method in DataHandlerGeneric
@@ -207,10 +209,7 @@ int main(int argc, const char *argv[]) {
   dataWriter = new DataWriterNetwork(*conf.network, *conf.port, runID);
 
   for (Digitizer &digitizer : digitizers) {
-    if (conf.verbose) {
-      std::cout << "Start acquisition on digitizer " << digitizer.name()
-                << std::endl;
-    }
+    XTRACE(MAIN, INF, "Start acquisition on digitizer %s", digitizer.name().c_str());
     digitizer.initialize(dataWriter);
     digitizer.startAcquisition();
     digitizer.active = true;
@@ -230,9 +229,9 @@ int main(int argc, const char *argv[]) {
     timers.emplace_back(conf.stats, [&digitizers]() { printStats(digitizers); },
                         true);
   }
-  if (conf.verbose) {
-    std::cout << "Running acquisition loop - Ctrl-C to interrupt" << std::endl;
-  }
+
+  XTRACE(MAIN, INF, "Running acquisition loop - Ctrl-C to interrupt");
+
   long acquisitionStart = DataHandler::getTimeMsecs();
   long eventsFound = 0;
   while (true) {
@@ -242,25 +241,22 @@ int main(int argc, const char *argv[]) {
         try {
           digitizer.acquisition();
         } catch (caen::Error &e) {
-          std::cerr << "ERROR: unexpected exception during acquisition: "
-                    << e.what() << "(" << e.code() << ")" << std::endl;
+          XTRACE(MAIN, ERR, "ERROR: unexpected exception during acquisition: %s (%d)", e.what(), e.code());
           digitizer.active = false;
         }
       }
       eventsFound += digitizer.getStats().eventsFound;
     }
     if (interrupt) {
-      std::cout << "Caught interrupt - stop acquisition and clean up."
-                << std::endl;
+      XTRACE(MAIN, ALW, "Caught interrupt - stop acquisition and clean up.");
       break;
     }
     if (timeout) {
-      std::cout << "Time out - stop acquisition and clean up." << std::endl;
+      XTRACE(MAIN, ALW, "Time out - stop acquisition and clean up.");
       break;
     }
     if (conf.events >= 0 && eventsFound >= conf.events) {
-      std::cout << "Collected requested events - stop acquisition and clean up."
-                << std::endl;
+      XTRACE(MAIN, ALW, "Collected requested events - stop acquisition and clean up.");
       break;
     }
   }
@@ -269,26 +265,19 @@ int main(int argc, const char *argv[]) {
   }
   long acquisitionStop = DataHandler::getTimeMsecs();
   for (Digitizer &digitizer : digitizers) {
-    if (conf.verbose) {
-      std::cout << "Stop acquisition on digitizer " << digitizer.name()
-                << std::endl;
-    }
+    XTRACE(MAIN, INF, "Stop acquisition on digitizer %s", digitizer.name().c_str());
     digitizer.stopAcquisition();
   }
-  if (conf.verbose) {
-    std::cout << "Acquisition complete - shutting down." << std::endl;
-  }
+  XTRACE(MAIN, ALW, "Acquisition complete - shutting down.");
   /* Clean up after all digitizers: buffers, etc. */
   for (Digitizer &digitizer : digitizers) {
     digitizer.close();
   }
   digitizers.clear();
-  if (conf.verbose) {
-    double runtime = (acquisitionStop - acquisitionStart) / 1000.0;
-    std::cout << "Acquisition ran for " << runtime << " seconds." << std::endl;
-    std::cout << "Collecting " << eventsFound << " events." << std::endl;
-    std::cout << "Resulting in a collection rate of "
-              << eventsFound / runtime / 1000.0 << " kHz." << std::endl;
-  }
+
+  double runtime = (acquisitionStop - acquisitionStart) / 1000.0;
+  XTRACE(MAIN, ALW, "Acquisition ran for %d seconds.", runtime);
+  XTRACE(MAIN, ALW, "Collecting %d events.", eventsFound);
+  XTRACE(MAIN, ALW, "Resulting in a collection rate of %f kHz.", eventsFound / runtime / 1000.0);
   return 0;
 }

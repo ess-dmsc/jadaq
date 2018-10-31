@@ -33,13 +33,13 @@
 
 #include "DataHandler.hpp"
 #include "DataWriter.hpp"
-#include "trace.hpp"
 #include <atomic>
 #include <boost/thread/thread.hpp>
 #include <chrono>
 #include <string>
 #include <thread>
 #include <unordered_map>
+#include "xtrace.h"
 
 class Digitizer {
 public:

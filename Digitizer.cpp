@@ -30,6 +30,7 @@
 #include <iomanip>
 #include <regex>
 #include <thread>
+#include "xtrace.h"
 
 #define MAX_GROUPS 8
 
@@ -301,8 +302,8 @@ Digitizer::Digitizer(CAEN_DGTZ_ConnectionType linkType_, int linkNum_,
 
 void Digitizer::initialize(DataWriter &dataWriter) {
   boardConfiguration = digitizer->getBoardConfiguration();
-  DEBUG(std::cout << "Prepare readout buffer for digitizer " << name()
-                  << std::endl;)
+  XTRACE(DIGIT, DEB, "Prepare readout buffer for digitizer %s", name().c_str());
+
   readoutBuffer = digitizer->mallocReadoutBuffer();
   uint32_t groups = this->groups();
   acqWindowSize = new uint32_t[groups];
@@ -349,7 +350,7 @@ void Digitizer::initialize(DataWriter &dataWriter) {
 }
 
 void Digitizer::close() {
-  DEBUG(std::cout << "Closing digitizer " << name() << std::endl;)
+  XTRACE(DIGIT, DEB, "Closing digitizer %s", name().c_str());
   digitizer->freeReadoutBuffer(readoutBuffer);
   if (digitizer) {
     delete digitizer;
@@ -370,17 +371,16 @@ void Digitizer::startAcquisition() {
 }
 
 void Digitizer::acquisition() {
-  DEBUG(std::cout << "Read at most " << readoutBuffer.size << "b data from "
-                  << name() << std::endl;)
+  XTRACE(DIGIT, DEB, "Read at most %db data from %s", readoutBuffer.size, name().c_str());
   /* We use slave terminated mode like in the sample from CAEN Digitizer library
    * docs. */
   digitizer->readData(readoutBuffer, CAEN_DGTZ_SLAVE_TERMINATED_READOUT_MBLT);
   uint32_t bytesRead = readoutBuffer.dataSize;
-  DEBUG(std::cout << "Read " << bytesRead << "b of acquired data" << std::endl;)
+  XTRACE(DIGIT, DEB, "Read %db of acquired data", bytesRead);
 
   /* NOTE: check and skip if there's no actual events to handle */
   if (bytesRead < 1) {
-    DEBUG(std::cout << "No data to read - skip further handling." << std::endl;)
+    XTRACE(DIGIT, DEB, "No data to read - skip further handling.");
     return;
   }
   stats.bytesRead += bytesRead;

@@ -30,6 +30,7 @@
 #include <cstdint>
 #include <iostream>
 #include <regex>
+#include "xtrace.h"
 
 Configuration::Configuration(std::ifstream &file, bool verbose) {
   setVerbose(verbose);
@@ -256,8 +257,7 @@ void Configuration::apply() {
       }
       digitizer = &*digitizers.rbegin();
     } catch (caen::Error &e) {
-      std::cerr << "ERROR: Unable to open digitizer [" << name
-                << "]: " << e.what() << std::endl;
+      XTRACE(MAIN, ERR, "ERROR: Unable to open digitizer [%s]:", name.c_str(), e.what());
       throw;
     }
     configure(*digitizer, conf, getVerbose());
