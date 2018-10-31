@@ -82,13 +82,9 @@ private:
       }
       Buffer(size_t numGroups) : groups(numGroups) {}
 
-      void malloc(DataWriter &dataWriter, size_t samples, bool network) {
-        if (network)
-          buffer = new jadaq::buffer<E>(Data::maxBufferSize, E::size(samples),
+      void malloc(DataWriter &dataWriter, size_t samples) {
+        buffer = new jadaq::buffer<E>(Data::maxBufferSize, E::size(samples),
                                         sizeof(Data::Header));
-        else
-          buffer =
-              new jadaq::buffer<E>(4096 * E::size(samples), E::size(samples));
         maxLocalTime = new uint32_t[groups];
         clear();
       }
@@ -116,9 +112,9 @@ private:
                    size_t samples, const uint32_t *jitter)
         : dataWriter(dw), digitizerID(digID), maxJitter(jitter),
           previous(groups), current(groups), next(groups) {
-      previous.malloc(dataWriter, samples, dataWriter.network());
-      current.malloc(dataWriter, samples, dataWriter.network());
-      next.malloc(dataWriter, samples, dataWriter.network());
+      previous.malloc(dataWriter, samples);
+      current.malloc(dataWriter, samples);
+      next.malloc(dataWriter, samples);
     }
     ~Implementation() {
       flush();

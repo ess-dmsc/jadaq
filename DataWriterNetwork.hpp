@@ -64,8 +64,6 @@ public:
     // TODO: This is where we will send the configuration over TCP
   }
 
-  static bool network() { return true; }
-
   void split(const std::string &) {}
 
   template <typename E>
