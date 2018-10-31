@@ -27,9 +27,7 @@
 #include "Configuration.hpp"
 #include "DataHandler.hpp"
 #include "DataWriter.hpp"
-#include "DataWriterHDF5.hpp"
 #include "DataWriterNetwork.hpp"
-#include "DataWriterText.hpp"
 #include "Digitizer.hpp"
 #include "FileID.hpp"
 #include "Timer.hpp"
@@ -43,8 +41,6 @@
 namespace po = boost::program_options;
 
 struct {
-  bool textout = false;
-  bool hdf5out = false;
   bool nullout = false;
   long events = -1;
   float time = -1.0f;
@@ -99,8 +95,6 @@ int main(int argc, const char *argv[]) {
         "time,t",
         po::value<float>()->value_name("<seconds>")->default_value(conf.time),
         "Stop acquisition after <seconds> seconds")(
-        "text,T", po::bool_switch(&conf.textout), "Output to text file.")(
-        "hdf5,H", po::bool_switch(&conf.hdf5out), "Output to hdf5 file.")(
         "split,s",
         po::value<float>()->value_name("<seconds>")->default_value(conf.split),
         "Split output file every <seconds> seconds")(
@@ -164,8 +158,7 @@ int main(int argc, const char *argv[]) {
       conf.port = new std::string(vm["port"].as<std::string>());
     }
     // We will use the Null data handlere if no other is selected
-    conf.nullout =
-        (!conf.textout && !conf.hdf5out && (conf.network == nullptr));
+    conf.nullout = (conf.network == nullptr);
   } catch (const po::error &error) {
     std::cerr << error.what() << '\n';
     throw;
@@ -213,22 +206,11 @@ int main(int argc, const char *argv[]) {
     }
   }
 
-  // TODO: move DataHandler creation to factory method in DataHandlerGeneric
+  /// \todo move DataHandler creation to factory method in DataHandlerGeneric
   DataWriter dataWriter;
-  if (conf.hdf5out) {
-    dataWriter = new DataWriterHDF5(*conf.path, *conf.basename,
-                                    conf.split > 0.0f ? fileID.toString() : "");
-  } else if (conf.textout) {
-    dataWriter = new DataWriterText(*conf.path, *conf.basename,
-                                    conf.split > 0.0f ? fileID.toString() : "");
-  } else if (conf.network != nullptr) {
-    dataWriter = new DataWriterNetwork(*conf.network, *conf.port, runID);
-  } else if (conf.nullout) {
-    dataWriter = new DataWriterNull();
-  } else {
-    std::cerr << "No valid data handler." << std::endl;
-    return -1;
-  }
+
+  dataWriter = new DataWriterNetwork(*conf.network, *conf.port, runID);
+
   for (Digitizer &digitizer : digitizers) {
     if (conf.verbose) {
       std::cout << "Start acquisition on digitizer " << digitizer.name()

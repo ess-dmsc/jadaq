@@ -30,40 +30,37 @@ find_package(Boost COMPONENTS system filesystem thread program_options REQUIRED)
 find_package(HDF5 1.10 REQUIRED COMPONENTS C CXX HL)
 include_directories(${HDF5_INCLUDE_DIRS})
 
-set(jadaq_SRC 
-  _CAENDigitizer.c 
-  Configuration.cpp 
-  Digitizer.cpp 
+set(jadaq_SRC
+  _CAENDigitizer.c
+  Configuration.cpp
+  Digitizer.cpp
   DPPQCDEvent.cpp
-  FunctionID.cpp 
-  StringConversion.cpp 
-  caen.cpp 
+  FunctionID.cpp
+  StringConversion.cpp
+  caen.cpp
 )
 set(jadaq_INC
-  _CAENDigitizer.h 
-  Configuration.hpp 
-  DataFormat.hpp 
-  DataHandler.hpp 
-  DataWriter.hpp 
-  DataWriterHDF5.hpp 
+  _CAENDigitizer.h
+  Configuration.hpp
+  DataFormat.hpp
+  DataHandler.hpp
+  DataWriter.hpp
   DataWriterNetwork.hpp 
-  DataWriterText.hpp 
   Digitizer.hpp
-  DPPQCDEvent.hpp 
-  EventAccessor.hpp  
+  DPPQCDEvent.hpp
+  EventAccessor.hpp
   EventIterator.hpp
   FileID.hpp
   FunctionID.hpp
-  StringConversion.hpp 
-  Timer.hpp 
+  StringConversion.hpp
+  Timer.hpp
   Waveform.hpp
-  caen.hpp 
-  container.hpp 
-  ini_parser.hpp 
-  interrupt.hpp 
-  trace.hpp 
+  caen.hpp
+  container.hpp
+  ini_parser.hpp
+  interrupt.hpp
+  trace.hpp
 )
 
 add_executable(jadaq ${jadaq_INC} ${jadaq_SRC} jadaq.cpp )
 target_link_libraries(jadaq ${CAEN_LIB} ${Boost_LIBRARIES} pthread ${HDF5_LIBRARIES} ${HDF5_HL_LIBRARIES})
-
