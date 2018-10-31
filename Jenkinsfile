@@ -61,6 +61,7 @@ def docker_cmake(image_key, xtra_flags) {
     def custom_sh = images[image_key]['sh']
     sh """docker exec ${container_name(image_key)} ${custom_sh} -c \"
         cd ${project}
+        mkdir build
         cd build
         cmake --version
         cmake -DCAEN_PATH=${project}/caenlib/lib ${xtra_flags} ..
