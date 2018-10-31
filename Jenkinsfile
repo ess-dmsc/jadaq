@@ -70,6 +70,7 @@ def docker_cmake(image_key, xtra_flags) {
 def docker_build(image_key) {
     def custom_sh = images[image_key]['sh']
     sh """docker exec ${container_name(image_key)} ${custom_sh} -c \"
+        mkdir ${project}/build
         cd ${project}/build
         make --version
         make
