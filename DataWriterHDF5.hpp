@@ -176,7 +176,8 @@ public:
         FL_PacketTable*& table = info.getTable(globalTimeStamp);
         if (table == nullptr)
         {
-            table = new FL_PacketTable(info.group->getId(), std::to_string(globalTimeStamp).c_str(),
+            /// \todo (char*) cast used to get rid of warning, maybe check this is OK?
+            table = new FL_PacketTable(info.group->getId(), (char *)std::to_string(globalTimeStamp).c_str(),
             buffer->begin()->h5type().getId(),buffer->size()); // TODO find a suitable chunk size - last argument
         }
         if (table->AppendPackets(buffer->size(),(void*)buffer->data())) // Fuck this is the worst interface ever!
