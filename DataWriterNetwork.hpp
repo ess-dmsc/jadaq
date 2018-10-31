@@ -64,8 +64,6 @@ public:
     // TODO: This is where we will send the configuration over TCP
   }
 
-  void split(const std::string &) {}
-
   template <typename E>
   void operator()(const jadaq::buffer<E> *buffer, uint32_t digitizerID,
                   uint64_t globalTimeStamp) {
