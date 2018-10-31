@@ -72,8 +72,6 @@ def docker_build(image_key) {
     sh """docker exec ${container_name(image_key)} ${custom_sh} -c \"
         cd ${project}/build
         make --version
-        make all unit_tests benchmark -j4
-        cd ../utils/udpredirect
         make
     \""""
 }
@@ -113,17 +111,6 @@ node('docker') {
                 scm_vars = checkout scm
             } catch (e) {
                 failure_function(e, 'Checkout failed')
-            }
-        }
-
-        stage("Static analysis") {
-            try {
-                sh "find . -name '*TestData.h' > exclude_cloc"
-                sh "cloc --exclude-list-file=exclude_cloc --by-file --xml --out=cloc.xml ."
-                sh "xsltproc jenkins/cloc2sloccount.xsl cloc.xml > sloccount.sc"
-                sloccountPublish encoding: '', pattern: ''
-            } catch (e) {
-                failure_function(e, 'Static analysis failed')
             }
         }
     }
