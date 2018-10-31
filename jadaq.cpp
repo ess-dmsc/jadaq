@@ -44,7 +44,6 @@ struct {
   bool nullout = false;
   long events = -1;
   float time = -1.0f;
-  float split = -1.0f;
   float stats = -1.0f;
   int verbose = 1;
   std::string *path = nullptr;
@@ -95,9 +94,6 @@ int main(int argc, const char *argv[]) {
         "time,t",
         po::value<float>()->value_name("<seconds>")->default_value(conf.time),
         "Stop acquisition after <seconds> seconds")(
-        "split,s",
-        po::value<float>()->value_name("<seconds>")->default_value(conf.split),
-        "Split output file every <seconds> seconds")(
         "stats",
         po::value<float>()->value_name("<seconds>")->default_value(conf.stats),
         "Print statistics every <seconds> seconds")(
@@ -151,7 +147,6 @@ int main(int argc, const char *argv[]) {
       *conf.path += '/';
     conf.events = vm["events"].as<int>();
     conf.time = vm["time"].as<float>();
-    conf.split = vm["split"].as<float>();
     conf.stats = vm["stats"].as<float>();
     if (vm.count("network")) {
       conf.network = new std::string(vm["network"].as<std::string>());
@@ -230,12 +225,7 @@ int main(int argc, const char *argv[]) {
   if (conf.time > 0.0f) {
     timers.emplace_back(conf.time, [&timeout]() { timeout = true; });
   }
-  if (conf.split > 0.0f) {
-    timers.emplace_back(
-        conf.split,
-        [&dataWriter, &fileID]() { dataWriter.split((++fileID).toString()); },
-        true);
-  }
+
   if (conf.stats > 0.0f) {
     timers.emplace_back(conf.stats, [&digitizers]() { printStats(digitizers); },
                         true);
