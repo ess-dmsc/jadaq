@@ -43,7 +43,7 @@
 #include <tuple>
 #include <vector>
 
-/* TODO: add doxygen comments to all important functions and structs */
+/// \todo add doxygen comments to all important functions and structs
 
 namespace caen {
 class Error : public std::exception {
