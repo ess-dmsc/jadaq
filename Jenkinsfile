@@ -14,7 +14,7 @@ project = "jadaq"
  ]]);
 
 images = [
-    'ubuntu1804': [
+    'fedora25': [
         'name': 'essdmscdm/ubuntu18.04-build-node:1.2.0',
         'sh': 'bash -e',
         'cmake_flags': ''
