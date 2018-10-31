@@ -45,12 +45,11 @@ set(jadaq_INC
   DataFormat.hpp
   DataHandler.hpp
   DataWriter.hpp
-  DataWriterNetwork.hpp 
+  DataWriterNetwork.hpp
   Digitizer.hpp
   DPPQCDEvent.hpp
   EventAccessor.hpp
   EventIterator.hpp
-  FileID.hpp
   FunctionID.hpp
   StringConversion.hpp
   Timer.hpp
@@ -59,7 +58,7 @@ set(jadaq_INC
   container.hpp
   ini_parser.hpp
   interrupt.hpp
-  trace.hpp
+  xtrace.h
 )
 
 add_executable(jadaq ${jadaq_INC} ${jadaq_SRC} jadaq.cpp )

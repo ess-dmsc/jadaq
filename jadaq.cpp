@@ -29,7 +29,6 @@
 #include "DataWriter.hpp"
 #include "DataWriterNetwork.hpp"
 #include "Digitizer.hpp"
-#include "FileID.hpp"
 #include "Timer.hpp"
 #include "interrupt.hpp"
 #include <boost/program_options.hpp>
@@ -170,7 +169,6 @@ int main(int argc, const char *argv[]) {
   uint64_t runID{0xdeadbeef};
   // prepare a run number
   /// \todo get rid of this, not writing to file
-  FileID fileID;
 
   /* Read-in and write resulting digitizer configuration */
   std::string configFileName = conf.configFile[0];
