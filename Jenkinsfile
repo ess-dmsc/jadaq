@@ -15,7 +15,7 @@ project = "jadaq"
 
 images = [
     'fedora25': [
-        'name': 'essdmscdm/ubuntu18.04-build-node:1.2.0',
+        'name': 'essdmscdm/essdmscdm/fedora25-build-node:2.0.0',
         'sh': 'bash -e',
         'cmake_flags': ''
     ]
@@ -49,6 +49,16 @@ def Object get_container(image_key) {
     return container
 }
 
+
+
+def docker_copy_code(image_key) {
+    def custom_sh = images[image_key]['sh']
+    sh "docker cp ${project}_code ${container_name(image_key)}:/home/jenkins/${project}"
+    sh """docker exec --user root ${container_name(image_key)} ${custom_sh} -c \"
+                        chown -R jenkins.jenkins /home/jenkins/${project}
+                        \""""
+}
+
 def docker_dependencies(image_key) {
     def conan_remote = "ess-dmsc-local"
     def custom_sh = images[image_key]['sh']
@@ -60,14 +70,6 @@ def docker_dependencies(image_key) {
             ${conan_remote} ${local_conan_server}
         conan install --build=outdated ..
     \""""
-}
-
-def docker_copy_code(image_key) {
-    def custom_sh = images[image_key]['sh']
-    sh "docker cp ${project}_code ${container_name(image_key)}:/home/jenkins/${project}"
-    sh """docker exec --user root ${container_name(image_key)} ${custom_sh} -c \"
-                        chown -R jenkins.jenkins /home/jenkins/${project}
-                        \""""
 }
 
 def docker_cmake(image_key, xtra_flags) {
