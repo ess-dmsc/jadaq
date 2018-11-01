@@ -3,8 +3,35 @@ cmake_minimum_required(VERSION 3.2)
 
 project(jadaq)
 
-if (JENKINS)
-  include("${CMAKE_BINARY_DIR}/conanbuildinfo.cmake")
+#=============================================================================
+# Augment CMake with our custom scripts
+#=============================================================================
+set(EXTRA_MODULES_DIR ${CMAKE_CURRENT_LIST_DIR}/cmake)
+
+#=============================================================================
+# Conan
+#=============================================================================
+SET(CONAN_PROFILE "default" CACHE STRING "Name of conan profile to use, uses default by default")
+SET(CONAN "DISABLED" CACHE STRING "conan options AUTO (conan must be in path), MANUAL (expects conanbuildinfo.cmake in build directory) or DISABLE")
+if(${CONAN} MATCHES "AUTO")
+  include(${EXTRA_MODULES_DIR}/conan.cmake)
+  conan_cmake_run(CONANFILE conanfile.txt
+    PROFILE ${CONAN_PROFILE}
+    BASIC_SETUP NO_OUTPUT_DIRS KEEP_RPATHS
+    BUILD_TYPE "None"
+    BUILD outdated)
+elseif(${CONAN} MATCHES "MANUAL")
+  if(EXISTS "${CMAKE_BINARY_DIR}/conanbuildinfo.cmake")
+    include("${CMAKE_BINARY_DIR}/conanbuildinfo.cmake")
+    conan_basic_setup(NO_OUTPUT_DIRS SKIP_RPATH)
+  else()
+    MESSAGE(FATAL_ERROR "CONAN set to MANUAL but no file named conanbuildinfo.cmake found in build directory")
+  endif()
+elseif(NOT ${CONAN} MATCHES "DISABLE")
+  MESSAGE(FATAL_ERROR "Unrecognised option for CONAN (${CONAN}), use AUTO, MANUAL or DISABLE")
+endif()
+
+if(${CONAN} MATCHES "AUTO")
   set(Boost_USE_STATIC_LIBS OFF)
   set(Boost_USE_MULTITHREADED ON)
   set(Boost_USE_STATIC_RUNTIME OFF)
@@ -74,7 +101,7 @@ add_executable(jadaq ${jadaq_INC} ${jadaq_SRC})
 
 target_link_libraries(jadaq ${CAEN_LIB} pthread)
 
-if (JENKINS)
+if(${CONAN} MATCHES "AUTO")
   target_link_libraries(jadaq Boost::filesystem Boost::system Boost::thread Boost::program_options)
 else()
   target_link_libraries(jadaq ${Boost_LIBRARIES})

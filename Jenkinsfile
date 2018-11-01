@@ -67,7 +67,6 @@ def docker_dependencies(image_key) {
         conan remote add \
             --insert 0 \
             ${conan_remote} ${local_conan_server}
-        conan install --build=outdated ..
     \""""
 }
 
@@ -76,9 +75,8 @@ def docker_cmake(image_key, xtra_flags) {
     sh """docker exec ${container_name(image_key)} ${custom_sh} -c \"
         cd ${project}
         cd build
-        . ./activate_run.sh
         cmake --version
-        cmake -DCAEN_PATH=../caenlib ${xtra_flags} -DJENKINS=ON ..
+        cmake -DCAEN_PATH=$(pwd)/../caenlib ${xtra_flags} -DCONAN=AUTO ..
     \""""
 }
 
