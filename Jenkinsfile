@@ -15,7 +15,7 @@ project = "jadaq"
 
 images = [
     'fedora25': [
-        'name': 'essdmscdm/essdmscdm/fedora25-build-node:2.0.0',
+        'name': 'essdmscdm/fedora25-build-node:2.0.0',
         'sh': 'bash -e',
         'cmake_flags': ''
     ]
