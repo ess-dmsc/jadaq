@@ -133,6 +133,7 @@ node('docker') {
                 sh "cloc --exclude-list-file=exclude_cloc --by-file --xml --out=cloc.xml ."
                 sh "which xsltproc"
                 sh "ls -la"
+                sh "ls -la .."
                 sh "xsltproc jenkins/cloc2sloccount.xsl cloc.xml > sloccount.sc"
                 sloccountPublish encoding: '', pattern: ''
             } catch (e) {
