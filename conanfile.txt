@@ -9,7 +9,6 @@ boost_property_tree/1.65.1@bincrafters/stable
 hdf5/1.10.2-dm2@ess-dmsc/stable
 
 [options]
-boost_asio:shared=True
 boost_filesystem:shared=True
 boost_system:shared=True
 boost_thread:shared=True
