@@ -13,7 +13,6 @@ boost_filesystem:shared=True
 boost_system:shared=True
 boost_thread:shared=True
 boost_program_options:shared=True
-boost_property_tree:shared=True
 
 [generators]
 cmake
