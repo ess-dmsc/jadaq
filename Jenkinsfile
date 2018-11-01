@@ -15,8 +15,15 @@ project = "jadaq"
 images = [
     'centos7': [
         'name': 'essdmscdm/centos7-build-node:3.2.0',
+        'cmake': 'CC=/usr/lib64/mpich-3.2/bin/mpicc CXX=/usr/lib64/mpich-3.2/bin/mpicxx cmake3',
         'sh': '/usr/bin/scl enable rh-python35 devtoolset-6 -- /bin/bash -e',
         'cmake_flags': ''
+    ],
+      'debian9-debug': [
+            'name': 'essdmscdm/debian9-build-node:2.3.0',
+            'cmake': 'cmake',
+            'sh': 'bash -e',
+            'cmake_flags': '-DCMAKE_BUILD_TYPE=Debug'
     ],
     'fedora25': [
         'name': 'essdmscdm/fedora25-build-node:2.0.0',
