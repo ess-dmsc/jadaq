@@ -15,6 +15,7 @@ project = "jadaq"
 images = [
     'centos7': [
         'name': 'essdmscdm/centos7-build-node:3.2.0',
+        'cmake': 'cmake3',
         'sh': '/usr/bin/scl enable rh-python35 devtoolset-6 -- /bin/bash -e',
         'cmake_flags': '-DCMAKE_BUILD_TYPE=Release'
     ]
@@ -71,13 +72,14 @@ def docker_dependencies(image_key) {
 }
 
 def docker_cmake(image_key, xtra_flags) {
+    cmake_exec = images[image_key]['cmake']
     def custom_sh = images[image_key]['sh']
     sh """docker exec ${container_name(image_key)} ${custom_sh} -c \"
         cd ${project}
         cd build
-        cmake --version
+        ${cmake_exec} --version
         pwd
-        cmake -DCAEN_PATH=\$(pwd)/../caenlib ${xtra_flags} -DCONAN=AUTO ..
+        ${cmake_exec} -DCAEN_PATH=\$(pwd)/../caenlib ${xtra_flags} -DCONAN=AUTO ..
     \""""
 }
 
