@@ -1,6 +1,5 @@
 project = "jadaq"
 
-
 // Set number of old builds to keep.
  properties([[
      $class: 'BuildDiscarderProperty',
@@ -131,7 +130,7 @@ node('docker') {
             try {
                 sh "find . -name '*TestData.h' > exclude_cloc"
                 sh "cloc --exclude-list-file=exclude_cloc --by-file --xml --out=cloc.xml ."
-                sh "docker cp ${container_name(image_key)}:/home/jenkins/${project} ."
+                //sh "docker cp ${container_name(image_key)}:/home/jenkins/${project} ."
                 sh "xsltproc jenkins/cloc2sloccount.xsl cloc.xml > sloccount.sc"
                 sloccountPublish encoding: '', pattern: ''
             } catch (e) {
