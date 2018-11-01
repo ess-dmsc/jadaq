@@ -2,6 +2,7 @@
 cmake_minimum_required(VERSION 3.2)
 
 project(jadaq)
+include("${CMAKE_BINARY_DIR}/conanbuildinfo.cmake")
 
 if(CAEN_PATH)
   message(STATUS ">>>> Using custom location, ${CAEN_PATH}, for Caen libs")
@@ -29,6 +30,10 @@ find_path(CAEN_INCLUDE_DIR NAMES CAENDigitizer.h   HINTS   ${CAEN_INC_PATH})
 find_library(CAEN_LIB NAMES CAENDigitizer CAENComm HINTS   ${CAEN_LIB_PATH})
 include_directories(${CAEN_INCLUDE_DIR})
 
+
+set(Boost_USE_STATIC_LIBS OFF)
+set(Boost_USE_MULTITHREADED ON)
+set(Boost_USE_STATIC_RUNTIME OFF)
 find_package(Boost COMPONENTS system filesystem thread program_options REQUIRED )
 
 

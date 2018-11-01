@@ -1,12 +1,22 @@
 [requires]
 cmake_findboost_modular/1.65.1@bincrafters/stable
 boost_system/1.65.1@bincrafters/stable
+boost_thread/1.65.1@bincrafters/stable
+boost_filesystem/1.65.1@bincrafters/stable
+boost_program_options/1.65.1@bincrafters/stable
 hdf5/1.10.2-dm2@ess-dmsc/stable
+
+[options]
+boost_filesystem:shared=True
+boost_system:shared=True
+boost_thread:shared=True
+boost_program_options:shared=True
 
 [generators]
 cmake
+virtualbuildenv
 virtualrunenv
 
 [imports]
-lib, * -> ./lib
-lib64, * -> ./lib
+lib, *.so.* -> ./lib
+lib, *.so -> ./lib
