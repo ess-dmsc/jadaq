@@ -13,6 +13,11 @@ project = "jadaq"
  ]]);
 
 images = [
+    'centos7': [
+        'name': 'essdmscdm/centos7-build-node:3.2.0',
+        'sh': '/usr/bin/scl enable rh-python35 devtoolset-6 -- /bin/bash -e',
+        'cmake_flags': ''
+    ],
     'fedora25': [
         'name': 'essdmscdm/fedora25-build-node:2.0.0',
         'sh': 'bash -e',

@@ -1,4 +1,8 @@
-cmake_minimum_required(VERSION 3.2)
+if(JENKINS)
+  cmake_minimum_required(VERSION 3.0.0)
+else()
+  cmake_minimum_required(VERSION 3.2)
+endif()
 project(jadaq)
 
 if(CAEN_PATH)
@@ -40,6 +44,7 @@ set(jadaq_SRC
   FunctionID.cpp
   StringConversion.cpp
   caen.cpp
+  jadaq.cpp
 )
 set(jadaq_INC
   _CAENDigitizer.h
@@ -63,5 +68,5 @@ set(jadaq_INC
   xtrace.h
 )
 
-add_executable(jadaq ${jadaq_INC} ${jadaq_SRC} jadaq.cpp )
+add_executable(jadaq ${jadaq_INC} ${jadaq_SRC})
 target_link_libraries(jadaq ${CAEN_LIB} pthread )
