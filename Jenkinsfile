@@ -132,8 +132,8 @@ node('docker') {
                 sh "cloc --exclude-list-file=exclude_cloc --by-file --xml --out=cloc.xml ."
                 sh "pwd"
                 sh "find .. -name cloc2sloccount.xsl"
-                sh "xsltproc jenkins/cloc2sloccount.xsl cloc.xml > sloccount.sc"
-                sloccountPublish encoding: '', pattern: ''
+                //sh "xsltproc jenkins/cloc2sloccount.xsl cloc.xml > sloccount.sc"
+                //sloccountPublish encoding: '', pattern: ''
             } catch (e) {
                 failure_function(e, 'Static analysis failed')
             }
