@@ -25,7 +25,15 @@ find_path(CAEN_INCLUDE_DIR NAMES CAENDigitizer.h   HINTS   ${CAEN_INC_PATH})
 find_library(CAEN_LIB NAMES CAENDigitizer CAENComm HINTS   ${CAEN_LIB_PATH})
 include_directories(${CAEN_INCLUDE_DIR})
 
-find_package(Boost COMPONENTS system filesystem thread program_options REQUIRED)
+if (JENKINS)
+  include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
+  conan_basic_setup()
+  find_package(Boost COMPONENTS REQUIRED regex system date_time asio)
+  target_link_libraries(${PROJECT_NAME} PUBLIC Boost::property_tree Boost::asio Boost::program_options)
+else()
+  find_package(Boost COMPONENTS system filesystem thread program_options REQUIRED)
+endif()
+
 
 set(jadaq_SRC
   _CAENDigitizer.c

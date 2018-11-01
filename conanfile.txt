@@ -1,0 +1,10 @@
+[requires]
+cmake_findboost_modular/1.65.1@bincrafters/stable
+
+[generators]
+cmake
+virtualrunenv
+
+[imports]
+lib, * -> ./lib
+lib64, * -> ./lib

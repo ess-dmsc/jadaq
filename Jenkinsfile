@@ -49,6 +49,19 @@ def Object get_container(image_key) {
     return container
 }
 
+def docker_dependencies(image_key) {
+    def conan_remote = "ess-dmsc-local"
+    def custom_sh = images[image_key]['sh']
+    sh """docker exec ${container_name(image_key)} ${custom_sh} -c \"
+        mkdir ${project}/build
+        cd ${project}/build
+        conan remote add \
+            --insert 0 \
+            ${conan_remote} ${local_conan_server}
+        conan install --build=outdated ..
+    \""""
+}
+
 def docker_copy_code(image_key) {
     def custom_sh = images[image_key]['sh']
     sh "docker cp ${project}_code ${container_name(image_key)}:/home/jenkins/${project}"
@@ -61,10 +74,9 @@ def docker_cmake(image_key, xtra_flags) {
     def custom_sh = images[image_key]['sh']
     sh """docker exec ${container_name(image_key)} ${custom_sh} -c \"
         cd ${project}
-        mkdir build
         cd build
         cmake --version
-        cmake -DCAEN_PATH=${project}/caenlib/lib ${xtra_flags} ..
+        cmake -DCAEN_PATH=${project}/caenlib/lib ${xtra_flags} -DJENKINS=ON ..
     \""""
 }
 
@@ -88,6 +100,7 @@ def get_pipeline(image_key)
                 def container = get_container(image_key)
 
                 docker_copy_code(image_key)
+                docker_dependencies(image_key)
                 docker_cmake(image_key, images[image_key]['cmake_flags'])
                 docker_build(image_key)
 
@@ -110,6 +123,17 @@ node('docker') {
                 scm_vars = checkout scm
             } catch (e) {
                 failure_function(e, 'Checkout failed')
+            }
+        }
+
+        stage("Static analysis") {
+            try {
+                sh "find . -name '*TestData.h' > exclude_cloc"
+                sh "cloc --exclude-list-file=exclude_cloc --by-file --xml --out=cloc.xml ."
+                sh "xsltproc jenkins/cloc2sloccount.xsl cloc.xml > sloccount.sc"
+                sloccountPublish encoding: '', pattern: ''
+            } catch (e) {
+                failure_function(e, 'Static analysis failed')
             }
         }
     }
