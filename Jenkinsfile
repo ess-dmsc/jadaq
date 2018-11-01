@@ -78,8 +78,7 @@ def docker_cmake(image_key, xtra_flags) {
         cd ${project}
         cd build
         ${cmake_exec} --version
-        pwd
-        ${cmake_exec} -DCAEN_PATH=\$(pwd)/../caenlib ${xtra_flags} -DCONAN=AUTO ..
+        ${cmake_exec} -DCAEN_PATH=/home/jenkins/jadaq/caenlib ${xtra_flags} -DCONAN=AUTO ..
     \""""
 }
 
