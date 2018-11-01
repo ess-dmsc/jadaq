@@ -26,7 +26,7 @@ find_library(CAEN_LIB NAMES CAENDigitizer CAENComm HINTS   ${CAEN_LIB_PATH})
 include_directories(${CAEN_INCLUDE_DIR})
 
 if (JENKINS)
-  find_package(Boost 1.4 COMPONENTS system filesystem thread program_options REQUIRED )
+  find_package(Boost COMPONENTS system filesystem thread program_options REQUIRED )
 else()
   find_package(Boost COMPONENTS system filesystem thread program_options REQUIRED)
 endif()
