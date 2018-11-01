@@ -76,7 +76,8 @@ def docker_cmake(image_key, xtra_flags) {
         cd ${project}
         cd build
         cmake --version
-        cmake -DCAEN_PATH=$(pwd)/../caenlib ${xtra_flags} -DCONAN=AUTO ..
+        pwd
+        cmake -DCAEN_PATH=\$(pwd)/../caenlib ${xtra_flags} -DCONAN=AUTO ..
     \""""
 }
 
