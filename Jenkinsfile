@@ -28,8 +28,8 @@ def failure_function(exception_obj, failureMessage) {
     emailext body: '${DEFAULT_CONTENT}\n\"' + failureMessage + '\"\n\nCheck console output at $BUILD_URL to view the results.',
             recipientProviders: toEmails,
             subject: '${DEFAULT_SUBJECT}'
-    slackSend color: 'danger',
-            message: "${project}-${env.BRANCH_NAME}: " + failureMessage
+    //slackSend color: 'danger',
+    //        message: "${project}-${env.BRANCH_NAME}: " + failureMessage
     throw exception_obj
 }
 
@@ -105,7 +105,6 @@ def get_pipeline(image_key)
                 docker_dependencies(image_key)
                 docker_cmake(image_key, images[image_key]['cmake_flags'])
                 docker_build(image_key)
-
             } finally {
                 sh "docker stop ${container_name(image_key)}"
                 sh "docker rm -f ${container_name(image_key)}"
