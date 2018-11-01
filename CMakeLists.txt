@@ -26,9 +26,7 @@ find_library(CAEN_LIB NAMES CAENDigitizer CAENComm HINTS   ${CAEN_LIB_PATH})
 include_directories(${CAEN_INCLUDE_DIR})
 
 if (JENKINS)
-  include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
-  conan_basic_setup()
-  find_package(Boost COMPONENTS system filesystem thread program_options REQUIRED )
+  find_package(Boost 1.4 COMPONENTS system filesystem thread program_options REQUIRED )
 else()
   find_package(Boost COMPONENTS system filesystem thread program_options REQUIRED)
 endif()
@@ -66,4 +64,4 @@ set(jadaq_INC
 )
 
 add_executable(jadaq ${jadaq_INC} ${jadaq_SRC} jadaq.cpp )
-target_link_libraries(jadaq ${CAEN_LIB} ${Boost_LIBRARIES} pthread )
+target_link_libraries(jadaq ${CAEN_LIB} pthread )
