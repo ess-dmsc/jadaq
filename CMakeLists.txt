@@ -102,7 +102,7 @@ add_executable(jadaq ${jadaq_INC} ${jadaq_SRC})
 target_link_libraries(jadaq ${CAEN_LIB} pthread)
 
 if(${CONAN} MATCHES "AUTO")
-  target_link_libraries(jadaq Boost::filesystem Boost::system Boost::thread Boost::program_options)
+  target_link_libraries(jadaq Boost::Boost::asio filesystem Boost::system Boost::thread Boost::program_options Boost::property_tree)
 else()
   target_link_libraries(jadaq ${Boost_LIBRARIES})
 endif()
