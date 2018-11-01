@@ -86,7 +86,6 @@ def docker_cmake(image_key, xtra_flags) {
 def docker_build(image_key) {
     def custom_sh = images[image_key]['sh']
     sh """docker exec ${container_name(image_key)} ${custom_sh} -c \"
-        mkdir ${project}/build
         cd ${project}/build
         make --version
         make
@@ -133,9 +132,7 @@ node('docker') {
             try {
                 sh "find . -name '*TestData.h' > exclude_cloc"
                 sh "cloc --exclude-list-file=exclude_cloc --by-file --xml --out=cloc.xml ."
-                sh "which xsltproc"
-                sh "ls -la"
-                sh "ls -la .."
+                sh "docker cp ${container_name(image_key)}:/home/jenkins/${project} ."
                 sh "xsltproc jenkins/cloc2sloccount.xsl cloc.xml > sloccount.sc"
                 sloccountPublish encoding: '', pattern: ''
             } catch (e) {
