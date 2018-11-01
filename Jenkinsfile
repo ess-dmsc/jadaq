@@ -16,7 +16,7 @@ images = [
     'centos7': [
         'name': 'essdmscdm/centos7-build-node:3.2.0',
         'sh': '/usr/bin/scl enable rh-python35 devtoolset-6 -- /bin/bash -e',
-        'cmake_flags': '-DCMAKE_BUILD_TYPE=Release -DCMAKE_SKIP_BUILD_RPATH=ON'
+        'cmake_flags': '-DCMAKE_BUILD_TYPE=Release'
     ]
 ]
 
@@ -78,7 +78,7 @@ def docker_cmake(image_key, xtra_flags) {
         cd build
         . ./activate_run.sh
         cmake --version
-        cmake -DCAEN_PATH=${project}/caenlib ${xtra_flags} -DJENKINS=ON ..
+        cmake -DCAEN_PATH=../caenlib ${xtra_flags} -DJENKINS=ON ..
     \""""
 }
 
