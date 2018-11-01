@@ -1,8 +1,6 @@
-if(JENKINS)
-  cmake_minimum_required(VERSION 3.0.0)
-else()
-  cmake_minimum_required(VERSION 3.2)
-endif()
+
+cmake_minimum_required(VERSION 3.2)
+
 project(jadaq)
 
 if(CAEN_PATH)
@@ -24,19 +22,14 @@ if (CMAKE_COMPILER_IS_GNUCXX AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 5.3)
     message(FATAL_ERROR "Require at least g++-5.3: On CentOS-7 use Devtoolset-4")
 endif()
 
+find_package(HDF5 1.10 REQUIRED COMPONENTS C CXX HL)
+include_directories(${HDF5_INCLUDE_DIRS})
 
 find_path(CAEN_INCLUDE_DIR NAMES CAENDigitizer.h   HINTS   ${CAEN_INC_PATH})
 find_library(CAEN_LIB NAMES CAENDigitizer CAENComm HINTS   ${CAEN_LIB_PATH})
 include_directories(${CAEN_INCLUDE_DIR})
 
-if (JENKINS)
-  include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
-  conan_basic_setup()
-  find_package(Boost COMPONENTS system filesystem thread program_options REQUIRED )
-  target_link_libraries(${PROJECT_NAME} PUBLIC Boost::Boost)
-else()
-  find_package(Boost COMPONENTS system filesystem thread program_options REQUIRED)
-endif()
+find_package(Boost COMPONENTS system filesystem thread program_options REQUIRED )
 
 
 set(jadaq_SRC
@@ -72,4 +65,9 @@ set(jadaq_INC
 )
 
 add_executable(jadaq ${jadaq_INC} ${jadaq_SRC})
-target_link_libraries(jadaq ${CAEN_LIB} pthread )
+
+if (JENKINS)
+  target_link_libraries(jadaq ${CAEN_LIB} ${Boost_LIBRARIES} pthread)
+else()
+  target_link_libraries(jadaq ${CAEN_LIB} ${Boost_LIBRARIES} pthread)
+endif()
