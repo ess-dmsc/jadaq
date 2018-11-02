@@ -313,6 +313,11 @@ void Digitizer::initialize(DataWriter &dataWriter) {
   if (id == 0xaaaabbbb) {
     readoutBuffer.size = 9000;
     readoutBuffer.data = (char *)malloc(9000);
+    uint32_t groups = 16;
+    acqWindowSize = new uint32_t[groups];
+    dataWriter.addDigitizer(serial());
+    dataHandler.initialize<Data::ListElement422>(dataWriter, serial(), groups,
+                                                 waveforms, acqWindowSize);
     return;
   }
 
@@ -391,10 +396,22 @@ void Digitizer::startAcquisition() {
 void Digitizer::acquisition() {
   XTRACE(DIGIT, DEB, "Read at most %db data from %s", readoutBuffer.size, name().c_str());
   if (id == 0xaaaabbbb) {
-    memset(readoutBuffer.data, 0xaa, 2048);
-    stats.bytesRead = 2048;
-    stats.eventsFound += 300;
-    usleep(10);
+    memset(readoutBuffer.data, 0x00, 2048); // emulate readData() function
+
+    (*(uint32_t *)readoutBuffer.data) = 0xa0000001; // magic value 0xa + size of 1
+    (*(uint32_t *)(readoutBuffer.data + 4)) = 0x00000001; // group mask 1
+    (*(uint32_t *)(readoutBuffer.data + 8)) = 0x00000000; // 0111 1xxx xxxx ...
+    (*(uint32_t *)(readoutBuffer.data + 12)) = 0x00000000; // 0111 1xxx xxxx ...
+    (*(uint32_t *)(readoutBuffer.data + 16)) = 0x80000004; // data size ?
+    (*(uint32_t *)(readoutBuffer.data + 20)) = 0x60000001; //
+    readoutBuffer.dataSize = 24; // emulate readData() function
+    stats.bytesRead += readoutBuffer.dataSize;
+
+    DPPQDCEventIterator iterator{readoutBuffer};
+    size_t events = dataHandler(iterator);
+    //stats.eventsFound += events;
+    stats.eventsFound += 255; // in a 2000 byte packet
+    usleep(1000);
     return;
   }
   /* We use slave terminated mode like in the sample from CAEN Digitizer library

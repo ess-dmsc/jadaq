@@ -21,6 +21,7 @@ const unsigned int TRC_G_DEBUG  = 0x00000002U;
 const unsigned int TRC_G_STATS  = 0x00000004U;
 const unsigned int TRC_G_MAIN   = 0x00000008U;
 const unsigned int TRC_G_DIGIT  = 0x00000010U;
+const unsigned int TRC_G_EVENT  = 0x00000020U;
 
 /// Add trace masks below, bitwise or of grouops
 

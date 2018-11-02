@@ -14,7 +14,6 @@
 #define MAX(a, b) (((a) > (b)) ? (a) : (b))
 #define PRINTD(V) std::setw(MAX(sizeof(V) * 3, sizeof(#V))) << V
 #define PRINTH(V) std::setw(MAX(sizeof(V) * 3, sizeof(#V))) << (#V)
-#define PRINTHS(V, T) std::setw(MAX(sizeof(V) * 3, sizeof(#V))) << (T)
 
 struct __attribute__((__packed__)) Interval {
   uint16_t start;

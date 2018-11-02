@@ -62,11 +62,13 @@ private:
       nextGroup();
     }
     void nextGroup() {
+      XTRACE(DEBUG, DEB, "nextGroup()");
       while (!(groupMask & (1 << ++group))) {
         if (group == sizeof(groupMask) * CHAR_BIT) {
           return; // End of Board Aggregate
         }
       }
+      XTRACE(DEBUG, DEB, "groupMask 0x%04x , group %d", groupMask, group);
       assert(((ptr[0] >> 31) & 1) == 1);
       uint32_t size = ptr[0] & 0x7fffffff;
       uint32_t format = ptr[1];
@@ -76,12 +78,14 @@ private:
       extras = ((format >> 28) & 1) == 1;
       waveform = ((format >> 27) & 1) == 1;
       end = ptr + size;
+
       ptr += 2; // point to first event
       elementSize = 2;
       if (extras)
         elementSize += 1;
       if (waveform)
         elementSize += (format & 0xFFF) << 2;
+      XTRACE(DEBUG, DEB, "data: size: %d, format: 0x%04x, extras %d, elementsize %d", size, format, extras, elementSize);
       assert((size - 2) % elementSize == 0);
     }
 
@@ -132,11 +136,14 @@ private:
   };
   GroupIterator groupIterator;
   GroupIterator nextGroupIterator() {
+    XTRACE(DEBUG, DEB, "nextGroupIterator() - buffer.begin() %p, buffer.end %p, bufsize %d", buffer.begin(), buffer.end(), buffer.end() - buffer.begin());
     if ((char *)ptr < buffer.end()) {
       size_t size = (ptr[0] & 0x0fffffff);
+      XTRACE(DEBUG, DEB, "size: %d", size);
       assert((ptr[0] & 0xf0000000) == 0xa0000000); // Magic value
       boardAggregateEnd = ptr + size;
       uint8_t groupMask = (uint8_t)(ptr[1] & 0xFF);
+      XTRACE(DEBUG, DEB, "groupmask: 0x%02x", groupMask);
       ptr += 4; // point to first group aggregate
       return GroupIterator(ptr, groupMask);
     } else {

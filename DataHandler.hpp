@@ -124,11 +124,13 @@ private:
     }
 
     size_t operator()(DPPQDCEventIterator &eventIterator) {
+      XTRACE(EVENT, DEB, "EventIterator");
       size_t events = 0;
       for (; eventIterator != eventIterator.end(); ++eventIterator) {
         events += 1;
         typename E::EventType event =
             eventIterator.event<typename E::EventType>();
+        XTRACE(EVENT, DEB, "XXXXXX");
         uint16_t group = eventIterator.group();
         if (current.maxLocalTime[group] < event.timeTag() + maxJitter[group]) {
           if (current.maxLocalTime[group] > 0 ||

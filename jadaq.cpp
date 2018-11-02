@@ -65,29 +65,24 @@ struct {
   std::vector<Digitizer> * digarr;
 } application_control;
 
-static void printStats(const std::vector<Digitizer> &digitizers) {
+static void printStats(const std::vector<Digitizer> &digitizers, uint32_t elapsedms) {
+  static long oldevents=0;
+  static long oldbytes=0;
   long eventsFound = 0;
   long bytesRead = 0;
-  std::cout << std::setw(15) << "DIGITIZER"
-            << "       " << PRINTHS(eventsFound, "Events")
-            << PRINTHS(bytesRead, "Bytes") << std::endl;
+  printf("   DIGITIZER                        Events                Bytes\n");
   for (const Digitizer &digitizer : digitizers) {
-    std::cout << std::setw(15) << digitizer.name() << ": ";
-    if (digitizer.active) {
-      std::cout << "ALIVE! ";
-    } else {
-      std::cout << "DEAD!! ";
-    }
     const Digitizer::Stats &stats = digitizer.getStats();
-    std::cout << PRINTD(stats.eventsFound) << PRINTD(stats.bytesRead)
-              << std::endl;
+    printf("     %-10s: %6s            %15" PRIu64 "           %15" PRIu64 "\n",
+           digitizer.name().c_str(), digitizer.active ? "ALIVE!" : "DEAD!", stats.eventsFound, stats.bytesRead);
     eventsFound += stats.eventsFound;
     bytesRead += stats.bytesRead;
   }
-  std::cout << std::setw(15) << "TOTAL"
-            << ":        " << PRINTD(eventsFound) << PRINTD(bytesRead)
-            << std::endl
-            << std::endl;
+  printf("     Total                         %15" PRIu64 "           %15" PRIu64 "\n", eventsFound, bytesRead);
+  printf("     Total Rates                   %15ld/s         %15ld/s\n\n",
+         (eventsFound - oldevents)*1000/elapsedms, (bytesRead - oldbytes)*1000/elapsedms);
+  oldevents = eventsFound;
+  oldbytes = bytesRead;
 }
 
 
@@ -104,7 +99,7 @@ void service_thread() {
     }
 
     if (stattimer.timeus() >= conf.stats * 1000000) {
-      printStats(*application_control.digarr);
+      printStats(*application_control.digarr, stattimer.timeus()/1000);
       stattimer.reset();
     }
     usleep(1000);

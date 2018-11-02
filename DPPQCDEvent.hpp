@@ -28,6 +28,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include "xtrace.h"
 
 struct Event {
   uint32_t *ptr;
