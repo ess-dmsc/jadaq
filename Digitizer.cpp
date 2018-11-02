@@ -394,6 +394,7 @@ void Digitizer::acquisition() {
     memset(readoutBuffer.data, 0xaa, 2048);
     stats.bytesRead = 2048;
     stats.eventsFound += 300;
+    usleep(10);
     return;
   }
   /* We use slave terminated mode like in the sample from CAEN Digitizer library
