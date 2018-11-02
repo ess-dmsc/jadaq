@@ -1,5 +1,7 @@
 project = "jadaq"
 
+clangformat_os = "fedora25"
+
 // Set number of old builds to keep.
  properties([[
      $class: 'BuildDiscarderProperty',
@@ -18,6 +20,11 @@ images = [
         'cmake': 'cmake3',
         'sh': '/usr/bin/scl enable rh-python35 devtoolset-6 -- /bin/bash -e',
         'cmake_flags': '-DCMAKE_BUILD_TYPE=Release'
+    ],
+    'fedora25': [
+        'name': 'essdmscdm/fedora25-build-node:2.0.0',
+        'sh'  : 'bash -e',
+        'cmake_flags': ''
     ]
 ]
 
@@ -92,6 +99,22 @@ def docker_build(image_key) {
 }
 
 
+def docker_cppcheck(image_key) {
+    try {
+        def custom_sh = images[image_key]['sh']
+        def test_output = "cppcheck.txt"
+        def cppcheck_script = """
+                        cd ${project}
+                        cppcheck --enable=all --inconclusive --template="{file},{line},{severity},{id},{message}" ./ 2> ${test_output}
+                    """
+        sh "docker exec ${container_name(image_key)} ${custom_sh} -c \"${cppcheck_script}\""
+        sh "docker cp ${container_name(image_key)}:/home/jenkins/${project} ."
+        sh "mv -f ./${project}/* ./"
+    } catch (e) {
+        failure_function(e, "Cppcheck step for (${container_name(image_key)}) failed")
+    }
+}
+
 
 def get_pipeline(image_key)
 {
@@ -103,7 +126,12 @@ def get_pipeline(image_key)
                 docker_copy_code(image_key)
                 docker_dependencies(image_key)
                 docker_cmake(image_key, images[image_key]['cmake_flags'])
-                docker_build(image_key)
+                docker_build(image_key
+
+                if (image_key == clangformat_os) {
+                  docker_cppcheck(image_key)
+                  step([$class: 'WarningsPublisher', parserConfigurations: [[parserName: 'Cppcheck Parser', pattern: "cppcheck.txt"]]])
+                }
             } finally {
                 sh "docker stop ${container_name(image_key)}"
                 sh "docker rm -f ${container_name(image_key)}"
