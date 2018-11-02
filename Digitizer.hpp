@@ -91,7 +91,12 @@ public:
   void startAcquisition();
   const Stats &getStats() const { return stats; }
   // TODO: Sould we do somthing different than expose these functions?
-  void stopAcquisition() { digitizer->stopAcquisition(); }
+  void stopAcquisition() {
+    if (id == 0xaaaabbbb) {
+      return;
+    }
+    digitizer->stopAcquisition();
+  }
   void reset() { digitizer->reset(); }
   void initialize(DataWriter &dataWriter);
 };

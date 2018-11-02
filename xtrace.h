@@ -44,7 +44,7 @@ const unsigned int TRC_L_DEB  = 7;
 #pragma GCC system_header
 
 #define TRC_MASK TRC_M_ALL
-#define TRC_LEVEL TRC_L_DEB
+#define TRC_LEVEL TRC_L_INF
 
 
 inline int Trace(int const LineNumber, char const *File, const char* GroupName,  const char* SeverityName, const char *Format, ...) {

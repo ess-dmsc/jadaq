@@ -310,6 +310,12 @@ void Digitizer::initialize(DataWriter &dataWriter) {
   boardConfiguration = digitizer->getBoardConfiguration();
   XTRACE(DIGIT, DEB, "Prepare readout buffer for digitizer %s", name().c_str());
 
+  if (id == 0xaaaabbbb) {
+    readoutBuffer.size = 9000;
+    readoutBuffer.data = (char *)malloc(9000);
+    return;
+  }
+
   readoutBuffer = digitizer->mallocReadoutBuffer();
   uint32_t groups = this->groups();
   acqWindowSize = new uint32_t[groups];
@@ -357,6 +363,9 @@ void Digitizer::initialize(DataWriter &dataWriter) {
 
 void Digitizer::close() {
   XTRACE(DIGIT, DEB, "Closing digitizer %s", name().c_str());
+  if (id == 0xaaaabbbb)  {
+    return;
+  }
   digitizer->freeReadoutBuffer(readoutBuffer);
   if (digitizer) {
     delete digitizer;
@@ -371,6 +380,9 @@ bool Digitizer::ready() {
 }
 
 void Digitizer::startAcquisition() {
+  if (id == 0xaaaabbbb) {
+    return;
+  }
   while (!ready())
     std::this_thread::sleep_for(std::chrono::milliseconds(10));
   digitizer->startAcquisition();
@@ -378,6 +390,12 @@ void Digitizer::startAcquisition() {
 
 void Digitizer::acquisition() {
   XTRACE(DIGIT, DEB, "Read at most %db data from %s", readoutBuffer.size, name().c_str());
+  if (id == 0xaaaabbbb) {
+    memset(readoutBuffer.data, 0xaa, 2048);
+    stats.bytesRead = 2048;
+    stats.eventsFound += 300;
+    return;
+  }
   /* We use slave terminated mode like in the sample from CAEN Digitizer library
    * docs. */
   digitizer->readData(readoutBuffer, CAEN_DGTZ_SLAVE_TERMINATED_READOUT_MBLT);

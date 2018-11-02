@@ -494,7 +494,6 @@ protected:
   }
 
 public:
-public:
   /* Digitizer creation */
   static Digitizer *open(CAEN_DGTZ_ConnectionType linkType, int linkNum,
                          int conetNode, uint32_t VMEBaseAddress);
@@ -712,8 +711,7 @@ public:
   /* Memory management */
   ReadoutBuffer mallocReadoutBuffer() {
     ReadoutBuffer buffer;
-    errorHandler(
-        _CAEN_DGTZ_MallocReadoutBuffer(handle_, &buffer.data, &buffer.size));
+    errorHandler(_CAEN_DGTZ_MallocReadoutBuffer(handle_, &buffer.data, &buffer.size));
     return buffer;
   }
 
@@ -1698,7 +1696,7 @@ protected:
   NULLDigitizer()
       : Digitizer() {
         XTRACE(DIGIT, DEB, "NULLDigitizer constructor");
-        memcpy(boardInfo_.ModelName, "NULLD", 5); 
+        memcpy(boardInfo_.ModelName, "NULLD", 5);
       }
 
 public:
@@ -1741,17 +1739,6 @@ public:
     return 8;
   } // 8 channels per group for x740
 
-  /* NOTE: BoardConfiguration differs in forced ones and zeros
-   * between generic and DPP version. Use a class-specific mask.
-   */
-  /* According to register docs the bits [0,2,5,7:8,10,23]
-   * must be 0 and the bits [4] must be 1 so we always
-   * force compliance by a bitwise-or with 0x00000010 followed
-   * by a bitwise-and with 0x008005A5 for the set operation.
-   * Similarly we prevent mangling of the force ones by a
-   * bitwise-and with the xor inverted version of 0x00000010 for
-   * the unset operation.
-   */
   virtual uint32_t filterBoardConfigurationSetMask(uint32_t mask) override {
     return ((mask | 0x00000010) & 0x008005A5);
   }
@@ -1759,28 +1746,6 @@ public:
     return (mask & (0xFFFFFFFF ^ 0x00000010));
   }
 
-  /**
-   * @brief Get AMCFirmwareRevision mask
-   *
-   * This register contains the channel FPGA (AMC) firmware
-   * revision information.\n
-   * The complete format is:\n
-   * Firmware Revision = X.Y (16 lower bits)\n
-   * Firmware Revision Date = Y/M/DD (16 higher bits)\n
-   * EXAMPLE 1: revision 1.03, November 12th, 2007 is 0x7B120103.\n
-   * EXAMPLE 2: revision 2.09, March 7th, 2016 is 0x03070209.\n
-   * NOTE: the nibble code for the year makes this information to
-   * roll over each 16 years.
-   *
-   * Get the low-level AMCFirmwareRevision mask in line with
-   * register docs. It is recommended to use the EasyX wrapper
-   * version instead.
-   *
-   * @param group:
-   * group index
-   * @returns
-   * 32-bit mask with layout described in register docs
-   */
   uint32_t getAMCFirmwareRevision(uint32_t group) override {
     uint32_t mask;
     if (group >= groups())
@@ -1789,88 +1754,24 @@ public:
     return mask;
   }
 
-  /* NOTE: Get / Set DC Offset is handled in GroupDCOffset */
 
-  /* NOTE: Get / Set Channel Enable Mask of Group is handled in
-   * ChannelGroupMask */
-
-  /* TODO: wrap Group n Low Channels DC Offset Individual Correction from
-   * register docs? */
-
-  /* TODO: wrap Group n High Channels DC Offset Individual Correction from
-   * register docs? */
-
-  /**
-   * @brief Get BoardConfiguration mask
-   *
-   * This register contains general settings for the board
-   * configuration.
-   *
-   * Get the low-level BoardConfiguration mask in line with
-   * register docs. It is recommended to use the EasyX wrapper
-   * version instead.
-   *
-   * NOTE: Read mask from 0x8000, BitSet mask with 0x8004 and
-   *       BitClear mask with 0x8008.
-   *
-   * @returns
-   * 32-bit mask with layout described in register docs
-   */
   uint32_t getBoardConfiguration() override {
-    uint32_t mask;
-    errorHandler(CAEN_DGTZ_ReadRegister(handle_, 0x8000, &mask));
+    uint32_t mask{0xecdc0001};
     return mask;
   }
-  /**
-   * @brief Set BoardConfiguration mask
-   *
-   * This register contains general settings for the board
-   * configuration.
-   *
-   * Set the low-level BoardConfiguration mask in line with
-   * register docs. It is recommended to use the EasyX wrapper
-   * version instead.
-   *
-   * @param mask:
-   * 32-bit mask with layout described in register docs
-   */
+
   void setBoardConfiguration(uint32_t mask) override {
     // errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x8004,
     // filterBoardConfigurationSetMask(mask)));
     errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x8004, mask));
   }
-  /**
-   * @brief Unset BoardConfiguration mask
-   *
-   *
-   * This register contains general settings for the board
-   * configuration.
-   *
-   * Unset the low-level BoardConfiguration mask in line with
-   * register docs. It is recommended to use the EasyX wrapper
-   * version instead.
-   *
-   * @param mask:
-   * 32-bit mask with layout described in register docs
-   */
+
   void unsetBoardConfiguration(uint32_t mask) override {
     // errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x8008,
     // filterBoardConfigurationUnsetMask(mask)));
     errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x8008, mask));
   }
 
-  /**
-   * @brief Get AcquisitionControl mask
-   *
-   * This register manages the acquisition settings.
-   *
-   * Get the low-level AcquisitionControl mask in line with
-   * register docs. It is recommended to use the EasyX wrapper
-   * version instead.
-   *
-   * @returns
-   * 32-bit mask with layout described in register docs
-   */
   uint32_t getAcquisitionControl() override {
     uint32_t mask;
     errorHandler(CAEN_DGTZ_ReadRegister(handle_, 0x8100, &mask));

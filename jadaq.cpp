@@ -49,8 +49,8 @@ namespace po = boost::program_options;
 struct {
   bool nullout = false;
   long events = -1;
-  float time = -1.0f;
-  float stats = -1.0f;
+  unsigned int time = 0xffffff; // many seconds
+  unsigned int stats = 0xffffff; // many seconds
   int verbose = 1;
   std::string *path = nullptr;
   std::string *basename = nullptr;
@@ -100,6 +100,7 @@ void service_thread() {
   while (1) {
     if (stoptimer.timeus() >= conf.time * 1000000) {
       application_control.timeout = true;
+      return;
     }
 
     if (stattimer.timeus() >= conf.stats * 1000000) {
@@ -248,6 +249,7 @@ int main(int argc, const char *argv[]) {
 
   /// setup stop timer and stat timer thread
   std::thread support(service_thread);
+  support.detach();
 
   application_control.digarr = &digitizers;
 

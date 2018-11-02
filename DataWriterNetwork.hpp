@@ -44,18 +44,13 @@ private:
   uint32_t seqNum{0};
 
 public:
-  DataWriterNetwork(const std::string &address, const std::string &port,
-                    uint64_t runID_)
+  DataWriterNetwork(const std::string &address, const std::string &port, uint64_t runID_)
       : runID(runID_) {
-    XTRACE(DEBUG, DEB, "DataWriterNetwork()");
+    XTRACE(DEBUG, DEB, "DataWriterNetwork() - address %s : %s", address.c_str(), port.c_str());
     try {
-      XTRACE(DEBUG, DEB, "before resolver()");
       udp::resolver resolver(ioService);
-      XTRACE(DEBUG, DEB, "after resolver()");
-      XTRACE(DEBUG, DEB, "address %s:%s", address.c_str(), port.c_str());
       udp::resolver::query query(udp::v4(), address.c_str(), port.c_str());
-      // TODO Handle result array properly
-
+      /// \todo Handle result array properly
       remoteEndpoint = *resolver.resolve(query);
       socket = new udp::socket(ioService);
       socket->open(udp::v4());
