@@ -30,7 +30,6 @@
 
 #include "FunctionID.hpp"
 #include "caen.hpp"
-
 #include "DataHandler.hpp"
 #include "DataWriter.hpp"
 #include <atomic>

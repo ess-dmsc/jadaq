@@ -29,7 +29,7 @@
 #include "DataWriter.hpp"
 #include "DataWriterNetwork.hpp"
 #include "Digitizer.hpp"
-#include "Timer.hpp"
+//#include "Timer.hpp"
 #include "interrupt.hpp"
 #include <boost/program_options.hpp>
 #include <chrono>
@@ -37,7 +37,7 @@
 #include <queue>
 #include <thread>
 #include "xtrace.h"
-
+#include "timer.h"
 
 // #undef TRC_MASK
 // #define TRC_MASK TRC_M_ALL
@@ -59,6 +59,11 @@ struct {
   std::string *outConfigFile = nullptr;
   std::vector<std::string> configFile;
 } conf;
+
+struct {
+  bool timeout{false};
+  std::vector<Digitizer> * digarr;
+} application_control;
 
 static void printStats(const std::vector<Digitizer> &digitizers) {
   long eventsFound = 0;
@@ -83,6 +88,27 @@ static void printStats(const std::vector<Digitizer> &digitizers) {
             << ":        " << PRINTD(eventsFound) << PRINTD(bytesRead)
             << std::endl
             << std::endl;
+}
+
+
+
+void service_thread() {
+  XTRACE(MAIN, INF, "Starting service thread");
+  Timer stoptimer;
+  Timer stattimer;
+
+  while (1) {
+    if (stoptimer.timeus() >= conf.time * 1000000) {
+      application_control.timeout = true;
+    }
+
+    if (stattimer.timeus() >= conf.stats * 1000000) {
+      printStats(*application_control.digarr);
+      stattimer.reset();
+    }
+    usleep(1000);
+  }
+
 }
 
 int main(int argc, const char *argv[]) {
@@ -156,9 +182,9 @@ int main(int argc, const char *argv[]) {
     if (vm.count("network")) {
       conf.network = new std::string(vm["network"].as<std::string>());
       conf.port = new std::string(vm["port"].as<std::string>());
+    } else {
+      conf.network = (std::string *)"127.0.0.1";
     }
-    // We will use the Null data handlere if no other is selected
-    conf.nullout = (conf.network == nullptr);
   } catch (const po::error &error) {
     std::cerr << error.what() << '\n';
     throw;
@@ -166,9 +192,8 @@ int main(int argc, const char *argv[]) {
 
   // get a unique run ID
   /// \todo get rid of this? hardcode for now
+  XTRACE(MAIN, ALW, "RunID currently constant 0xdeadbeef");
   uint64_t runID{0xdeadbeef};
-  // prepare a run number
-  /// \todo get rid of this, not writing to file
 
   /* Read-in and write resulting digitizer configuration */
   std::string configFileName = conf.configFile[0];
@@ -183,6 +208,8 @@ int main(int argc, const char *argv[]) {
   Configuration configuration(configFile, conf.verbose > 1);
   configFile.close();
 
+  XTRACE(MAIN, INF, "Done reading configuration file");
+
   if (conf.outConfigFile) {
     std::ofstream outFile(*conf.outConfigFile);
     if (outFile.good()) {
@@ -194,6 +221,7 @@ int main(int argc, const char *argv[]) {
     }
   }
 
+  XTRACE(MAIN, INF, "getDigitizers()");
   std::vector<Digitizer> &digitizers = configuration.getDigitizers();
   XTRACE(MAIN, INF, "Setup %d digitizer(s):", digitizers.size());
 
@@ -204,8 +232,10 @@ int main(int argc, const char *argv[]) {
   /// \todo move DataHandler creation to factory method in DataHandlerGeneric
   DataWriter dataWriter;
 
+  XTRACE(MAIN, INF, "Creating DataWriter for UDP");
   dataWriter = new DataWriterNetwork(*conf.network, *conf.port, runID);
 
+  XTRACE(MAIN, INF, "Starting Acquisition");
   for (Digitizer &digitizer : digitizers) {
     XTRACE(MAIN, INF, "Start acquisition on digitizer %s", digitizer.name().c_str());
     digitizer.initialize(dataWriter);
@@ -216,17 +246,11 @@ int main(int argc, const char *argv[]) {
   /* Set up interrupt handler */
   setup_interrupt_handler();
 
-  // Setup IO service for timer
-  std::atomic<bool> timeout{false};
-  std::deque<Timer> timers;
-  if (conf.time > 0.0f) {
-    timers.emplace_back(conf.time, [&timeout]() { timeout = true; });
-  }
+  /// setup stop timer and stat timer thread
+  std::thread support(service_thread);
 
-  if (conf.stats > 0.0f) {
-    timers.emplace_back(conf.stats, [&digitizers]() { printStats(digitizers); },
-                        true);
-  }
+  application_control.digarr = &digitizers;
+
 
   XTRACE(MAIN, INF, "Running acquisition loop - Ctrl-C to interrupt");
 
@@ -249,7 +273,7 @@ int main(int argc, const char *argv[]) {
       XTRACE(MAIN, ALW, "Caught interrupt - stop acquisition and clean up.");
       break;
     }
-    if (timeout) {
+    if (application_control.timeout) {
       XTRACE(MAIN, ALW, "Time out - stop acquisition and clean up.");
       break;
     }
@@ -258,9 +282,11 @@ int main(int argc, const char *argv[]) {
       break;
     }
   }
-  for (Timer &timer : timers) {
-    timer.cancel();
-  }
+  /// \todo replace by tsctimer and ustimer
+  // for (Timer &timer : timers) {
+  //   timer.cancel();
+  // }
+
   long acquisitionStop = DataHandler::getTimeMsecs();
   for (Digitizer &digitizer : digitizers) {
     XTRACE(MAIN, INF, "Stop acquisition on digitizer %s", digitizer.name().c_str());

@@ -88,13 +88,13 @@ set(jadaq_INC
   EventIterator.hpp
   FunctionID.hpp
   StringConversion.hpp
-  Timer.hpp
   Waveform.hpp
   caen.hpp
   container.hpp
   ini_parser.hpp
   interrupt.hpp
   xtrace.h
+  timer.h
 )
 
 add_executable(jadaq ${jadaq_INC} ${jadaq_SRC})

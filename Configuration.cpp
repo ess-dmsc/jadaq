@@ -219,8 +219,10 @@ static void configure(Digitizer &digitizer, pt::ptree &conf, bool verbose) {
 }
 
 void Configuration::apply() {
+  XTRACE(DIGIT, DEB, "Configuration::apply()");
   for (auto &section : in) {
     std::string name = section.first;
+    XTRACE(DIGIT, DEB, "Section %s", name.c_str());
     pt::ptree conf(section.second); // create local a copy we can modify
     if (conf.empty()) {
       continue; // Skip top level keys i.e. not in a [section]
@@ -239,27 +241,25 @@ void Configuration::apply() {
     conf.erase("CONET");
     Digitizer *digitizer = nullptr;
     if (usb < 0 && optical < 0) {
-      std::cerr << "ERROR: [" << name << ']'
-                << " contains neither USB nor OPTICAL number. One is REQUIRED."
-                << std::endl;
+      XTRACE(DIGIT, ERR, "ERROR: [%s] contains neither USB nor OPTICAL number. One is REQUIRED.", name.c_str());
+      digitizers.emplace_back(ECDC_NULL_CONNECTION, optical, conet, vme);
       continue;
     } else if (usb >= 0 && optical >= 0) {
-      std::cerr << "ERROR: [" << name << ']'
-                << " contains both USB and OPTICAL number. Omly one is VALID"
-                << std::endl;
+      XTRACE(DIGIT, ERR, "ERROR: [%s] contains both USB and OPTICAL number. Only one is VALID.", name.c_str());
+      digitizers.emplace_back(ECDC_NULL_CONNECTION, optical, conet, vme);
       continue;
     }
-    try {
+    // try {
       if (optical >= 0) {
         digitizers.emplace_back(CAEN_DGTZ_OpticalLink, optical, conet, vme);
       } else {
         digitizers.emplace_back(CAEN_DGTZ_USB, usb, conet, vme);
       }
       digitizer = &*digitizers.rbegin();
-    } catch (caen::Error &e) {
-      XTRACE(MAIN, ERR, "ERROR: Unable to open digitizer [%s]:", name.c_str(), e.what());
-      throw;
-    }
+    // } catch (caen::Error &e) {
+    //   XTRACE(MAIN, ERR, "ERROR: Unable to open digitizer [%s]:", name.c_str(), e.what());
+    //   throw;
+    // }
     configure(*digitizer, conf, getVerbose());
   }
 }

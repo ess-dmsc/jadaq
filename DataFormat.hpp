@@ -196,9 +196,8 @@ static_assert(std::is_pod<WaveformElement<Data::ListElement422>>::value,
 static_assert(std::is_pod<WaveformElement<Data::ListElement8222>>::value,
               "Data::WaveformElement<Data::ListElement8222> > must be POD");
 
-static constexpr const char *defaultDataPort = "12345";
-static constexpr const size_t maxBufferSize =
-    JUMBO_PAYLOAD - (UDP_HEADER + IP_HEADER);
+static constexpr const char *defaultDataPort = "9000";
+static constexpr const size_t maxBufferSize = JUMBO_PAYLOAD - (UDP_HEADER + IP_HEADER);
 
 } // namespace Data
 static inline std::ostream &operator<<(std::ostream &os,

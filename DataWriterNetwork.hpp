@@ -31,6 +31,7 @@
 #include <boost/asio.hpp>
 #include <boost/asio/io_service.hpp>
 #include <boost/bind.hpp>
+#include "xtrace.h"
 
 using boost::asio::ip::udp;
 
@@ -46,16 +47,20 @@ public:
   DataWriterNetwork(const std::string &address, const std::string &port,
                     uint64_t runID_)
       : runID(runID_) {
+    XTRACE(DEBUG, DEB, "DataWriterNetwork()");
     try {
+      XTRACE(DEBUG, DEB, "before resolver()");
       udp::resolver resolver(ioService);
+      XTRACE(DEBUG, DEB, "after resolver()");
+      XTRACE(DEBUG, DEB, "address %s:%s", address.c_str(), port.c_str());
       udp::resolver::query query(udp::v4(), address.c_str(), port.c_str());
       // TODO Handle result array properly
+
       remoteEndpoint = *resolver.resolve(query);
       socket = new udp::socket(ioService);
       socket->open(udp::v4());
     } catch (std::exception &e) {
-      std::cerr << "ERROR in UDP connection setup to " << address << ":" << port
-                << " : " << e.what() << std::endl;
+      XTRACE(DEBUG, ERR, "ERROR in UDP connection setup to %s:%s - %s", address.c_str(), port.c_str(), e.what());
       throw;
     }
   }

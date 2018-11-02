@@ -293,6 +293,11 @@ Digitizer::Digitizer(CAEN_DGTZ_ConnectionType linkType_, int linkNum_,
                                       VMEBaseAddress_)),
       linkType(linkType_), linkNum(linkNum_), conetNode(conetNode_),
       VMEBaseAddress(VMEBaseAddress_) {
+  XTRACE(DIGIT, DEB, "Digitizer::Digitizer()");
+  if (linkType == ECDC_NULL_CONNECTION) {
+    id = 0xaaaabbbb;
+    return;
+  }
   firmware = digitizer->getDPPFirmwareType();
   if (firmware != CAEN_DGTZ_DPPFirmware_QDC) {
     throw std::runtime_error("we only support CAEN_DGTZ_DPPFirmware_QDC");
@@ -301,6 +306,7 @@ Digitizer::Digitizer(CAEN_DGTZ_ConnectionType linkType_, int linkNum_,
 }
 
 void Digitizer::initialize(DataWriter &dataWriter) {
+  XTRACE(DIGIT, DEB, "Digitizer::initialize()");
   boardConfiguration = digitizer->getBoardConfiguration();
   XTRACE(DIGIT, DEB, "Prepare readout buffer for digitizer %s", name().c_str());
 

@@ -33,6 +33,7 @@ class DataWriter {
 public:
   DataWriter() = default;
   template <typename DW> DataWriter &operator=(DW *dataWriter) {
+    XTRACE(DEBUG, DEB, "DataWriter op=");
     instance.reset(new Model<DW>(dataWriter));
     return *this;
   }
@@ -44,6 +45,7 @@ public:
   template <typename E>
   void operator()(const jadaq::buffer<E> *buffer, uint32_t digitizerID,
                   uint64_t globalTimeStamp) {
+    XTRACE(DEBUG, DEB, "DataWriter op()");
     instance->operator()(buffer, digitizerID, globalTimeStamp);
   }
 
