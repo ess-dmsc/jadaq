@@ -35,8 +35,8 @@ def failure_function(exception_obj, failureMessage) {
     emailext body: '${DEFAULT_CONTENT}\n\"' + failureMessage + '\"\n\nCheck console output at $BUILD_URL to view the results.',
             recipientProviders: toEmails,
             subject: '${DEFAULT_SUBJECT}'
-    //slackSend color: 'danger',
-    //        message: "${project}-${env.BRANCH_NAME}: " + failureMessage
+    slackSend color: 'danger',
+            message: "${project}-${env.BRANCH_NAME}: " + failureMessage
     throw exception_obj
 }
 
@@ -162,8 +162,8 @@ node('docker') {
                 sh "cloc --exclude-list-file=exclude_cloc --by-file --xml --out=cloc.xml ."
                 sh "pwd"
                 sh "find .. -name cloc2sloccount.xsl"
-                //sh "xsltproc jenkins/cloc2sloccount.xsl cloc.xml > sloccount.sc"
-                //sloccountPublish encoding: '', pattern: ''
+                sh "xsltproc jenkins/cloc2sloccount.xsl cloc.xml > sloccount.sc"
+                sloccountPublish encoding: '', pattern: ''
             } catch (e) {
                 failure_function(e, 'Static analysis failed')
             }
