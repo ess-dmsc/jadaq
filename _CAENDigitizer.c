@@ -193,18 +193,6 @@ V1740DPP_QDC_GetRecordLength(int handle, uint32_t *size, int channel) {
   return CAEN_DGTZ_Success;
 }
 
-static CAEN_DGTZ_ErrorCode
-V1740DPP_QDC_SetRecordLength(int handle, uint32_t size, int channel) {
-  CAEN_DGTZ_ErrorCode err;
-  if (channel < 0)
-    err = CAEN_DGTZ_WriteRegister(
-        handle, 0x8024, size >> 3); // TODO why the shift? Not documented
-  else
-    err = CAEN_DGTZ_WriteRegister(handle, 0x1024 | channel << 8,
-                                  size >>
-                                      3); // TODO why the shift? Not documented
-  return err;
-}
 
 static CAEN_DGTZ_ErrorCode
 V1740DPP_QDC_MallocDPPWaveforms(int handle, void **waveforms,
@@ -590,11 +578,6 @@ V1740DPP_QDC_DecodeDPPWaveforms(int handle, _CAEN_DGTZ_DPP_QDC_Event_t *event,
 CAEN_DGTZ_ErrorCode CAENDGTZ_API
 _CAEN_DGTZ_MallocDPPEvents(int handle, void **events, uint32_t *allocatedSize) {
   QDC_FUNCTION(MallocDPPEvents, handle, events, allocatedSize)
-}
-
-CAEN_DGTZ_ErrorCode CAENDGTZ_API _CAEN_DGTZ_FreeDPPEvents(int handle,
-                                                          void **events) {
-  QDC_FUNCTION(FreeDPPEvents, handle, events)
 }
 
 CAEN_DGTZ_ErrorCode CAENDGTZ_API

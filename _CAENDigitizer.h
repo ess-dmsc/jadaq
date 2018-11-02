@@ -79,8 +79,6 @@ CAEN_DGTZ_ErrorCode CAENDGTZ_API
 _CAEN_DGTZ_GetDPPFirmwareType(int handle, CAEN_DGTZ_DPPFirmware_t *firmware);
 CAEN_DGTZ_ErrorCode CAENDGTZ_API
 _CAEN_DGTZ_MallocDPPEvents(int handle, void **events, uint32_t *allocatedSize);
-CAEN_DGTZ_ErrorCode CAENDGTZ_API _CAEN_DGTZ_FreeDPPEvents(int handle,
-                                                          void **events);
 CAEN_DGTZ_ErrorCode CAENDGTZ_API _CAEN_DGTZ_MallocReadoutBuffer(int handle,
                                                                 char **buffer,
                                                                 uint32_t *size);
