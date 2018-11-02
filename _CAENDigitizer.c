@@ -602,18 +602,6 @@ _CAEN_DGTZ_MallocReadoutBuffer(int handle, char **buffer, uint32_t *size) {
   QDC_FUNCTION(MallocReadoutBuffer, handle, buffer, size)
 }
 
-CAEN_DGTZ_ErrorCode CAENDGTZ_API _CAEN_DGTZ_SetRecordLength(int handle,
-                                                            uint32_t size,
-                                                            int channel) {
-  QDC_FUNCTION(SetRecordLength, handle, size, channel)
-}
-
-CAEN_DGTZ_ErrorCode CAENDGTZ_API _CAEN_DGTZ_GetRecordLength(int handle,
-                                                            uint32_t *size,
-                                                            int channel) {
-  QDC_FUNCTION(GetRecordLength, handle, size, channel)
-}
-
 CAEN_DGTZ_ErrorCode CAENDGTZ_API _CAEN_DGTZ_MallocDPPWaveforms(
     int handle, void **waveforms, uint32_t *allocatedSize) {
   QDC_FUNCTION(MallocDPPWaveforms, handle, waveforms, allocatedSize)

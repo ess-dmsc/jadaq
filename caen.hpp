@@ -770,8 +770,8 @@ public:
   }
 
   void freeDPPEvents(DPPEvents_t *events) {
-    if (events->allocatedSize < 0)
-      errorHandler(_CAEN_DGTZ_FreeDPPEvents(handle_, events->data()));
+    // if (events->allocatedSize < 0)  // \todo meant !=
+    //   errorHandler(_CAEN_DGTZ_FreeDPPEvents(handle_, events->data()));
     events->allocatedSize = 0;
   }
 
@@ -3047,7 +3047,7 @@ public:
    * Offset value by at least 112 ns.
    */
   uint32_t getDPPPreTriggerSize(uint32_t group) override {
-    if (group >= groups() || group < 0)
+    if (group >= groups())
       errorHandler(CAEN_DGTZ_InvalidChannelNumber);
     uint32_t samples;
     errorHandler(
@@ -3069,7 +3069,7 @@ public:
    * Offset value by at least 112 ns.
    */
   void setDPPPreTriggerSize(uint32_t group, uint32_t samples) override {
-    if (group >= groups() || group < 0)
+    if (group >= groups())
       errorHandler(CAEN_DGTZ_InvalidChannelNumber);
     {
       errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x103C | group << 8,

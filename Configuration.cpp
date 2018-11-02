@@ -47,11 +47,6 @@ void Configuration::write(std::ofstream &file) {
   pt::write_ini(file, readBack());
 }
 
-/*
- * Write the parsed tree back on stream
- */
-void Configuration::writeInput(std::ofstream &file) { pt::write_ini(file, in); }
-
 std::string to_string(const Configuration::Range &range) {
   std::stringstream ss;
   ss << range.first << '-' << range.last;
@@ -227,13 +222,12 @@ void Configuration::apply() {
     if (conf.empty()) {
       continue; // Skip top level keys i.e. not in a [section]
     }
-    int usb = -1;
-    int optical = -1;
+
     uint32_t vme = 0;
     int conet = 0;
-    usb = conf.get<int>("USB", -1);
+    int usb = conf.get<int>("USB", -1);
     conf.erase("USB");
-    optical = conf.get<int>("OPTICAL", -1);
+    int optical = conf.get<int>("OPTICAL", -1);
     conf.erase("OPTICAL");
     vme = conf.get<uint32_t>("VME", 0);
     conf.erase("VME");
