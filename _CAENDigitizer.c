@@ -139,27 +139,6 @@ V1740DPP_QDC_MallocDPPEvents(int handle, void **events,
   return CAEN_DGTZ_Success;
 }
 
-static CAEN_DGTZ_ErrorCode V1740DPP_QDC_FreeDPPEvents(int handle,
-                                                      void **events) {
-  /* Free the temporary group decode helpers */
-  uint32_t i = 0;
-  for (i = 0; i < MAX_GROUPS; i++) {
-    if (gEventsGrp[i] != NULL) {
-      free(gEventsGrp[i]);
-      gEventsGrp[i] = NULL;
-    }
-  }
-  /* Free the entire chunk in one go by freeing element 0 */
-  if (events != NULL) {
-    _CAEN_DGTZ_DPP_QDC_Event_t *ptr = events[0];
-    for (i = 0; i < MAX_CHANNELS; i++) {
-      events[i] = NULL;
-    }
-    free(ptr);
-  }
-  return CAEN_DGTZ_Success;
-}
-
 static CAEN_DGTZ_ErrorCode
 V1740DPP_QDC_MallocReadoutBuffer(int handle, char **buffer, uint32_t *size) {
   // TODO: allocate only the memory needed
