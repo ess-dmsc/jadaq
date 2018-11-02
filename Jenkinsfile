@@ -124,9 +124,11 @@ def get_pipeline(image_key)
                 def container = get_container(image_key)
 
                 docker_copy_code(image_key)
-                docker_dependencies(image_key)
-                docker_cmake(image_key, images[image_key]['cmake_flags'])
-                docker_build(image_key
+                if (image_key != clangformat_os) {
+                    docker_dependencies(image_key)
+                    docker_cmake(image_key, images[image_key]['cmake_flags'])
+                    docker_build(image_key)
+                }
 
                 if (image_key == clangformat_os) {
                   docker_cppcheck(image_key)
