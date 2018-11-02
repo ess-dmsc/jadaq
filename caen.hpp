@@ -478,7 +478,7 @@ private:
 
 protected:
   Digitizer() {} // for NULLDigitizer
-  int handle_;
+  int handle_{0};
   CAEN_DGTZ_BoardInfo_t boardInfo_;
 
   Digitizer(int handle, CAEN_DGTZ_BoardInfo_t boardInfo) : handle_(handle) {
@@ -580,7 +580,7 @@ public:
 
   const std::string license() const { return std::string(boardInfo_.License); }
 
-  int handle() { return handle_; }
+  int handle() const { return handle_; }
 
   CAEN_DGTZ_DPPFirmware_t getDPPFirmwareType() {
     CAEN_DGTZ_DPPFirmware_t firmware = CAEN_DGTZ_NotDPPFirmware;
@@ -1706,10 +1706,10 @@ public:
 
   public:
     BoardConfiguration(uint32_t value) : v(value) {}
-    uint32_t value() { return v; }
-    bool triggerOverlap() { return (v & (1 << 1)) == (1 << 1); }
-    bool testPattern() { return (v & (1 << 3)) == (1 << 3); }
-    bool polarity() { return (v & (1 << 6)) == (1 << 6); }
+    uint32_t value() const { return v; }
+    bool triggerOverlap() const { return (v & (1 << 1)) == (1 << 1); }
+    bool testPattern() const { return (v & (1 << 3)) == (1 << 3); }
+    bool polarity() const { return (v & (1 << 6)) == (1 << 6); }
   };
 
   class AcquisitionStatus {
@@ -1718,15 +1718,15 @@ public:
 
   public:
     AcquisitionStatus(uint32_t value) : v(value) {}
-    uint32_t value() { return v; }
-    bool status() { return (v & (1 << 2)) == (1 << 2); }
-    bool eventReady() { return (v & (1 << 3)) == (1 << 3); }
-    bool eventFull() { return (v & (1 << 4)) == (1 << 4); }
-    bool externalClockSource() { return (v & (1 << 5)) == (1 << 5); }
-    bool PLLready() { return (v & (1 << 7)) == (1 << 7); }
-    bool boardReady() { return (v & (1 << 8)) == (1 << 8); }
-    bool s_in() { return (v & (1 << 15)) == (1 << 15); }
-    bool trg_in() { return (v & (1 << 16)) == (1 << 16); }
+    uint32_t value() const { return v; }
+    bool status() const { return (v & (1 << 2)) == (1 << 2); }
+    bool eventReady() const { return (v & (1 << 3)) == (1 << 3); }
+    bool eventFull() const { return (v & (1 << 4)) == (1 << 4); }
+    bool externalClockSource() const { return (v & (1 << 5)) == (1 << 5); }
+    bool PLLready() const { return (v & (1 << 7)) == (1 << 7); }
+    bool boardReady() const { return (v & (1 << 8)) == (1 << 8); }
+    bool s_in() const { return (v & (1 << 15)) == (1 << 15); }
+    bool trg_in() const { return (v & (1 << 16)) == (1 << 16); }
   };
 
   virtual uint32_t channels() const override {
@@ -2219,10 +2219,10 @@ public:
 
   public:
     BoardConfiguration(uint32_t value) : v(value) {}
-    uint32_t value() { return v; }
-    bool triggerOverlap() { return (v & (1 << 1)) == (1 << 1); }
-    bool testPattern() { return (v & (1 << 3)) == (1 << 3); }
-    bool polarity() { return (v & (1 << 6)) == (1 << 6); }
+    uint32_t value() const { return v; }
+    bool triggerOverlap() const { return (v & (1 << 1)) == (1 << 1); }
+    bool testPattern() const { return (v & (1 << 3)) == (1 << 3); }
+    bool polarity() const { return (v & (1 << 6)) == (1 << 6); }
   };
 
   class AcquisitionStatus {
@@ -2231,15 +2231,15 @@ public:
 
   public:
     AcquisitionStatus(uint32_t value) : v(value) {}
-    uint32_t value() { return v; }
-    bool status() { return (v & (1 << 2)) == (1 << 2); }
-    bool eventReady() { return (v & (1 << 3)) == (1 << 3); }
-    bool eventFull() { return (v & (1 << 4)) == (1 << 4); }
-    bool externalClockSource() { return (v & (1 << 5)) == (1 << 5); }
-    bool PLLready() { return (v & (1 << 7)) == (1 << 7); }
-    bool boardReady() { return (v & (1 << 8)) == (1 << 8); }
-    bool s_in() { return (v & (1 << 15)) == (1 << 15); }
-    bool trg_in() { return (v & (1 << 16)) == (1 << 16); }
+    uint32_t value() const { return v; }
+    bool status() const { return (v & (1 << 2)) == (1 << 2); }
+    bool eventReady() const { return (v & (1 << 3)) == (1 << 3); }
+    bool eventFull() const { return (v & (1 << 4)) == (1 << 4); }
+    bool externalClockSource() const { return (v & (1 << 5)) == (1 << 5); }
+    bool PLLready() const { return (v & (1 << 7)) == (1 << 7); }
+    bool boardReady() const { return (v & (1 << 8)) == (1 << 8); }
+    bool s_in() const { return (v & (1 << 15)) == (1 << 15); }
+    bool trg_in() const { return (v & (1 << 16)) == (1 << 16); }
   };
 
   virtual uint32_t channels() const override {
@@ -2859,11 +2859,11 @@ public:
 
   public:
     BoardConfiguration(uint32_t value) : v(value) {}
-    uint32_t value() { return v; }
-    bool waveform() { return (v & (1 << 16)) == (1 << 16); }
-    bool extras() { return (v & (1 << 17)) == (1 << 17); }
-    bool timestamp() { return (v & (1 << 18)) == (1 << 18); }
-    bool charge() { return (v & (1 << 19)) == (1 << 19); }
+    uint32_t value() const { return v; }
+    bool waveform() const { return (v & (1 << 16)) == (1 << 16); }
+    bool extras() const { return (v & (1 << 17)) == (1 << 17); }
+    bool timestamp() const { return (v & (1 << 18)) == (1 << 18); }
+    bool charge() const { return (v & (1 << 19)) == (1 << 19); }
   };
 
   /* According to register docs the bits [0:3,5:7,9:11,14:15,22:31]

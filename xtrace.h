@@ -53,7 +53,7 @@ inline int Trace(int const LineNumber, char const *File, const char* GroupName, 
 
   va_list args;
   va_start (args, Format);
-  __attribute__((unused)) int Characters = vasprintf(&MessageBuffer, Format, args);
+  vasprintf(&MessageBuffer, Format, args);
   va_end (args);
 
   printf("%-4s %-20s %5d %-7s - %s\n", SeverityName, basename((char *)File), LineNumber, GroupName, MessageBuffer);
