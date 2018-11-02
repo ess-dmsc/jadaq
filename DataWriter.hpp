@@ -103,7 +103,7 @@ public:
   DataWriterNull() = default;
   void addDigitizer(uint32_t) {}
   template <typename E>
-  void operator()(const jadaq::buffer<E> *, uint32_t, uint64_t) {}
+  void operator()(const jadaq::buffer<E> *, uint32_t, uint64_t) const {}
 };
 
 #endif // JADAQ_DATAWRITERNULL_HPP

@@ -91,7 +91,7 @@ public:
   std::string get(FunctionID functionID);
   std::string get(FunctionID functionID, int index);
   void acquisition();
-  const std::set<uint32_t> &getRegisters() { return manipulatedRegisters; }
+  const std::set<uint32_t> &getRegisters() const { return manipulatedRegisters; }
   bool ready();
   void startAcquisition();
   const Stats &getStats() const { return stats; }

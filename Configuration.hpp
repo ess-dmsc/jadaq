@@ -47,7 +47,7 @@ public:
   std::vector<Digitizer> &getDigitizers();
   void write(std::ofstream &file);
   void setVerbose(bool verbose) { verbose_ = verbose; }
-  bool getVerbose() { return verbose_; }
+  bool getVerbose() const { return verbose_; }
   class Range {
   private:
     int first;
@@ -57,8 +57,8 @@ public:
     Range() : first(0), last(-1) {}
     Range(int first_, int last_) : first(first_), last(last_) {}
     explicit Range(std::string);
-    int begin() { return first; }
-    int end() { return last + 1; }
+    int begin() const { return first; }
+    int end() const { return last + 1; }
     friend std::string to_string(const Configuration::Range &range);
   };
 };

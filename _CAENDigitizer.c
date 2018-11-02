@@ -510,7 +510,7 @@ V1740DPP_QDC_DecodeDPPWaveforms(int handle, _CAEN_DGTZ_DPP_QDC_Event_t *event,
   /* Sanity check: prevent truncating memory outside waveforms! */
   uint32_t samples = gWaveforms->DTrace4 - gWaveforms->DTrace3;
   if (samples < 0 || samples <= maxIndex * 2 + 1) {
-    printf("WARNING: decode loop to %d would go out of bounds (%d) in "
+    printf("WARNING: decode loop to %d would go out of bounds (%u) in "
            "V1740DPP_QDC_DecodeDPPWaveforms: Skipping!\n",
            maxIndex, samples);
     return CAEN_DGTZ_EventNotFound;
