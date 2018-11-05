@@ -251,7 +251,7 @@ int main(int argc, const char *argv[]) {
 
   XTRACE(MAIN, INF, "Running acquisition loop - Ctrl-C to interrupt");
 
-  long acquisitionStart = DataHandler::getTimeMsecs();
+  Timer acquisitionTimer;
   long eventsFound = 0;
   while (true) {
     eventsFound = 0;
@@ -279,12 +279,8 @@ int main(int argc, const char *argv[]) {
       break;
     }
   }
-  /// \todo replace by tsctimer and ustimer
-  // for (Timer &timer : timers) {
-  //   timer.cancel();
-  // }
 
-  long acquisitionStop = DataHandler::getTimeMsecs();
+  auto elapsed = acquisitionTimer.timeus();
   for (Digitizer &digitizer : digitizers) {
     XTRACE(MAIN, INF, "Stop acquisition on digitizer %s", digitizer.name().c_str());
     digitizer.stopAcquisition();
@@ -296,9 +292,8 @@ int main(int argc, const char *argv[]) {
   }
   digitizers.clear();
 
-  double runtime = (acquisitionStop - acquisitionStart) / 1000.0;
-  XTRACE(MAIN, ALW, "Acquisition ran for %d seconds.", runtime);
+  XTRACE(MAIN, ALW, "Acquisition ran for %.2f seconds.", elapsed/1000000.0);
   XTRACE(MAIN, ALW, "Collecting %d events.", eventsFound);
-  XTRACE(MAIN, ALW, "Resulting in a collection rate of %f kHz.", eventsFound / runtime / 1000.0);
+  XTRACE(MAIN, ALW, "Resulting in a collection rate of %.2f kHz.", eventsFound / (elapsed / 1000.0));
   return 0;
 }

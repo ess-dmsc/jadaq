@@ -47,6 +47,8 @@ else()
   set(CAEN_LIB_PATH $ENV{HOME}/lib)
 endif()
 
+
+set(CMAKE_CXX_FLAGS_RELEASE "-Ofast -flto -O3")
 set(CMAKE_CXX_STANDARD 11)
 set(ACCEPED_WARNINGS "-Wno-unused-function")
 set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -fpermissive -Wall ${ACCEPED_WARNINGS}" )

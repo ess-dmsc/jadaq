@@ -422,9 +422,8 @@ void Digitizer::acquisition() {
 
     DPPQDCEventIterator iterator{readoutBuffer};
     size_t events = dataHandler(iterator);
-    //stats.eventsFound += events;
-    stats.eventsFound += events; // in a 2000 byte packet
-    usleep(1000000);
+    stats.eventsFound += events;
+    //usleep(1000000);
     return;
   }
 

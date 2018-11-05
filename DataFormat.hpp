@@ -34,7 +34,7 @@
 
 #define VERSION  { 1, 3 }
 
-#define JUMBO_PAYLOAD 9000
+#define JUMBO_PAYLOAD 1500
 #define IP_HEADER 20
 #define UDP_HEADER 8
 

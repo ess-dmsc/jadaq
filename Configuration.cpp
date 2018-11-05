@@ -214,10 +214,10 @@ static void configure(Digitizer &digitizer, pt::ptree &conf, bool verbose) {
 }
 
 void Configuration::apply() {
-  XTRACE(DIGIT, DEB, "Configuration::apply()");
+  XTRACE(CONF, DEB, "Configuration::apply()");
   for (auto &section : in) {
     std::string name = section.first;
-    XTRACE(DIGIT, DEB, "Section %s", name.c_str());
+    XTRACE(CONF, DEB, "Section %s", name.c_str());
     pt::ptree conf(section.second); // create local a copy we can modify
     if (conf.empty()) {
       continue; // Skip top level keys i.e. not in a [section]
@@ -235,11 +235,11 @@ void Configuration::apply() {
     conf.erase("CONET");
     Digitizer *digitizer = nullptr;
     if (usb < 0 && optical < 0) {
-      XTRACE(DIGIT, ERR, "ERROR: [%s] contains neither USB nor OPTICAL number. One is REQUIRED.", name.c_str());
+      XTRACE(CONF, ERR, "ERROR: [%s] contains neither USB nor OPTICAL number. One is REQUIRED.", name.c_str());
       digitizers.emplace_back(ECDC_NULL_CONNECTION, optical, conet, vme);
       continue;
     } else if (usb >= 0 && optical >= 0) {
-      XTRACE(DIGIT, ERR, "ERROR: [%s] contains both USB and OPTICAL number. Only one is VALID.", name.c_str());
+      XTRACE(CONF, ERR, "ERROR: [%s] contains both USB and OPTICAL number. Only one is VALID.", name.c_str());
       digitizers.emplace_back(ECDC_NULL_CONNECTION, optical, conet, vme);
       continue;
     }
