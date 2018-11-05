@@ -32,8 +32,7 @@
 #include <iomanip>
 #include <iostream>
 
-#define VERSION                                                                \
-  { 1, 3 }
+#define VERSION  { 1, 3 }
 
 #define JUMBO_PAYLOAD 9000
 #define IP_HEADER 20

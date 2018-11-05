@@ -22,6 +22,8 @@ const unsigned int TRC_G_STATS  = 0x00000004U;
 const unsigned int TRC_G_MAIN   = 0x00000008U;
 const unsigned int TRC_G_DIGIT  = 0x00000010U;
 const unsigned int TRC_G_EVENT  = 0x00000020U;
+const unsigned int TRC_G_DATAH  = 0x00000040U;
+const unsigned int TRC_G_UDP    = 0x00000080U;
 
 /// Add trace masks below, bitwise or of grouops
 
@@ -45,7 +47,8 @@ const unsigned int TRC_L_DEB  = 7;
 #pragma GCC system_header
 
 #define TRC_MASK TRC_M_ALL
-#define TRC_LEVEL TRC_L_INF
+//#define TRC_MASK TRC_G_EVENT
+#define TRC_LEVEL TRC_L_DEB
 
 
 inline int Trace(int const LineNumber, char const *File, const char* GroupName,  const char* SeverityName, const char *Format, ...) {

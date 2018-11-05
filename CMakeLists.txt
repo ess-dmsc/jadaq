@@ -84,7 +84,6 @@ set(jadaq_INC
   DataWriterNetwork.hpp
   Digitizer.hpp
   DPPQCDEvent.hpp
-  EventAccessor.hpp
   EventIterator.hpp
   FunctionID.hpp
   StringConversion.hpp

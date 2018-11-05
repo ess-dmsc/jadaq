@@ -1693,10 +1693,11 @@ private:
                                     uint32_t VMEBaseAddress);
 
 protected:
-  NULLDigitizer()
+  NULLDigitizer(int id, CAEN_DGTZ_BoardInfo_t info)
       : Digitizer() {
         XTRACE(DIGIT, DEB, "NULLDigitizer constructor");
-        memcpy(boardInfo_.ModelName, "NULLD", 5);
+        boardInfo_ = info;
+        sprintf(boardInfo_.ModelName, "NULL%d", id);
       }
 
 public:

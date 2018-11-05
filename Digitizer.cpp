@@ -395,25 +395,39 @@ void Digitizer::startAcquisition() {
 
 void Digitizer::acquisition() {
   XTRACE(DIGIT, DEB, "Read at most %db data from %s", readoutBuffer.size, name().c_str());
+
   if (id == 0xaaaabbbb) {
     memset(readoutBuffer.data, 0x00, 2048); // emulate readData() function
 
-    (*(uint32_t *)readoutBuffer.data) = 0xa0000001; // magic value 0xa + size of 1
-    (*(uint32_t *)(readoutBuffer.data + 4)) = 0x00000001; // group mask 1
-    (*(uint32_t *)(readoutBuffer.data + 8)) = 0x00000000; // 0111 1xxx xxxx ...
-    (*(uint32_t *)(readoutBuffer.data + 12)) = 0x00000000; // 0111 1xxx xxxx ...
-    (*(uint32_t *)(readoutBuffer.data + 16)) = 0x80000004; // data size ?
-    (*(uint32_t *)(readoutBuffer.data + 20)) = 0x60000001; //
-    readoutBuffer.dataSize = 24; // emulate readData() function
+    (*(uint32_t *)(readoutBuffer.data +  0)) = 0xa0000030;  // magic value 0xa + size of
+    (*(uint32_t *)(readoutBuffer.data +  4)) = 0x00000001;  // group mask 1
+    (*(uint32_t *)(readoutBuffer.data +  8)) = 0x00000000;  // unused ?
+    (*(uint32_t *)(readoutBuffer.data + 12)) = 0x00000000; // unused ?
+
+    // Group 0 - channels 0 - 15
+    (*(uint32_t *)(readoutBuffer.data + 16)) = 0x80000020; // MSB 1 + data size 32 bytes
+    (*(uint32_t *)(readoutBuffer.data + 20)) = 0x60000001; // 0110 0 ....
+
+    (*(uint32_t *)(readoutBuffer.data + 24)) = 0x01020304; // Time
+    (*(uint32_t *)(readoutBuffer.data + 28)) = 0x00001000; // subch 0, charge 4096
+
+    (*(uint32_t *)(readoutBuffer.data + 32)) = 0x01020305; // Time
+    (*(uint32_t *)(readoutBuffer.data + 36)) = 0x00001000; // subch 0, charge 4096
+
+    (*(uint32_t *)(readoutBuffer.data + 40)) = 0x01020306; // Time
+    (*(uint32_t *)(readoutBuffer.data + 44)) = 0xf0001000; // subch 15, charge 4096
+
+    readoutBuffer.dataSize = 48; // emulate readData() function
     stats.bytesRead += readoutBuffer.dataSize;
 
     DPPQDCEventIterator iterator{readoutBuffer};
     size_t events = dataHandler(iterator);
     //stats.eventsFound += events;
-    stats.eventsFound += 255; // in a 2000 byte packet
-    usleep(1000);
+    stats.eventsFound += events; // in a 2000 byte packet
+    usleep(1000000);
     return;
   }
+
   /* We use slave terminated mode like in the sample from CAEN Digitizer library
    * docs. */
   digitizer->readData(readoutBuffer, CAEN_DGTZ_SLAVE_TERMINATED_READOUT_MBLT);

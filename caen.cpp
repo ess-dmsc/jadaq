@@ -51,8 +51,11 @@ Digitizer *Digitizer::open(CAEN_DGTZ_ConnectionType linkType, int linkNum,
   XTRACE(DIGIT, DEB, "Digitizer::open(), linktype %d", linkType);
 
   if (linkType == ECDC_NULL_CONNECTION) {
-    XTRACE(DIGIT, WAR, "Spoofing NULLDigitizer");
-    return new NULLDigitizer();
+    static int nuldigid{1};
+    boardInfo.SerialNumber = nuldigid;
+    XTRACE(DIGIT, WAR, "Spoofing NULLDigitizer %d", nuldigid);
+    nuldigid++;
+    return new NULLDigitizer(nuldigid, boardInfo);
   }
 
 

@@ -27,7 +27,6 @@
 
 #include "DataFormat.hpp"
 #include "DataWriter.hpp"
-#include "EventAccessor.hpp"
 #include "EventIterator.hpp"
 #include "container.hpp"
 #include <functional>
@@ -124,14 +123,15 @@ private:
     }
 
     size_t operator()(DPPQDCEventIterator &eventIterator) {
-      XTRACE(EVENT, DEB, "EventIterator");
       size_t events = 0;
       for (; eventIterator != eventIterator.end(); ++eventIterator) {
         events += 1;
         typename E::EventType event =
             eventIterator.event<typename E::EventType>();
-        XTRACE(EVENT, DEB, "XXXXXX");
+
         uint16_t group = eventIterator.group();
+          XTRACE(DATAH, DEB, "Digitizer: %d, time: 0x%04x, channel: %d, subch: %d, charge: %d",
+                 digitizerID, event.timeTag(), event.channel(group), event.subChannel(), event.charge());
         if (current.maxLocalTime[group] < event.timeTag() + maxJitter[group]) {
           if (current.maxLocalTime[group] > 0 ||
               previous.maxLocalTime[group] == 0 ||
@@ -156,8 +156,10 @@ private:
         std::swap(current, previous);
         std::swap(next, current);
       }
+      XTRACE(DATAH, DEB, "events parsed %d", events);
       return events;
     }
+
     void flush() {
       if (previous.buffer->size() > 0) {
         dataWriter(previous.buffer, digitizerID, previous.globalTimeStamp);
