@@ -9,8 +9,6 @@
   <xsl:variable name="module" select="substring-before($file_path_part1,'/')"/>
   <xsl:value-of select="@code"/>
   <xsl:text>&#09;</xsl:text>
-  <xsl:value-of select="@comment"/>
-  <xsl:text>&#09;</xsl:text>
   <xsl:value-of select="@language"/>
   <xsl:text>&#09;</xsl:text>
   <xsl:value-of select="$module"/>
