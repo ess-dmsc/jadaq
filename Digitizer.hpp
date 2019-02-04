@@ -73,7 +73,7 @@ public:
     const std::string model() { return digitizer->modelName(); }
     const uint32_t modelNo() { return digitizer->modelNo(); }
     const uint32_t serial() { return digitizer->serialNumber(); }
-    const uint64_t digitizerID() { return id; }
+    const uint32_t digitizerID() { return id; }
     uint32_t channels() const { return digitizer->channels(); }
     uint32_t groups() const { return digitizer->groups(); }
     void close(); //TODO: Why do we need close() in stead of using a destructor

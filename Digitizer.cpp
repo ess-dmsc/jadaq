@@ -299,14 +299,19 @@ Digitizer::Digitizer(CAEN_DGTZ_ConnectionType linkType_, int linkNum_, int conet
         , VMEBaseAddress(VMEBaseAddress_)
 {
     firmware = digitizer->getDPPFirmwareType();
-    id = ((uint64_t)digitizer->modelNo()<<32)|digitizer->serialNumber();
+    /* Generate an unique ID based on model and serial number.
+       Despite casting to 32bit, the result _is_ unique:
+       - internally, the serial no is 16bit wide (see Common.c:827)
+       - model no is set from enum CAEN_DGTZ_BoardModel_t with max val 41 (CAEN library 2.9.1, see CAENDigitizerType.h:349->CAENDigitizer.c:519ff->Common.c:838)
+     */
+    id = (digitizer->modelNo()<<16)|digitizer->serialNumber();
 }
 
 void Digitizer::initialize(DataWriter& dataWriter)
 {
     DEBUG(std::cout << "Prepare readout buffer for digitizer " << name() << std::endl;)
     readoutBuffer = digitizer->mallocReadoutBuffer();
-    dataWriter.addDigitizer(serial());
+    dataWriter.addDigitizer(digitizerID());
     // model- and firmware-dependent initialization
     switch (digitizer->familyCode()){
     case CAEN_DGTZ_XX751_FAMILY_CODE:

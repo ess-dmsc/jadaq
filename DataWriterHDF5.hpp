@@ -44,7 +44,7 @@ private:
     std::map<uint32_t, H5::Group*> digitizerMap;
     H5::Group* addDigitizer_(uint32_t digitizerID)
     {
-        std::string name = std::to_string(digitizerID>>32) + "_" + std::to_string(digitizerID & 0xFFFFFFFF);
+        std::string name = std::to_string(digitizerID>>16) + "_" + std::to_string(digitizerID & 0xFFFF);
         H5::Group* digitizerGroup = new H5::Group(file->createGroup(name));
         digitizerMap[digitizerID] = digitizerGroup;
         return digitizerGroup;
