@@ -37,7 +37,7 @@ class DataHandler
 {
 public:
     template<typename E>
-    void initialize(DataWriter& dataWriter, uint64_t digitizerID, size_t groups, size_t samples, const uint32_t* maxJitter)
+    void initialize(DataWriter& dataWriter, uint32_t digitizerID, size_t groups, size_t samples, const uint32_t* maxJitter)
     {
         instance.reset(new Implementation<E>(dataWriter,digitizerID,groups,samples,maxJitter));
     }
@@ -64,7 +64,7 @@ private:
         static_assert(std::is_pod<E>::value, "E must be POD");
     private:
         DataWriter& dataWriter;
-        uint64_t digitizerID;
+        uint32_t digitizerID;
         const uint32_t* maxJitter;
 
         struct Buffer
@@ -134,7 +134,7 @@ private:
         }
 
     public:
-        Implementation(DataWriter& dw, uint64_t digID, size_t groups, size_t samples, const uint32_t* jitter)
+        Implementation(DataWriter& dw, uint32_t digID, size_t groups, size_t samples, const uint32_t* jitter)
                 : dataWriter(dw)
                 , digitizerID(digID)
                 , maxJitter(jitter)

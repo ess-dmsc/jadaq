@@ -61,7 +61,7 @@ public:
 
     }
 
-    void addDigitizer(uint64_t digitizerID)
+    void addDigitizer(uint32_t digitizerID)
     {
         // TODO: This is where we will send the configuration over TCP
     }
@@ -69,7 +69,7 @@ public:
     static bool network() { return true; }
 
     template <typename E>
-    void operator()(const jadaq::buffer<E>* buffer, uint64_t digitizerID, uint64_t globalTimeStamp)
+    void operator()(const jadaq::buffer<E>* buffer, uint32_t digitizerID, uint64_t globalTimeStamp)
     {
         Data::Header* header = (Data::Header*)buffer->data();
         header->runID = runID;

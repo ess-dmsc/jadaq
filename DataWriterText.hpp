@@ -60,7 +60,7 @@ public:
         mutex.unlock();
     }
 
-    void addDigitizer(uint64_t digitizerID)
+    void addDigitizer(uint32_t digitizerID)
     {
         mutex.lock();
         *file << "# digitizerID: " << digitizerID << std::endl;
@@ -70,15 +70,15 @@ public:
     static bool network() { return false; }
 
     template <typename E>
-    void operator()(const jadaq::buffer<E>* buffer, uint64_t digitizerID, uint64_t globalTimeStamp)
+    void operator()(const jadaq::buffer<E>* buffer, uint32_t digitizer, uint64_t globalTimeStamp)
     {
         mutex.lock();
-        *file << "#" << PRINTH(digitizerID) << " ";
+        *file << "#" << PRINTH(digitizer) << " ";
         E::headerOn(*file);
         *file << std::endl << "@" << globalTimeStamp << std::endl;
         for(const E& element: *buffer)
         {
-            *file << " " << PRINTD(digitizerID) << " " << element << "\n";
+            *file << " " << PRINTD(digitizer) << " " << element << "\n";
         }
         mutex.unlock();
     }

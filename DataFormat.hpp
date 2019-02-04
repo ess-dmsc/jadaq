@@ -60,7 +60,7 @@ namespace Data
     {
         uint64_t runID;
         uint64_t globalTime;
-        uint64_t digitizerID;
+        uint32_t digitizerID;
         uint16_t elementType;
         uint16_t numElements;
         uint16_t version;

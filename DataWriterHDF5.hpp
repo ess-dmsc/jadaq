@@ -41,8 +41,8 @@ private:
     H5::H5File* file = nullptr;
     H5::Group* root = nullptr;
     std::mutex mutex;
-    std::map<uint64_t, H5::Group*> digitizerMap;
-    H5::Group* addDigitizer_(uint64_t digitizerID)
+    std::map<uint32_t, H5::Group*> digitizerMap;
+    H5::Group* addDigitizer_(uint32_t digitizerID)
     {
         std::string name = std::to_string(digitizerID>>32) + "_" + std::to_string(digitizerID & 0xFFFFFFFF);
         H5::Group* digitizerGroup = new H5::Group(file->createGroup(name));
@@ -91,7 +91,7 @@ public:
         delete file;
         mutex.unlock();
     }
-    void addDigitizer(uint64_t digitizerID)
+    void addDigitizer(uint32_t digitizerID)
     {
         //mutex.lock();
         //addDigitizer_(digitizerID);
@@ -101,7 +101,7 @@ public:
     static bool network() { return false; }
 
     template <typename E>
-    void operator()(const jadaq::buffer<E>* buffer, uint64_t digitizerID, uint64_t globalTimeStamp)
+    void operator()(const jadaq::buffer<E>* buffer, uint32_t digitizerID, uint64_t globalTimeStamp)
     {
         if (buffer->size() < 1)
             return;

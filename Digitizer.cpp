@@ -306,7 +306,7 @@ void Digitizer::initialize(DataWriter& dataWriter)
 {
     DEBUG(std::cout << "Prepare readout buffer for digitizer " << name() << std::endl;)
     readoutBuffer = digitizer->mallocReadoutBuffer();
-    dataWriter.addDigitizer(digitizerID());
+    dataWriter.addDigitizer(serial());
     // model- and firmware-dependent initialization
     switch (digitizer->familyCode()){
     case CAEN_DGTZ_XX751_FAMILY_CODE:
@@ -335,7 +335,7 @@ void Digitizer::initialize(DataWriter& dataWriter)
             // TODO: initialize acqWindowSize elsewhere for all digitizer types
             acqWindowSize[i] = 0; // no "jitter" expected
           }
-          dataHandler.initialize<Data::StdElement751>(dataWriter,digitizerID(), groups(), waveforms, acqWindowSize);
+          dataHandler.initialize<Data::StdElement751>(dataWriter,serial(), groups(), waveforms, acqWindowSize);
           break;
         }
         default:
@@ -378,16 +378,16 @@ void Digitizer::initialize(DataWriter& dataWriter)
             if (waveforms)
               {
                 if (extras)
-                    dataHandler.initialize<Data::DPPQDCWaveformElement<Data::ListElement8222> >(dataWriter,digitizerID(),groups,waveforms,acqWindowSize);
+                    dataHandler.initialize<Data::DPPQDCWaveformElement<Data::ListElement8222> >(dataWriter,serial(),groups,waveforms,acqWindowSize);
                 else
-                    dataHandler.initialize<Data::DPPQDCWaveformElement<Data::ListElement422> >(dataWriter,digitizerID(),groups,waveforms,acqWindowSize);
+                    dataHandler.initialize<Data::DPPQDCWaveformElement<Data::ListElement422> >(dataWriter,serial(),groups,waveforms,acqWindowSize);
             }
             else if (extras)
             {
-                dataHandler.initialize<Data::ListElement8222>(dataWriter,digitizerID(),groups,waveforms,acqWindowSize);
+                dataHandler.initialize<Data::ListElement8222>(dataWriter,serial(),groups,waveforms,acqWindowSize);
             } else
             {
-                dataHandler.initialize<Data::ListElement422>(dataWriter,digitizerID(),groups,waveforms,acqWindowSize);
+                dataHandler.initialize<Data::ListElement422>(dataWriter,serial(),groups,waveforms,acqWindowSize);
             }
             break;
           }
