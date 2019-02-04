@@ -252,7 +252,6 @@ namespace Data {
     static_assert(std::is_pod<DPPQDCWaveformElement<Data::ListElement422> >::value, "Data::DPPQDCWaveformElement<Data::ListElement422> > must be POD");
     static_assert(std::is_pod<DPPQDCWaveformElement<Data::ListElement8222> >::value, "Data::DPPQDCWaveformElement<Data::ListElement8222> > must be POD");
 
-static constexpr const char *defaultDataPort = "9000";
 static constexpr const size_t maxBufferSize = JUMBO_PAYLOAD - (UDP_HEADER + IP_HEADER);
 
 } // namespace Data

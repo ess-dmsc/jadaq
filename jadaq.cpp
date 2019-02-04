@@ -132,8 +132,7 @@ int main(int argc, const char *argv[]) {
         "Use <name> as the basename for file output.")(
         "network,N", po::value<std::string>()->value_name("<address>"),
         "Send data over network - address to bind to.")(
-        "port,P", po::value<std::string>()->value_name("<port>")->default_value(
-                      Data::defaultDataPort),
+        "port,P", po::value<std::string>()->value_name("<port>")->default_value("9000"),
         "Network port to bind to if sending over network")(
         "config_out", po::value<std::string>()->value_name("<file>"),
         "Read back device(s) configuration and write to <file>")(
@@ -179,7 +178,8 @@ int main(int argc, const char *argv[]) {
       conf.network = new std::string(vm["network"].as<std::string>());
       conf.port = new std::string(vm["port"].as<std::string>());
     } else {
-      conf.network = (std::string *)"127.0.0.1";
+      conf.network = new std::string("127.0.0.1");
+      conf.port = new std::string(vm["port"].as<std::string>());
     }
   } catch (const po::error &error) {
     std::cerr << error.what() << '\n';
