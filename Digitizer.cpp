@@ -436,7 +436,7 @@ void Digitizer::close() {
 }
 
 bool Digitizer::ready() {
-  caen::Digitizer740::AcquisitionStatus acqStatus{
+  caen::Digitizer::AcquisitionStatus acqStatus{
       digitizer->getAcquisitionStatus()};
   return acqStatus.boardReady() && acqStatus.PLLready();
 }

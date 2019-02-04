@@ -605,6 +605,25 @@ public:
     return value;
   }
 
+  /* helper class to translate Acquisition Status of register 0x8104 in X740 and X751 */
+  class AcquisitionStatus {
+  private:
+    uint32_t v;
+
+  public:
+    AcquisitionStatus(uint32_t value) : v(value) {}
+    uint32_t value() const { return v; }
+    virtual bool status() const { return (v & (1 << 2)) == (1 << 2); }
+    virtual bool eventReady() const { return (v & (1 << 3)) == (1 << 3); }
+    virtual bool eventFull() const { return (v & (1 << 4)) == (1 << 4); }
+    virtual bool externalClockSource() const { return (v & (1 << 5)) == (1 << 5); }
+    virtual bool PLLready() const { return (v & (1 << 7)) == (1 << 7); }
+    virtual bool boardReady() const { return (v & (1 << 8)) == (1 << 8); }
+    virtual bool s_in() const { return (v & (1 << 15)) == (1 << 15); }
+    virtual bool trg_in() const { return (v & (1 << 16)) == (1 << 16); }
+  };
+
+
   /* Utility functions */
   void reset() { errorHandler(CAEN_DGTZ_Reset(handle_)); }
 
@@ -1725,23 +1744,6 @@ public:
     bool polarity() const { return (v & (1 << 6)) == (1 << 6); }
   };
 
-  class AcquisitionStatus {
-  private:
-    uint32_t v;
-
-  public:
-    AcquisitionStatus(uint32_t value) : v(value) {}
-    uint32_t value() const { return v; }
-    bool status() const { return (v & (1 << 2)) == (1 << 2); }
-    bool eventReady() const { return (v & (1 << 3)) == (1 << 3); }
-    bool eventFull() const { return (v & (1 << 4)) == (1 << 4); }
-    bool externalClockSource() const { return (v & (1 << 5)) == (1 << 5); }
-    bool PLLready() const { return (v & (1 << 7)) == (1 << 7); }
-    bool boardReady() const { return (v & (1 << 8)) == (1 << 8); }
-    bool s_in() const { return (v & (1 << 15)) == (1 << 15); }
-    bool trg_in() const { return (v & (1 << 16)) == (1 << 16); }
-  };
-
   virtual uint32_t channels() const override {
     return groups() * channelsPerGroup();
   }
@@ -2236,23 +2238,6 @@ public:
     bool triggerOverlap() const { return (v & (1 << 1)) == (1 << 1); }
     bool testPattern() const { return (v & (1 << 3)) == (1 << 3); }
     bool polarity() const { return (v & (1 << 6)) == (1 << 6); }
-  };
-
-  class AcquisitionStatus {
-  private:
-    uint32_t v;
-
-  public:
-    AcquisitionStatus(uint32_t value) : v(value) {}
-    uint32_t value() const { return v; }
-    bool status() const { return (v & (1 << 2)) == (1 << 2); }
-    bool eventReady() const { return (v & (1 << 3)) == (1 << 3); }
-    bool eventFull() const { return (v & (1 << 4)) == (1 << 4); }
-    bool externalClockSource() const { return (v & (1 << 5)) == (1 << 5); }
-    bool PLLready() const { return (v & (1 << 7)) == (1 << 7); }
-    bool boardReady() const { return (v & (1 << 8)) == (1 << 8); }
-    bool s_in() const { return (v & (1 << 15)) == (1 << 15); }
-    bool trg_in() const { return (v & (1 << 16)) == (1 << 16); }
   };
 
   virtual uint32_t channels() const override {
@@ -3636,6 +3621,26 @@ public:
             //errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x8008, filterBoardConfigurationUnsetMask(mask)));
             errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x8008, mask));
         }
+
+      /**
+       * @brief Get AcquisitionStatus mask
+       *
+       * This register monitors a set of conditions related to the
+       * acquisition status.
+       *
+       * Get the low-level AcquisitionStatus mask in line with
+       * register docs. It is recommended to use the EasyX wrapper
+       * version instead.
+       *
+       * @returns
+       * 32-bit mask with layout described in register docs
+       */
+      uint32_t getAcquisitionStatus() override {
+        uint32_t mask;
+        errorHandler(CAEN_DGTZ_ReadRegister(handle_, 0x8104, &mask));
+        return mask;
+      }
+
 
       // TODO: many register-level functions are missing in the 751 implementation; they can likely be easily transferred from the 740 class if needed
     };
