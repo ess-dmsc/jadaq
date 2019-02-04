@@ -1,52 +1,109 @@
+
 cmake_minimum_required(VERSION 3.2)
+
 project(jadaq)
-#set(CMAKE_VERBOSE_MAKEFILE ON)
-#
-# NOTE: to compile for valgrind debug run something like:
-# mkdir -p build
-# cd build
-# cmake -D CMAKE_BUILD_TYPE=Debug ..
-# make
-# valgrind --leak-check=full --track-origins=yes ./jadaq [CONFFILE]
-#
+
+#=============================================================================
+# Augment CMake with our custom scripts
+#=============================================================================
+set(EXTRA_MODULES_DIR ${CMAKE_CURRENT_LIST_DIR}/cmake)
+
+#=============================================================================
+# Conan
+#=============================================================================
+SET(CONAN_PROFILE "default" CACHE STRING "Name of conan profile to use, uses default by default")
+SET(CONAN "DISABLED" CACHE STRING "conan options AUTO (conan must be in path), MANUAL (expects conanbuildinfo.cmake in build directory) or DISABLE")
+if(${CONAN} MATCHES "AUTO")
+  include(${EXTRA_MODULES_DIR}/conan.cmake)
+  conan_cmake_run(CONANFILE conanfile.txt
+    PROFILE ${CONAN_PROFILE}
+    BASIC_SETUP NO_OUTPUT_DIRS KEEP_RPATHS
+    BUILD_TYPE "None"
+    BUILD outdated)
+elseif(${CONAN} MATCHES "MANUAL")
+  if(EXISTS "${CMAKE_BINARY_DIR}/conanbuildinfo.cmake")
+    include("${CMAKE_BINARY_DIR}/conanbuildinfo.cmake")
+    conan_basic_setup(NO_OUTPUT_DIRS SKIP_RPATH)
+  else()
+    MESSAGE(FATAL_ERROR "CONAN set to MANUAL but no file named conanbuildinfo.cmake found in build directory")
+  endif()
+elseif(NOT ${CONAN} MATCHES "DISABLE")
+  MESSAGE(FATAL_ERROR "Unrecognised option for CONAN (${CONAN}), use AUTO, MANUAL or DISABLE")
+endif()
+
+if(${CONAN} MATCHES "AUTO")
+  set(Boost_USE_STATIC_LIBS OFF)
+  set(Boost_USE_MULTITHREADED ON)
+  set(Boost_USE_STATIC_RUNTIME OFF)
+endif()
+
+if(CAEN_PATH)
+  message(STATUS ">>>> Using custom location, ${CAEN_PATH}, for Caen libs")
+  set(CAEN_INC_PATH ${CAEN_PATH}/include)
+  set(CAEN_LIB_PATH ${CAEN_PATH}/lib)
+else()
+  message(STATUS ">>>> Using default location for Caen libs")
+  set(CAEN_INC_PATH $ENV{HOME}/include)
+  set(CAEN_LIB_PATH $ENV{HOME}/lib)
+endif()
+
+
+set(CMAKE_CXX_FLAGS_RELEASE "-Ofast -flto -O3")
 set(CMAKE_CXX_STANDARD 11)
 set(ACCEPED_WARNINGS "-Wno-unused-function -Wno-unused-variable -Wcast-align")
 set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -Wall ${ACCEPED_WARNINGS} -Werror" )
 set(CMAKE_C_STANDARD 99)
+
 if (CMAKE_COMPILER_IS_GNUCXX AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 5.3)
     message(FATAL_ERROR "Require at least g++-5.3: On CentOS-7 use Devtoolset-4")
-    # for further details please refer to
-    # https://www.softwarecollections.org/en/scls/rhscl/devtoolset-4/
-    # add something like the following in your shell rc to always use it:
-    # source scl_source enable devtoolset-4
 endif()
-find_path(CAEN_INCLUDE_DIR NAMES CAENDigitizer.h
-        HINTS   $ENV{HOME}/include)
-find_library(CAEN_LIB NAMES CAENDigitizer
-        HINTS   $ENV{HOME}/lib)
-include_directories(${CAEN_INCLUDE_DIR})
 
-find_package(Boost COMPONENTS system filesystem thread program_options REQUIRED)
-
-find_package(HDF5 REQUIRED COMPONENTS C CXX)
+find_package(HDF5 1.10 REQUIRED COMPONENTS C CXX HL)
 include_directories(${HDF5_INCLUDE_DIRS})
 
-add_library(debugCAENComm SHARED debugCAENComm.c)
-target_link_libraries(debugCAENComm dl)
+find_path(CAEN_INCLUDE_DIR NAMES CAENDigitizer.h   HINTS   ${CAEN_INC_PATH})
+find_library(CAEN_LIB NAMES CAENDigitizer CAENComm HINTS   ${CAEN_LIB_PATH})
+include_directories(${CAEN_INCLUDE_DIR})
 
-add_library(caen SHARED caen.hpp caen.cpp _CAENDigitizer.c _CAENDigitizer.h DPPQCDEvent.hpp DPPQCDEvent.cpp)
-target_link_libraries(caen dl)
+find_package(Boost COMPONENTS system filesystem thread program_options REQUIRED )
 
-#file(GLOB DataHandlerHEADERS DataFormat.hpp DataHandler*.hpp uuid.hpp EventAccessor.hpp)
-file(GLOB DataHandlerHEADERS DataFormat.hpp DataHandler.hpp DataWriterHDF5.hpp DataWriterText.hpp DataWriter.hpp DataWriterNetwork.hpp uuid.hpp EventAccessor.hpp  EventIterator.hpp)
-#file(GLOB DataHandlerSOURCES DataHandler*.cpp uuid.cpp)
-file(GLOB DataHandlerSOURCES uuid.cpp)
-add_library(DataHandler ${DataHandlerHEADERS} ${DataHandlerSOURCES} Waveform.hpp)
+set(jadaq_SRC
+  _CAENDigitizer.c
+  Configuration.cpp
+  Digitizer.cpp
+  DPPQCDEvent.cpp
+  FunctionID.cpp
+  StringConversion.cpp
+  caen.cpp
+  jadaq.cpp
+)
+set(jadaq_INC
+  _CAENDigitizer.h
+  Configuration.hpp
+  DataFormat.hpp
+  DataHandler.hpp
+  DataWriter.hpp
+  DataWriterNetwork.hpp
+  Digitizer.hpp
+  DPPQCDEvent.hpp
+  EventIterator.hpp
+  FunctionID.hpp
+  StringConversion.hpp
+  Waveform.hpp
+  caen.hpp
+  container.hpp
+  ini_parser.hpp
+  interrupt.hpp
+  xtrace.h
+  timer.h
+)
 
-add_executable(jadaq ${DataHandlerHEADERS} jadaq.cpp caen.hpp Configuration.cpp Configuration.hpp Digitizer.cpp Digitizer.hpp FunctionID.hpp FunctionID.cpp ini_parser.hpp StringConversion.cpp StringConversion.hpp CAENConf.cpp CAENConf.hpp trace.hpp interrupt.hpp container.hpp runno.cpp)
-target_link_libraries(jadaq ${CAEN_LIB} caen DataHandler ${Boost_LIBRARIES} pthread ${HDF5_CXX_LIBRARIES})
+add_executable(jadaq ${jadaq_INC} ${jadaq_SRC})
 
-# For jadaq-ds
-# jadaq-ds now depends on caen and CAEN_LIB because of EventAccessor. Can we get rid of this dependency
-#add_executable(jadaq-ds jadaq-ds.cpp ${DataHandlerHEADERS} NetworkReceive.cpp NetworkReceive.hpp trace.hpp interrupt.hpp)
-#target_link_libraries(jadaq-ds ${CAEN_LIB} caen DataHandler ${HDF5_CXX_LIBRARIES} ${Boost_LIBRARIES} pthread)
+target_link_libraries(jadaq ${CAEN_LIB} pthread)
+
+if(${CONAN} MATCHES "AUTO")
+  target_link_libraries(jadaq Boost::filesystem Boost::system Boost::thread Boost::program_options)
+else()
+  target_link_libraries(jadaq ${Boost_LIBRARIES})
+endif()

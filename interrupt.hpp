@@ -29,21 +29,16 @@
 
 volatile sig_atomic_t interrupt = 0;
 
-static void handler(int s)
-{
-    interrupt = s;
+static void handler(int s) { interrupt = s; }
+
+static void setup_interrupt_handler() {
+  struct sigaction sigIntHandler;
+  sigIntHandler.sa_handler = handler;
+  sigemptyset(&sigIntHandler.sa_mask);
+  sigIntHandler.sa_flags = 0;
+  sigaction(SIGINT, &sigIntHandler, NULL);
+  sigaction(SIGTERM, &sigIntHandler, NULL);
+  sigaction(SIGHUP, &sigIntHandler, NULL);
 }
 
-static void setup_interrupt_handler()
-{
-    struct sigaction sigIntHandler;
-    sigIntHandler.sa_handler = handler;
-    sigemptyset(&sigIntHandler.sa_mask);
-    sigIntHandler.sa_flags = 0;
-    sigaction(SIGINT, &sigIntHandler, NULL);
-    sigaction(SIGTERM, &sigIntHandler, NULL);
-    sigaction(SIGHUP, &sigIntHandler, NULL);
-}
-
-
-#endif //JADAQ_INTERRUPT_H
+#endif // JADAQ_INTERRUPT_H

@@ -25,16 +25,13 @@
 #ifndef JADAQ_DATAHANDLER_HPP
 #define JADAQ_DATAHANDLER_HPP
 
-#include <functional>
 #include "DataFormat.hpp"
-#include "uuid.hpp"
-#include "EventAccessor.hpp"
+#include "DataWriter.hpp"
 #include "EventIterator.hpp"
 #include "container.hpp"
-#include "DataWriter.hpp"
+#include <functional>
 
-class DataHandler
-{
+class DataHandler {
 public:
     template<typename E>
     void initialize(DataWriter& dataWriter, uint32_t digitizerID, size_t groups, size_t samples, const uint32_t* maxJitter)
@@ -67,92 +64,61 @@ private:
         uint32_t digitizerID;
         const uint32_t* maxJitter;
 
-        struct Buffer
-        {
-            size_t groups;
-            jadaq::buffer<E>* buffer;
-            uint32_t* maxLocalTime; // Array containing MaxLocalTime from the previous insertion needed to detect reset
-            uint64_t globalTimeStamp = 0;
-            void clear()
-            {
-                buffer->clear();
-                for (size_t i = 0; i < groups; ++i)
-                {
-                    maxLocalTime[i] = 0;
-                }
-                globalTimeStamp = 0;
-            }
-            Buffer(size_t numGroups) : groups(numGroups) {}
-
-            void malloc(DataWriter& dataWriter, size_t samples, bool network)
-            {
-                if (network)
-                    buffer = new jadaq::buffer<E>(Data::maxBufferSize,E::size(samples), sizeof(Data::Header));
-                else
-                    buffer = new jadaq::buffer<E>(4096*E::size(samples),E::size(samples));
-                maxLocalTime = new uint32_t[groups];
-                clear();
-            }
-            void free()
-            {
-                delete buffer;
-                delete[] maxLocalTime;
-            }
-
-        } current, next, extra;
-
-        void inline store(Buffer& buffer, typename E::EventType& event, uint16_t group)
-        {
-            buffer.maxLocalTime[group] = event.timeTag();
-            try {
-                buffer.buffer->emplace_back(event,group);
-            } catch (std::length_error&)
-            {
-                if (dataWriter.network())
-                {
-                    dataWriter(buffer.buffer, digitizerID, buffer.globalTimeStamp);
-                    buffer.buffer->clear();
-                }
-                else {
-                    if (buffer.buffer->data_capacity() >= extra.buffer->data_capacity())
-                    {
-                        size_t new_size = buffer.buffer->data_capacity() * 2;
-                        delete extra.buffer;
-                        extra.buffer = new jadaq::buffer<E>(new_size, *buffer.buffer);
-                    }
-                    else {
-                        extra.buffer->copy(*buffer.buffer);
-                    }
-                    delete buffer.buffer;
-                    buffer.buffer = jadaq::buffer<E>::empty_like(*extra.buffer);
-                    std::swap(buffer.buffer,extra.buffer);
-                    extra.clear();
-                }
-
-                buffer.buffer->emplace_back(event,group);
-            }
+    struct Buffer {
+      size_t groups;
+      jadaq::buffer<E> *buffer;
+      uint32_t *maxLocalTime; // Array containing MaxLocalTime from the previous
+                              // insertion needed to detect reset
+      uint64_t globalTimeStamp = 0;
+      void clear() {
+        buffer->clear();
+        for (size_t i = 0; i < groups; ++i) {
+          maxLocalTime[i] = 0;
         }
+        globalTimeStamp = 0;
+      }
+      Buffer(size_t numGroups) : groups(numGroups) {}
 
-    public:
-        Implementation(DataWriter& dw, uint32_t digID, size_t groups, size_t samples, const uint32_t* jitter)
-                : dataWriter(dw)
-                , digitizerID(digID)
-                , maxJitter(jitter)
-                , current(groups)
-                , next(groups)
-                , extra(groups)
-        {
-            current.malloc(dataWriter, samples, dataWriter.network());
-            next.malloc(dataWriter, samples, dataWriter.network());
-            extra.malloc(dataWriter, samples, dataWriter.network());
-        }
-        ~Implementation()
-        {
-            flush();
-            current.free();
-            next.free();
-            extra.free();
-        }
+      void malloc(DataWriter &dataWriter, size_t samples) {
+        buffer = new jadaq::buffer<E>(Data::maxBufferSize, E::size(samples),
+                                        sizeof(Data::Header));
+        maxLocalTime = new uint32_t[groups];
+        clear();
+      }
+      void free() {
+        delete buffer;
+        delete[] maxLocalTime;
+      }
+
+    } previous, current, next;
+
+    void inline store(Buffer &buffer, typename E::EventType &event,
+                      uint16_t group) {
+      buffer.maxLocalTime[group] = event.timeTag();
+      try {
+        buffer.buffer->emplace_back(event, group);
+      } catch (std::length_error &) {
+        dataWriter(buffer.buffer, digitizerID, buffer.globalTimeStamp);
+        buffer.buffer->clear();
+        buffer.buffer->emplace_back(event, group);
+      }
+    }
+
+  public:
+    Implementation(DataWriter &dw, uint32_t digID, size_t groups,
+                   size_t samples, const uint32_t *jitter)
+        : dataWriter(dw), digitizerID(digID), maxJitter(jitter),
+          previous(groups), current(groups), next(groups) {
+      previous.malloc(dataWriter, samples);
+      current.malloc(dataWriter, samples);
+      next.malloc(dataWriter, samples);
+    }
+    ~Implementation() {
+      flush();
+      previous.free();
+      current.free();
+      next.free();
+    }
 
       size_t operator()(DataBlockBaseIterator& eventIterator)
         {
@@ -162,43 +128,48 @@ private:
                 events += 1;
                 typename E::EventType event = eventIterator.event<typename E::EventType>();
                 uint16_t group = eventIterator.group();
-                if (current.maxLocalTime[group] < event.timeTag() + maxJitter[group])
-                {
-                    store(current,event,group);
+                XTRACE(DATAH, DEB, "Digitizer: %d, time: 0x%04x", digitizerID, event.timeTag());
+                if (current.maxLocalTime[group] < event.timeTag() + maxJitter[group]) {
+                  if (current.maxLocalTime[group] > 0 ||
+                      previous.maxLocalTime[group] == 0 ||
+                      previous.maxLocalTime[group] >=
+                      event.timeTag() + maxJitter[group]) {
+                    store(current, event, group);
+                  } else {
+                    store(previous, event, group);
+                  }
                 } else {
-                    if (next.globalTimeStamp == 0)
-                    {
-                        next.globalTimeStamp = DataHandler::getTimeMsecs();
-                    }
-                    store(next,event,group);
-                }
-            }
-            if (!next.buffer->empty())
-            {
-                if (current.buffer->size() > 0)
-                {
-                    dataWriter(current.buffer, digitizerID, current.globalTimeStamp);
-                }
-                current.clear();
-                std::swap(current,next);
-            }
-            return events;
+                  if (next.globalTimeStamp == 0) {
+                    next.globalTimeStamp = DataHandler::getTimeMsecs();
+                  }
+                  store(next, event, group);
         }
-        void flush()
-        {
-            if (current.buffer->size() > 0)
-            {
-                dataWriter(current.buffer, digitizerID, current.globalTimeStamp);
-                current.clear();
-            }
-            if (next.buffer->size() > 0)
-            {
-                dataWriter(next.buffer, digitizerID, next.globalTimeStamp);
-                next.clear();
-            }
+      }
+      if (!next.buffer->empty()) {
+        if (previous.buffer->size() > 0) {
+          dataWriter(previous.buffer, digitizerID, previous.globalTimeStamp);
         }
-    };
-    std::unique_ptr<Interface> instance;
+        previous.clear();
+        std::swap(current, previous);
+        std::swap(next, current);
+      }
+      XTRACE(DATAH, DEB, "events parsed %d", events);
+      return events;
+    }
+
+    void flush() {
+      if (previous.buffer->size() > 0) {
+        dataWriter(previous.buffer, digitizerID, previous.globalTimeStamp);
+        previous.clear();
+      }
+      if (current.buffer->size() > 0) {
+        dataWriter(current.buffer, digitizerID, current.globalTimeStamp);
+        current.clear();
+      }
+      assert(next.buffer->size() == 0);
+    }
+  };
+  std::unique_ptr<Interface> instance;
 };
 
-#endif //JADAQ_DATAHANDLER_HPP
+#endif // JADAQ_DATAHANDLER_HPP

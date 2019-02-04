@@ -23,27 +23,26 @@
 #ifndef JADAQ_DATAFORMAT_HPP
 #define JADAQ_DATAFORMAT_HPP
 
-#include <chrono>
-#include <cstdint>
-#include <cstddef>
-#include <iostream>
-#include <H5Cpp.h>
-#include <iomanip>
-#include "Waveform.hpp"
 #include "EventIterator.hpp"
+#include "Waveform.hpp"
+#include <H5Cpp.h>
+#include <chrono>
+#include <cstddef>
+#include <cstdint>
+#include <iomanip>
+#include <iostream>
 
-#define VERSION {1,2}
+#define VERSION  { 1, 3 }
 
-#define JUMBO_PAYLOAD 9000
-#define IP_HEADER       20
-#define UDP_HEADER       8
+#define JUMBO_PAYLOAD 1500
+#define IP_HEADER 20
+#define UDP_HEADER 8
 
 /* TODO: Take care of endianness: https://linux.die.net/man/3/endian
  * We will use little endian for our network protocol since odds
  * are that both ends will be running on intel hardware
  */
-namespace Data
-{
+namespace Data {
     const uint16_t currentVersion = *(uint16_t*)(uint8_t[])VERSION;
     const constexpr uint16_t WaveformBase = 1<<8;
     enum ElementType: uint16_t
@@ -64,7 +63,8 @@ namespace Data
         uint16_t elementType;
         uint16_t numElements;
         uint16_t version;
-        uint8_t __pad[6];
+        uint32_t seqNum;
+        uint8_t __pad[2];
     };
     static_assert(std::is_pod<Header>::value, "Data::Header must be POD");
 
@@ -252,8 +252,8 @@ namespace Data
     static_assert(std::is_pod<DPPQDCWaveformElement<Data::ListElement422> >::value, "Data::DPPQDCWaveformElement<Data::ListElement422> > must be POD");
     static_assert(std::is_pod<DPPQDCWaveformElement<Data::ListElement8222> >::value, "Data::DPPQDCWaveformElement<Data::ListElement8222> > must be POD");
 
-    static constexpr const char* defaultDataPort = "12345";
-    static constexpr const size_t maxBufferSize = JUMBO_PAYLOAD-(UDP_HEADER+IP_HEADER);
+static constexpr const char *defaultDataPort = "9000";
+static constexpr const size_t maxBufferSize = JUMBO_PAYLOAD - (UDP_HEADER + IP_HEADER);
 
 } // namespace Data
 static inline std::ostream& operator<< (std::ostream& os, const Data::ListElement422& e)
@@ -267,4 +267,4 @@ static inline std::ostream& operator<< (std::ostream& os, const Data::DPPQDCWave
 static inline std::ostream& operator<< (std::ostream& os, const Data::DPPQDCWaveformElement<Data::ListElement8222>& e)
 { e.printOn(os); return os; }
 
-#endif //JADAQ_DATAFORMAT_HPP
+#endif // JADAQ_DATAFORMAT_HPP

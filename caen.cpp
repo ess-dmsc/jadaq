@@ -28,6 +28,8 @@
  */
 
 #include "caen.hpp"
+#include "xtrace.h"
+
 namespace caen {
 
     /** Convenience helper to detect and instantiate most specific
@@ -45,6 +47,15 @@ namespace caen {
         int handle;
         CAEN_DGTZ_BoardInfo_t boardInfo;
         CAEN_DGTZ_DPPFirmware_t firmware;
+        XTRACE(DIGIT, DEB, "Digitizer::open(), linktype %d", linkType);
+        // NULL digitizer
+        if (linkType == ECDC_NULL_CONNECTION) {
+          static int nuldigid{1};
+          boardInfo.SerialNumber = nuldigid;
+          XTRACE(DIGIT, WAR, "Spoofing NULLDigitizer %d", nuldigid);
+          nuldigid++;
+          return new NULLDigitizer(nuldigid, boardInfo);
+        }
         handle = openRawDigitizer(linkType, linkNum, conetNode, VMEBaseAddress);
         boardInfo = getRawDigitizerBoardInfo(handle);
         firmware = getRawDigitizerDPPFirmware(handle);

@@ -26,14 +26,14 @@
 #ifndef JADAQ_DPPQDCEVENT_HPP
 #define JADAQ_DPPQDCEVENT_HPP
 
-#include <cstdint>
 #include <cstddef>
+#include <cstdint>
+#include "xtrace.h"
 
-struct Event
-{
-    uint32_t* ptr;
-    size_t size;
-    Event(uint32_t* p, size_t s): ptr(p), size(s) {}
+struct Event {
+  uint32_t *ptr;
+  size_t size;
+  Event(uint32_t *p, size_t s) : ptr(p), size(s) {}
 };
 
 struct DPPQDCEvent: Event

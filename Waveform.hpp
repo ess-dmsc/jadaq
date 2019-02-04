@@ -5,42 +5,41 @@
 #ifndef JADAQ_WAVEFORM_HPP
 #define JADAQ_WAVEFORM_HPP
 
-#include <cstdint>
-#include <ostream>
-#include <H5Cpp.h>
-#include <iomanip>
 #include "DPPQCDEvent.hpp"
+#include <H5Cpp.h>
+#include <cstdint>
+#include <iomanip>
+#include <ostream>
 
-#define MAX(a,b) (((a)>(b))?(a):(b))
-#define PRINTD(V) std::setw(MAX(sizeof(V)*3,sizeof(#V))) << V
-#define PRINTH(V) std::setw(MAX(sizeof(V)*3,sizeof(#V))) << (#V)
+#define MAX(a, b) (((a) > (b)) ? (a) : (b))
+#define PRINTD(V) std::setw(MAX(sizeof(V) * 3, sizeof(#V))) << V
+#define PRINTH(V) std::setw(MAX(sizeof(V) * 3, sizeof(#V))) << (#V)
 
-
-    struct __attribute__ ((__packed__)) Interval
-    {
-        uint16_t start;
-        uint16_t end;
-        Interval() = default;
-        void printOn(std::ostream& os) const
-        {
-            os << PRINTD(start) << " " << PRINTD(end);
-        }
-        static void insertMembers(H5::CompType& datatype, size_t offset)
-        {
-            datatype.insertMember("start", HOFFSET(Interval, start) + offset, H5::PredType::NATIVE_UINT16);
-            datatype.insertMember("end", HOFFSET(Interval, end) + offset, H5::PredType::NATIVE_UINT16);
-        }
-        static size_t size() { return sizeof(Interval); }
-        static H5::CompType h5type()
-        {
-            H5::CompType datatype(size());
-            insertMembers(datatype,0);
-            return datatype;
-        }
-    };
-    static_assert(std::is_pod<Interval>::value, "Interval must be POD");
-    static inline std::ostream& operator<< (std::ostream& os, const Interval& i)
-    { i.printOn(os); return os; }
+struct __attribute__((__packed__)) Interval {
+  uint16_t start;
+  uint16_t end;
+  Interval() = default;
+  void printOn(std::ostream &os) const {
+    os << PRINTD(start) << " " << PRINTD(end);
+  }
+  static void insertMembers(H5::CompType &datatype, size_t offset) {
+    datatype.insertMember("start", HOFFSET(Interval, start) + offset,
+                          H5::PredType::NATIVE_UINT16);
+    datatype.insertMember("end", HOFFSET(Interval, end) + offset,
+                          H5::PredType::NATIVE_UINT16);
+  }
+  static size_t size() { return sizeof(Interval); }
+  static H5::CompType h5type() {
+    H5::CompType datatype(size());
+    insertMembers(datatype, 0);
+    return datatype;
+  }
+};
+static_assert(std::is_pod<Interval>::value, "Interval must be POD");
+static inline std::ostream &operator<<(std::ostream &os, const Interval &i) {
+  i.printOn(os);
+  return os;
+}
 
     struct __attribute__ ((__packed__)) DPPQDCWaveform
     {
@@ -82,13 +81,12 @@
         }
         static size_t size(size_t samples) { return sizeof(DPPQDCWaveform) + sizeof(uint16_t)*samples; }
 
-        H5::CompType h5type() const
-        {
-            H5::CompType datatype(size(num_samples));
-            insertMembers(datatype,0);
-            return datatype;
-        }
-    };
+  H5::CompType h5type() const {
+    H5::CompType datatype(size(num_samples));
+    insertMembers(datatype, 0);
+    return datatype;
+  }
+};
 
     static_assert(std::is_pod<DPPQDCWaveform>::value, "DPPQDCWaveform must be POD");
     static inline std::ostream& operator<< (std::ostream& os, const DPPQDCWaveform& w)

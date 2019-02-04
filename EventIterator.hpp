@@ -26,10 +26,10 @@
 #ifndef JADAQ_EVENTITERATOR_HPP
 #define JADAQ_EVENTITERATOR_HPP
 
+#include "Waveform.hpp"
+#include "caen.hpp"
 #include <iterator>
 #include <limits>
-#include "caen.hpp"
-#include "Waveform.hpp"
 
 /** abstract base class for an iterator over the elements contained in a data block */
 class DataBlockBaseIterator{
@@ -107,197 +107,208 @@ public:
 
 
 /*
- * DPPQDCEventIterator will iterate over a set of Board Aggregates contained in one Data Block
+ * DPPQDCEventIterator will iterate over a set of Board Aggregates contained in
+ * one Data Block
  */
-  class DPPQDCEventIterator : public DataBlockBaseIterator
-{
+  class DPPQDCEventIterator : public DataBlockBaseIterator{
 private:
-    uint32_t* boardAggregateEnd;
-    /*
-     * Group Iterator will iterate over a set of Group Aggregates contained in one Board Aggregate
-     */
-    class GroupIterator
-    {
-    private:
-        uint32_t* ptr;
-        uint32_t* end;
-        uint8_t groupMask = 0;
-        size_t elementSize = 0 ;
-        int group = -1;
-        bool waveform = false;
-        bool extras = false;
-    public:
-        GroupIterator(void* p) : ptr((uint32_t*)p) {}
-        GroupIterator(uint32_t* p, uint16_t gm)
-                : ptr(p)
-                , groupMask(gm)
-                , elementSize(2)
-        { nextGroup(); }
-        void nextGroup()
-        {
-            while (!(groupMask & (1<<++group)))
-            {
-                if (group == sizeof(groupMask)*CHAR_BIT)
-                {
-                    return; // End of Board Aggregate
-                }
-            }
-            assert(((ptr[0] >> 31) & 1) == 1);
-            uint32_t size = ptr[0] & 0x7fffffff;
-            uint32_t format = ptr[1];
-            assert (((format>>31) & 1) == 0);
-            assert (((format>>30) & 1) == 1);
-            assert (((format>>29) & 1) == 1);
-            extras = ((format>>28) & 1) == 1;
-            waveform = ((format>>27) & 1) == 1;
-            end = ptr+size;
-            ptr += 2; //point to first event
-            if (extras)
-                elementSize += 1;
-            if (waveform)
-                elementSize += (format & 0xFFF) << 2;
-            assert((size - 2) % elementSize == 0);
-
-        }
-
-        bool waveformFlag() const
-        { return waveform; }
-
-        bool extrasFlag() const
-        { return extras; }
-
-        uint16_t currentGroup()
-        {
-            assert (group >= 0);
-            return (uint16_t)group;
-        }
-
-        GroupIterator& operator++()
-        {
-            ptr += elementSize;
-            if (ptr == end)
-            {
-                nextGroup();
-            }
-            assert(ptr <= end);
-            return *this;
-        }
-        GroupIterator operator++(int)
-        {
-            GroupIterator tmp(*this);
-            ++*this;
-            return tmp;
-        }
-        bool operator==(const GroupIterator& other) const { return ptr == other.ptr; }
-        bool operator!=(const GroupIterator& other) const { return (ptr != other.ptr); }
-        bool operator>(const GroupIterator& other) const { return ptr > other.ptr; }
-        bool operator<(const GroupIterator& other) const { return ptr < other.ptr; }
-        bool operator>=(const GroupIterator& other) const { return ptr >= other.ptr; }
-        bool operator<=(const GroupIterator& other) const { return ptr <= other.ptr; }
-        bool operator==(const void* other) const { return ptr == other; }
-        bool operator!=(const void* other) const { return ptr != other; }
-        bool operator>(const void* other) const { return ptr > other; }
-        bool operator<(const void* other) const { return ptr < other; }
-        bool operator>=(const void* other) const { return ptr >= other; }
-        bool operator<=(const void* other) const { return ptr <= other; }
-        DPPQDCEvent operator*() const { return DPPQDCEvent{ptr, elementSize}; }
-        uint32_t* getEventPtr() { return ptr; }
-        size_t getEventSize() { return elementSize; };
-        template <typename T>
-        T event() { return T{ptr, elementSize}; }
-    };
-    GroupIterator groupIterator;
-    GroupIterator nextGroupIterator()
-    {
-        if ((char*)ptr < buffer.end())
-        {
-            size_t size = (ptr[0] & 0x0fffffff);
-            assert((ptr[0] & 0xf0000000) == 0xa0000000); // Magic value
-            boardAggregateEnd = ptr + size;
-            uint8_t groupMask = (uint8_t) (ptr[1] & 0xFF);
-            ptr += 4; // point to first group aggregate
-            return GroupIterator(ptr, groupMask);
-        } else
-        {
-            return GroupIterator(buffer.end());
-        }
+  uint32_t *boardAggregateEnd;
+  /*
+   * Group Iterator will iterate over a set of Group Aggregates contained in one
+   * Board Aggregate
+   */
+  class GroupIterator {
+  private:
+    uint32_t *ptr;
+    uint32_t *end;
+    uint8_t groupMask = 0;
+    size_t elementSize = 0;
+    int group = -1;
+    bool waveform = false;
+    bool extras = false;
+  public:
+    GroupIterator(void *p) : ptr((uint32_t *)p) {}
+    GroupIterator(uint32_t *p, uint16_t gm)
+        : ptr(p), groupMask(gm), elementSize(2) {
+      nextGroup();
     }
+    void nextGroup() {
+      while (!(groupMask & (1 << ++group))) {
+        if (group == sizeof(groupMask) * CHAR_BIT) {
+          return; // End of Board Aggregate
+        }
+      }
+      assert(((ptr[0] >> 31) & 1) == 1);
+      uint32_t size = ptr[0] & 0x7fffffff;
+      uint32_t format = ptr[1];
+      assert(((format >> 31) & 1) == 0);
+      assert(((format >> 30) & 1) == 1);
+      assert(((format >> 29) & 1) == 1);
+      extras = ((format >> 28) & 1) == 1;
+      waveform = ((format >> 27) & 1) == 1;
+      end = ptr + size;
+
+      ptr += 2; // point to first event
+      elementSize = 2;
+      if (extras)
+        elementSize += 1;
+      if (waveform)
+        elementSize += (format & 0xFFF) << 2;
+      XTRACE(EVENT, DEB, "data: size: %d, format: 0x%04x, extras %d, elementsize %d", size, format, extras, elementSize);
+      assert((size - 2) % elementSize == 0);
+    }
+
+    bool waveformFlag() const { return waveform; }
+
+    bool extrasFlag() const { return extras; }
+
+    uint16_t currentGroup() {
+      assert(group >= 0);
+      return (uint16_t)group;
+    }
+
+    GroupIterator &operator++() {
+      ptr += elementSize;
+      if (ptr == end) {
+        nextGroup();
+      }
+      assert(ptr <= end);
+      return *this;
+    }
+    GroupIterator operator++(int) {
+      GroupIterator tmp(*this);
+      ++*this;
+      return tmp;
+    }
+    bool operator==(const GroupIterator &other) const {
+      return ptr == other.ptr;
+    }
+    bool operator!=(const GroupIterator &other) const {
+      return (ptr != other.ptr);
+    }
+    bool operator>(const GroupIterator &other) const { return ptr > other.ptr; }
+    bool operator<(const GroupIterator &other) const { return ptr < other.ptr; }
+    bool operator>=(const GroupIterator &other) const {
+      return ptr >= other.ptr;
+    }
+    bool operator<=(const GroupIterator &other) const {
+      return ptr <= other.ptr;
+    }
+    bool operator==(const void *other) const { return ptr == other; }
+    bool operator!=(const void *other) const { return ptr != other; }
+    bool operator>(const void *other) const { return ptr > other; }
+    bool operator<(const void *other) const { return ptr < other; }
+    bool operator>=(const void *other) const { return ptr >= other; }
+    bool operator<=(const void *other) const { return ptr <= other; }
+    DPPQDCEvent operator*() const { return DPPQDCEvent{ptr, elementSize}; }
+    uint32_t* getEventPtr() { return ptr; }
+    size_t getEventSize() { return elementSize; };
+    template <typename T>
+    T event() { return T{ptr, elementSize}; }
+  };
+  GroupIterator groupIterator;
+  GroupIterator nextGroupIterator() {
+    XTRACE(EVENT, DEB, "nextGroupIterator() - buffer.begin() %p, buffer.end %p, bufsize %d", buffer.begin(), buffer.end(), buffer.end() - buffer.begin());
+    if ((char *)ptr < buffer.end()) {
+      size_t size = (ptr[0] & 0x0fffffff);
+      assert((ptr[0] & 0xf0000000) == 0xa0000000); // Magic value
+      boardAggregateEnd = ptr + size;
+      uint8_t groupMask = (uint8_t)(ptr[1] & 0xFF);
+      XTRACE(EVENT, DEB, "size: %d, groupmask: 0x%02x", size, groupMask);
+      ptr += 4; // point to first group aggregate
+      return GroupIterator(ptr, groupMask);
+    } else {
+      return GroupIterator(buffer.end());
+    }
+  }
+
 public:
-    DPPQDCEventIterator(const caen::ReadoutBuffer& b)
-      : DataBlockBaseIterator(b)
-      , groupIterator(nextGroupIterator()) {}
+  DPPQDCEventIterator(const caen::ReadoutBuffer &b)
+    : DataBlockBaseIterator(b),
+      groupIterator(nextGroupIterator()) {
+    XTRACE(EVENT, DEB, "bufsize: %d, datasize %d", buffer.size, buffer.dataSize);
+  }
 
-    bool waveformFlag() const
-    { return groupIterator.waveformFlag(); }
+  bool waveformFlag() const { return groupIterator.waveformFlag(); }
 
-    bool extrasFlag() const
-    { return groupIterator.extrasFlag(); }
+  bool extrasFlag() const { return groupIterator.extrasFlag(); }
 
-    DPPQDCEventIterator& operator++()
-    {
-        if (++groupIterator == boardAggregateEnd)
-        {
-            ptr = boardAggregateEnd;
-            groupIterator = nextGroupIterator();
-        }
-        return *this;
+  DPPQDCEventIterator &operator++() {
+    if (++groupIterator == boardAggregateEnd) {
+      ptr = boardAggregateEnd;
+      groupIterator = nextGroupIterator();
     }
-    DPPQDCEventIterator operator++(int)
-    {
-        DPPQDCEventIterator tmp(*this);
-        ++*this;
-        return tmp;
-    }
-    bool operator==(const DPPQDCEventIterator& other) const { return groupIterator == other.groupIterator; }
-    bool operator!=(const DPPQDCEventIterator& other) const { return groupIterator != other.groupIterator; }
-    bool operator>(const DPPQDCEventIterator& other) const { return groupIterator > other.groupIterator; }
-    bool operator<(const DPPQDCEventIterator& other) const { return groupIterator < other.groupIterator; }
-    bool operator>=(const DPPQDCEventIterator& other) const { return groupIterator >= other.groupIterator; }
-    bool operator<=(const DPPQDCEventIterator& other) const { return groupIterator <= other.groupIterator; }
-    bool operator==(const void* other) const { return groupIterator == other; }
-    bool operator!=(const void* other) const { return groupIterator != other; }
-    bool operator>(const void* other) const { return groupIterator > other; }
-    bool operator<(const void* other) const { return groupIterator < other; }
-    bool operator>=(const void* other) const { return groupIterator >= other; }
-    bool operator<=(const void* other) const { return groupIterator <= other; }
-    DPPQDCEvent operator*() const { return *groupIterator; }
-    void* end() const { return buffer.end(); }
+    return *this;
+  }
+  DPPQDCEventIterator operator++(int) {
+    DPPQDCEventIterator tmp(*this);
+    ++*this;
+    return tmp;
+  }
+  bool operator==(const DPPQDCEventIterator &other) const {
+    return groupIterator == other.groupIterator;
+  }
+  bool operator!=(const DPPQDCEventIterator &other) const {
+    return groupIterator != other.groupIterator;
+  }
+  bool operator>(const DPPQDCEventIterator &other) const {
+    return groupIterator > other.groupIterator;
+  }
+  bool operator<(const DPPQDCEventIterator &other) const {
+    return groupIterator < other.groupIterator;
+  }
+  bool operator>=(const DPPQDCEventIterator &other) const {
+    return groupIterator >= other.groupIterator;
+  }
+  bool operator<=(const DPPQDCEventIterator &other) const {
+    return groupIterator <= other.groupIterator;
+  }
+  bool operator==(const void *other) const { return groupIterator == other; }
+  bool operator!=(const void *other) const { return groupIterator != other; }
+  bool operator>(const void *other) const { return groupIterator > other; }
+  bool operator<(const void *other) const { return groupIterator < other; }
+  bool operator>=(const void *other) const { return groupIterator >= other; }
+  bool operator<=(const void *other) const { return groupIterator <= other; }
+  DPPQDCEvent operator*() const { return *groupIterator; }
+  void *end() const { return buffer.end(); }
     uint16_t group() { return groupIterator.currentGroup(); }
     uint32_t* getEventPtr() { return groupIterator.getEventPtr(); }
     size_t getEventSize() { return groupIterator.getEventSize(); };
 };
 
 template <>
-inline DPPQDCEvent DPPQDCEventIterator::GroupIterator::event<DPPQDCEvent>()
-{
-    assert(extras == false);
-    assert(waveform == false);
-    return DPPQDCEvent{ptr, elementSize};
+inline DPPQDCEvent DPPQDCEventIterator::GroupIterator::event<DPPQDCEvent>() {
+  assert(extras == false);
+  assert(waveform == false);
+  return DPPQDCEvent{ptr, elementSize};
 }
 
 template <>
-inline DPPQDCEventExtra DPPQDCEventIterator::GroupIterator::event<DPPQDCEventExtra>()
-{
-    assert(extras == true);
-    assert(waveform == false);
-    return DPPQDCEventExtra{ptr, elementSize};
+inline DPPQDCEventExtra
+DPPQDCEventIterator::GroupIterator::event<DPPQDCEventExtra>() {
+  XTRACE(EVENT, DEB, "");
+  assert(extras == true);
+  assert(waveform == false);
+  return DPPQDCEventExtra{ptr, elementSize};
 }
 
 template <>
-inline DPPQDCEventWaveform<DPPQDCEvent> DPPQDCEventIterator::GroupIterator::event<DPPQDCEventWaveform<DPPQDCEvent> >()
-{
-    assert(extras == false);
-    assert(waveform == true);
-    return DPPQDCEventWaveform<DPPQDCEvent>{ptr, elementSize};
+inline DPPQDCEventWaveform<DPPQDCEvent>
+DPPQDCEventIterator::GroupIterator::event<DPPQDCEventWaveform<DPPQDCEvent>>() {
+  XTRACE(EVENT, DEB, "");
+  assert(extras == false);
+  assert(waveform == true);
+  return DPPQDCEventWaveform<DPPQDCEvent>{ptr, elementSize};
 }
 
 template <>
-inline DPPQDCEventWaveform<DPPQDCEventExtra> DPPQDCEventIterator::GroupIterator::event<DPPQDCEventWaveform<DPPQDCEventExtra> >()
-{
-    assert(extras == true);
-    assert(waveform == true);
-    return DPPQDCEventWaveform<DPPQDCEventExtra>{ptr, elementSize};
+inline DPPQDCEventWaveform<DPPQDCEventExtra>
+DPPQDCEventIterator::GroupIterator::event<
+    DPPQDCEventWaveform<DPPQDCEventExtra>>() {
+  XTRACE(EVENT, DEB, "");
+  assert(extras == true);
+  assert(waveform == true);
+  return DPPQDCEventWaveform<DPPQDCEventExtra>{ptr, elementSize};
 }
 
-
-#endif //JADAQ_EVENTITERATOR_HPP
+#endif // JADAQ_EVENTITERATOR_HPP

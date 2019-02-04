@@ -25,62 +25,60 @@
 #ifndef JADAQ_DATAWRITERWORK_HPP
 #define JADAQ_DATAWRITERWORK_HPP
 
-
 /* Default to jumbo frame sized buffer */
+#include "DataFormat.hpp"
+#include "container.hpp"
 #include <boost/asio.hpp>
 #include <boost/asio/io_service.hpp>
 #include <boost/bind.hpp>
-#include "DataFormat.hpp"
-#include "container.hpp"
+#include "xtrace.h"
 
 using boost::asio::ip::udp;
 
-class DataWriterNetwork
-{
+class DataWriterNetwork {
 private:
-    uint64_t runID;
-    boost::asio::io_service ioService;
-    udp::endpoint remoteEndpoint;
-    udp::socket *socket = nullptr;
+  uint64_t runID;
+  boost::asio::io_service ioService;
+  udp::endpoint remoteEndpoint;
+  udp::socket *socket = nullptr;
+  uint32_t seqNum{0};
 
 public:
-    DataWriterNetwork(const std::string& address, const std::string& port, uint64_t runID_)
-            : runID(runID_)
-    {
-        try {
-            udp::resolver resolver(ioService);
-            udp::resolver::query query(udp::v4(), address.c_str(), port.c_str());
-            //TODO Handle result array properly
-            remoteEndpoint = *resolver.resolve(query);
-            socket = new udp::socket(ioService);
-            socket->open(udp::v4());
-        } catch (std::exception& e) {
-            std::cerr << "ERROR in UDP connection setup to " << address << ":" << port << " : " << e.what() << std::endl;
-            throw;
-        }
-
+  DataWriterNetwork(const std::string &address, const std::string &port, uint64_t runID_)
+      : runID(runID_) {
+    XTRACE(DEBUG, DEB, "DataWriterNetwork() - address %s : %s", address.c_str(), port.c_str());
+    try {
+      udp::resolver resolver(ioService);
+      udp::resolver::query query(udp::v4(), address.c_str(), port.c_str());
+      /// \todo Handle result array properly
+      remoteEndpoint = *resolver.resolve(query);
+      socket = new udp::socket(ioService);
+      socket->open(udp::v4());
+    } catch (std::exception &e) {
+      XTRACE(DEBUG, ERR, "ERROR in UDP connection setup to %s:%s - %s", address.c_str(), port.c_str(), e.what());
+      throw;
     }
+  }
 
-    void addDigitizer(uint32_t digitizerID)
-    {
-        // TODO: This is where we will send the configuration over TCP
-    }
+  void addDigitizer(uint32_t digitizerID) {
+    // TODO: This is where we will send the configuration over TCP
+  }
 
-    static bool network() { return true; }
-
-    template <typename E>
-    void operator()(const jadaq::buffer<E>* buffer, uint32_t digitizerID, uint64_t globalTimeStamp)
-    {
-        Data::Header* header = (Data::Header*)buffer->data();
-        header->runID = runID;
-        header->globalTime = globalTimeStamp;
-        header->digitizerID = digitizerID;
-        header->version = Data::currentVersion;
-        header->elementType = E::type();
-        header->numElements = (uint16_t)buffer->size();
-        socket->send_to(boost::asio::buffer(buffer->data(), buffer->data_size()), remoteEndpoint);
-    }
+  template <typename E>
+  void operator()(const jadaq::buffer<E> *buffer, uint32_t digitizerID,
+                  uint64_t globalTimeStamp) {
+    Data::Header *header = (Data::Header *)buffer->data();
+    header->seqNum = seqNum;
+    seqNum++;
+    header->runID = runID;
+    header->globalTime = globalTimeStamp;
+    header->digitizerID = digitizerID;
+    header->version = Data::currentVersion;
+    header->elementType = E::type();
+    header->numElements = (uint16_t)buffer->size();
+    socket->send_to(boost::asio::buffer(buffer->data(), buffer->data_size()),
+                    remoteEndpoint);
+  }
 };
 
-
-#endif //JADAQ_DATAWRITERWORK_HPP
+#endif // JADAQ_DATAWRITERWORK_HPP

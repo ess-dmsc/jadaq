@@ -30,65 +30,82 @@
 
 #include "FunctionID.hpp"
 #include "caen.hpp"
-
-#include <string>
-#include <unordered_map>
-#include <chrono>
-#include <thread>
-#include <boost/thread/thread.hpp>
-#include "trace.hpp"
 #include "DataHandler.hpp"
-#include "uuid.hpp"
 #include "DataWriter.hpp"
+#include <atomic>
+#include <boost/thread/thread.hpp>
+#include <chrono>
+#include <string>
+#include <thread>
+#include <unordered_map>
+#include "xtrace.h"
 
-class Digitizer
-{
+class Digitizer {
+public:
+  struct Stats {
+    long bytesRead = 0;
+    long eventsFound = 0;
+  };
+
 private:
-    caen::Digitizer* digitizer = nullptr;
-    CAEN_DGTZ_DPPFirmware_t firmware;
-    uint32_t boardConfiguration = 0;
-    uint64_t id;
-    uint32_t waveforms = 0;
-    bool extras   = false;
-    uint32_t* acqWindowSize = nullptr;
-    DataHandler dataHandler;
-    std::set<uint32_t> manipulatedRegisters;
-    caen::ReadoutBuffer readoutBuffer;
+  caen::Digitizer *digitizer = nullptr;
+  CAEN_DGTZ_DPPFirmware_t firmware;
+  uint32_t boardConfiguration = 0;
+  uint32_t id;
+  uint32_t waveforms = 0;
+  bool extras = false;
+  uint32_t *acqWindowSize = nullptr;
+  DataHandler dataHandler;
+  std::set<uint32_t> manipulatedRegisters;
+  caen::ReadoutBuffer readoutBuffer;
+  Stats stats;
 
 public:
-    /* Connection parameters */
-    const CAEN_DGTZ_ConnectionType linkType;
-    const int linkNum;
-    const int conetNode;
-    const uint32_t VMEBaseAddress;
-    STAT(struct Stats {
-             uint32_t bytesRead = 0;
-             uint32_t eventsFound = 0;
-             uint32_t eventsUnpacked = 0;
-             uint32_t eventsDecoded = 0;
-             uint32_t eventsSent = 0;
-         } stats;)
-    Digitizer(CAEN_DGTZ_ConnectionType linkType_, int linkNum_, int conetNode_, uint32_t VMEBaseAddress_);
-    const std::string name() { return digitizer->modelName() + "_" + std::to_string(digitizer->serialNumber()); }
-    const std::string model() { return digitizer->modelName(); }
-    const uint32_t modelNo() { return digitizer->modelNo(); }
-    const uint32_t serial() { return digitizer->serialNumber(); }
-    const uint32_t digitizerID() { return id; }
-    uint32_t channels() const { return digitizer->channels(); }
-    uint32_t groups() const { return digitizer->groups(); }
-    void close(); //TODO: Why do we need close() in stead of using a destructor
-    void set(FunctionID functionID, std::string value);
-    void set(FunctionID functionID, int index, std::string value);
-    std::string get(FunctionID functionID);
-    std::string get(FunctionID functionID, int index);
-    void acquisition();
-    const std::set<uint32_t>& getRegisters() { return manipulatedRegisters; }
-    // TODO: Sould we do somthing different than expose these three function?
-    void startAcquisition() { digitizer->startAcquisition(); }
-    void stopAcquisition() { digitizer->stopAcquisition(); }
-    void reset() { digitizer->reset(); }
-    void initialize(DataWriter& dataWriter);
+  /* Connection parameters */
+  const CAEN_DGTZ_ConnectionType linkType;
+  const int linkNum;
+  const int conetNode;
+  const uint32_t VMEBaseAddress;
+  bool active = false;
+  Digitizer() = delete;
+  Digitizer(Digitizer &) = delete;
+  Digitizer(Digitizer &&) = default;
+  Digitizer(CAEN_DGTZ_ConnectionType linkType_, int linkNum_, int conetNode_,
+            uint32_t VMEBaseAddress_);
+  const std::string name() const {
+    return digitizer->modelName() + "_" +
+           std::to_string(digitizer->serialNumber());
+  }
+  const std::string model() const { return digitizer->modelName(); }
+  const uint32_t modelNo() { return digitizer->modelNo(); }
+  const uint32_t serial() const {
+    if (id == 0xaaaabbb) {
+      return 0xecdc0002;
+    }
+    return digitizer->serialNumber();
+  }
+  const uint32_t digitizerID() { return id; }
+  uint32_t channels() const { return digitizer->channels(); }
+  uint32_t groups() const { return digitizer->groups(); }
+  void close(); // TODO: Why do we need close() in stead of using a destructor
+  void set(FunctionID functionID, std::string value);
+  void set(FunctionID functionID, int index, std::string value);
+  std::string get(FunctionID functionID);
+  std::string get(FunctionID functionID, int index);
+  void acquisition();
+  const std::set<uint32_t> &getRegisters() const { return manipulatedRegisters; }
+  bool ready();
+  void startAcquisition();
+  const Stats &getStats() const { return stats; }
+  // TODO: Sould we do somthing different than expose these functions?
+  void stopAcquisition() {
+    if (id == 0xaaaabbbb) {
+      return;
+    }
+    digitizer->stopAcquisition();
+  }
+  void reset() { digitizer->reset(); }
+  void initialize(DataWriter &dataWriter);
 };
 
-
-#endif //JADAQ_DIGITIZER_HPP
+#endif // JADAQ_DIGITIZER_HPP
