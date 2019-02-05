@@ -5,7 +5,7 @@
 #ifndef JADAQ_WAVEFORM_HPP
 #define JADAQ_WAVEFORM_HPP
 
-#include "DPPQCDEvent.hpp"
+#include "DPPQDCEvent.hpp"
 #include <H5Cpp.h>
 #include <cstdint>
 #include <iomanip>

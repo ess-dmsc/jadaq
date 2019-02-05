@@ -24,7 +24,7 @@
  */
 
 #include <bitset>
-#include "DPPQCDEvent.hpp"
+#include "DPPQDCEvent.hpp"
 #include "Waveform.hpp"
 #include <cassert>
 

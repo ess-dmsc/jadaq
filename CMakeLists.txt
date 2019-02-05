@@ -71,7 +71,7 @@ set(jadaq_SRC
   _CAENDigitizer.c 
   Configuration.cpp 
   Digitizer.cpp 
-  DPPQCDEvent.cpp
+  DPPQDCEvent.cpp
   runno.cpp
   FunctionID.cpp
   StringConversion.cpp
@@ -87,7 +87,7 @@ set(jadaq_INC
   DataWriterNetwork.hpp
   DataWriterHDF5.hpp 
   Digitizer.hpp
-  DPPQCDEvent.hpp
+  DPPQDCEvent.hpp
   EventIterator.hpp
   FunctionID.hpp
   StringConversion.hpp
