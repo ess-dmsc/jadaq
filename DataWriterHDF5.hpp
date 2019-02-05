@@ -25,120 +25,161 @@
 #ifndef JADAQ_DATAHANDLERHDF5_HPP
 #define JADAQ_DATAHANDLERHDF5_HPP
 
-#include <string>
-#include <mutex>
-#include <map>
-#include <vector>
-#include <set>
-#include <cassert>
-#include <H5Cpp.h>
 #include "DataFormat.hpp"
 #include "container.hpp"
+#include <H5Cpp.h>
+#include <H5PacketTable.h>
+#include <cassert>
+#include <map>
+#include <mutex>
+#include <set>
+#include <string>
+#include <vector>
 
-class DataWriterHDF5
-{
+class DataWriterHDF5 {
 private:
-    H5::H5File* file = nullptr;
-    H5::Group* root = nullptr;
-    std::mutex mutex;
-    std::map<uint32_t, H5::Group*> digitizerMap;
-    H5::Group* addDigitizer_(uint32_t digitizerID)
-    {
-        std::string name = std::to_string(digitizerID>>16) + "_" + std::to_string(digitizerID & 0xFFFF);
-        H5::Group* digitizerGroup = new H5::Group(file->createGroup(name));
-        digitizerMap[digitizerID] = digitizerGroup;
-        return digitizerGroup;
+  struct DigitizerInfo {
+    FL_PacketTable *previous = nullptr;
+    FL_PacketTable *current = nullptr;
+    H5::Group *group = nullptr;
+    uint64_t currentTimeStamp = 0;
+    FL_PacketTable *&getTable(uint64_t timeStamp) {
+      if (timeStamp == currentTimeStamp)
+        return current;
+      else if (timeStamp < currentTimeStamp)
+        return previous;
+      else {
+        if (previous)
+          delete (previous);
+        previous = current;
+        currentTimeStamp = timeStamp;
+        current = nullptr;
+        return current;
+      }
     }
-  template<typename H5LOC>
-  void writeAttribute(std::string name, H5LOC& location, const H5::PredType& type, const void* data) const
-    {
-        try {
-            H5::Attribute a = location.createAttribute(name, type, H5::DataSpace(H5S_SCALAR));
-            a.write(type,data);
-            a.close();
-        } catch (H5::Exception& e)
-        {
-            std::cerr << "ERROR: DataWriterHDF5 can not writeAttribute \"" << name << "\"." << std::endl;
-            throw;
-        }
-    }
+  };
+  const std::string &pathname;
+  const std::string &basename;
 
+  H5::H5File *file = nullptr;
+  H5::Group *root = nullptr;
+  std::mutex mutex;
+  std::map<uint32_t, DigitizerInfo> digitizerInfo;
+
+  DigitizerInfo &getDigitizerInfo(uint32_t digitizerID) {
+    auto itr = digitizerInfo.find(digitizerID);
+    if (itr != digitizerInfo.end()) {
+      return itr->second;
+    } else {
+      DigitizerInfo info;
+      std::string name = std::to_string(digitizerID>>16) + "_" + std::to_string(digitizerID & 0xFFFF);
+      info.group =
+          new H5::Group(file->createGroup(name));
+      digitizerInfo[digitizerID] = info;
+      return digitizerInfo[digitizerID];
+    }
+  }
+  void writeAttribute(std::string name, H5::DataSet &dataset,
+                      const H5::PredType &type, const void *data) const {
+    try {
+      H5::Attribute a =
+          dataset.createAttribute(name, type, H5::DataSpace(H5S_SCALAR));
+      a.write(type, data);
+      a.close();
+    } catch (H5::Exception &e) {
+      std::cerr << "ERROR: DataWriterHDF5 can not writeAttribute \"" << name
+                << "\"." << std::endl;
+      throw;
+    }
+  }
+
+  void open(const std::string &id) {
+    std::string filename = pathname + basename + id + ".h5";
+    try {
+      assert(file == nullptr);
+      file = new H5::H5File(filename, H5F_ACC_TRUNC);
+      assert(root == nullptr);
+      root = new H5::Group(file->openGroup("/"));
+    } catch (H5::Exception &e) {
+      std::cerr << "ERROR: could not open/create HDF5-file \"" << filename
+                << "\":" << e.getDetailMsg() << std::endl;
+      throw;
+    }
+  }
+
+  void close() {
+    assert(file);
+    for (auto &itr : digitizerInfo) {
+      if (itr.second.current)
+        delete itr.second.current;
+      if (itr.second.previous)
+        delete itr.second.previous;
+      if (itr.second.group)
+        delete itr.second.group;
+    }
+    digitizerInfo.clear();
+    root->close();
+    delete root;
+    root = nullptr;
+    file->close();
+    delete file;
+    file = nullptr;
+  }
 
 public:
-  DataWriterHDF5(std::string pathname, std::string runID)
-    {
-        if (!pathname.empty() && *pathname.rbegin() != '/')
-          pathname += '/';
-        std::string filename = pathname + "jadaq-run-" + runID + ".h5";
-        try
-        {
-            file = new H5::H5File(filename, H5F_ACC_TRUNC);
-            root = new H5::Group(file->openGroup("/"));
-        } catch (H5::Exception& e)
-        {
-            std::cerr << "ERROR: could not open/create HDF5-file \"" << filename <<  "\":" << e.getDetailMsg() << std::endl;
-            throw;
-        }
-    }
+  DataWriterHDF5(const std::string &pathname_, const std::string &basename_,
+                 const std::string &&id)
+      : pathname(pathname_), basename(basename_) {
+    open(id);
+  }
 
-    ~DataWriterHDF5()
-    {
-        assert(file);
-        mutex.lock(); // Wait if someone is still writing data
-        root->close();
-        delete root;
-        file->close();
-        delete file;
-        mutex.unlock();
-    }
-    void addDigitizer(uint32_t digitizerID)
-    {
-        //mutex.lock();
-        //addDigitizer_(digitizerID);
-        //mutex.unlock();
-    }
+  ~DataWriterHDF5() {
+    mutex.lock(); // Wait if someone is still writing data
+    close();
+    mutex.unlock();
+  }
 
-    static bool network() { return false; }
+  void split(const std::string &id) {
+    mutex.lock();
+    close();
+    open(id);
+    mutex.unlock();
+  }
 
-    template <typename E>
-    void operator()(const jadaq::buffer<E>* buffer, uint32_t digitizerID, uint64_t globalTimeStamp)
-    {
-        if (buffer->size() < 1)
-            return;
-        mutex.lock();
-        H5::Group* digitizerGroup;
-        auto itr = digitizerMap.find(digitizerID);
-        if (itr != digitizerMap.end())
-        {
-            digitizerGroup = itr->second;
-        } else
-        {
-            digitizerGroup = addDigitizer_(digitizerID);
-            uint16_t format = E::type();
-            writeAttribute("JADAQ_DATA_TYPE", *digitizerGroup, H5::PredType::NATIVE_UINT16, &format);
-        }
-        const hsize_t size[1] = {buffer->size()};
-        try
-        {
-            H5::DataSpace dataspace(1, size);
-            H5::DataSet dataset = digitizerGroup->createDataSet(std::to_string(globalTimeStamp), buffer->begin()->h5type(),
-                                                                dataspace);
-            writeAttribute("globalTimestamp", dataset, H5::PredType::NATIVE_UINT64, &globalTimeStamp);
-            dataset.write(buffer->data(), buffer->begin()->h5type());
-        } catch (H5::Exception& e)
-        {
-            std::cerr << "Error while writing to HDF5 file: " << e.getDetailMsg() <<
-                      "\n\t " << "HDF5::write( " << digitizerID << ", " << globalTimeStamp <<
-                      ", " << buffer->size() << " )" << std::endl;
-            for(const E& element: *buffer)
-            {
-                std::cerr << element << "\n";
-            }
+  void addDigitizer(uint32_t digitizerID) {
+    mutex.lock();
+    getDigitizerInfo(digitizerID);
+    mutex.unlock();
+  }
 
-        }
-        mutex.unlock();
+  static bool network() { return false; }
+
+  template <typename E>
+  void operator()(const jadaq::buffer<E> *buffer, uint32_t digitizerID,
+                  uint64_t globalTimeStamp) {
+    if (buffer->size() < 1)
+      return;
+    mutex.lock();
+    DigitizerInfo &info = getDigitizerInfo(digitizerID);
+    FL_PacketTable *&table = info.getTable(globalTimeStamp);
+    if (table == nullptr) {
+      /// \todo (char*) cast used to get rid of warning, maybe check this is OK?
+      table = new FL_PacketTable(
+          info.group->getId(), (char *)std::to_string(globalTimeStamp).c_str(),
+          buffer->begin()->h5type().getId(),
+          buffer->size()); // TODO find a suitable chunk size - last argument
     }
+    if (table->AppendPackets(
+            buffer->size(),
+            (void *)buffer->data())) // Fuck this is the worst interface ever!
+    {
+      std::cerr << "Error while writing to HDF5 file: "
+                << "\n\t "
+                << "HDF5::write( " << digitizerID << ", " << globalTimeStamp
+                << ", " << buffer->size() << " )" << std::endl;
+    }
+    mutex.unlock();
+  }
 };
 
-
-#endif //JADAQ_DATAHANDLERHDF5_HPP
+#endif // JADAQ_DATAHANDLERHDF5_HPP
