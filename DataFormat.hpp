@@ -32,7 +32,8 @@
 #include <iomanip>
 #include <iostream>
 
-#define VERSION  { 1, 3 }
+constexpr uint8_t version_maj {1};
+constexpr uint8_t version_min {3};
 
 #define JUMBO_PAYLOAD 1500
 #define IP_HEADER 20
@@ -43,7 +44,7 @@
  * are that both ends will be running on intel hardware
  */
 namespace Data {
-    const uint16_t currentVersion = *(uint16_t*)(uint8_t[])VERSION;
+    const uint16_t currentVersion = *(uint16_t*)(uint8_t[]){version_maj, version_min};
     const constexpr uint16_t WaveformBase = 1<<8;
     enum ElementType: uint16_t
     {
