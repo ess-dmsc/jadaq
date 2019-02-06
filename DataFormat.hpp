@@ -44,7 +44,7 @@ constexpr uint8_t version_min {3};
  * are that both ends will be running on intel hardware
  */
 namespace Data {
-    const uint16_t currentVersion = *(uint16_t*)(uint8_t[]){version_maj, version_min};
+    const uint16_t currentVersion = (version_maj << 8) + version_min;
     const constexpr uint16_t WaveformBase = 1<<8;
     enum ElementType: uint16_t
     {
