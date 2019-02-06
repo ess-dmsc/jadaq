@@ -77,12 +77,14 @@ public:
            std::to_string(digitizer->serialNumber());
   }
   const std::string model() const { return digitizer->modelName(); }
+  const uint32_t modelNo() { return digitizer->modelNo(); }
   const uint32_t serial() const {
     if (id == 0xaaaabbb) {
       return 0xecdc0002;
     }
     return digitizer->serialNumber();
   }
+  const uint32_t digitizerID() { return id; }
   uint32_t channels() const { return digitizer->channels(); }
   uint32_t groups() const { return digitizer->groups(); }
   void close(); // TODO: Why do we need close() in stead of using a destructor

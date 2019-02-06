@@ -33,38 +33,36 @@
 
 class DataHandler {
 public:
-  template <typename E>
-  void initialize(DataWriter &dataWriter, uint32_t digitizerID, size_t groups,
-                  size_t samples, const uint32_t *maxJitter) {
-    instance.reset(new Implementation<E>(dataWriter, digitizerID, groups,
-                                         samples, maxJitter));
-  }
-  void flush() { instance->flush(); }
-  size_t operator()(DPPQDCEventIterator &it) {
-    return instance->operator()(it);
-  }
-  static int64_t getTimeMsecs() {
-    return std::chrono::duration_cast<std::chrono::milliseconds>(
-               std::chrono::system_clock::now().time_since_epoch())
-        .count();
-  }
-
+    template<typename E>
+    void initialize(DataWriter& dataWriter, uint32_t digitizerID, size_t groups, size_t samples, const uint32_t* maxJitter)
+    {
+        instance.reset(new Implementation<E>(dataWriter,digitizerID,groups,samples,maxJitter));
+    }
+    void flush() { instance->flush(); }
+    size_t operator()(DataBlockBaseIterator& it) { return instance->operator()(it); }
+    static int64_t getTimeMsecs()
+    {
+        return std::chrono::duration_cast<std::chrono::milliseconds>(
+                std::chrono::system_clock::now().time_since_epoch()).count();
+    }
 private:
-  struct Interface {
-    virtual ~Interface() = default;
-    virtual size_t operator()(DPPQDCEventIterator &it) = 0;
-    virtual void flush() = 0;
-  };
-  /* E is element type e.g. Data::ListElementxxx
-   * C is containertype i.e. jadaq::vector, jadaq::set, jadaq::buffer
-  */
-  template <typename E> class Implementation : public Interface {
-    static_assert(std::is_pod<E>::value, "E must be POD");
-
-  private:
-    DataWriter &dataWriter;
-    uint32_t digitizerID;
-    const uint32_t *maxJitter;
+    struct Interface
+    {
+        virtual ~Interface() = default;
+        virtual size_t operator()(DataBlockBaseIterator& it) = 0;
+        virtual void flush() = 0;
+    };
+    /* E is element type e.g. Data::ListElementxxx
+     * C is containertype i.e. jadaq::vector, jadaq::set, jadaq::buffer
+    */
+    template <typename E>
+    class Implementation: public Interface
+    {
+        static_assert(std::is_pod<E>::value, "E must be POD");
+    private:
+        DataWriter& dataWriter;
+        uint32_t digitizerID;
+        const uint32_t* maxJitter;
 
     struct Buffer {
       size_t groups;
@@ -122,30 +120,29 @@ private:
       next.free();
     }
 
-    size_t operator()(DPPQDCEventIterator &eventIterator) {
-      size_t events = 0;
-      for (; eventIterator != eventIterator.end(); ++eventIterator) {
-        events += 1;
-        typename E::EventType event =
-            eventIterator.event<typename E::EventType>();
-
-        uint16_t group = eventIterator.group();
-          XTRACE(DATAH, DEB, "Digitizer: %d, time: 0x%04x, channel: %d, subch: %d, charge: %d",
-                 digitizerID, event.timeTag(), event.channel(group), event.subChannel(), event.charge());
-        if (current.maxLocalTime[group] < event.timeTag() + maxJitter[group]) {
-          if (current.maxLocalTime[group] > 0 ||
-              previous.maxLocalTime[group] == 0 ||
-              previous.maxLocalTime[group] >=
-                  event.timeTag() + maxJitter[group]) {
-            store(current, event, group);
-          } else {
-            store(previous, event, group);
-          }
-        } else {
-          if (next.globalTimeStamp == 0) {
-            next.globalTimeStamp = DataHandler::getTimeMsecs();
-          }
-          store(next, event, group);
+      size_t operator()(DataBlockBaseIterator& eventIterator)
+        {
+            size_t events = 0;
+            for (;eventIterator != eventIterator.end(); ++eventIterator)
+            {
+                events += 1;
+                typename E::EventType event = eventIterator.event<typename E::EventType>();
+                uint16_t group = eventIterator.group();
+                XTRACE(DATAH, DEB, "Digitizer: %d, time: 0x%04x", digitizerID, event.timeTag());
+                if (current.maxLocalTime[group] < event.timeTag() + maxJitter[group]) {
+                  if (current.maxLocalTime[group] > 0 ||
+                      previous.maxLocalTime[group] == 0 ||
+                      previous.maxLocalTime[group] >=
+                      event.timeTag() + maxJitter[group]) {
+                    store(current, event, group);
+                  } else {
+                    store(previous, event, group);
+                  }
+                } else {
+                  if (next.globalTimeStamp == 0) {
+                    next.globalTimeStamp = DataHandler::getTimeMsecs();
+                  }
+                  store(next, event, group);
         }
       }
       if (!next.buffer->empty()) {

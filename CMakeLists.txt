@@ -50,8 +50,8 @@ endif()
 
 set(CMAKE_CXX_FLAGS_RELEASE "-Ofast -flto -O3")
 set(CMAKE_CXX_STANDARD 11)
-set(ACCEPED_WARNINGS "-Wno-unused-function")
-set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -fpermissive -Wall ${ACCEPED_WARNINGS}" )
+set(ACCEPED_WARNINGS "-Wno-unused-function -Wno-unused-variable -Wcast-align")
+set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -Wall ${ACCEPED_WARNINGS} -Werror" )
 set(CMAKE_C_STANDARD 99)
 
 if (CMAKE_COMPILER_IS_GNUCXX AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 5.3)
@@ -67,11 +67,12 @@ include_directories(${CAEN_INCLUDE_DIR})
 
 find_package(Boost COMPONENTS system filesystem thread program_options REQUIRED )
 
-set(jadaq_SRC
-  _CAENDigitizer.c
-  Configuration.cpp
-  Digitizer.cpp
-  DPPQCDEvent.cpp
+set(jadaq_SRC 
+  _CAENDigitizer.c 
+  Configuration.cpp 
+  Digitizer.cpp 
+  DPPQDCEvent.cpp
+  runno.cpp
   FunctionID.cpp
   StringConversion.cpp
   caen.cpp
@@ -84,8 +85,9 @@ set(jadaq_INC
   DataHandler.hpp
   DataWriter.hpp
   DataWriterNetwork.hpp
+  DataWriterHDF5.hpp 
   Digitizer.hpp
-  DPPQCDEvent.hpp
+  DPPQDCEvent.hpp
   EventIterator.hpp
   FunctionID.hpp
   StringConversion.hpp
@@ -101,6 +103,8 @@ set(jadaq_INC
 add_executable(jadaq ${jadaq_INC} ${jadaq_SRC})
 
 target_link_libraries(jadaq ${CAEN_LIB} pthread)
+
+target_link_libraries(jadaq ${HDF5_LIBRARIES} ${HDF5_HL_LIBRARIES})
 
 if(${CONAN} MATCHES "AUTO")
   target_link_libraries(jadaq Boost::filesystem Boost::system Boost::thread Boost::program_options)

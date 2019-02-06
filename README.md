@@ -7,10 +7,20 @@ To follow these instructions you need the following software
  * git
  * cmake
  * boost-devel
- * hdf5-devel
+ * hdf5-devel (>1.10)
  * python
  * gcc/g++ (5.3 or later)
 
+### Building HDF5 from source
+If your distribution does not ship with a current version of HDF5, you can build
+it directly from sources: https://www.hdfgroup.org/downloads/hdf5/source-code/
+
+```
+cd hdf5/source
+mkdir build
+cd build
+../configure --prefix=$HOME/local/hdf5 --enable-cxx
+```
 
 ## Set up
 Clone the project from github to a local jadaq folder:
@@ -30,15 +40,15 @@ yum install git cmake boost-devel hdf5-devel python
 ```
 
 Since CentOS/RHEL does not provide a recent compiler suite it is
-necessary to install and use the devtools-4 package
+necessary to install and use the devtools-7 package
 instead. Instructions are available at:
 
-https://www.softwarecollections.org/en/scls/rhscl/devtoolset-4/
+https://www.softwarecollections.org/en/scls/rhscl/devtoolset-7/
 
-In that case you have to either explicitly launch a devtools-4 environment with
+In that case you have to either explicitly launch a devtools-7 environment with
 
 ```
-scl enable devtoolset-4 bash
+scl enable devtoolset-7 bash
 ```
 or set it up permanently in your shell configuration.
 
@@ -51,7 +61,12 @@ cd build
 cmake ..
 ```
 
-From now on you should be able to just use 'make' to build the binaries:
+If you want to specify an alternative path to certain libraries, you can append
+the following switches to the `cmake` call:
+
+`-DHDF5_ROOT=$HOME/local/hdf5`
+
+When `cmake` has run successfully, you should be able to just use 'make' to build the binaries:
 
 ```
 make

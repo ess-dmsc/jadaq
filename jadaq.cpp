@@ -27,7 +27,9 @@
 #include "Configuration.hpp"
 #include "DataHandler.hpp"
 #include "DataWriter.hpp"
+#include "DataWriterHDF5.hpp"
 #include "DataWriterNetwork.hpp"
+#include "DataWriterText.hpp"
 #include "Digitizer.hpp"
 //#include "Timer.hpp"
 #include "interrupt.hpp"
@@ -36,17 +38,20 @@
 #include <iostream>
 #include <queue>
 #include <thread>
+#include "runno.hpp"
 #include "xtrace.h"
 #include "timer.h"
 
 // #undef TRC_MASK
 // #define TRC_MASK TRC_M_ALL
 // #undef TRC_LEVEL
-// #define TRC_LEVEL TRC_L_DEB
+// #define TRC_LEVEL TRC_L_INF
 
 namespace po = boost::program_options;
 
 struct {
+  bool textout = false;
+  bool hdf5out = false;
   bool nullout = false;
   long events = -1;
   unsigned int time = 0xffffff; // many seconds
@@ -121,19 +126,19 @@ int main(int argc, const char *argv[]) {
         "time,t",
         po::value<float>()->value_name("<seconds>")->default_value(conf.time),
         "Stop acquisition after <seconds> seconds")(
+        "hdf5,H", po::bool_switch(&conf.hdf5out), "Output to hdf5 file.")(
         "stats",
         po::value<float>()->value_name("<seconds>")->default_value(conf.stats),
         "Print statistics every <seconds> seconds")(
         "path,p",
-        po::value<std::string>()->value_name("<path>")->default_value(""),
+        po::value<std::string>()->value_name("<path>")->default_value("."),
         "Store data and other run information in local <path>.")(
         "basename,b",
         po::value<std::string>()->value_name("<name>")->default_value("jadaq-"),
         "Use <name> as the basename for file output.")(
         "network,N", po::value<std::string>()->value_name("<address>"),
         "Send data over network - address to bind to.")(
-        "port,P", po::value<std::string>()->value_name("<port>")->default_value(
-                      Data::defaultDataPort),
+        "port,P", po::value<std::string>()->value_name("<port>")->default_value("9000"),
         "Network port to bind to if sending over network")(
         "config_out", po::value<std::string>()->value_name("<file>"),
         "Read back device(s) configuration and write to <file>")(
@@ -178,18 +183,21 @@ int main(int argc, const char *argv[]) {
     if (vm.count("network")) {
       conf.network = new std::string(vm["network"].as<std::string>());
       conf.port = new std::string(vm["port"].as<std::string>());
-    } else {
-      conf.network = (std::string *)"127.0.0.1";
     }
+    // else {
+    //   conf.network = new std::string("127.0.0.1");
+    //   conf.port = new std::string(vm["port"].as<std::string>());
+    // }
+    // We will use the Null data handlere if no other is selected
+    conf.nullout = (!conf.hdf5out && (conf.network == nullptr));
+
   } catch (const po::error &error) {
     std::cerr << error.what() << '\n';
     throw;
   }
 
-  // get a unique run ID
-  /// \todo get rid of this? hardcode for now
-  XTRACE(MAIN, ALW, "RunID currently constant 0xdeadbeef");
-  uint64_t runID{0xdeadbeef};
+  // prepare a run number
+  runno runNumber;
 
   /* Read-in and write resulting digitizer configuration */
   std::string configFileName = conf.configFile[0];
@@ -217,6 +225,29 @@ int main(int argc, const char *argv[]) {
     }
   }
 
+  // read in run number stored in path (if any)
+  if (runNumber.readFromPath(*conf.path)){
+    XTRACE(MAIN, DEB, "Found run number %d at path '%s'", runNumber.value(), (*conf.path).c_str());
+  } else {
+    XTRACE(MAIN, WAR, "No run number found at path '%s' (will be set to zero)", (*conf.path).c_str());
+  }
+  // copy over configuration file
+  std::stringstream dstName;
+  dstName << *conf.path << *conf.basename << runNumber.toString() << ".cfg";
+  std::ifstream  src(configFileName, std::ios::binary);
+  std::ofstream  dst(dstName.str(), std::ios::binary);
+  dst << src.rdbuf();
+  if (!dst){
+    std::cerr << "Error: could not copy config file to '" << *conf.path << "' -- please check the output path argument!" << std::endl;
+    return -1;
+  }
+  // write out next run number to file
+  runno nextRun(runNumber.value()+1);
+  nextRun.writeToPath(*conf.path);
+
+  XTRACE(MAIN, ALW, "Starting run %s", runNumber.toString().c_str());
+
+
   XTRACE(MAIN, INF, "getDigitizers()");
   std::vector<Digitizer> &digitizers = configuration.getDigitizers();
   XTRACE(MAIN, INF, "Setup %d digitizer(s):", digitizers.size());
@@ -225,13 +256,24 @@ int main(int argc, const char *argv[]) {
       XTRACE(MAIN, INF, "digitizer: %s", digitizer.name().c_str());
   }
 
-  /// \todo move DataHandler creation to factory method in DataHandlerGeneric
+  // TODO: move DataHandler creation to factory method in DataHandlerGeneric
   DataWriter dataWriter;
 
-  XTRACE(MAIN, INF, "Creating DataWriter for UDP");
-  dataWriter = new DataWriterNetwork(*conf.network, *conf.port, runID);
-
+  if (conf.hdf5out) {
+    XTRACE(MAIN, NOTE, "Creating DataWriter for HDF5");
+    dataWriter = new DataWriterHDF5(*conf.path, *conf.basename,runNumber.toString().c_str());
+  } else if (conf.network != nullptr) {
+    XTRACE(MAIN, NOTE, "Creating DataWriter for UDP");
+    dataWriter = new DataWriterNetwork(*conf.network, *conf.port, runNumber.value());
+  } else if (conf.nullout) {
+    XTRACE(MAIN, WAR, "Creating (dummy) DataWriter for to /dev/null");
+    dataWriter = new DataWriterNull();
+  } else {
+    std::cerr << "No valid data handler." << std::endl;
+    return -1;
+  }
   XTRACE(MAIN, INF, "Starting Acquisition");
+
   for (Digitizer &digitizer : digitizers) {
     XTRACE(MAIN, INF, "Start acquisition on digitizer %s", digitizer.name().c_str());
     digitizer.initialize(dataWriter);

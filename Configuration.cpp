@@ -236,11 +236,11 @@ void Configuration::apply() {
     Digitizer *digitizer = nullptr;
     if (usb < 0 && optical < 0) {
       XTRACE(CONF, ERR, "ERROR: [%s] contains neither USB nor OPTICAL number. One is REQUIRED.", name.c_str());
-      digitizers.emplace_back(ECDC_NULL_CONNECTION, optical, conet, vme);
+      digitizers.emplace_back((CAEN_DGTZ_ConnectionType)ECDC_NULL_CONNECTION, optical, conet, vme);
       continue;
     } else if (usb >= 0 && optical >= 0) {
       XTRACE(CONF, ERR, "ERROR: [%s] contains both USB and OPTICAL number. Only one is VALID.", name.c_str());
-      digitizers.emplace_back(ECDC_NULL_CONNECTION, optical, conet, vme);
+      digitizers.emplace_back((CAEN_DGTZ_ConnectionType)ECDC_NULL_CONNECTION, optical, conet, vme);
       continue;
     }
     // try {

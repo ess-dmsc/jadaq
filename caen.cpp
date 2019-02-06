@@ -32,47 +32,45 @@
 
 namespace caen {
 
-/** Convenience helper to detect and instantiate most specific
- * Digitizer class for further use.
- * @param linkType: which kind of link or bus to connect with
- * @param linkNum: device index on the link or bus
- * @param conetNode: node index if using CONET
- * @param VMEBaseAddress: device address if using VME connection
- * @returns
- * Abstracted digitizer instance of the appropriate kind.
- */
+    /** Convenience helper to detect and instantiate most specific
+     * Digitizer class for further use.
+     * @param linkType: which kind of link or bus to connect with
+     * @param linkNum: device index on the link or bus
+     * @param conetNode: node index if using CONET
+     * @param VMEBaseAddress: device address if using VME connection
+     * @returns
+     * Abstracted digitizer instance of the appropriate kind.
+     */
 
-// TODO get rid of "Raw" functions
-Digitizer *Digitizer::open(CAEN_DGTZ_ConnectionType linkType, int linkNum,
-                           int conetNode, uint32_t VMEBaseAddress) {
-  int handle;
-  CAEN_DGTZ_BoardInfo_t boardInfo;
-  CAEN_DGTZ_DPPFirmware_t firmware;
-  XTRACE(DIGIT, DEB, "Digitizer::open(), linktype %d", linkType);
-
-  if (linkType == ECDC_NULL_CONNECTION) {
-    static int nuldigid{1};
-    boardInfo.SerialNumber = nuldigid;
-    XTRACE(DIGIT, WAR, "Spoofing NULLDigitizer %d", nuldigid);
-    nuldigid++;
-    return new NULLDigitizer(nuldigid, boardInfo);
-  }
-
-
-  handle = openRawDigitizer(linkType, linkNum, conetNode, VMEBaseAddress);
-  boardInfo = getRawDigitizerBoardInfo(handle);
-  firmware = getRawDigitizerDPPFirmware(handle);
-  /* NOTE: Digitizer destructor takes care of closing Digitizer handle */
-  switch (boardInfo.FamilyCode) {
-  case CAEN_DGTZ_XX740_FAMILY_CODE:
-    if (firmware == CAEN_DGTZ_DPPFirmware_QDC)
-      return new Digitizer740DPP(handle, boardInfo);
-    else
-      return new Digitizer740(handle, boardInfo);
-  default:
-    return new Digitizer(handle, boardInfo);
-    ;
-  }
-}
+    // TODO get rid of "Raw" functions
+    Digitizer *Digitizer::open(CAEN_DGTZ_ConnectionType linkType, int linkNum, int conetNode, uint32_t VMEBaseAddress) {
+        int handle;
+        CAEN_DGTZ_BoardInfo_t boardInfo;
+        CAEN_DGTZ_DPPFirmware_t firmware;
+        XTRACE(DIGIT, DEB, "Digitizer::open(), linktype %d", linkType);
+        // NULL digitizer
+        if (linkType == ECDC_NULL_CONNECTION) {
+          static int nuldigid{1};
+          boardInfo.SerialNumber = nuldigid;
+          XTRACE(DIGIT, WAR, "Spoofing NULLDigitizer %d", nuldigid);
+          nuldigid++;
+          return new NULLDigitizer(nuldigid, boardInfo);
+        }
+        handle = openRawDigitizer(linkType, linkNum, conetNode, VMEBaseAddress);
+        boardInfo = getRawDigitizerBoardInfo(handle);
+        firmware = getRawDigitizerDPPFirmware(handle);
+        /* NOTE: Digitizer destructor takes care of closing Digitizer handle */
+        switch (boardInfo.FamilyCode) {
+            case CAEN_DGTZ_XX740_FAMILY_CODE:
+                if (firmware == CAEN_DGTZ_DPPFirmware_QDC)
+                    return new Digitizer740DPP(handle, boardInfo);
+                else
+                    return new Digitizer740(handle, boardInfo);
+            case CAEN_DGTZ_XX751_FAMILY_CODE:
+                return new Digitizer751(handle, boardInfo);
+            default:
+                return new Digitizer(handle, boardInfo);;
+        }
+    }
 
 } // namespace caen

@@ -39,14 +39,19 @@
 #include <map>
 #include <sstream>
 #include <stdexcept>
+#include <bitset>
 #include <string>
 #include <tuple>
 #include <vector>
 #include "xtrace.h"
 
+
+#define ECDC_NULL_CONNECTION 11 // link type for "NULL" digitizer
+
 /// \todo add doxygen comments to all important functions and structs
 
 namespace caen {
+
 class Error : public std::exception {
 private:
   CAEN_DGTZ_ErrorCode code_;
@@ -551,10 +556,11 @@ public:
 
   virtual uint32_t channels() const { return boardInfo_.Channels; }
 
-  // by default groups do not exists. I.e. one channel pr. group
-  virtual uint32_t groups() const { return boardInfo_.Channels; }
+  // by default groups do not exists. i.e. all channels are in one virtual "group"
+  virtual uint32_t groups() const { return 1; }
 
-  virtual uint32_t channelsPerGroup() const { return 1; }
+  // by default there exists only one "group"
+  virtual uint32_t channelsPerGroup() const { return boardInfo_.Channels; }
 
   uint32_t formFactor() const { return boardInfo_.FormFactor; }
 
@@ -598,6 +604,25 @@ public:
     errorHandler(CAEN_DGTZ_ReadRegister(handle_, address, &value));
     return value;
   }
+
+  /* helper class to translate Acquisition Status of register 0x8104 in X740 and X751 */
+  class AcquisitionStatus {
+  private:
+    uint32_t v;
+
+  public:
+    AcquisitionStatus(uint32_t value) : v(value) {}
+    uint32_t value() const { return v; }
+    virtual bool status() const { return (v & (1 << 2)) == (1 << 2); }
+    virtual bool eventReady() const { return (v & (1 << 3)) == (1 << 3); }
+    virtual bool eventFull() const { return (v & (1 << 4)) == (1 << 4); }
+    virtual bool externalClockSource() const { return (v & (1 << 5)) == (1 << 5); }
+    virtual bool PLLready() const { return (v & (1 << 7)) == (1 << 7); }
+    virtual bool boardReady() const { return (v & (1 << 8)) == (1 << 8); }
+    virtual bool s_in() const { return (v & (1 << 15)) == (1 << 15); }
+    virtual bool trg_in() const { return (v & (1 << 16)) == (1 << 16); }
+  };
+
 
   /* Utility functions */
   void reset() { errorHandler(CAEN_DGTZ_Reset(handle_)); }
@@ -893,6 +918,12 @@ public:
   void setGroupEnableMask(uint32_t mask) {
     errorHandler(CAEN_DGTZ_SetGroupEnableMask(handle_, mask));
   }
+
+  size_t getNChannelEnabled()
+  { return (size_t) std::bitset<32>(getChannelEnableMask()).count(); }
+
+  size_t getNGroupEnabled()
+  { return (size_t) std::bitset<32>(getGroupEnableMask()).count(); }
 
   /* TODO: mark get/setDecimationFactor as not allowed on DPP?
    *       Not clear from docs but one should supposedly use the
@@ -1713,23 +1744,6 @@ public:
     bool polarity() const { return (v & (1 << 6)) == (1 << 6); }
   };
 
-  class AcquisitionStatus {
-  private:
-    uint32_t v;
-
-  public:
-    AcquisitionStatus(uint32_t value) : v(value) {}
-    uint32_t value() const { return v; }
-    bool status() const { return (v & (1 << 2)) == (1 << 2); }
-    bool eventReady() const { return (v & (1 << 3)) == (1 << 3); }
-    bool eventFull() const { return (v & (1 << 4)) == (1 << 4); }
-    bool externalClockSource() const { return (v & (1 << 5)) == (1 << 5); }
-    bool PLLready() const { return (v & (1 << 7)) == (1 << 7); }
-    bool boardReady() const { return (v & (1 << 8)) == (1 << 8); }
-    bool s_in() const { return (v & (1 << 15)) == (1 << 15); }
-    bool trg_in() const { return (v & (1 << 16)) == (1 << 16); }
-  };
-
   virtual uint32_t channels() const override {
     return groups() * channelsPerGroup();
   }
@@ -2224,23 +2238,6 @@ public:
     bool triggerOverlap() const { return (v & (1 << 1)) == (1 << 1); }
     bool testPattern() const { return (v & (1 << 3)) == (1 << 3); }
     bool polarity() const { return (v & (1 << 6)) == (1 << 6); }
-  };
-
-  class AcquisitionStatus {
-  private:
-    uint32_t v;
-
-  public:
-    AcquisitionStatus(uint32_t value) : v(value) {}
-    uint32_t value() const { return v; }
-    bool status() const { return (v & (1 << 2)) == (1 << 2); }
-    bool eventReady() const { return (v & (1 << 3)) == (1 << 3); }
-    bool eventFull() const { return (v & (1 << 4)) == (1 << 4); }
-    bool externalClockSource() const { return (v & (1 << 5)) == (1 << 5); }
-    bool PLLready() const { return (v & (1 << 7)) == (1 << 7); }
-    bool boardReady() const { return (v & (1 << 8)) == (1 << 8); }
-    bool s_in() const { return (v & (1 << 15)) == (1 << 15); }
-    bool trg_in() const { return (v & (1 << 16)) == (1 << 16); }
   };
 
   virtual uint32_t channels() const override {
@@ -3490,6 +3487,163 @@ public:
     errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x1024 | group << 8, size));
   }
 };
+
+
+    class Digitizer751 : public Digitizer{
+    private:
+        Digitizer751();
+        friend Digitizer* Digitizer::open(CAEN_DGTZ_ConnectionType linkType, int linkNum, int conetNode, uint32_t VMEBaseAddress);
+
+    protected:
+        Digitizer751(int handle, CAEN_DGTZ_BoardInfo_t boardInfo) : Digitizer(handle,boardInfo) {}
+
+    public:
+        class BoardConfiguration
+        {
+        private:
+            uint32_t v;
+        public:
+            BoardConfiguration(uint32_t value): v(value) {}
+            uint32_t value() {return v;}
+            bool triggerOverlap() {return (v&(1<<1)) == (1<<1);}
+            bool testPattern() {return (v&(1<<3)) == (1<<3);}
+            bool polarity() {return (v&(1<<6)) == (1<<6);}
+            bool enableDes() {return (v&(1<<12)) == (1<<12);}
+        };
+
+        /* NOTE: BoardConfiguration differs in forced ones and zeros
+         * between generic and DPP version. Use a class-specific mask.
+         */
+        /* According to register docs the bits [0,2,5] must be 0 and the bits
+         * [4] must be 1 while [7:11,13:31] are reserved so we always force
+         * compliance by a bitwise-or with 0x00000010 followed by a bitwise-and
+         * with 0x0000105A for the set operation. Similarly we prevent mangling
+         * of the force ones by a bitwise-and with the xor inverted version of
+         * 0x00000010 for the unset operation.
+         */
+        virtual uint32_t filterBoardConfigurationSetMask(uint32_t mask) override
+        { return ((mask | 0x00000010) & 0x0000105A); }
+        virtual uint32_t filterBoardConfigurationUnsetMask(uint32_t mask) override
+        { return (mask & (0xFFFFFFFF ^ 0x00000010)); }
+
+        /**
+         * @brief Get AMCFirmwareRevision mask
+         *
+         * This register contains the channel FPGA (AMC) firmware
+         * revision information.\n
+         * The complete format is:\n
+         * Firmware Revision = X.Y (16 lower bits)\n
+         * Firmware Revision Date = Y/M/DD (16 higher bits)\n
+         * EXAMPLE 1: revision 1.03, November 12th, 2007 is 0x7B120103.\n
+         * EXAMPLE 2: revision 2.09, March 7th, 2016 is 0x03070209.\n
+         * NOTE: the nibble code for the year makes this information to
+         * roll over each 16 years.
+         *
+         * Get the low-level AMCFirmwareRevision mask in line with
+         * register docs. It is recommended to use the EasyX wrapper
+         * version instead.
+         *
+         * @param group:
+         * group index
+         * @returns
+         * 32-bit mask with layout described in register docs
+         */
+        uint32_t getAMCFirmwareRevision(uint32_t group) override
+        {
+            uint32_t mask;
+            if (group >= groups())
+                errorHandler(CAEN_DGTZ_InvalidChannelNumber);
+            errorHandler(CAEN_DGTZ_ReadRegister(handle_, 0x108C | group<<8, &mask));
+            return mask;
+        }
+
+        /* NOTE: Get / Set DC Offset is handled in GroupDCOffset */
+
+        /* NOTE: Get / Set Channel Enable Mask of Group is handled in
+         * ChannelGroupMask */
+
+        /**
+         * @brief Get BoardConfiguration mask
+         *
+         * This register contains general settings for the board
+         * configuration.
+         *
+         * Get the low-level BoardConfiguration mask in line with
+         * register docs. It is recommended to use the EasyX wrapper
+         * version instead.
+         *
+         * NOTE: Read mask from 0x8000, BitSet mask with 0x8004 and
+         *       BitClear mask with 0x8008.
+         *
+         * @returns
+         * 32-bit mask with layout described in register docs
+         */
+        uint32_t getBoardConfiguration() override
+        {
+            uint32_t mask;
+            errorHandler(CAEN_DGTZ_ReadRegister(handle_, 0x8000, &mask));
+            return mask;
+        }
+        /**
+         * @brief Set BoardConfiguration mask
+         *
+         * This register contains general settings for the board
+         * configuration.
+         *
+         * Set the low-level BoardConfiguration mask in line with
+         * register docs. It is recommended to use the EasyX wrapper
+         * version instead.
+         *
+         * @param mask:
+         * 32-bit mask with layout described in register docs
+         */
+        void setBoardConfiguration(uint32_t mask) override
+        {
+            //errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x8004, filterBoardConfigurationSetMask(mask)));
+            errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x8004, mask));
+        }
+        /**
+         * @brief Unset BoardConfiguration mask
+         *
+         *
+         * This register contains general settings for the board
+         * configuration.
+         *
+         * Unset the low-level BoardConfiguration mask in line with
+         * register docs. It is recommended to use the EasyX wrapper
+         * version instead.
+         *
+         * @param mask:
+         * 32-bit mask with layout described in register docs
+         */
+        void unsetBoardConfiguration(uint32_t mask) override
+        {
+            //errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x8008, filterBoardConfigurationUnsetMask(mask)));
+            errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x8008, mask));
+        }
+
+      /**
+       * @brief Get AcquisitionStatus mask
+       *
+       * This register monitors a set of conditions related to the
+       * acquisition status.
+       *
+       * Get the low-level AcquisitionStatus mask in line with
+       * register docs. It is recommended to use the EasyX wrapper
+       * version instead.
+       *
+       * @returns
+       * 32-bit mask with layout described in register docs
+       */
+      uint32_t getAcquisitionStatus() override {
+        uint32_t mask;
+        errorHandler(CAEN_DGTZ_ReadRegister(handle_, 0x8104, &mask));
+        return mask;
+      }
+
+
+      // TODO: many register-level functions are missing in the 751 implementation; they can likely be easily transferred from the 740 class if needed
+    };
 
 } // namespace caen
 #endif //_CAEN_HPP

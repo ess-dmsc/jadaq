@@ -5,7 +5,7 @@
 #ifndef JADAQ_WAVEFORM_HPP
 #define JADAQ_WAVEFORM_HPP
 
-#include "DPPQCDEvent.hpp"
+#include "DPPQDCEvent.hpp"
 #include <H5Cpp.h>
 #include <cstdint>
 #include <iomanip>
@@ -41,50 +41,45 @@ static inline std::ostream &operator<<(std::ostream &os, const Interval &i) {
   return os;
 }
 
-struct __attribute__((__packed__)) Waveform {
-  uint16_t num_samples;
-  uint16_t trigger;
-  Interval gate;
-  Interval holdoff;
-  Interval overthreshold;
-  uint16_t samples[];
-  Waveform() = default;
-  template <typename DPPQCDEventType>
-  Waveform(const DPPQCDEventWaveform<DPPQCDEventType> &event) {
-    event.waveform(*this);
-  }
-  void printOn(std::ostream &os) const {
-    os << PRINTD(num_samples) << " " << PRINTD(trigger) << " " << PRINTD(gate)
-       << " " << PRINTD(holdoff) << " " << PRINTD(overthreshold);
-    for (uint16_t i = 0; i < num_samples; ++i) {
-      os << " " << std::setw(5) << samples[i];
-    }
-  }
-  static void headerOn(std::ostream &os) {
-    os << PRINTH(num_samples) << " " << PRINTH(trigger) << " " << PRINTH(gate)
-       << " " << PRINTH(holdoff) << PRINTH(overthreshold) << " "
-       << "samples";
-  }
-  void insertMembers(H5::CompType &datatype, size_t offset) const {
-    datatype.insertMember("num_samples",
-                          HOFFSET(Waveform, num_samples) + offset,
-                          H5::PredType::NATIVE_UINT16);
-    datatype.insertMember("trigger", HOFFSET(Waveform, trigger) + offset,
-                          H5::PredType::NATIVE_UINT16);
-    datatype.insertMember("gate", HOFFSET(Waveform, gate) + offset,
-                          Interval::h5type());
-    datatype.insertMember("holdoff", HOFFSET(Waveform, holdoff) + offset,
-                          Interval::h5type());
-    datatype.insertMember("overthreshold",
-                          HOFFSET(Waveform, overthreshold) + offset,
-                          Interval::h5type());
-    static const hsize_t n[1] = {num_samples};
-    datatype.insertMember("samples", HOFFSET(Waveform, samples) + offset,
-                          H5::ArrayType(H5::PredType::NATIVE_UINT16, 1, n));
-  }
-  static size_t size(size_t samples) {
-    return sizeof(Waveform) + sizeof(uint16_t) * samples;
-  }
+    struct __attribute__ ((__packed__)) DPPQDCWaveform
+    {
+        uint16_t num_samples;
+        uint16_t trigger;
+        Interval gate;
+        Interval holdoff;
+        Interval overthreshold;
+        uint16_t samples[];
+        DPPQDCWaveform() = default;
+        template <typename DPPQDCEventType>
+          DPPQDCWaveform(const DPPQDCEventWaveform<DPPQDCEventType> & event)
+        {
+            event.waveform(*this);
+        }
+        void printOn(std::ostream& os) const
+        {
+            os << PRINTD(num_samples) << " " << PRINTD(trigger) << " " << PRINTD(gate) << " " <<
+               PRINTD(holdoff) << " " << PRINTD(overthreshold);
+            for (uint16_t i = 0; i < num_samples; ++i)
+            {
+                os << " " <<  std::setw(5) << samples[i];
+            }
+        }
+        static void headerOn(std::ostream& os)
+        {
+            os << PRINTH(num_samples) << " " << PRINTH(trigger) << " " << PRINTH(gate) << " " << PRINTH(holdoff) <<
+               PRINTH(overthreshold) << " " << "samples";
+        }
+        void insertMembers(H5::CompType& datatype, size_t offset) const
+        {
+          datatype.insertMember("num_samples", HOFFSET(DPPQDCWaveform, num_samples) + offset, H5::PredType::NATIVE_UINT16);
+          datatype.insertMember("trigger", HOFFSET(DPPQDCWaveform, trigger) + offset, H5::PredType::NATIVE_UINT16);
+          datatype.insertMember("gate", HOFFSET(DPPQDCWaveform, gate) + offset, Interval::h5type());
+          datatype.insertMember("holdoff", HOFFSET(DPPQDCWaveform, holdoff) + offset, Interval::h5type());
+          datatype.insertMember("overthreshold", HOFFSET(DPPQDCWaveform, overthreshold) + offset, Interval::h5type());
+            static const hsize_t n[1] = {num_samples};
+            datatype.insertMember("samples", HOFFSET(DPPQDCWaveform, samples) + offset, H5::ArrayType(H5::PredType::NATIVE_UINT16,1,n));
+        }
+        static size_t size(size_t samples) { return sizeof(DPPQDCWaveform) + sizeof(uint16_t)*samples; }
 
   H5::CompType h5type() const {
     H5::CompType datatype(size(num_samples));
@@ -93,10 +88,51 @@ struct __attribute__((__packed__)) Waveform {
   }
 };
 
-static_assert(std::is_pod<Waveform>::value, "Waveform must be POD");
-static inline std::ostream &operator<<(std::ostream &os, const Waveform &w) {
-  w.printOn(os);
-  return os;
-}
+    static_assert(std::is_pod<DPPQDCWaveform>::value, "DPPQDCWaveform must be POD");
+    static inline std::ostream& operator<< (std::ostream& os, const DPPQDCWaveform& w)
+    { w.printOn(os); return os; }
 
-#endif // JADAQ_WAVEFORM_HPP
+    struct __attribute__ ((__packed__)) StdWaveform
+    {
+        uint16_t num_samples;
+        uint16_t samples[];
+        StdWaveform() = default;
+        template <typename StdEventType>
+          StdWaveform(const StdEventWaveform<StdEventType> & event)
+        {
+            event.waveform(*this);
+        }
+        void printOn(std::ostream& os) const
+        {
+            os << PRINTD(num_samples) << " ";
+            for (uint16_t i = 0; i < num_samples; ++i)
+            {
+                os << " " <<  std::setw(5) << samples[i];
+            }
+        }
+        static void headerOn(std::ostream& os)
+        {
+            os << PRINTH(num_samples) << " " << "samples";
+        }
+        void insertMembers(H5::CompType& datatype, size_t offset) const
+        {
+            datatype.insertMember("num_samples", HOFFSET(StdWaveform, num_samples) + offset, H5::PredType::NATIVE_UINT16);
+            static const hsize_t n[1] = {num_samples};
+            datatype.insertMember("samples", HOFFSET(StdWaveform, samples) + offset, H5::ArrayType(H5::PredType::NATIVE_UINT16,1,n));
+        }
+        static size_t size(size_t samples) { return sizeof(StdWaveform) + sizeof(uint16_t)*samples; }
+
+        H5::CompType h5type() const
+        {
+            H5::CompType datatype(size(num_samples));
+            insertMembers(datatype,0);
+            return datatype;
+        }
+    };
+
+    static_assert(std::is_pod<StdWaveform>::value, "StdWaveform must be POD");
+    static inline std::ostream& operator<< (std::ostream& os, const StdWaveform& w)
+    { w.printOn(os); return os; }
+
+
+#endif //JADAQ_WAVEFORM_HPP

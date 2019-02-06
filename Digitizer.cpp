@@ -287,29 +287,34 @@ void Digitizer::set(FunctionID functionID, std::string value) {
   });
 }
 
-Digitizer::Digitizer(CAEN_DGTZ_ConnectionType linkType_, int linkNum_,
-                     int conetNode_, uint32_t VMEBaseAddress_)
-    : digitizer(caen::Digitizer::open(linkType_, linkNum_, conetNode_,
-                                      VMEBaseAddress_)),
-      linkType(linkType_), linkNum(linkNum_), conetNode(conetNode_),
-      VMEBaseAddress(VMEBaseAddress_) {
+Digitizer::Digitizer(CAEN_DGTZ_ConnectionType linkType_, int linkNum_, int conetNode_, uint32_t VMEBaseAddress_)
+        : digitizer(caen::Digitizer::open(linkType_, linkNum_, conetNode_, VMEBaseAddress_))
+        , linkType(linkType_)
+        , linkNum(linkNum_)
+        , conetNode(conetNode_)
+        , VMEBaseAddress(VMEBaseAddress_)
+{
   XTRACE(DIGIT, DEB, "Digitizer::Digitizer()");
-  if (linkType == ECDC_NULL_CONNECTION) {
+  // NULL digitizer
+  if (linkType == (CAEN_DGTZ_ConnectionType)ECDC_NULL_CONNECTION) {
     id = 0xaaaabbbb;
     return;
   }
-  firmware = digitizer->getDPPFirmwareType();
-  if (firmware != CAEN_DGTZ_DPPFirmware_QDC) {
-    throw std::runtime_error("we only support CAEN_DGTZ_DPPFirmware_QDC");
-  }
-  id = digitizer->serialNumber();
+    firmware = digitizer->getDPPFirmwareType();
+    /* Generate an unique ID based on model and serial number.
+       Despite casting to 32bit, the result _is_ unique:
+       - internally, the serial no is 16bit wide (see Common.c:827)
+       - model no is set from enum CAEN_DGTZ_BoardModel_t with max val 41 (CAEN library 2.9.1, see CAENDigitizerType.h:349->CAENDigitizer.c:519ff->Common.c:838)
+     */
+    id = (digitizer->modelNo()<<16)|digitizer->serialNumber();
 }
 
-void Digitizer::initialize(DataWriter &dataWriter) {
+void Digitizer::initialize(DataWriter& dataWriter)
+{
   XTRACE(DIGIT, DEB, "Digitizer::initialize()");
-  boardConfiguration = digitizer->getBoardConfiguration();
   XTRACE(DIGIT, DEB, "Prepare readout buffer for digitizer %s", name().c_str());
 
+  // ECDC_NULL_CONNECTION
   if (id == 0xaaaabbbb) {
     readoutBuffer.size = 9000;
     readoutBuffer.data = (char *)malloc(9000);
@@ -321,49 +326,101 @@ void Digitizer::initialize(DataWriter &dataWriter) {
     return;
   }
 
-  readoutBuffer = digitizer->mallocReadoutBuffer();
-  uint32_t groups = this->groups();
-  acqWindowSize = new uint32_t[groups];
-  dataWriter.addDigitizer(serial());
-  switch ((int)firmware) // Cast to int as long as CAEN_DGTZ_DPPFirmware_QDC is
-                         // not part of the enumeration
-  {
-  case CAEN_DGTZ_DPPFirmware_QDC: {
-    caen::Digitizer740DPP::BoardConfiguration bc{boardConfiguration};
-    extras = bc.extras();
-    if (bc.waveform())
-      waveforms = digitizer->getRecordLength(0);
-    for (uint32_t i = 0; i < groups; ++i) {
-      acqWindowSize[i] =
-          std::max({digitizer->getRecordLength(i) * bc.waveform(),
-                    digitizer->getDPPPreTriggerSize(i) +
-                        digitizer->getDPPTriggerHoldOffWidth(i),
-                    digitizer->getDPPGateWidth(i) -
-                        digitizer->getDPPGateOffset(i) +
-                        digitizer->getDPPPreTriggerSize(i)}) *
-          2; // Lets be conservative :P
-    }
 
-    if (waveforms) {
-      if (extras)
-        dataHandler.initialize<Data::WaveformElement<Data::ListElement8222>>(
-            dataWriter, serial(), groups, waveforms, acqWindowSize);
-      else
-        dataHandler.initialize<Data::WaveformElement<Data::ListElement422>>(
-            dataWriter, serial(), groups, waveforms, acqWindowSize);
-    } else if (extras) {
-      dataHandler.initialize<Data::ListElement8222>(
-          dataWriter, serial(), groups, waveforms, acqWindowSize);
-    } else {
-      dataHandler.initialize<Data::ListElement422>(dataWriter, serial(), groups,
-                                                   waveforms, acqWindowSize);
-    }
-    break;
-  }
-  default:
-    throw std::runtime_error(
-        "Unknown firmware type. Not supported by Digitizer.");
-  }
+    readoutBuffer = digitizer->mallocReadoutBuffer();
+    dataWriter.addDigitizer(digitizerID());
+    // model- and firmware-dependent initialization
+    switch (digitizer->familyCode()){
+    case CAEN_DGTZ_XX751_FAMILY_CODE:
+      boardConfiguration = digitizer->getBoardConfiguration();
+      switch ((int)firmware) //Cast to int as long as CAEN_DGTZ_DPPFirmware_QDC is not part of the enumeration
+        {
+        case CAEN_DGTZ_DPPFirmware_PHA:
+          throw std::runtime_error("PHA firmware not supported by jadaq::Digitizer on " + digitizer->modelName());
+          break;
+        case CAEN_DGTZ_DPPFirmware_PSD:
+          throw std::runtime_error("PSD firmware not supported by jadaq::Digitizer on " + digitizer->modelName());
+          break;
+        case CAEN_DGTZ_DPPFirmware_CI:
+          throw std::runtime_error("CI firmware not supported by jadaq::Digitizer on " + digitizer->modelName());
+          break;
+        case CAEN_DGTZ_DPPFirmware_ZLE:
+          throw std::runtime_error("ZLE firmware not supported by jadaq::Digitizer on " + digitizer->modelName());
+          break;
+        case CAEN_DGTZ_DPPFirmware_QDC:
+          throw std::runtime_error("QDC firmware not supported by jadaq::Digitizer on " + digitizer->modelName());
+          break;
+        case CAEN_DGTZ_NotDPPFirmware:{
+          waveforms = digitizer->getRecordLength()*digitizer->getNChannelEnabled();
+          acqWindowSize = new uint32_t[groups()];
+          for (uint32_t i = 0; i < groups(); ++i){
+            // TODO: initialize acqWindowSize elsewhere for all digitizer types
+            acqWindowSize[i] = 0; // no "jitter" expected
+          }
+          dataHandler.initialize<Data::StdElement751>(dataWriter,serial(), groups(), waveforms, acqWindowSize);
+          break;
+        }
+        default:
+          throw std::runtime_error("Unknown firmware type. Not supported by jadaq::Digitizer on " + digitizer->modelName());
+        }
+      break;
+    case CAEN_DGTZ_XX740_FAMILY_CODE:
+      boardConfiguration = digitizer->getBoardConfiguration();
+      switch ((int)firmware) //Cast to int as long as CAEN_DGTZ_DPPFirmware_QDC is not part of the enumeration
+        {
+        case CAEN_DGTZ_DPPFirmware_PHA:
+          throw std::runtime_error("PHA firmware not supported by jadaq::Digitizer on " + digitizer->modelName());
+          break;
+        case CAEN_DGTZ_DPPFirmware_PSD:
+          throw std::runtime_error("PSD firmware not supported by jadaq::Digitizer on " + digitizer->modelName());
+          break;
+        case CAEN_DGTZ_DPPFirmware_CI:
+          throw std::runtime_error("CI firmware not supported by jadaq::Digitizer on " + digitizer->modelName());
+          break;
+        case CAEN_DGTZ_DPPFirmware_ZLE:
+          throw std::runtime_error("ZLE firmware not supported by jadaq::Digitizer on " + digitizer->modelName());
+          break;
+        case CAEN_DGTZ_DPPFirmware_QDC:
+          {
+            caen::Digitizer740DPP::BoardConfiguration bc{boardConfiguration};
+            uint32_t groups = this->groups();
+            acqWindowSize = new uint32_t[groups];
+            extras = bc.extras();
+            if (bc.waveform())
+                waveforms = digitizer->getRecordLength(0);
+            for (uint32_t i = 0; i < groups; ++i)
+            {
+                acqWindowSize[i] = std::max({digitizer->getRecordLength(i)*bc.waveform(),
+                                             digitizer->getDPPPreTriggerSize(i) + digitizer->getDPPTriggerHoldOffWidth(i),
+                      digitizer->getDPPGateWidth(i) - digitizer->getDPPGateOffset(i)+ digitizer->getDPPPreTriggerSize(i)}) * 2; // Lets be conservative :P
+            }
+
+            if (waveforms)
+              {
+                if (extras)
+                    dataHandler.initialize<Data::DPPQDCWaveformElement<Data::ListElement8222> >(dataWriter,serial(),groups,waveforms,acqWindowSize);
+                else
+                    dataHandler.initialize<Data::DPPQDCWaveformElement<Data::ListElement422> >(dataWriter,serial(),groups,waveforms,acqWindowSize);
+            }
+            else if (extras)
+            {
+                dataHandler.initialize<Data::ListElement8222>(dataWriter,serial(),groups,waveforms,acqWindowSize);
+            } else
+            {
+                dataHandler.initialize<Data::ListElement422>(dataWriter,serial(),groups,waveforms,acqWindowSize);
+            }
+            break;
+          }
+        case CAEN_DGTZ_NotDPPFirmware:
+          throw std::runtime_error("Standard firmware not supported by jadaq::Digitizer on " + digitizer->modelName());
+          break;
+        default:
+          throw std::runtime_error("Unknown firmware type. Not supported by jadaq::Digitizer on " + digitizer->modelName());
+        } // 740D
+      break;
+    default:
+      throw std::runtime_error("Unknown digitizer type. Not supported by jadaq::Digitizer on " + digitizer->modelName());
+    } // familyCode
 }
 
 void Digitizer::close() {
@@ -379,7 +436,7 @@ void Digitizer::close() {
 }
 
 bool Digitizer::ready() {
-  caen::Digitizer740::AcquisitionStatus acqStatus{
+  caen::Digitizer::AcquisitionStatus acqStatus{
       digitizer->getAcquisitionStatus()};
   return acqStatus.boardReady() && acqStatus.PLLready();
 }
@@ -396,9 +453,9 @@ void Digitizer::startAcquisition() {
 void Digitizer::acquisition() {
   XTRACE(DIGIT, DEB, "Read at most %db data from %s", readoutBuffer.size, name().c_str());
 
+  // NULL Digitizer "readout"
   if (id == 0xaaaabbbb) {
     memset(readoutBuffer.data, 0x00, 2048); // emulate readData() function
-
     (*(uint32_t *)(readoutBuffer.data +  0)) = 0xa0000030;  // magic value 0xa + size of
     (*(uint32_t *)(readoutBuffer.data +  4)) = 0x00000001;  // group mask 1
     (*(uint32_t *)(readoutBuffer.data +  8)) = 0x00000000;  // unused ?
@@ -439,17 +496,54 @@ void Digitizer::acquisition() {
     return;
   }
   stats.bytesRead += bytesRead;
-  switch ((int)firmware) // Cast to int as long as CAEN_DGTZ_DPPFirmware_QDC is
-                         // not part of the enumeration
-  {
-  case CAEN_DGTZ_DPPFirmware_QDC: {
-    DPPQDCEventIterator iterator{readoutBuffer};
-    size_t events = dataHandler(iterator);
-    stats.eventsFound += events;
-    break;
-  }
-  default:
-    throw std::runtime_error(
-        "Unknown firmware type. Not supported by Digitizer.");
-  }
+
+    // model- and firmware-dependent acquisition
+    switch (digitizer->familyCode()){
+    case CAEN_DGTZ_XX751_FAMILY_CODE:
+      switch ((int)firmware) //Cast to int as long as CAEN_DGTZ_DPPFirmware_QDC is not part of the enumeration
+        {
+        case CAEN_DGTZ_NotDPPFirmware:
+          {
+          StdBLTEventIterator iterator{readoutBuffer};
+          size_t events = dataHandler(iterator);
+          stats.eventsFound += events;
+          break;
+          }
+        default:
+          throw std::runtime_error("Data acquisition not implemented by jadaq::Digitizer for firmware present on " + digitizer->modelName());
+        }
+      break;
+    case CAEN_DGTZ_XX740_FAMILY_CODE:
+      switch ((int)firmware) //Cast to int as long as CAEN_DGTZ_DPPFirmware_QDC is not part of the enumeration
+        {
+        case CAEN_DGTZ_DPPFirmware_PHA:
+          throw std::runtime_error("PHA firmware not supported by jadaq::Digitizer on " + digitizer->modelName());
+          break;
+        case CAEN_DGTZ_DPPFirmware_PSD:
+          throw std::runtime_error("PSD firmware not supported by jadaq::Digitizer on " + digitizer->modelName());
+          break;
+        case CAEN_DGTZ_DPPFirmware_CI:
+          throw std::runtime_error("CI firmware not supported by jadaq::Digitizer on " + digitizer->modelName());
+          break;
+        case CAEN_DGTZ_DPPFirmware_ZLE:
+          throw std::runtime_error("ZLE firmware not supported by jadaq::Digitizer on " + digitizer->modelName());
+          break;
+        case CAEN_DGTZ_DPPFirmware_QDC:
+          {
+            DPPQDCEventIterator iterator{readoutBuffer};
+            size_t events = dataHandler(iterator);
+            stats.eventsFound += events;
+            break;
+          }
+        case CAEN_DGTZ_NotDPPFirmware:
+          throw std::runtime_error("Non DPP firmware not supported by jadaq::Digitizer on " + digitizer->modelName());
+          break;
+        default:
+          throw std::runtime_error("Unknown firmware type. Not supported by jadaq::Digitizer on " + digitizer->modelName());
+        }
+      break;
+    default:
+      throw std::runtime_error("Unknown digitizer type. Not supported by jadaq::Digitizer on " + digitizer->modelName());
+    }
+
 }

@@ -49,50 +49,35 @@ public:
   }
 
 private:
-  struct Concept {
-    virtual ~Concept() = default;
-    virtual void addDigitizer(uint32_t digitizerID) = 0;
-    virtual void operator()(const jadaq::buffer<Data::ListElement422> *buffer,
-                            uint32_t digitizerID, uint64_t globalTimeStamp) = 0;
-    virtual void operator()(const jadaq::buffer<Data::ListElement8222> *buffer,
-                            uint32_t digitizerID, uint64_t globalTimeStamp) = 0;
-    virtual void
-    operator()(const jadaq::buffer<Data::WaveformElement<Data::ListElement422>>
-                   *buffer,
-               uint32_t digitizerID, uint64_t globalTimeStamp) = 0;
-    virtual void
-    operator()(const jadaq::buffer<Data::WaveformElement<Data::ListElement8222>>
-                   *buffer,
-               uint32_t digitizerID, uint64_t globalTimeStamp) = 0;
-  };
-  template <typename DW> struct Model : Concept {
-    explicit Model(DW *value) : val(value) {}
-    ~Model() { delete val; }
-    void addDigitizer(uint32_t digitizerID) override {
-      val->addDigitizer(digitizerID);
-    }
-    void operator()(const jadaq::buffer<Data::ListElement422> *buffer,
-                    uint32_t digitizerID, uint64_t globalTimeStamp) final {
-      val->operator()(buffer, digitizerID, globalTimeStamp);
-    }
-    void operator()(const jadaq::buffer<Data::ListElement8222> *buffer,
-                    uint32_t digitizerID, uint64_t globalTimeStamp) final {
-      val->operator()(buffer, digitizerID, globalTimeStamp);
-    }
-    void
-    operator()(const jadaq::buffer<Data::WaveformElement<Data::ListElement422>>
-                   *buffer,
-               uint32_t digitizerID, uint64_t globalTimeStamp) final {
-      val->operator()(buffer, digitizerID, globalTimeStamp);
-    }
-    void
-    operator()(const jadaq::buffer<Data::WaveformElement<Data::ListElement8222>>
-                   *buffer,
-               uint32_t digitizerID, uint64_t globalTimeStamp) final {
-      val->operator()(buffer, digitizerID, globalTimeStamp);
-    }
-    DW *val;
-  };
+    struct Concept
+    {
+        virtual ~Concept() = default;
+        virtual void addDigitizer(uint32_t digitizerID) = 0;
+        virtual void operator()(const jadaq::buffer<Data::ListElement422>* buffer, uint32_t digitizerID, uint64_t globalTimeStamp) = 0;
+        virtual void operator()(const jadaq::buffer<Data::ListElement8222>* buffer, uint32_t digitizerID, uint64_t globalTimeStamp) = 0;
+        virtual void operator()(const jadaq::buffer<Data::StdElement751>* buffer, uint32_t digitizerID, uint64_t globalTimeStamp) = 0;
+        virtual void operator()(const jadaq::buffer<Data::DPPQDCWaveformElement<Data::ListElement422> >* buffer, uint32_t digitizerID, uint64_t globalTimeStamp) = 0;
+        virtual void operator()(const jadaq::buffer<Data::DPPQDCWaveformElement<Data::ListElement8222> >* buffer, uint32_t digitizerID, uint64_t globalTimeStamp) = 0;
+    };
+    template <typename DW>
+    struct Model : Concept
+    {
+        explicit Model(DW* value) : val(value) {}
+        ~Model() { delete val; }
+        void addDigitizer(uint32_t digitizerID) override
+        { val->addDigitizer(digitizerID); }
+        void operator()(const jadaq::buffer<Data::ListElement422>* buffer, uint32_t digitizerID, uint64_t globalTimeStamp) final
+        { val->operator()(buffer,digitizerID,globalTimeStamp); }
+        void operator()(const jadaq::buffer<Data::ListElement8222>* buffer, uint32_t digitizerID, uint64_t globalTimeStamp) final
+        { val->operator()(buffer,digitizerID,globalTimeStamp); }
+        void operator()(const jadaq::buffer<Data::StdElement751>* buffer, uint32_t digitizerID, uint64_t globalTimeStamp) final
+        { val->operator()(buffer,digitizerID,globalTimeStamp); }
+        void operator()(const jadaq::buffer<Data::DPPQDCWaveformElement<Data::ListElement422> >* buffer, uint32_t digitizerID, uint64_t globalTimeStamp) final
+        { val->operator()(buffer,digitizerID,globalTimeStamp); }
+        void operator()(const jadaq::buffer<Data::DPPQDCWaveformElement<Data::ListElement8222> >* buffer, uint32_t digitizerID, uint64_t globalTimeStamp) final
+        { val->operator()(buffer,digitizerID,globalTimeStamp); }
+        DW* val;
+    };
 
   std::unique_ptr<Concept> instance;
 };
