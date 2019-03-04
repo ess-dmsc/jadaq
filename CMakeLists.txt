@@ -1,5 +1,6 @@
 
 cmake_minimum_required(VERSION 3.2)
+cmake_policy(VERSION 3.12)
 
 project(jadaq)
 
@@ -7,6 +8,7 @@ project(jadaq)
 # Augment CMake with our custom scripts
 #=============================================================================
 set(EXTRA_MODULES_DIR ${CMAKE_CURRENT_LIST_DIR}/cmake)
+list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
 
 #=============================================================================
 # Conan
@@ -37,16 +39,8 @@ if(${CONAN} MATCHES "AUTO")
   set(Boost_USE_STATIC_RUNTIME OFF)
 endif()
 
-if(CAEN_PATH)
-  message(STATUS ">>>> Using custom location, ${CAEN_PATH}, for Caen libs")
-  set(CAEN_INC_PATH ${CAEN_PATH}/include)
-  set(CAEN_LIB_PATH ${CAEN_PATH}/lib)
-else()
-  message(STATUS ">>>> Using default location for Caen libs")
-  set(CAEN_INC_PATH $ENV{HOME}/include)
-  set(CAEN_LIB_PATH $ENV{HOME}/lib)
-endif()
-
+Find_Package(CAEN REQUIRED)
+include_directories(${CAEN_INCLUDE_DIRS})
 
 set(CMAKE_CXX_FLAGS_RELEASE "-Ofast -flto -O3")
 set(CMAKE_CXX_STANDARD 11)
@@ -55,15 +49,11 @@ set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -Wall ${ACCEPED_WARNINGS} -Werror" )
 set(CMAKE_C_STANDARD 99)
 
 if (CMAKE_COMPILER_IS_GNUCXX AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 5.3)
-    message(FATAL_ERROR "Require at least g++-5.3: On CentOS-7 use Devtoolset-4")
+    message(FATAL_ERROR "Require at least g++-5.3: On CentOS-7 use Devtoolset > 4")
 endif()
 
 find_package(HDF5 1.10 REQUIRED COMPONENTS C CXX HL)
 include_directories(${HDF5_INCLUDE_DIRS})
-
-find_path(CAEN_INCLUDE_DIR NAMES CAENDigitizer.h   HINTS   ${CAEN_INC_PATH})
-find_library(CAEN_LIB NAMES CAENDigitizer CAENComm HINTS   ${CAEN_LIB_PATH})
-include_directories(${CAEN_INCLUDE_DIR})
 
 find_package(Boost COMPONENTS system filesystem thread program_options REQUIRED )
 
@@ -102,7 +92,7 @@ set(jadaq_INC
 
 add_executable(jadaq ${jadaq_INC} ${jadaq_SRC})
 
-target_link_libraries(jadaq ${CAEN_LIB} pthread)
+target_link_libraries(jadaq ${CAEN_LIBRARIES} pthread)
 
 target_link_libraries(jadaq ${HDF5_LIBRARIES} ${HDF5_HL_LIBRARIES})
 
