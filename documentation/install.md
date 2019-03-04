@@ -14,11 +14,11 @@ cd build
 ## Set up
 Clone the project from github to a local jadaq folder:
 ```
-git clone https://github.com/tblum/jadaq.git jadaq
+git clone https://github.com/ess-dmsc/jadaq.git jadaq
 ```
 or if you have ssh git access you might prefer:
 ```
-git clone git@github.com:tblum/jadaq.git jadaq
+git clone git@github.com:ess-dmsc/jadaq.git jadaq
 ```
 
 Make sure the build dependencies are installed. On CentOS/RHEL 7 it can

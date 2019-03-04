@@ -28,7 +28,7 @@ As usual for a CMake project:
 To specify building with Conan for dependency management and with custom location of
 Caen libraries
 ```
-> cmake <path-to-source> -DCAEN_PATH=<path-to-caenlibs> -DCONAN=AUTO
+> cmake <path-to-source> -DCAEN_ROOT=<path-to-caenlibs> -DCONAN=AUTO
 > make
 ```
 
