@@ -71,7 +71,6 @@ if(NOT "${CMAKE_GENERATOR}" MATCHES "(Win64|IA64)")
     /opt/local/lib
     $ENV{HOME}/lib
     ${extern_lib_path}/lib/x86
-    #  ${PC_CAENComm_LIBDIR} ${PC_CAENComm_LIBRARY_DIRS}
     )
 else(NOT "${CMAKE_GENERATOR}" MATCHES "(Win64|IA64)")
   # using 64 bit compiler
@@ -90,16 +89,27 @@ else(NOT "${CMAKE_GENERATOR}" MATCHES "(Win64|IA64)")
     /usr/lib
     /opt/local/lib
     $ENV{HOME}/lib
-    #  ${PC_CAENComm_LIBDIR} ${PC_CAENComm_LIBRARY_DIRS}
     )
 endif()
 
+# resolve symlinks
+get_filename_component(CAENDigitizer_LIBRARY ${CAENDigitizer_LIBRARY} REALPATH)
+get_filename_component(CAENComm_LIBRARY ${CAENComm_LIBRARY} REALPATH)
 
 include(FindPackageHandleStandardArgs)
 # handle the QUIETLY and REQUIRED arguments and set CAENDigitizer_FOUND to TRUE
 # if all listed variables are TRUE
-find_package_handle_standard_args("CAEN Comm and Digitizer libraries and includes" DEFAULT_MSG
+find_package_handle_standard_args("CAEN" DEFAULT_MSG
                                   CAEN_INCLUDE_DIR CAENDigitizer_LIBRARY CAENComm_LIBRARY)
+
+if(CAEN_FOUND)
+  if(NOT CAEN_FIND_QUIETLY)
+    message(STATUS "Found the following CAEN libraries:")
+    message(STATUS "  CAEN Comm: ${CAENComm_LIBRARY}")
+    message(STATUS "  CAEN Digitizer: ${CAENDigitizer_LIBRARY}")
+    message(STATUS "  CAEN includes: ${CAEN_INCLUDE_DIR}")
+  endif()
+endif()
 
 mark_as_advanced( CAEN_INCLUDE_DIR CAENDigitizer_LIBRARY CAENComm_LIBRARY)
 
