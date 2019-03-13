@@ -489,6 +489,7 @@ void Digitizer::acquisition() {
   digitizer->readData(readoutBuffer, CAEN_DGTZ_SLAVE_TERMINATED_READOUT_MBLT);
   uint32_t bytesRead = readoutBuffer.dataSize;
   XTRACE(DIGIT, DEB, "Read %db of acquired data", bytesRead);
+  stats.readouts++;
 
   /* NOTE: check and skip if there's no actual events to handle */
   if (bytesRead < 1) {
@@ -496,7 +497,6 @@ void Digitizer::acquisition() {
     return;
   }
   stats.bytesRead += bytesRead;
-  stats.readouts++;
 
     // model- and firmware-dependent acquisition
     switch (digitizer->familyCode()){

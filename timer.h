@@ -62,10 +62,14 @@ class SteadyTimer {
   uint64_t elapsedms() const {
     return std::chrono::duration_cast<milli>
       (clock::now() - start).count(); }
+  uint64_t elapsedus() const {
+    return std::chrono::duration_cast<micro>
+      (clock::now() - start).count(); }
 
  private:
   typedef std::chrono::steady_clock clock;
   typedef std::chrono::duration<uint64_t, std::milli > milli;
+  typedef std::chrono::duration<uint64_t, std::micro > micro;
   std::chrono::time_point<clock> start;
 };
 

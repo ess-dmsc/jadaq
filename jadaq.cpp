@@ -306,16 +306,18 @@ int main(int argc, const char *argv[]) {
   uint64_t readouts = 0;
   SteadyTimer readoutTimer;
   while (true) {
+    // reset stats
     eventsFound = 0;
+    readouts = 0;
     for (Digitizer &digitizer : digitizers) {
       if (digitizer.active) {
         try {
-          /* wait a certain amount of milliseconds between acquisition attempts to avoid
+          /* wait a certain amount of time between acquisition attempts to avoid
            potential hickups on the link */
           // NOTE: introduced to address issue #18, value determined experimentally
           // TODO: make this value configurable
-          int gracePeriod = 50 - readoutTimer.elapsedms();
-          if (gracePeriod > 0) std::this_thread::sleep_for(std::chrono::milliseconds(gracePeriod));
+          int gracePeriod = 5000 - readoutTimer.elapsedus(); // microseconds
+          if (gracePeriod > 0) std::this_thread::sleep_for(std::chrono::microseconds(gracePeriod));
           readoutTimer.reset();
           digitizer.acquisition();
         } catch (caen::Error &e) {
@@ -323,6 +325,7 @@ int main(int argc, const char *argv[]) {
           digitizer.active = false;
         }
       }
+      // accumulative stats for all digitizers
       eventsFound += digitizer.getStats().eventsFound;
       readouts += digitizer.getStats().readouts;
     }
@@ -355,6 +358,6 @@ int main(int argc, const char *argv[]) {
   XTRACE(MAIN, ALW, "Acquisition ran for %.2f seconds.", elapsed/1000000.0);
   XTRACE(MAIN, ALW, "Collecting %u events.", eventsFound);
   XTRACE(MAIN, ALW, "Resulting in a collection rate of %.2f kHz.", eventsFound / (elapsed / 1000.0));
-  XTRACE(MAIN, ALW, "Total number of readout attempts: %u.", eventsFound);
+  XTRACE(MAIN, ALW, "Total number of readout attempts: %u.", readouts);
   return 0;
 }
