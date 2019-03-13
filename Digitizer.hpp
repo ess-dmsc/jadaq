@@ -43,8 +43,9 @@
 class Digitizer {
 public:
   struct Stats {
-    long bytesRead = 0;
-    long eventsFound = 0;
+    uint64_t bytesRead = 0;
+    uint64_t eventsFound = 0;
+    uint64_t readouts = 0;
   };
 
 private:

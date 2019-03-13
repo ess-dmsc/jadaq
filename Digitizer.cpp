@@ -496,6 +496,7 @@ void Digitizer::acquisition() {
     return;
   }
   stats.bytesRead += bytesRead;
+  stats.readouts++;
 
     // model- and firmware-dependent acquisition
     switch (digitizer->familyCode()){

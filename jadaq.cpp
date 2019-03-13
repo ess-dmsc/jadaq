@@ -71,23 +71,31 @@ struct {
 } application_control;
 
 static void printStats(const std::vector<Digitizer> &digitizers, uint32_t elapsedms) {
-  static long oldevents=0;
-  static long oldbytes=0;
-  long eventsFound = 0;
-  long bytesRead = 0;
-  printf("   DIGITIZER                        Events                Bytes\n");
+  static uint64_t oldevents=0;
+  static uint64_t oldbytes=0;
+  static uint64_t oldreadouts=0;
+  uint64_t eventsFound = 0;
+  uint64_t bytesRead = 0;
+  uint64_t readouts = 0;
+  printf("   DIGITIZER                        Events                Bytes                Readouts\n");
   for (const Digitizer &digitizer : digitizers) {
     const Digitizer::Stats &stats = digitizer.getStats();
-    printf("     %-10s: %6s            %15" PRIu64 "           %15" PRIu64 "\n",
-           digitizer.name().c_str(), digitizer.active ? "ALIVE!" : "DEAD!", stats.eventsFound, stats.bytesRead);
+    printf("     %-10s: %6s            %15" PRIu64 "           %15" PRIu64 "           %15" PRIu64 "\n",
+           digitizer.name().c_str(), digitizer.active ? "ALIVE!" : "DEAD!",
+           stats.eventsFound, stats.bytesRead, stats.readouts);
     eventsFound += stats.eventsFound;
     bytesRead += stats.bytesRead;
+    readouts += stats.readouts;
   }
-  printf("     Total                         %15" PRIu64 "           %15" PRIu64 "\n", eventsFound, bytesRead);
-  printf("     Total Rates                   %15ld/s         %15ld/s\n\n",
-         (eventsFound - oldevents)*1000/elapsedms, (bytesRead - oldbytes)*1000/elapsedms);
+  printf("     Total                         %15" PRIu64 "           %15" PRIu64 "           %15" PRIu64"\n",
+         eventsFound, bytesRead, readouts);
+  printf("     Total Rates                   %15ld/s         %15ld/s         %15ld/s\n\n",
+         (eventsFound - oldevents)*1000/elapsedms,
+         (bytesRead - oldbytes)*1000/elapsedms,
+         (readouts - oldreadouts)*1000/elapsedms);
   oldevents = eventsFound;
   oldbytes = bytesRead;
+  oldreadouts = oldreadouts;
 }
 
 
@@ -294,12 +302,21 @@ int main(int argc, const char *argv[]) {
   XTRACE(MAIN, INF, "Running acquisition loop - Ctrl-C to interrupt");
 
   Timer acquisitionTimer;
-  long eventsFound = 0;
+  uint64_t eventsFound = 0;
+  uint64_t readouts = 0;
+  SteadyTimer readoutTimer;
   while (true) {
     eventsFound = 0;
     for (Digitizer &digitizer : digitizers) {
       if (digitizer.active) {
         try {
+          /* wait a certain amount of milliseconds between acquisition attempts to avoid
+           potential hickups on the link */
+          // NOTE: introduced to address issue #18, value determined experimentally
+          // TODO: make this value configurable
+          int gracePeriod = 50 - readoutTimer.elapsedms();
+          if (gracePeriod > 0) std::this_thread::sleep_for(std::chrono::milliseconds(gracePeriod));
+          readoutTimer.reset();
           digitizer.acquisition();
         } catch (caen::Error &e) {
           XTRACE(MAIN, ERR, "ERROR: unexpected exception during acquisition: %s (%d)", e.what(), e.code());
@@ -307,6 +324,7 @@ int main(int argc, const char *argv[]) {
         }
       }
       eventsFound += digitizer.getStats().eventsFound;
+      readouts += digitizer.getStats().readouts;
     }
     if (interrupt) {
       XTRACE(MAIN, ALW, "Caught interrupt - stop acquisition and clean up.");
@@ -316,7 +334,7 @@ int main(int argc, const char *argv[]) {
       XTRACE(MAIN, ALW, "Time out - stop acquisition and clean up.");
       break;
     }
-    if (conf.events >= 0 && eventsFound >= conf.events) {
+    if (conf.events >= 0 && eventsFound >= static_cast<uint64_t>(conf.events)) {
       XTRACE(MAIN, ALW, "Collected requested events - stop acquisition and clean up.");
       break;
     }
@@ -335,7 +353,8 @@ int main(int argc, const char *argv[]) {
   digitizers.clear();
 
   XTRACE(MAIN, ALW, "Acquisition ran for %.2f seconds.", elapsed/1000000.0);
-  XTRACE(MAIN, ALW, "Collecting %d events.", eventsFound);
+  XTRACE(MAIN, ALW, "Collecting %u events.", eventsFound);
   XTRACE(MAIN, ALW, "Resulting in a collection rate of %.2f kHz.", eventsFound / (elapsed / 1000.0));
+  XTRACE(MAIN, ALW, "Total number of readout attempts: %u.", eventsFound);
   return 0;
 }

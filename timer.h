@@ -1,4 +1,7 @@
 
+#ifndef JADAQ_TIMER
+#define JADAQ_TIMER
+
 #include <chrono>
 #include <cstdint>
 
@@ -27,7 +30,7 @@ private:
 };
 
 
-
+// timer based on high-resolution clock
 class Timer {
 
   typedef std::chrono::high_resolution_clock HRClock;
@@ -49,3 +52,21 @@ class Timer {
   private:
     TP t1;
 };
+
+
+// timer based on steady clock
+class SteadyTimer {
+ public:
+ SteadyTimer() : start(clock::now()) {}
+  void reset() { start = clock::now(); }
+  uint64_t elapsedms() const {
+    return std::chrono::duration_cast<milli>
+      (clock::now() - start).count(); }
+
+ private:
+  typedef std::chrono::steady_clock clock;
+  typedef std::chrono::duration<uint64_t, std::milli > milli;
+  std::chrono::time_point<clock> start;
+};
+
+#endif // JADAQ_TIMER
