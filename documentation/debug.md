@@ -1,5 +1,12 @@
 # Debugging
 
+## Include debugging symbols and disable optimizations
+For running jadaq inside a debugger like `gdb`, one gets the most useful output
+when debugging symbols are enabled and compiler optimizations are disabled. This can be achieved by running CMake with the following additional switches:
+```
+cmake -DCMAKE_BUILD_TYPE=DEBUG DCMAKE_C_FLAGS_DEBUG="-g -O0" -DCMAKE_CXX_FLAGS_DEBUG="-g -O0" ..
+```
+
 ## Debugging jumps in DPP timestamps
 We have seen occasional jumps in the resulting event timestamps. It
 looks like the acquisition can't keep up if the events arrive often
