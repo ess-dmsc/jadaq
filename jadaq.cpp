@@ -316,7 +316,7 @@ int main(int argc, const char *argv[]) {
            potential hickups on the link */
           // NOTE: introduced to address issue #18, value determined experimentally
           // TODO: make this value configurable
-          int gracePeriod = 5000 - readoutTimer.elapsedus(); // microseconds
+          int gracePeriod = 500 - readoutTimer.elapsedus(); // microseconds
           if (gracePeriod > 0) std::this_thread::sleep_for(std::chrono::microseconds(gracePeriod));
           readoutTimer.reset();
           digitizer.acquisition();
