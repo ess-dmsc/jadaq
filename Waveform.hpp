@@ -120,7 +120,7 @@ static inline std::ostream &operator<<(std::ostream &os, const Interval &i) {
             static const hsize_t n[1] = {num_samples};
             datatype.insertMember("samples", HOFFSET(StdWaveform, samples) + offset, H5::ArrayType(H5::PredType::NATIVE_UINT16,1,n));
         }
-        static size_t size(size_t samples) { return sizeof(StdWaveform) + sizeof(uint16_t)*samples; }
+      static size_t size(size_t samples) { return sizeof(uint16_t) + sizeof(uint16_t)*samples; }
 
         H5::CompType h5type() const
         {

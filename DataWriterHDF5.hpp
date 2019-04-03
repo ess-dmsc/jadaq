@@ -177,7 +177,7 @@ public:
     }
     if (table->AppendPackets(
             buffer->size(),
-            (void *)buffer->data())) // Fuck this is the worst interface ever!
+            (char *)buffer->data()+sizeof(Data::Header))) // Fuck this is the worst interface ever!
     {
       std::cerr << "Error while writing to HDF5 file: "
                 << "\n\t "
