@@ -42,6 +42,7 @@ private:
     FL_PacketTable *previous = nullptr;
     FL_PacketTable *current = nullptr;
     H5::Group *group = nullptr;
+    uint16_t format = Data::ElementType::None;
     uint64_t currentTimeStamp = 0;
     FL_PacketTable *&getTable(uint64_t timeStamp) {
       if (timeStamp == currentTimeStamp)
@@ -79,18 +80,18 @@ private:
       return digitizerInfo[digitizerID];
     }
   }
-  void writeAttribute(std::string name, H5::DataSet &dataset,
-                      const H5::PredType &type, const void *data) const {
+  template<typename H5LOC>
+  void writeAttribute(std::string name, H5LOC& location, const H5::PredType& type, const void* data) const
+  {
     try {
-      H5::Attribute a =
-          dataset.createAttribute(name, type, H5::DataSpace(H5S_SCALAR));
-      a.write(type, data);
+      H5::Attribute a = location.createAttribute(name, type, H5::DataSpace(H5S_SCALAR));
+      a.write(type,data);
       a.close();
-    } catch (H5::Exception &e) {
-      std::cerr << "ERROR: DataWriterHDF5 can not writeAttribute \"" << name
-                << "\"." << std::endl;
-      throw;
-    }
+    } catch (H5::Exception& e)
+      {
+        std::cerr << "ERROR: DataWriterHDF5 can not writeAttribute \"" << name << "\"." << std::endl;
+        throw;
+      }
   }
 
   void open(const std::string &id) {
@@ -161,6 +162,11 @@ public:
       return;
     mutex.lock();
     DigitizerInfo &info = getDigitizerInfo(digitizerID);
+    if (info.format == Data::ElementType::None){
+      // write data format identifier to file
+      info.format = E::type();
+      writeAttribute("JADAQ_DATA_TYPE", *info.group, H5::PredType::NATIVE_UINT16, &info.format);
+    }
     FL_PacketTable *&table = info.getTable(globalTimeStamp);
     if (table == nullptr) {
       /// \todo (char*) cast used to get rid of warning, maybe check this is OK?
