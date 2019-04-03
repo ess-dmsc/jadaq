@@ -128,7 +128,7 @@ private:
                 events += 1;
                 typename E::EventType event = eventIterator.event<typename E::EventType>();
                 uint16_t group = eventIterator.group();
-                XTRACE(DATAH, DEB, "Digitizer: %d, time: 0x%04x", digitizerID, event.timeTag());
+                XTRACE(DATAH, DEB, "Digitizer: %d_%d, time: 0x%04x", digitizerID>>16, digitizerID & 0xFFFF, event.timeTag());
                 if (current.maxLocalTime[group] < event.timeTag() + maxJitter[group]) {
                   if (current.maxLocalTime[group] > 0 ||
                       previous.maxLocalTime[group] == 0 ||
