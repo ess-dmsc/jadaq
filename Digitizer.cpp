@@ -421,6 +421,16 @@ void Digitizer::initialize(DataWriter& dataWriter)
     default:
       throw std::runtime_error("Unknown digitizer type. Not supported by jadaq::Digitizer on " + digitizer->modelName());
     } // familyCode
+
+    // flush read out buffer on the digitizer
+    uint32_t bytesRead = 1;
+    uint32_t bytesFlushed = 0;
+    while (bytesRead > 0){
+      digitizer->readData(readoutBuffer, CAEN_DGTZ_SLAVE_TERMINATED_READOUT_MBLT);
+      bytesRead = readoutBuffer.dataSize;
+      bytesFlushed += bytesRead;
+    }
+    XTRACE(DIGIT, DEB, "Flushed %db of data still in digitizer buffer", bytesRead);
 }
 
 void Digitizer::close() {
