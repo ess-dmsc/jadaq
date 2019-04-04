@@ -35,7 +35,7 @@
 constexpr uint8_t version_maj {1};
 constexpr uint8_t version_min {3};
 
-#define JUMBO_PAYLOAD 1500
+#define JUMBO_PAYLOAD 9000
 #define IP_HEADER 20
 #define UDP_HEADER 8
 
