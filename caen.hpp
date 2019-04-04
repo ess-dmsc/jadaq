@@ -30,7 +30,7 @@
 #ifndef _CAEN_HPP
 #define _CAEN_HPP
 
-#include "_CAENDigitizer.h"
+#include <CAENDigitizer.h>
 #include <CAENDigitizerType.h>
 #include <boost/any.hpp>
 #include <cassert>
@@ -459,7 +459,7 @@ static CAEN_DGTZ_BoardInfo_t getRawDigitizerBoardInfo(int handle) {
  */
 static CAEN_DGTZ_DPPFirmware_t getRawDigitizerDPPFirmware(int handle) {
   CAEN_DGTZ_DPPFirmware_t firmware;
-  errorHandler(_CAEN_DGTZ_GetDPPFirmwareType(handle, &firmware));
+  errorHandler(CAEN_DGTZ_GetDPPFirmwareType(handle, &firmware));
   return firmware;
 }
 /**
@@ -590,7 +590,7 @@ public:
 
   CAEN_DGTZ_DPPFirmware_t getDPPFirmwareType() {
     CAEN_DGTZ_DPPFirmware_t firmware = CAEN_DGTZ_NotDPPFirmware;
-    errorHandler(_CAEN_DGTZ_GetDPPFirmwareType(handle_, &firmware));
+    errorHandler(CAEN_DGTZ_GetDPPFirmwareType(handle_, &firmware));
     return firmware;
   }
 
@@ -736,7 +736,7 @@ public:
   /* Memory management */
   ReadoutBuffer mallocReadoutBuffer() {
     ReadoutBuffer buffer;
-    errorHandler(_CAEN_DGTZ_MallocReadoutBuffer(handle_, &buffer.data, &buffer.size));
+    errorHandler(CAEN_DGTZ_MallocReadoutBuffer(handle_, &buffer.data, &buffer.size));
     return buffer;
   }
 
@@ -776,7 +776,7 @@ public:
       throw std::runtime_error("ZLE Firmware not supported by DPPEvents_t.");
       break;
     case CAEN_DGTZ_DPPFirmware_QDC:
-      events = new DPPEvents<_CAEN_DGTZ_DPP_QDC_Event_t>{};
+      events = new DPPEvents<CAEN_DGTZ_DPP_QDC_Event_t>{};
       break;
     case CAEN_DGTZ_NotDPPFirmware:
       throw std::runtime_error(
@@ -786,7 +786,7 @@ public:
       throw std::runtime_error(
           "Unknown firmware type. Not supported by Digitizer.");
     }
-    errorHandler(_CAEN_DGTZ_MallocDPPEvents(handle_, events->data(),
+    errorHandler(CAEN_DGTZ_MallocDPPEvents(handle_, events->data(),
                                             &(events->allocatedSize)));
     return events;
   }
@@ -796,19 +796,19 @@ public:
 
   void freeDPPEvents(DPPEvents_t *events) {
     // if (events->allocatedSize < 0)  // \todo meant !=
-    //   errorHandler(_CAEN_DGTZ_FreeDPPEvents(handle_, events->data()));
+    //   errorHandler(CAEN_DGTZ_FreeDPPEvents(handle_, events->data()));
     events->allocatedSize = 0;
   }
 
   DPPWaveforms mallocDPPWaveforms() {
     DPPWaveforms waveforms;
-    errorHandler(_CAEN_DGTZ_MallocDPPWaveforms(handle_, &waveforms.ptr,
+    errorHandler(CAEN_DGTZ_MallocDPPWaveforms(handle_, &waveforms.ptr,
                                                &waveforms.allocatedSize));
     return waveforms;
   }
   void freeDPPWaveforms(DPPWaveforms waveforms) {
     if (waveforms.ptr != nullptr) {
-      errorHandler(_CAEN_DGTZ_FreeDPPWaveforms(handle_, waveforms.ptr));
+      errorHandler(CAEN_DGTZ_FreeDPPWaveforms(handle_, waveforms.ptr));
       waveforms.ptr = nullptr;
       waveforms.allocatedSize = 0;
     }
@@ -858,12 +858,12 @@ public:
   }
 
   void getDPPEvents(ReadoutBuffer buffer, DPPEvents_t *events) {
-    errorHandler(_CAEN_DGTZ_GetDPPEvents(handle_, buffer.data, buffer.dataSize,
+    errorHandler(CAEN_DGTZ_GetDPPEvents(handle_, buffer.data, buffer.dataSize,
                                          events->data(), events->nEvents));
   }
 
   DPPWaveforms &decodeDPPWaveforms(void *event, DPPWaveforms &waveforms) {
-    errorHandler(_CAEN_DGTZ_DecodeDPPWaveforms(handle_, event, waveforms.ptr));
+    errorHandler(CAEN_DGTZ_DecodeDPPWaveforms(handle_, event, waveforms.ptr));
     return waveforms;
   }
   /*
@@ -1039,12 +1039,12 @@ public:
   uint32_t getChannelTriggerThreshold(uint32_t channel) {
     uint32_t treshold;
     errorHandler(
-        _CAEN_DGTZ_GetChannelTriggerThreshold(handle_, channel, &treshold));
+        CAEN_DGTZ_GetChannelTriggerThreshold(handle_, channel, &treshold));
     return treshold;
   }
   void setChannelTriggerThreshold(uint32_t channel, uint32_t treshold) {
     errorHandler(
-        _CAEN_DGTZ_SetChannelTriggerThreshold(handle_, channel, treshold));
+        CAEN_DGTZ_SetChannelTriggerThreshold(handle_, channel, treshold));
   }
 
   /**
@@ -1073,7 +1073,7 @@ public:
     if (group >= groups()) // Needed because of bug in
                            // CAEN_DGTZ_GetGroupTriggerThreshold - patch pending
       errorHandler(CAEN_DGTZ_InvalidChannelNumber);
-    errorHandler(_CAEN_DGTZ_GetChannelGroupMask(handle_, group, &mask));
+    errorHandler(CAEN_DGTZ_GetChannelGroupMask(handle_, group, &mask));
     return mask;
   }
   void setChannelGroupMask(uint32_t group, uint32_t mask) {
@@ -1081,7 +1081,7 @@ public:
     if (group >= groups()) // Needed because of bug in
                            // CAEN_DGTZ_SetGroupTriggerThreshold - patch pending
       errorHandler(CAEN_DGTZ_InvalidChannelNumber);
-    errorHandler(_CAEN_DGTZ_SetChannelGroupMask(handle_, group, mask));
+    errorHandler(CAEN_DGTZ_SetChannelGroupMask(handle_, group, mask));
   }
 
   CAEN_DGTZ_TriggerPolarity_t getTriggerPolarity(uint32_t channel) {
@@ -1411,7 +1411,7 @@ public:
   }
 
   /* NOTE: this is a public function according to docs but only
-   * exposed as _CAEN_DGTZ_Read_EEPROM in actual API. We leave it
+   * exposed as CAEN_DGTZ_Read_EEPROM in actual API. We leave it
    * as is without trying to wrap buf nicely or anything.
    */
   unsigned char *read_EEPROM(int EEPROMIndex, unsigned short add, int nbOfBytes,
@@ -1503,7 +1503,7 @@ public:
   uint32_t getNumEventsPerAggregate(int32_t channel) {
     uint32_t numEvents;
     errorHandler(
-        _CAEN_DGTZ_GetNumEventsPerAggregate(handle_, &numEvents, channel));
+        CAEN_DGTZ_GetNumEventsPerAggregate(handle_, &numEvents, channel));
     return numEvents;
   }
   void setNumEventsPerAggregate(uint32_t numEvents) {
@@ -1521,7 +1521,7 @@ public:
     default:
       break;
     }
-    errorHandler(_CAEN_DGTZ_SetNumEventsPerAggregate(handle_, n, channel));
+    errorHandler(CAEN_DGTZ_SetNumEventsPerAggregate(handle_, n, channel));
   }
 
   uint32_t getMaxNumAggregatesBLT() {

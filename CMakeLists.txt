@@ -58,7 +58,6 @@ include_directories(${HDF5_INCLUDE_DIRS})
 find_package(Boost COMPONENTS system filesystem thread program_options REQUIRED )
 
 set(jadaq_SRC 
-  _CAENDigitizer.c 
   Configuration.cpp 
   Digitizer.cpp 
   DPPQDCEvent.cpp
@@ -69,7 +68,6 @@ set(jadaq_SRC
   jadaq.cpp
 )
 set(jadaq_INC
-  _CAENDigitizer.h
   Configuration.hpp
   DataFormat.hpp
   DataHandler.hpp
