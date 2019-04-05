@@ -423,6 +423,7 @@ void Digitizer::initialize(DataWriter& dataWriter)
     } // familyCode
 
     // flush read out buffer on the digitizer
+    // NOTE: it turns out there is no indication that this is necessary; see issue #26; remove at will
     uint32_t bytesRead = 1;
     uint32_t bytesFlushed = 0;
     while (bytesRead > 0){
@@ -430,7 +431,9 @@ void Digitizer::initialize(DataWriter& dataWriter)
       bytesRead = readoutBuffer.dataSize;
       bytesFlushed += bytesRead;
     }
-    XTRACE(DIGIT, DEB, "Flushed %db of data still in digitizer buffer", bytesRead);
+    if (bytesFlushed>0){
+      XTRACE(DIGIT, WAR, "Flushed %db of data still in digitizer buffer", bytesRead);
+    }
 }
 
 void Digitizer::close() {
@@ -455,6 +458,9 @@ void Digitizer::startAcquisition() {
   if (id == 0xaaaabbbb) {
     return;
   }
+  // fixed minimum wait for digitizer to be ready (value determined experimentally):
+  std::this_thread::sleep_for(std::chrono::milliseconds(175));
+    // additional wait if necessary:
   while (!ready())
     std::this_thread::sleep_for(std::chrono::milliseconds(10));
   digitizer->startAcquisition();
