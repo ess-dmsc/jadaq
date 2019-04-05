@@ -53,6 +53,7 @@ enum FunctionID {
   AnalogMonOutput,
   AnalogInspectionMonParams,
   EventPackaging,
+  TriggerCountingMode,
   FastTriggerDigitizing,
   FastTriggerMode,
   DRS4SamplingFrequency,

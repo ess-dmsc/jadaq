@@ -48,6 +48,7 @@ static std::unordered_map<std::string, FunctionID> functionMap = {
     MAP_ENTRY(AnalogMonOutput),
     MAP_ENTRY(AnalogInspectionMonParams),
     MAP_ENTRY(EventPackaging),
+    MAP_ENTRY(TriggerCountingMode),
     MAP_ENTRY(FastTriggerDigitizing),
     MAP_ENTRY(FastTriggerMode),
     MAP_ENTRY(DRS4SamplingFrequency),
@@ -123,6 +124,7 @@ const std::string to_string(FunctionID id) {
     CASE_TO_STR(AnalogMonOutput)
     CASE_TO_STR(AnalogInspectionMonParams)
     CASE_TO_STR(EventPackaging)
+    CASE_TO_STR(TriggerCountingMode)
     CASE_TO_STR(FastTriggerDigitizing)
     CASE_TO_STR(FastTriggerMode)
     CASE_TO_STR(DRS4SamplingFrequency)
