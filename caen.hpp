@@ -1469,6 +1469,46 @@ public:
         CAEN_DGTZ_SetTriggerLogic(handle_, params.logic, params.majorityLevel));
   }
 
+  /**
+   * @brief Get Trigger Counting Mode Selection Bit
+   *
+   * (bit 3 in register 0x8100)
+   *
+   * This register bit controls whether only accepted triggers or all triggers
+   * are counted.
+   *
+   * Note: only to be used with the x1751 digitizer series
+   *
+   * @returns
+   * 32-bit value set to either 1 (all) or 0 (only accepted)
+   */
+  uint32_t getTriggerCountingMode() {
+    uint32_t value;
+    errorHandler(CAEN_DGTZ_ReadRegister(handle_, 0x8100, &value));
+    return (value & 0x08) >> 3;
+  }
+
+  /**
+   * @brief Set Trigger Counting Mode Selection Bit
+   *
+   * (bit 3 in register 0x8100)
+   *
+   * This register bit controls whether only accepted triggers or all triggers
+   * are counted.
+   *
+   *  Note: only to be used with the x1751 digitizer series
+   *
+   * @param value
+   * 32-bit value set to either 1 (all) or 0 (only accepted)
+   */
+   void setTriggerCountingMode(uint32_t value) {
+    uint32_t current;
+    errorHandler(CAEN_DGTZ_ReadRegister(handle_, 0x8100, &current));
+    current |= (value & 0x0001) << 3;
+    errorHandler(CAEN_DGTZ_WriteRegister(handle_, 0x8100, current));
+  }
+
+
   SAMTriggerCountVetoParams getSAMTriggerCountVetoParam(int channel) {
     SAMTriggerCountVetoParams params;
     errorHandler(CAEN_DGTZ_GetSAMTriggerCountVetoParam(
@@ -3640,7 +3680,6 @@ public:
         errorHandler(CAEN_DGTZ_ReadRegister(handle_, 0x8104, &mask));
         return mask;
       }
-
 
       // TODO: many register-level functions are missing in the 751 implementation; they can likely be easily transferred from the 740 class if needed
     };
