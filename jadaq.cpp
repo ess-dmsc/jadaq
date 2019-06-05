@@ -305,11 +305,13 @@ int main(int argc, const char *argv[]) {
   Timer acquisitionTimer;
   uint64_t eventsFound = 0;
   uint64_t readouts = 0;
+  uint16_t alive = 0;
   SteadyTimer readoutTimer;
   while (true) {
     // reset stats
     eventsFound = 0;
     readouts = 0;
+    alive = 0;
     for (Digitizer &digitizer : digitizers) {
       if (digitizer.active) {
         try {
@@ -325,6 +327,7 @@ int main(int argc, const char *argv[]) {
           }
           readoutTimer.reset();
           digitizer.acquisition();
+          alive++;
         } catch (caen::Error &e) {
           XTRACE(MAIN, ERR, "ERROR: unexpected exception during acquisition: %s (%d)", e.what(), e.code());
           digitizer.active = false;
@@ -346,17 +349,29 @@ int main(int argc, const char *argv[]) {
       XTRACE(MAIN, ALW, "Collected requested events - stop acquisition and clean up.");
       break;
     }
+    if (alive == 0) {
+      XTRACE(MAIN, ALW, "No digitizers alive any longer -- stopping acquisition.");
+      break;
+    }
   }
 
   auto elapsed = acquisitionTimer.timeus();
   for (Digitizer &digitizer : digitizers) {
     XTRACE(MAIN, INF, "Stop acquisition on digitizer %s", digitizer.name().c_str());
-    digitizer.stopAcquisition();
+    try{
+      digitizer.stopAcquisition();
+    } catch (caen::Error &e) {
+      XTRACE(MAIN, ERR, "ERROR: unexpected exception when stopping acquisition: %s (%d)", e.what(), e.code());
+    }
   }
   XTRACE(MAIN, ALW, "Acquisition complete - shutting down.");
   /* Clean up after all digitizers: buffers, etc. */
   for (Digitizer &digitizer : digitizers) {
-    digitizer.close();
+    try{
+      digitizer.close();
+    } catch (caen::Error &e) {
+      XTRACE(MAIN, ERR, "ERROR: unexpected exception during shutdown: %s (%d)", e.what(), e.code());
+    }
   }
   digitizers.clear();
 
