@@ -70,26 +70,27 @@ struct {
   std::vector<Digitizer> * digarr;
 } application_control;
 
-static void printStats(const std::vector<Digitizer> &digitizers, uint32_t elapsedms) {
+static void printStats(const std::vector<Digitizer> &digitizers, uint32_t elapsedms, uint64_t time) {
   static uint64_t oldevents=0;
   static uint64_t oldbytes=0;
   static uint64_t oldreadouts=0;
   uint64_t eventsFound = 0;
   uint64_t bytesRead = 0;
   uint64_t readouts = 0;
+  printf("  Status after %ld seconds runtime:\n", time/1000);
   printf("   DIGITIZER                        Events                Bytes                Readouts\n");
   for (const Digitizer &digitizer : digitizers) {
     const Digitizer::Stats &stats = digitizer.getStats();
-    printf("     %-10s: %6s            %15" PRIu64 "           %15" PRIu64 "           %15" PRIu64 "\n",
+    printf("     %-10s: %6s    %15" PRIu64 "           %15" PRIu64 "           %15" PRIu64 "\n",
            digitizer.name().c_str(), digitizer.active ? "ALIVE!" : "DEAD!",
            stats.eventsFound, stats.bytesRead, stats.readouts);
     eventsFound += stats.eventsFound;
     bytesRead += stats.bytesRead;
     readouts += stats.readouts;
   }
-  printf("     Total                         %15" PRIu64 "           %15" PRIu64 "           %15" PRIu64"\n",
+  printf("     Total                 %15" PRIu64 "           %15" PRIu64 "           %15" PRIu64"\n",
          eventsFound, bytesRead, readouts);
-  printf("     Total Rates                   %15ld/s         %15ld/s         %15ld/s\n\n",
+  printf("     Total Rates           %15ld/s         %15ld/s         %15ld/s\n\n",
          (eventsFound - oldevents)*1000/elapsedms,
          (bytesRead - oldbytes)*1000/elapsedms,
          (readouts - oldreadouts)*1000/elapsedms);
@@ -112,7 +113,7 @@ void service_thread() {
     }
 
     if (stattimer.elapsedus() >= (uint64_t) conf.stats * 1000000) {
-      printStats(*application_control.digarr, stattimer.elapsedus()/1000);
+      printStats(*application_control.digarr, stattimer.elapsedus()/1000, stoptimer.elapsedms());
       stattimer.reset();
     }
     usleep(1000);
@@ -316,8 +317,12 @@ int main(int argc, const char *argv[]) {
            potential hickups on the link */
           // NOTE: introduced to address issue #18, value determined experimentally
           // TODO: make this value configurable
-          int gracePeriod = 500 - readoutTimer.elapsedus(); // microseconds
-          if (gracePeriod > 0) std::this_thread::sleep_for(std::chrono::microseconds(gracePeriod));
+          int gracePeriod = 750 - readoutTimer.elapsedus(); // microseconds
+          if (gracePeriod > 15) {std::this_thread::sleep_for(std::chrono::microseconds(gracePeriod));}
+          else {
+            // wait at least 10us before polling again
+            std::this_thread::sleep_for(std::chrono::microseconds(15));
+          }
           readoutTimer.reset();
           digitizer.acquisition();
         } catch (caen::Error &e) {
