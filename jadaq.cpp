@@ -54,8 +54,8 @@ struct {
   bool hdf5out = false;
   bool nullout = false;
   long events = -1;
-  unsigned int time = 0xffffff; // many seconds
-  unsigned int stats = 0xffffff; // many seconds
+  uint32_t time = 0xffffff; // many seconds
+  uint32_t stats = 0xffffff; // many seconds
   int verbose = 1;
   std::string *path = nullptr;
   std::string *basename = nullptr;
@@ -102,17 +102,17 @@ static void printStats(const std::vector<Digitizer> &digitizers, uint32_t elapse
 
 void service_thread() {
   XTRACE(MAIN, INF, "Starting service thread");
-  Timer stoptimer;
-  Timer stattimer;
+  SteadyTimer stoptimer;
+  SteadyTimer stattimer;
 
   while (1) {
-    if (stoptimer.timeus() >= conf.time * 1000000) {
+    if (stoptimer.elapsedus() >= (uint64_t) conf.time * 1000000) {
       application_control.timeout = true;
       return;
     }
 
-    if (stattimer.timeus() >= conf.stats * 1000000) {
-      printStats(*application_control.digarr, stattimer.timeus()/1000);
+    if (stattimer.elapsedus() >= (uint64_t) conf.stats * 1000000) {
+      printStats(*application_control.digarr, stattimer.elapsedus()/1000);
       stattimer.reset();
     }
     usleep(1000);
