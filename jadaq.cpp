@@ -78,7 +78,7 @@ static void printStats(const std::vector<Digitizer> &digitizers, uint32_t elapse
   uint64_t bytesRead = 0;
   uint64_t readouts = 0;
   printf("  Status after %ld seconds runtime:\n", time/1000);
-  printf("   DIGITIZER                        Events                Bytes                Readouts\n");
+  printf("   DIGITIZER                        Events                  Bytes                       Readouts\n");
   for (const Digitizer &digitizer : digitizers) {
     const Digitizer::Stats &stats = digitizer.getStats();
     printf("     %-10s: %6s    %15" PRIu64 "           %15" PRIu64 "           %15" PRIu64 "\n",
@@ -96,7 +96,7 @@ static void printStats(const std::vector<Digitizer> &digitizers, uint32_t elapse
          (readouts - oldreadouts)*1000/elapsedms);
   oldevents = eventsFound;
   oldbytes = bytesRead;
-  oldreadouts = oldreadouts;
+  oldreadouts = readouts;
 }
 
 
@@ -318,10 +318,10 @@ int main(int argc, const char *argv[]) {
           // NOTE: introduced to address issue #18, value determined experimentally
           // TODO: make this value configurable
           int gracePeriod = 750 - readoutTimer.elapsedus(); // microseconds
-          if (gracePeriod > 15) {std::this_thread::sleep_for(std::chrono::microseconds(gracePeriod));}
+          if (gracePeriod > 50) {std::this_thread::sleep_for(std::chrono::microseconds(gracePeriod));}
           else {
             // wait at least 10us before polling again
-            std::this_thread::sleep_for(std::chrono::microseconds(15));
+            std::this_thread::sleep_for(std::chrono::microseconds(50));
           }
           readoutTimer.reset();
           digitizer.acquisition();
