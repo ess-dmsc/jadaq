@@ -112,6 +112,8 @@ private:
       previous.malloc(dataWriter, samples);
       current.malloc(dataWriter, samples);
       next.malloc(dataWriter, samples);
+      previous.globalTimeStamp = DataHandler::getTimeMsecs();
+      current.globalTimeStamp = DataHandler::getTimeMsecs();
     }
     ~Implementation() {
       flush();
