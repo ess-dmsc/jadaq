@@ -107,16 +107,16 @@ void service_thread() {
   SteadyTimer stattimer;
 
   while (1) {
-    if (stoptimer.elapsedus() >= (uint64_t) conf.time * 1000000) {
+    if (stoptimer.elapsedms() >= (uint64_t) conf.time * 1e3) {
       application_control.timeout = true;
       return;
     }
 
-    if (stattimer.elapsedus() >= (uint64_t) conf.stats * 1000000) {
+    if (stattimer.elapsedms() >= (uint64_t) conf.stats * 1e3) {
       printStats(*application_control.digarr, stattimer.elapsedus()/1000, stoptimer.elapsedms());
       stattimer.reset();
     }
-    usleep(1000);
+    usleep(5000);
   }
 
 }
@@ -133,11 +133,11 @@ int main(int argc, const char *argv[]) {
         po::value<int>()->value_name("<count>")->default_value(conf.events),
         "Stop acquisition after collecting <count> events")(
         "time,t",
-        po::value<float>()->value_name("<seconds>")->default_value(conf.time),
+        po::value<int>()->value_name("<seconds>")->default_value(conf.time),
         "Stop acquisition after <seconds> seconds")(
         "hdf5,H", po::bool_switch(&conf.hdf5out), "Output to hdf5 file.")(
         "stats",
-        po::value<float>()->value_name("<seconds>")->default_value(conf.stats),
+        po::value<int>()->value_name("<seconds>")->default_value(conf.stats),
         "Print statistics every <seconds> seconds")(
         "path,p",
         po::value<std::string>()->value_name("<path>")->default_value("."),
@@ -187,8 +187,8 @@ int main(int argc, const char *argv[]) {
     if (!conf.path->empty() && *conf.path->rbegin() != '/')
       *conf.path += '/';
     conf.events = vm["events"].as<int>();
-    conf.time = vm["time"].as<float>();
-    conf.stats = vm["stats"].as<float>();
+    conf.time = vm["time"].as<int>();
+    conf.stats = vm["stats"].as<int>();
     if (vm.count("network")) {
       conf.network = new std::string(vm["network"].as<std::string>());
       conf.port = new std::string(vm["port"].as<std::string>());
