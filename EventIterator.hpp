@@ -163,7 +163,7 @@ private:
     bool extrasFlag() const { return extras; }
 
     uint16_t currentGroup() {
-      assert(group >= 0);
+      //assert(group >= 0);
       return (uint16_t)group;
     }
 
@@ -172,7 +172,7 @@ private:
       if (ptr == end) {
         nextGroup();
       }
-      assert(ptr <= end);
+      //assert(ptr <= end);
       return *this;
     }
     GroupIterator operator++(int) {

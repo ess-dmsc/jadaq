@@ -342,8 +342,8 @@ int main(int argc, const char *argv[]) {
     }
     if (conf.split > 0.0f) {
       if (splitTimer.timeus()/1000000 >= conf.split) {
-        std::string extension = ++runNumber.toString();
-        dataWriter.split(runNumber);
+        dataWriter.split((++runNumber).toString());
+        splitTimer.reset();
       }
     }
     if (interrupt) {
