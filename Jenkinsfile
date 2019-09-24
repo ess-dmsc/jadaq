@@ -23,7 +23,7 @@ images = [
     ],
     'debian9': [
         'name': 'screamingudder/debian9-build-node:3.4.0',
-        'cmake': 'cmake3',
+        'cmake': 'cmake',
         'sh'  : 'bash -e',
         'cmake_flags': '-DCMAKE_BUILD_TYPE=Debug'
     ]
