@@ -1,6 +1,6 @@
 project = "jadaq"
 
-clangformat_os = "fedora25"
+cppcheck_os = "debian9"
 
 // Set number of old builds to keep.
  properties([[
@@ -16,13 +16,13 @@ clangformat_os = "fedora25"
 
 images = [
     'centos7': [
-        'name': 'essdmscdm/centos7-build-node:3.2.0',
+        'name': 'screamingudder/centos7-build-node:4.6.0',
         'cmake': 'cmake3',
         'sh': '/usr/bin/scl enable rh-python35 devtoolset-6 -- /bin/bash -e',
         'cmake_flags': '-DCMAKE_BUILD_TYPE=Release'
     ],
-    'fedora25': [
-        'name': 'essdmscdm/fedora25-build-node:2.0.0',
+    'debian9': [
+        'name': 'screamingudder/debian9-build-node:3.4.0',
         'sh'  : 'bash -e',
         'cmake_flags': ''
     ]
@@ -124,13 +124,13 @@ def get_pipeline(image_key)
                 def container = get_container(image_key)
 
                 docker_copy_code(image_key)
-                if (image_key != clangformat_os) {
+                if (image_key != cppcheck_os) {
                     docker_dependencies(image_key)
                     docker_cmake(image_key, images[image_key]['cmake_flags'])
                     docker_build(image_key)
                 }
 
-                if (image_key == clangformat_os) {
+                if (image_key == cppcheck_os) {
                   docker_cppcheck(image_key)
                   step([$class: 'WarningsPublisher', parserConfigurations: [[parserName: 'Cppcheck Parser', pattern: "cppcheck.txt"]]])
                 }
