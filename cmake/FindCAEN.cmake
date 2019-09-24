@@ -33,26 +33,12 @@ PATH_SUFFIXES CAENDigitizerLib )
 if(NOT "${CMAKE_GENERATOR}" MATCHES "(Win64|IA64)")
   # using 32 bit compiler
   find_library(CAENDigitizer_LIBRARY NAMES CAENDigitizer HINTS ${libhints32})
-else(NOT "${CMAKE_GENERATOR}" MATCHES "(Win64|IA64)")
-  # using 64 bit compiler
-  find_library(CAENDigitizer_LIBRARY NAMES CAENDigitizer HINTS ${libhints64})
-endif()
-
-# library might be installed in either or both 32/64bit, need to figure out which one to use
-if(NOT "${CMAKE_GENERATOR}" MATCHES "(Win64|IA64)")
-  # using 32 bit compiler
   find_library(CAENComm_LIBRARY NAMES CAENComm HINTS ${libhints32})
-else(NOT "${CMAKE_GENERATOR}" MATCHES "(Win64|IA64)")
-  # using 64 bit compiler
-  find_library(CAENComm_LIBRARY NAMES CAENComm HINTS ${libhints64})
-endif()
-
-# library might be installed in either or both 32/64bit, need to figure out which one to use
-if(NOT "${CMAKE_GENERATOR}" MATCHES "(Win64|IA64)")
-  # using 32 bit compiler
   find_library(CAENVME_LIBRARY NAMES CAENVME HINTS ${libhints32})
 else(NOT "${CMAKE_GENERATOR}" MATCHES "(Win64|IA64)")
   # using 64 bit compiler
+  find_library(CAENDigitizer_LIBRARY NAMES CAENDigitizer HINTS ${libhints64})
+  find_library(CAENComm_LIBRARY NAMES CAENComm HINTS ${libhints64})
   find_library(CAENVME_LIBRARY NAMES CAENVME HINTS ${libhints64})
 endif()
 
@@ -77,7 +63,7 @@ if(CAEN_FOUND)
   endif()
 endif()
 
-mark_as_advanced( CAEN_INCLUDE_DIR CAENDigitizer_LIBRARY CAENComm_LIBRARY CAENVME_LIBRARY)
+mark_as_advanced(CAEN_INCLUDE_DIR CAENDigitizer_LIBRARY CAENComm_LIBRARY CAENVME_LIBRARY)
 
 set(CAEN_LIBRARIES ${CAENDigitizer_LIBRARY} ${CAENComm_LIBRARY} ${CAENVME_LIBRARY})
 set(CAEN_INCLUDE_DIRS ${CAEN_INCLUDE_DIR})
