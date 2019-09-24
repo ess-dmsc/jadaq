@@ -23,8 +23,9 @@ images = [
     ],
     'debian9': [
         'name': 'screamingudder/debian9-build-node:3.4.0',
+        'cmake': 'cmake3',
         'sh'  : 'bash -e',
-        'cmake_flags': ''
+        'cmake_flags': '-DCMAKE_BUILD_TYPE=Debug'
     ]
 ]
 
@@ -85,7 +86,8 @@ def docker_cmake(image_key, xtra_flags) {
         cd ${project}
         cd build
         ${cmake_exec} --version
-        ${cmake_exec} -DCAEN_ROOT=/home/jenkins/jadaq/libcaen ${xtra_flags} -DCONAN=AUTO ..
+        conan install .. --build=missing
+        ${cmake_exec} -DCAEN_ROOT=/home/jenkins/jadaq/libcaen ${xtra_flags} -DCONAN=MANUAL ..
     \""""
 }
 
@@ -133,6 +135,9 @@ def get_pipeline(image_key)
                 if (image_key == cppcheck_os) {
                   docker_cppcheck(image_key)
                   step([$class: 'WarningsPublisher', parserConfigurations: [[parserName: 'Cppcheck Parser', pattern: "cppcheck.txt"]]])
+                  docker_dependencies(image_key)
+                  docker_cmake(image_key, images[image_key]['cmake_flags'])
+                  docker_build(image_key)
                 }
             } finally {
                 sh "docker stop ${container_name(image_key)}"
