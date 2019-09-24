@@ -12,6 +12,11 @@ if (extern_file)
 #  MESSAGE(STATUS "Found CAENDigitizer library in 'extern' subfolder: ${extern_lib_path}")
 endif(extern_file)
 
+set(libhints64 "${CAEN_ROOT}/lib64 $ENV{CAEN_ROOT}/lib64 /usr/local/lib64 /usr/lib64 /opt/local/lib64
+    $ENV{HOME}/lib64 ${extern_lib_path}/lib/x64  ${CAEN_ROOT}/lib $ENV{CAEN_ROOT}/lib
+    /usr/local/lib /usr/lib /opt/local/lib $ENV{HOME}/lib")
+set(libhints32 "${CAEN_ROOT}/lib $ENV{CAEN_ROOT}/lib /usr/local/lib /usr/lib /opt/local/lib
+    $ENV{HOME}/lib ${extern_lib_path}/lib/x86")
 
 find_path(CAEN_INCLUDE_DIR CAENDigitizer.h
   HINTS
@@ -27,91 +32,52 @@ PATH_SUFFIXES CAENDigitizerLib )
 # library might be installed in either or both 32/64bit, need to figure out which one to use
 if(NOT "${CMAKE_GENERATOR}" MATCHES "(Win64|IA64)")
   # using 32 bit compiler
-  find_library(CAENDigitizer_LIBRARY NAMES CAENDigitizer
-    HINTS
-    ${CAEN_ROOT}/lib
-    $ENV{CAEN_ROOT}/lib
-    /usr/local/lib
-    /usr/lib
-    /opt/local/lib
-    $ENV{HOME}/lib
-    ${extern_lib_path}/lib/x86
-    )
+  find_library(CAENDigitizer_LIBRARY NAMES CAENDigitizer HINTS ${libhints32})
 else(NOT "${CMAKE_GENERATOR}" MATCHES "(Win64|IA64)")
   # using 64 bit compiler
-  find_library(CAENDigitizer_LIBRARY NAMES CAENDigitizer
-    HINTS
-    # focus on default 64-bit paths used e.g. by RedHat systems
-    ${CAEN_ROOT}/lib64
-    $ENV{CAEN_ROOT}/lib64
-    /usr/local/lib64
-    /usr/lib64
-    /opt/local/lib64
-    $ENV{HOME}/lib64
-    ${extern_lib_path}/lib/x64
-    # else, try the usual suspects:
-    ${CAEN_ROOT}/lib
-    $ENV{CAEN_ROOT}/lib
-    /usr/local/lib
-    /usr/lib
-    /opt/local/lib
-    $ENV{HOME}/lib
-    )
+  find_library(CAENDigitizer_LIBRARY NAMES CAENDigitizer HINTS ${libhints64})
 endif()
 
 # library might be installed in either or both 32/64bit, need to figure out which one to use
 if(NOT "${CMAKE_GENERATOR}" MATCHES "(Win64|IA64)")
   # using 32 bit compiler
-  find_library(CAENComm_LIBRARY NAMES CAENComm
-    HINTS
-    ${CAEN_ROOT}/lib
-    $ENV{CAEN_ROOT}/lib
-    /usr/local/lib
-    /usr/lib
-    /opt/local/lib
-    $ENV{HOME}/lib
-    ${extern_lib_path}/lib/x86
-    )
+  find_library(CAENComm_LIBRARY NAMES CAENComm HINTS ${libhints32})
 else(NOT "${CMAKE_GENERATOR}" MATCHES "(Win64|IA64)")
   # using 64 bit compiler
-  find_library(CAENComm_LIBRARY NAMES CAENComm
-    HINTS
-    # focus on default 64-bit paths used e.g. by RedHat systems
-    ${CAEN_ROOT}/lib64
-    $ENV{CAEN_ROOT}/lib64
-    /usr/local/lib64
-    /usr/lib64
-    /opt/local/lib64
-    $ENV{HOME}/lib64
-    ${extern_lib_path}/lib/x64
-    # else, try the usual suspects:
-    /usr/local/lib
-    /usr/lib
-    /opt/local/lib
-    $ENV{HOME}/lib
-    )
+  find_library(CAENComm_LIBRARY NAMES CAENComm HINTS ${libhints64})
+endif()
+
+# library might be installed in either or both 32/64bit, need to figure out which one to use
+if(NOT "${CMAKE_GENERATOR}" MATCHES "(Win64|IA64)")
+  # using 32 bit compiler
+  find_library(CAENVME_LIBRARY NAMES CAENVME HINTS ${libhints32})
+else(NOT "${CMAKE_GENERATOR}" MATCHES "(Win64|IA64)")
+  # using 64 bit compiler
+  find_library(CAENVME_LIBRARY NAMES CAENVME HINTS ${libhints64})
 endif()
 
 # resolve symlinks
 get_filename_component(CAENDigitizer_LIBRARY ${CAENDigitizer_LIBRARY} REALPATH)
 get_filename_component(CAENComm_LIBRARY ${CAENComm_LIBRARY} REALPATH)
+get_filename_component(CAENVME_LIBRARY ${CAENVME_LIBRARY} REALPATH)
 
 include(FindPackageHandleStandardArgs)
 # handle the QUIETLY and REQUIRED arguments and set CAENDigitizer_FOUND to TRUE
 # if all listed variables are TRUE
 find_package_handle_standard_args("CAEN" DEFAULT_MSG
-                                  CAEN_INCLUDE_DIR CAENDigitizer_LIBRARY CAENComm_LIBRARY)
+CAEN_INCLUDE_DIR CAENDigitizer_LIBRARY CAENComm_LIBRARY CAENVME_LIBRARY)
 
 if(CAEN_FOUND)
   if(NOT CAEN_FIND_QUIETLY)
     message(STATUS "Found the following CAEN libraries:")
     message(STATUS "  CAEN Comm: ${CAENComm_LIBRARY}")
     message(STATUS "  CAEN Digitizer: ${CAENDigitizer_LIBRARY}")
+    message(STATUS "  CAEN VME: ${CAENVME_LIBRARY}")
     message(STATUS "  CAEN includes: ${CAEN_INCLUDE_DIR}")
   endif()
 endif()
 
-mark_as_advanced( CAEN_INCLUDE_DIR CAENDigitizer_LIBRARY CAENComm_LIBRARY)
+mark_as_advanced( CAEN_INCLUDE_DIR CAENDigitizer_LIBRARY CAENComm_LIBRARY CAENVME_LIBRARY)
 
-set(CAEN_LIBRARIES ${CAENDigitizer_LIBRARY} ${CAENComm_LIBRARY} )
-set( CAEN_INCLUDE_DIRS ${CAEN_INCLUDE_DIR} )
+set(CAEN_LIBRARIES ${CAENDigitizer_LIBRARY} ${CAENComm_LIBRARY} ${CAENVME_LIBRARY})
+set(CAEN_INCLUDE_DIRS ${CAEN_INCLUDE_DIR})
