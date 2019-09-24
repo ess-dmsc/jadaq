@@ -135,9 +135,9 @@ def get_pipeline(image_key)
                 if (image_key == cppcheck_os) {
                   docker_cppcheck(image_key)
                   step([$class: 'WarningsPublisher', parserConfigurations: [[parserName: 'Cppcheck Parser', pattern: "cppcheck.txt"]]])
-                  docker_dependencies(image_key)
-                  docker_cmake(image_key, images[image_key]['cmake_flags'])
-                  docker_build(image_key)
+                  #docker_dependencies(image_key)
+                  #docker_cmake(image_key, images[image_key]['cmake_flags'])
+                  #docker_build(image_key)
                 }
             } finally {
                 sh "docker stop ${container_name(image_key)}"
