@@ -18,7 +18,7 @@ PREFIX=${2:-goofy}
 # Amount of time that each file contains data for in seconds
 SPLIT_TIME=${3:-60} 
 # Runtime for each configuration in seconds 
-RUN_TIME=${4:-9000}
+RUN_TIME=${4:-90000}
 
 #if [ $# -ne 3 ]; then
 #    echo Launch like ./runscript.sh PREFIX SPLIT_TIME RUN_TIME
@@ -118,9 +118,9 @@ then
     cp ${config} ${path}/${BASE_NAME}.in.ini
 
     # Selet the appropriate run-mode (filewriting, forwarding to EFU, etc.)
-   COMMAND="${JADAQ} --hdf5 --time ${RUN_TIME} --split ${SPLIT_TIME} --stats ${STAT_TIME} --path $path --basename ${basename} --config ${config} --config_out ${path}/${BASE_NAME}.out.ini 2>&1 | tee -a ${path}/outputmessages_$datee.log"
+#   COMMAND="${JADAQ} --hdf5 --time ${RUN_TIME} --split ${SPLIT_TIME} --stats ${STAT_TIME} --path $path --basename ${basename} --config ${config} --config_out ${path}/${BASE_NAME}.out.ini 2>&1 | tee -a ${path}/outputmessages_$datee.log"
 #   COMMAND="${JADAQ} -T --time ${RUN_TIME} --split ${SPLIT_TIME} --stats ${STAT_TIME} --path $path --basename ${basename} --config ${config} --config_out ${path}/${BASE_NAME}.out.ini 2>&1 | tee -a ${path}/outputmessages_$datee.log"
-#   COMMAND="${JADAQ} -N 192.168.0.58 -P 9000 --time ${RUN_TIME} --stats ${STAT_TIME} --path $path --basename ${basename} --config ${config} --config_out ${path}/${BASE_NAME}.out.ini 2>&1 | tee -a ${path}/outputmessages_$datee.log"
+   COMMAND="${JADAQ} -N 192.168.0.58 -P 9000 --time ${RUN_TIME} --stats ${STAT_TIME} --path $path --basename ${basename} --config ${config} --config_out ${path}/${BASE_NAME}.out.ini 2>&1 | tee -a ${path}/outputmessages_$datee.log"
 
     #if [ ${1} ]; then
     #    echo ${COMMAND}
