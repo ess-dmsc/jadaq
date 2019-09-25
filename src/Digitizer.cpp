@@ -308,7 +308,9 @@ Digitizer::Digitizer(CAEN_DGTZ_ConnectionType linkType_, int linkNum_, int conet
        - internally, the serial no is 16bit wide (see Common.c:827)
        - model no is set from enum CAEN_DGTZ_BoardModel_t with max val 41 (CAEN library 2.9.1, see CAENDigitizerType.h:349->CAENDigitizer.c:519ff->Common.c:838)
      */
-    id = (digitizer->modelNo()<<16)|digitizer->serialNumber();
+    /// \todo decide on how to make this globally unique
+    //id = (digitizer->modelNo()<<16)|digitizer->serialNumber();
+    id = digitizer->serialNumber();
 }
 
 void Digitizer::initialize(DataWriter& dataWriter)

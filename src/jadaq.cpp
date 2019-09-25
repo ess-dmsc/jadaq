@@ -98,6 +98,7 @@ static void printStats(const std::vector<Digitizer> &digitizers, uint32_t elapse
   oldevents = eventsFound;
   oldbytes = bytesRead;
   oldreadouts = readouts;
+  fflush(stdout);
 }
 
 
@@ -235,12 +236,14 @@ int main(int argc, const char *argv[]) {
     }
   }
 
+
+  /// \todo agree on this
   // read in run number stored in path (if any)
-  if (runNumber.readFromPath(*conf.path)){
-    XTRACE(MAIN, DEB, "Found run number %d at path '%s'", runNumber.value(), (*conf.path).c_str());
-  } else {
-    XTRACE(MAIN, WAR, "No run number found at path '%s' (will be set to zero)", (*conf.path).c_str());
-  }
+  //if (runNumber.readFromPath(*conf.path)){
+  //  XTRACE(MAIN, DEB, "Found run number %d at path '%s'", runNumber.value(), (*conf.path).c_str());
+  //} else {
+  //  XTRACE(MAIN, WAR, "No run number found at path '%s' (will be set to zero)", (*conf.path).c_str());
+  //}
   // copy over configuration file
   std::stringstream dstName;
   dstName << *conf.path << *conf.basename << runNumber.toString() << ".cfg";
