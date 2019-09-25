@@ -73,7 +73,9 @@ private:
       return itr->second;
     } else {
       DigitizerInfo info;
-      std::string name = std::to_string(digitizerID>>16) + "_" + std::to_string(digitizerID & 0xFFFF);
+      /// \todo reverting hdf5 name for digitizer, screws up FraPi's matlap code
+      //std::string name = std::to_string(digitizerID>>16) + "_" + std::to_string(digitizerID & 0xFFFF);
+      std::string name = std::to_string(digitizerID & 0xFFFF);
       info.group =
           new H5::Group(file->createGroup(name));
       digitizerInfo[digitizerID] = info;
