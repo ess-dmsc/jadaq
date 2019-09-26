@@ -20,6 +20,10 @@ as a minimum. Adding a brief description is considered courteous.
 ## Edit
 Make your edits, run your tests, add, commit and push to your heart's content.
 
+    > git add x y z
+    > git commit -m 'new files for xx added'
+    > git push --set-upstream origin issue_33_describe_workflow
+
 ## Create Pull-Request (PR)
 Only admins are allowed to merge to master without a previous PR. The PR triggers a
 code review requiring at least one reviewer approval before merging is allowed.
