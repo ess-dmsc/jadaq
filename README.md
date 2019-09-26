@@ -39,6 +39,10 @@ If you prefer to run conan manually the procedure is
 > make
 ```
 
+## Contributing
+
+Please read the [CONTRIBUTING.md](CONTRIBUTING.md) file for details on our code of conduct and the process for submitting pull requests to us.
+
 ## Authors
 
 * Troels Blum
