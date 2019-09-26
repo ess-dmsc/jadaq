@@ -52,6 +52,7 @@ namespace po = boost::program_options;
 struct {
   bool textout = false;
   bool hdf5out = false;
+  float split = -1.0f;
   bool nullout = false;
   long events = -1;
   uint32_t time = 0xffffff; // many seconds
@@ -97,6 +98,7 @@ static void printStats(const std::vector<Digitizer> &digitizers, uint32_t elapse
   oldevents = eventsFound;
   oldbytes = bytesRead;
   oldreadouts = readouts;
+  fflush(stdout);
 }
 
 
@@ -125,34 +127,32 @@ int main(int argc, const char *argv[]) {
   try {
     po::options_description desc{"Usage: " + std::string(argv[0]) +
                                  " [<options>]"};
-    desc.add_options()("help,h", "Display help information")(
-        "verbose,v",
-        po::value<int>()->value_name("<level>")->default_value(conf.verbose),
-        "Set program verbosity level.")(
-        "events,e",
-        po::value<int>()->value_name("<count>")->default_value(conf.events),
-        "Stop acquisition after collecting <count> events")(
-        "time,t",
-        po::value<int>()->value_name("<seconds>")->default_value(conf.time),
-        "Stop acquisition after <seconds> seconds")(
-        "hdf5,H", po::bool_switch(&conf.hdf5out), "Output to hdf5 file.")(
-        "stats",
-        po::value<int>()->value_name("<seconds>")->default_value(conf.stats),
-        "Print statistics every <seconds> seconds")(
-        "path,p",
-        po::value<std::string>()->value_name("<path>")->default_value("."),
-        "Store data and other run information in local <path>.")(
-        "basename,b",
-        po::value<std::string>()->value_name("<name>")->default_value("jadaq-"),
-        "Use <name> as the basename for file output.")(
-        "network,N", po::value<std::string>()->value_name("<address>"),
-        "Send data over network - address to bind to.")(
-        "port,P", po::value<std::string>()->value_name("<port>")->default_value("9000"),
-        "Network port to bind to if sending over network")(
-        "config_out", po::value<std::string>()->value_name("<file>"),
-        "Read back device(s) configuration and write to <file>")(
-        "config", po::value<std::vector<std::string>>()->value_name("<file>"),
+    desc.add_options()
+       ("help,h", "Display help information")
+       ("verbose,v", po::value<int>()->value_name("<level>")->default_value(conf.verbose),
+        "Set program verbosity level.")
+       ("events,e",  po::value<int>()->value_name("<count>")->default_value(conf.events),
+        "Stop acquisition after collecting <count> events")
+       ("time,t", po::value<int>()->value_name("<seconds>")->default_value(conf.time),
+        "Stop acquisition after <seconds> seconds")
+       ("split,s", po::value<float>()->value_name("<seconds>")->default_value(conf.split),
+        "Split output file every <seconds> seconds")
+       ("hdf5,H", po::bool_switch(&conf.hdf5out), "Output to hdf5 file.")
+       ("stats",  po::value<int>()->value_name("<seconds>")->default_value(conf.stats),
+        "Print statistics every <seconds> seconds")
+       ("path,p", po::value<std::string>()->value_name("<path>")->default_value("."),
+        "Store data and other run information in local <path>.")
+       ("basename,b", po::value<std::string>()->value_name("<name>")->default_value("jadaq-"),
+        "Use <name> as the basename for file output.")
+       ("network,N", po::value<std::string>()->value_name("<address>"),
+        "Send data over network - address to bind to.")
+       ("port,P", po::value<std::string>()->value_name("<port>")->default_value("9000"),
+        "Network port to bind to if sending over network")
+       ("config_out", po::value<std::string>()->value_name("<file>"),
+        "Read back device(s) configuration and write to <file>")
+       ("config", po::value<std::vector<std::string>>()->value_name("<file>"),
         "Configuration file");
+
     po::positional_options_description pos;
     pos.add("config", -1);
     po::variables_map vm;
@@ -188,7 +188,9 @@ int main(int argc, const char *argv[]) {
       *conf.path += '/';
     conf.events = vm["events"].as<int>();
     conf.time = vm["time"].as<int>();
+    conf.split = vm["split"].as<float>();
     conf.stats = vm["stats"].as<int>();
+
     if (vm.count("network")) {
       conf.network = new std::string(vm["network"].as<std::string>());
       conf.port = new std::string(vm["port"].as<std::string>());
@@ -234,12 +236,14 @@ int main(int argc, const char *argv[]) {
     }
   }
 
+
+  /// \todo agree on this
   // read in run number stored in path (if any)
-  if (runNumber.readFromPath(*conf.path)){
-    XTRACE(MAIN, DEB, "Found run number %d at path '%s'", runNumber.value(), (*conf.path).c_str());
-  } else {
-    XTRACE(MAIN, WAR, "No run number found at path '%s' (will be set to zero)", (*conf.path).c_str());
-  }
+  //if (runNumber.readFromPath(*conf.path)){
+  //  XTRACE(MAIN, DEB, "Found run number %d at path '%s'", runNumber.value(), (*conf.path).c_str());
+  //} else {
+  //  XTRACE(MAIN, WAR, "No run number found at path '%s' (will be set to zero)", (*conf.path).c_str());
+  //}
   // copy over configuration file
   std::stringstream dstName;
   dstName << *conf.path << *conf.basename << runNumber.toString() << ".cfg";
@@ -270,7 +274,8 @@ int main(int argc, const char *argv[]) {
 
   if (conf.hdf5out) {
     XTRACE(MAIN, NOTE, "Creating DataWriter for HDF5");
-    dataWriter = new DataWriterHDF5(*conf.path, *conf.basename,runNumber.toString().c_str());
+    std::string extension = conf.split > 0.0f ? runNumber.toString() : "";
+    dataWriter = new DataWriterHDF5(*conf.path, *conf.basename, extension.c_str());
   } else if (conf.network != nullptr) {
     XTRACE(MAIN, NOTE, "Creating DataWriter for UDP");
     dataWriter = new DataWriterNetwork(*conf.network, *conf.port, runNumber.value());
@@ -302,10 +307,11 @@ int main(int argc, const char *argv[]) {
 
   XTRACE(MAIN, INF, "Running acquisition loop - Ctrl-C to interrupt");
 
-  Timer acquisitionTimer;
   uint64_t eventsFound = 0;
   uint64_t readouts = 0;
   uint16_t alive = 0;
+  Timer acquisitionTimer;
+  Timer splitTimer;
   SteadyTimer readoutTimer;
   while (true) {
     // reset stats
@@ -336,6 +342,12 @@ int main(int argc, const char *argv[]) {
       // accumulative stats for all digitizers
       eventsFound += digitizer.getStats().eventsFound;
       readouts += digitizer.getStats().readouts;
+    }
+    if (conf.split > 0.0f) {
+      if (splitTimer.timeus()/1000000 >= conf.split) {
+        dataWriter.split((++runNumber).toString());
+        splitTimer.reset();
+      }
     }
     if (interrupt) {
       XTRACE(MAIN, ALW, "Caught interrupt - stop acquisition and clean up.");

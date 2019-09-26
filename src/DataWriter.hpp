@@ -41,6 +41,10 @@ public:
     instance->addDigitizer(digitizerID);
   }
 
+  void split(const std::string& id) {
+    instance->split(id);
+  }
+
   template <typename E>
   void operator()(const jadaq::buffer<E> *buffer, uint32_t digitizerID,
                   uint64_t globalTimeStamp) {
@@ -53,6 +57,7 @@ private:
     {
         virtual ~Concept() = default;
         virtual void addDigitizer(uint32_t digitizerID) = 0;
+        virtual void split(const std::string& id) = 0;
         virtual void operator()(const jadaq::buffer<Data::ListElement422>* buffer, uint32_t digitizerID, uint64_t globalTimeStamp) = 0;
         virtual void operator()(const jadaq::buffer<Data::ListElement8222>* buffer, uint32_t digitizerID, uint64_t globalTimeStamp) = 0;
         virtual void operator()(const jadaq::buffer<Data::StdElement751>* buffer, uint32_t digitizerID, uint64_t globalTimeStamp) = 0;
@@ -66,6 +71,8 @@ private:
         ~Model() { delete val; }
         void addDigitizer(uint32_t digitizerID) override
         { val->addDigitizer(digitizerID); }
+        void split(const std::string& id) override
+        { return val->split(id); }
         void operator()(const jadaq::buffer<Data::ListElement422>* buffer, uint32_t digitizerID, uint64_t globalTimeStamp) final
         { val->operator()(buffer,digitizerID,globalTimeStamp); }
         void operator()(const jadaq::buffer<Data::ListElement8222>* buffer, uint32_t digitizerID, uint64_t globalTimeStamp) final
@@ -86,6 +93,7 @@ class DataWriterNull {
 public:
   DataWriterNull() = default;
   void addDigitizer(uint32_t) {}
+  void split(const std::string&) { }
   template <typename E>
   void operator()(const jadaq::buffer<E> *, uint32_t, uint64_t) const {}
 };

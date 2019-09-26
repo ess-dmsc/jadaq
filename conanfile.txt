@@ -1,11 +1,11 @@
 [requires]
-cmake_findboost_modular/1.65.1@bincrafters/stable
-boost_asio/1.65.1@bincrafters/stable
-boost_system/1.65.1@bincrafters/stable
-boost_thread/1.65.1@bincrafters/stable
-boost_filesystem/1.65.1@bincrafters/stable
-boost_program_options/1.65.1@bincrafters/stable
-boost_property_tree/1.65.1@bincrafters/stable
+cmake_findboost_modular/1.66.0@bincrafters/stable
+boost_asio/1.66.0@bincrafters/stable
+boost_system/1.66.0@bincrafters/stable
+boost_thread/1.66.0@bincrafters/stable
+boost_filesystem/1.66.0@bincrafters/stable
+boost_program_options/1.66.0@bincrafters/stable
+boost_property_tree/1.66.0@bincrafters/stable
 hdf5/1.10.5-dm1@ess-dmsc/stable
 
 [options]

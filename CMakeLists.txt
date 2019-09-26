@@ -57,35 +57,35 @@ include_directories(${HDF5_INCLUDE_DIRS})
 
 find_package(Boost COMPONENTS system filesystem thread program_options REQUIRED )
 
-set(jadaq_SRC 
-  Configuration.cpp 
-  Digitizer.cpp 
-  DPPQDCEvent.cpp
-  runno.cpp
-  FunctionID.cpp
-  StringConversion.cpp
-  caen.cpp
-  jadaq.cpp
+set(jadaq_SRC
+  src/Configuration.cpp
+  src/Digitizer.cpp
+  src/DPPQDCEvent.cpp
+  src/runno.cpp
+  src/FunctionID.cpp
+  src/StringConversion.cpp
+  src/caen.cpp
+  src/jadaq.cpp
 )
 set(jadaq_INC
-  Configuration.hpp
-  DataFormat.hpp
-  DataHandler.hpp
-  DataWriter.hpp
-  DataWriterNetwork.hpp
-  DataWriterHDF5.hpp 
-  Digitizer.hpp
-  DPPQDCEvent.hpp
-  EventIterator.hpp
-  FunctionID.hpp
-  StringConversion.hpp
-  Waveform.hpp
-  caen.hpp
-  container.hpp
-  ini_parser.hpp
-  interrupt.hpp
-  xtrace.h
-  timer.h
+  src/Configuration.hpp
+  src/DataFormat.hpp
+  src/DataHandler.hpp
+  src/DataWriter.hpp
+  src/DataWriterNetwork.hpp
+  src/DataWriterHDF5.hpp
+  src/Digitizer.hpp
+  src/DPPQDCEvent.hpp
+  src/EventIterator.hpp
+  src/FunctionID.hpp
+  src/StringConversion.hpp
+  src/Waveform.hpp
+  src/caen.hpp
+  src/container.hpp
+  src/ini_parser.hpp
+  src/interrupt.hpp
+  src/xtrace.h
+  src/timer.h
 )
 
 add_executable(jadaq ${jadaq_INC} ${jadaq_SRC})
