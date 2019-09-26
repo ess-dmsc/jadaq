@@ -8,6 +8,8 @@ Provide a one-liner text describing the new functionality or the improvement
 
 This will give you a issue number, NNN.
 
+    https://github.com/ess-dmsc/jadaq/issues/new
+
 ## Create a branch
 Preferably from master. If you branch from another branch you might
 want to mention from which one. The branch should be named issue_NNN
