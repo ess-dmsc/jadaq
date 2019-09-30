@@ -39,12 +39,9 @@ constexpr uint8_t version_min {3};
 #define IP_HEADER 20
 #define UDP_HEADER 8
 
-/* TODO: Take care of endianness: https://linux.die.net/man/3/endian
- * We will use little endian for our network protocol since odds
- * are that both ends will be running on intel hardware
- */
 namespace Data {
-    const uint16_t currentVersion = (version_maj << 8) + version_min;
+     // store version as Big Endian for backwards compatibility
+    const uint16_t currentVersion = (version_min << 8) + version_maj;
     const constexpr uint16_t WaveformBase = 1<<8;
     enum ElementType: uint16_t
     {
