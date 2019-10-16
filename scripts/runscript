@@ -1,0 +1,169 @@
+#!/bin/sh
+#
+# Runscript for JADAQ, intended to be used with Multi-Blade
+# Associated (default) configuration file is jadaq/config/system_setup.sh
+
+# Can be run either with FileWriter or with EFU, switch mode with
+# ./runscript.sh EFU (or FW)
+
+
+run_dir="$(cd"$(dirname $0)" && pwd)" &> /dev/null
+cd ..
+JADAQ_DIR="$(pwd)"
+
+### Fetch user settings
+source config/system_setup.sh
+
+### Override parameters if arguments provided
+if [[ $# -eq 4 ]]; then
+  SUBFOLDER="$1"
+  SPLIT_TIME=$2 # seconds
+  PREFIX="$3"
+  RUN_TIME=$4 # seconds
+  _EFU_MODE=0 # change to JADAQ fw just in case
+elif [[ $# -eq 1 ]]; then
+  if [[ $1 =~ [e|E][f|F][u|U] ]]; then
+    sed -i "" -e "s/_EFU_MODE=0/_EFU_MODE=1/g" "${JADAQ_DIR}/config/system_setup.sh"
+    _EFU_MODE=1
+  elif [[ $1 =~ [f|F][w|W] ]]; then
+    sed -i "" -e "s/_EFU_MODE=1/_EFU_MODE=0/g" "${JADAQ_DIR}/config/system_setup.sh"
+    _EFU_MODE=0
+  else
+    echo "Invalid choice, use like ./runscript.sh EFU (or FW) to switch mode"
+    echo "Exiting..."; exit 1
+  fi
+fi
+
+### Splashscreen and print settings
+_splash () {
+  clear
+  printf "================================================\n"
+  printf "============    Just Another DAQ    ============\n"
+  printf "================================================\n"
+  printf "%-15s%s\n" "JADAQ dir:" "${JADAQ_DIR}"
+  printf "%-15s%s\n" "Config file:" "${CONFIG}"
+  printf "================================================\n"
+
+  if [[ ${jadaq_efu} -eq 1 ]]; then
+    _efu_splash
+  else
+    _filewriter_splash
+  fi
+}
+
+_filewriter_splash () {
+  printf "\n" "-FILEWRITER SETTINGS-"
+  printf "%-15s%s\n" "Data path:" "${DATA_PATH}"
+  printf "%-15s%s\n" "Subfolder:" "${SUBFOLDER}"
+  printf "%-15s%s\n" "File prefix:" "${PREFIX}"
+  printf "%-15s%s\n" "Split time:" "${SPLIT_TIME} seconds"
+  printf "%-15s%s\n" "Run time:" "${RUN_TIME} seconds"
+  printf "\n"
+  printf "%s\n" "To override these settings, use like"
+  printf "%s\n" "./runscript.sh SUBFOLDER SPLIT_TIME FILENAME_PREFIX RUN_TIME"
+}
+
+_efu_splash () {
+  printf "%s\n" "-EFU SETTINGS-"
+  printf "%-15s%s\n" "EFU IP:" ""${_EFU_IP}""
+  printf "%-15s%s\n" "EFU Port:" ""${_EFU_PORT}""
+  printf "\n"
+  printf "%s\n" "To override these settings, use like"
+  printf "%s\n" "./runscript.sh EFU_IP EFU_PORT"
+}
+
+### Check and read files, set up datestamp and filewriting parameters
+_error () {
+  echo "error:: $*" 1>&2
+  exit 1
+}
+
+_check_file () {
+  if [ ! -e $1 ]; then
+    _error "$1 doesn't exist"
+  fi
+}
+
+_check_executable () {
+  if [ ! -x $1 ]; then
+    _error "$1 cannot execute, check permissions"
+  fi
+}
+
+_ensure_folder () {
+  if [ ! -d $1 ]; then
+    echo "$1 doesn't exist, creating..."
+    mkdir -p $1 || _error "Can't create folder $1"
+  fi
+}
+
+### Prepare to run then run
+jadaq_efu=${_EFU_MODE} # 0 for JADAQ filewriting, 1 for EFU
+
+jadaq_path="${JADAQ_DIR}/build/jadaq"
+config_path="${JADAQ_DIR}/config/${CONFIG}.ini"
+data_path="${DATA_PATH}/${SUBFOLDER}"
+
+datestamp="$(date +%y%m%d-%H%M%S)"
+base_name="${PREFIX}-${datestamp}_"
+
+_splash
+
+if [[ ${jadaq_efu} -eq 0 ]]; then
+  command="${jadaq_path} \
+    --hdf5 \
+    --time ${RUN_TIME} \
+    --split ${SPLIT_TIME} \
+    --stats ${STAT_TIME} \
+    --path ${data_path} \
+    --basename ${base_name} \
+    --config ${config_path} \
+    --config_out ${data_path}/${CONFIG}.out.ini \
+    2>&1 \
+    | tee -a ${data_path}/outputmessages_${datestamp}.log"
+else # EFU mode
+  command="${jadaq_path} \
+    -N ${_EFU_IP} \
+    -P ${_EFU_PORT} \
+    --time ${RUN_TIME} \
+    --stats ${STAT_TIME} \
+    --path ${data_path} \
+    --basename ${base_name} \
+    --config ${config_path} \
+    --config_out ${data_path}/${CONFIG}.out.ini \
+    2>&1 \
+    | tee -a ${data_path}/outputmessages_${datestamp}.log"
+fi
+
+_run_jadaq () {
+  _check_executable "${jadaq_path}" && echo "JADAQ OK"
+  _check_file "${config_path}" && echo "CONFIG OK"
+  _ensure_folder "${data_path}" && echo "FOLDER OK"
+
+  echo "Starting run at "$(date)" using command:"
+  echo "${command// /}"
+  eval "${command}"
+}
+
+if [[ ${jadaq_efu} -eq 0 ]]; then
+  echo
+  echo "Will save files like"
+  echo "${data_path}/${base_name}SERIAL.hdf5"
+fi
+
+### Wait for final confirmation
+echo
+echo "Ready to run, type 'r' to run or 'q' to quit: "
+while ! [[ ${option} =~ r|R|q|Q ]]; do
+  read -n 1 -r -s option
+done
+
+case ${option} in
+r|R)
+  _run_jadaq
+  ;;
+q|Q)
+  echo "Exiting..."
+  exit 1
+  ;;
+esac

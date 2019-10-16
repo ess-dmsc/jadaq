@@ -8,7 +8,6 @@ BASE_NAME=CAEN-MB18-6D
 # Configuration file path
 CONFIG_PATH=${HOME}/jadaq/config
 # path to binary
-#JADAQ=${HOME}/jadaq-MB/build/jadaq
 JADAQ=${HOME}/jadaq/build/jadaq
 
 # Subfolder to save files in
