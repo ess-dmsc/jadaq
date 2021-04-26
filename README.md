@@ -15,12 +15,7 @@ To build and run this software the following dependencies are required
  * [**bash**](https://www.gnu.org/software/bash/) For properly setting paths to the conan provided dependencies.
  * A recent C/C++ compiler with support for C++11.
 
-Conan is used to download dependencies. For conan to know where the dependencies can be downloaded from, package repositories must be added by running the following commands:
-
-* `conan remote add conancommunity https://api.bintray.com/conan/conan-community/conan`
-* `conan remote add bincrafters https://api.bintray.com/conan/bincrafters/public-conan`
-* `conan remote add conan-transit https://api.bintray.com/conan/conan/conan-transit`
-* `conan remote add ess-dmsc https://api.bintray.com/conan/ess-dmsc/conan`
+Conan is used to download dependencies. For conan to know where the dependencies can be downloaded from, package repositories must be added by running the instructions from the [conan-configuration](https://github.com/ess-dmsc/conan-configuration) repository.
 
 For details on the prerequites and installation see [documentation](documentation/install.md)
 
