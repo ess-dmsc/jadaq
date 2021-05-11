@@ -21,11 +21,6 @@ container_build_nodes = [
   'debian10': ContainerBuildNode.getDefaultContainerBuildNode('debian10')
 ]
 
-cmake_flags = [
-  'centos7': '-DCMAKE_BUILD_TYPE=Release',
-  'debian10': '-DCMAKE_BUILD_TYPE=Debug'
-]
-
 def failure_function(exception_obj, failureMessage) {
   def toEmails = [[$class: 'DevelopersRecipientProvider']]
   emailext body: '${DEFAULT_CONTENT}\n\"' + failureMessage + '\"\n\nCheck console output at $BUILD_URL to view the results.',
@@ -62,12 +57,12 @@ builders = pipeline_builder.createBuilders { container ->
     }  // stage
   } else {  // Not the Cppcheck OS
       pipeline_builder.stage("${container.key}: configure") {
-      def local_cmake_flags = cmake_flags[container.key]
       container.sh """
         mkdir ${pipeline_builder.project}/build
         cd ${pipeline_builder.project}/build
+        conan remote add --insert 0 ess-dmsc-local ${local_conan_server}
         cmake --version
-        cmake ${local_cmake_flags} -DCONAN=AUTO -DCAEN_ROOT=/home/jenkins/${pipeline_builder.project}/libcaen ..
+        cmake -DCMAKE_BUILD_TYPE=Release -DCONAN=AUTO -DCAEN_ROOT=/home/jenkins/${pipeline_builder.project}/libcaen ..
       """
     }  // stage
 
