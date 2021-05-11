@@ -67,7 +67,7 @@ builders = pipeline_builder.createBuilders { container ->
         mkdir ${pipeline_builder.project}/build
         cd ${pipeline_builder.project}/build
         cmake --version
-        cmake ${local_cmake_flags} -DCAEN_ROOT=/home/jenkins/${pipeline_builder.project}/libcaen ..
+        cmake ${local_cmake_flags} -DCONAN=AUTO -DCAEN_ROOT=/home/jenkins/${pipeline_builder.project}/libcaen ..
       """
     }  // stage
 
