@@ -73,7 +73,7 @@ builders = pipeline_builder.createBuilders { container ->
 
     pipeline_builder.stage("${container.key}: build") {
       container.sh """
-        cd ${pipeline_builder.project}
+        cd ${pipeline_builder.project}/build
         make --version
         make -j8
       """
