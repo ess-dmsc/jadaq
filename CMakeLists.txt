@@ -1,4 +1,3 @@
-
 cmake_minimum_required(VERSION 3.2)
 cmake_policy(VERSION 3.12)
 
@@ -9,6 +8,7 @@ project(jadaq)
 #=============================================================================
 set(EXTRA_MODULES_DIR ${CMAKE_CURRENT_LIST_DIR}/cmake)
 list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_BINARY_DIR})
 
 #=============================================================================
 # Conan
