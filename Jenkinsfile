@@ -46,14 +46,11 @@ builders = pipeline_builder.createBuilders { container ->
     pipeline_builder.stage("${container.key}: cppcheck") {
       container.sh """
         cd ${pipeline_builder.project}
-        cppcheck --enable=all --inconclusive --template="{file},{line},{severity},{id},{message}" ./ 2> cppcheck.txt
+        cppcheck --enable=all --inconclusive --template="{file},{line},{severity},{id},{message}" --xml --xml-version=2 ./ 2> cppcheck.xml
       """
       container.copyFrom(pipeline_builder.project, ".")
       sh "mv -f ./${pipeline_builder.project}/* ./"
-      step([
-        $class: 'WarningsPublisher',
-        parserConfigurations: [[parserName: 'Cppcheck Parser', pattern: "cppcheck.txt"]]
-      ])
+      recordIssues(tools: [cppCheck(pattern: 'cppcheck.xml')])
     }  // stage
   } else {  // Not the Cppcheck OS
       pipeline_builder.stage("${container.key}: configure") {
