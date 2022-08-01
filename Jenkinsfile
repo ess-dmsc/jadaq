@@ -57,7 +57,6 @@ builders = pipeline_builder.createBuilders { container ->
       container.sh """
         mkdir ${pipeline_builder.project}/build
         cd ${pipeline_builder.project}/build
-        conan remote add --insert 0 ess-dmsc-local ${local_conan_server}
         cmake --version
         CXXFLAGS=-Wno-error=parentheses cmake -DCMAKE_BUILD_TYPE=Release -DCONAN=AUTO -DCAEN_ROOT=/home/jenkins/${pipeline_builder.project}/libcaen ..
       """
