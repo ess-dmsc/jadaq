@@ -58,6 +58,7 @@ builders = pipeline_builder.createBuilders { container ->
         mkdir ${pipeline_builder.project}/build
         cd ${pipeline_builder.project}/build
         cmake --version
+        conan install --build boost_build --build missing boost_build/1.69.0@bincrafters/stable
         CXXFLAGS=-Wno-error=parentheses cmake -DCMAKE_BUILD_TYPE=Release -DCONAN=AUTO -DCAEN_ROOT=/home/jenkins/${pipeline_builder.project}/libcaen ..
       """
     }  // stage
