@@ -7,7 +7,7 @@ boost_filesystem/1.69.0@bincrafters/stable
 boost_program_options/1.69.0@bincrafters/stable
 boost_property_tree/1.69.0@bincrafters/stable
 bzip2/1.0.8
-hdf5/1.10.5-dm1@ess-dmsc/stable
+hdf5/1.12.2
 
 [options]
 boost_filesystem:shared=True
