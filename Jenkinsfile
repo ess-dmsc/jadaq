@@ -2,7 +2,7 @@
 import ecdcpipeline.ContainerBuildNode
 import ecdcpipeline.PipelineBuilder
 
-cppcheck_os = "debian10"
+cppcheck_os = "debian11"
 
 // Set number of old builds to keep.
 properties([[
@@ -17,8 +17,8 @@ properties([[
 ]]);
 
 container_build_nodes = [
-  'centos7': ContainerBuildNode.getDefaultContainerBuildNode('centos7-gcc8'),
-  'debian10': ContainerBuildNode.getDefaultContainerBuildNode('debian10')
+  'centos7': ContainerBuildNode.getDefaultContainerBuildNode('centos7-gcc11'),
+  'debian10': ContainerBuildNode.getDefaultContainerBuildNode('debian11')
 ]
 
 def failure_function(exception_obj, failureMessage) {
