@@ -26,6 +26,7 @@
 
 #include "StringConversion.hpp"
 
+#include <limits>
 #include <regex>
 
 #define STR_MATCH(S, V, R)                                                     \
