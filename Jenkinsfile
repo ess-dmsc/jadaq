@@ -18,7 +18,7 @@ properties([[
 
 container_build_nodes = [
   'centos7': ContainerBuildNode.getDefaultContainerBuildNode('centos7-gcc11'),
-  'debian10': ContainerBuildNode.getDefaultContainerBuildNode('debian11')
+  'debian11': ContainerBuildNode.getDefaultContainerBuildNode('debian11')
 ]
 
 def failure_function(exception_obj, failureMessage) {
